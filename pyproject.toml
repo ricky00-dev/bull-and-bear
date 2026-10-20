@@ -1,0 +1,33 @@
+[project]
+name = "bullbear"
+version = "0.1.0"
+description = "매수·매도 AI 에이전트 토론 기반 모의투자 교육 서비스"
+readme = "README.md"
+authors = [
+    { name = "ricky00-dev", email = "235210269+ricky00-dev@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=1.15.0",
+    "httpx>=0.28.1",
+    "pandas>=3.0.6",
+    "pydantic>=2.14.1",
+    "pykrx>=1.0.51",
+    "python-dotenv>=1.2.4",
+    "setuptools<81",  # pykrx imports pkg_resources
+]
+
+[project.scripts]
+bullbear = "bullbear.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.3,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
