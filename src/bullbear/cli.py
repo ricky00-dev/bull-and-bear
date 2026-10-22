@@ -14,6 +14,7 @@ from datetime import datetime
 
 from .config import Settings, load_settings
 from .data import DataUnavailable
+from .data.naver_news import NaverNewsSource
 from .data.pykrx_dart import PykrxDartSource
 from .data.universe import UNIVERSE, UnknownTicker, resolve
 from .events import EventLog
@@ -36,7 +37,12 @@ def _fmt(value: float | None, unit: str) -> str:
 def _make_snapshot(settings: Settings, query: str) -> Snapshot:
     ticker, name = resolve(query)
     source = PykrxDartSource(settings.dart_api_key, settings.cache_dir)
-    snap = build_snapshot(source, ticker, name)
+    try:
+        news = NaverNewsSource(settings.naver_client_id, settings.naver_client_secret)
+    except DataUnavailable as e:
+        print(f"경고: {e}", file=sys.stderr)
+        news = None
+    snap = build_snapshot(source, ticker, name, news=news)
     snap.save(settings.snapshot_dir)
     return snap
 
@@ -49,11 +55,13 @@ def cmd_universe(_args, _settings: Settings) -> None:
 def cmd_snapshot(args, settings: Settings) -> None:
     snap = _make_snapshot(settings, args.ticker)
     print(f"{snap.name}({snap.ticker})  스냅샷 {snap.snapshot_id}  기준일 {snap.as_of}  공급자 {snap.provider}")
-    for category in ("price", "financials", "valuation", "disclosure"):
+    for category in ("price", "financials", "valuation", "disclosure", "news"):
         facts = snap.by_category(category)
         print(f"\n[{category}] {len(facts)}개")
         for f in facts:
-            if f.unit == "text":
+            if category == "news":
+                print(f"  {f.id:<28} {f.published_at:%m-%d %H:%M}  {f.label}")
+            elif f.unit == "text":
                 print(f"  {f.id:<28} {f.as_of}  {f.label}" + (f"  ({f.note})" if f.note and category != "disclosure" else ""))
             else:
                 print(f"  {f.id:<28} {f.label:<28} {_fmt(f.value, f.unit):>16}")

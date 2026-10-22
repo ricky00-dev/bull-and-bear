@@ -18,10 +18,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .data import DataUnavailable, FinancialReport, MarketDataSource, PriceBar
+from .data import DataUnavailable, FinancialReport, MarketDataSource, NewsSource, PriceBar
 from .data.base import INCOME_ACCOUNTS
 
-Category = Literal["price", "financials", "valuation", "disclosure"]
+Category = Literal["price", "financials", "valuation", "disclosure", "news"]
 
 ACCOUNT_LABELS = {
     "revenue": "매출액",
@@ -36,6 +36,8 @@ REPORT_LABELS = {"Q1": "1분기", "H1": "반기", "Q3": "3분기", "FY": "연간
 PRICE_LOOKBACK_DAYS = 400  # 1년 수익률 + 120일 이동평균에 충분한 달력일
 DISCLOSURE_LOOKBACK_DAYS = 90
 MAX_DISCLOSURES = 30
+NEWS_LOOKBACK_DAYS = 7
+MAX_NEWS = 30
 KST = timezone(timedelta(hours=9))
 MARKET_CLOSE = time(15, 40)  # 종가 확정 여유 포함
 
@@ -51,6 +53,7 @@ class Fact(BaseModel):
     inputs: list[str] = Field(default_factory=list)  # 계산값이면 입력 Fact ID
     note: str | None = None
     url: str | None = None
+    published_at: datetime | None = None  # 뉴스처럼 시각이 중요한 근거
 
 
 class Snapshot(BaseModel):
@@ -81,8 +84,16 @@ class Snapshot(BaseModel):
 # 빌더
 
 
-def build_snapshot(source: MarketDataSource, ticker: str, name: str, *, today: date | None = None) -> Snapshot:
-    today = today or date.today()
+def build_snapshot(
+    source: MarketDataSource,
+    ticker: str,
+    name: str,
+    *,
+    news: NewsSource | None = None,
+    now: datetime | None = None,
+) -> Snapshot:
+    now = now or datetime.now(KST)
+    today = now.astimezone(KST).date()
     warnings: list[str] = []
     facts: dict[str, Fact] = {}
 
@@ -90,7 +101,7 @@ def build_snapshot(source: MarketDataSource, ticker: str, name: str, *, today: d
     if len(bars) < 2:
         raise DataUnavailable(f"시세가 부족합니다: {ticker}")
     as_of = bars[-1].date
-    now_kst = datetime.now(KST)
+    now_kst = now.astimezone(KST)
     if as_of == now_kst.date() and now_kst.time() < MARKET_CLOSE:
         warnings.append("장중 스냅샷: 마지막 일봉이 확정되지 않은 값입니다")
     _add(facts, price_facts(bars))
@@ -123,6 +134,16 @@ def build_snapshot(source: MarketDataSource, ticker: str, name: str, *, today: d
     except DataUnavailable as e:
         warnings.append(f"공시 없음: {e}")
 
+    if news is None:
+        warnings.append("뉴스 소스 미설정")
+    else:
+        try:
+            # 스냅샷 생성 시각 이후 기사는 받지 않는다
+            articles = news.search(ticker, name, now - timedelta(days=NEWS_LOOKBACK_DAYS), now)
+            _add(facts, news_facts(articles[:MAX_NEWS]))
+        except DataUnavailable as e:
+            warnings.append(f"뉴스 없음: {e}")
+
     digest = hashlib.sha256(
         json.dumps({k: v.model_dump(mode="json") for k, v in sorted(facts.items())}, sort_keys=True).encode()
     ).hexdigest()[:10]
@@ -131,8 +152,8 @@ def build_snapshot(source: MarketDataSource, ticker: str, name: str, *, today: d
         ticker=ticker,
         name=name,
         as_of=as_of,
-        created_at=datetime.now().astimezone(),
-        provider=source.name,
+        created_at=now,
+        provider=source.name + (f"+{news.name}" if news else ""),
         facts=facts,
         warnings=warnings,
     )
@@ -301,4 +322,19 @@ def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int,
     if op and rev and rev[0] > 0:
         derived("VAL.OP_MARGIN_TTM", "영업이익률(최근 4분기)", op[0] / rev[0] * 100, "%",
                 ["VAL.OPERATING_INCOME_TTM", "VAL.REVENUE_TTM"], "")
+    return out
+
+
+# ---- 뉴스 ----
+
+
+def news_facts(articles) -> list[Fact]:
+    out = []
+    for a in articles:
+        fid = f"NEWS.{hashlib.sha1(a.source_ref.encode()).hexdigest()[:8]}"
+        out.append(Fact(
+            id=fid, category="news", label=a.title, value=None, unit="text",
+            as_of=a.published_at.astimezone(KST).date(), published_at=a.published_at,
+            source=a.source_ref, note=a.summary or None, url=a.url,
+        ))
     return out

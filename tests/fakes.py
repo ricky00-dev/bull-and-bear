@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from bullbear.agents import Attempt
-from bullbear.data import AccountValue, Disclosure, FinancialReport, MarketDataSource, PriceBar, ShareCount
+from bullbear.data import (
+    AccountValue, Disclosure, FinancialReport, MarketDataSource, NewsArticle, NewsSource, PriceBar, ShareCount,
+)
 from bullbear.schemas import Decision, ModeratorDecision, SideScore, Statement
+from bullbear.snapshot import KST
 
 AS_OF = date(2026, 10, 16)
+NOW = datetime(2026, 10, 16, 18, 0, tzinfo=KST)  # 장 마감 후
 
 
 class FakeSource(MarketDataSource):
@@ -50,6 +54,17 @@ class FakeSource(MarketDataSource):
 
     def get_disclosures(self, ticker, start, end):
         return [Disclosure("DART:20261001000123", date(2026, 10, 1), "주요사항보고서(자기주식취득결정)", "가짜전자", "https://example")]
+
+
+class FakeNews(NewsSource):
+    name = "fake-news"
+
+    def search(self, ticker, name, start, end):
+        articles = [
+            NewsArticle("https://news/1", datetime(2026, 10, 16, 9, 30, tzinfo=KST), "가짜전자, 자사주 1조 매입 결정", "요약", "https://news/1"),
+            NewsArticle("https://news/2", datetime(2026, 10, 16, 19, 0, tzinfo=KST), "장 마감 뒤 기사", "요약", "https://news/2"),
+        ]
+        return [a for a in articles if start <= a.published_at <= end]
 
 
 def statement(*evidence: tuple[str, str, float | None], argument: str | None = None) -> Statement:

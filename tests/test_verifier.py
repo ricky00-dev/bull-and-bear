@@ -3,12 +3,12 @@ import pytest
 from bullbear.snapshot import build_snapshot
 from bullbear.verifier import verify
 
-from .fakes import AS_OF, FakeSource, statement
+from .fakes import NOW, FakeNews, FakeSource, statement
 
 
 @pytest.fixture(scope="module")
 def snap():
-    return build_snapshot(FakeSource(), "000000", "가짜전자", today=AS_OF)
+    return build_snapshot(FakeSource(), "000000", "가짜전자", news=FakeNews(), now=NOW)
 
 
 def codes(result, severity="error"):

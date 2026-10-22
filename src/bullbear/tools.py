@@ -17,6 +17,7 @@ TOOL_CATEGORIES: dict[str, Category] = {
     "get_financials": "financials",
     "get_valuation": "valuation",
     "get_disclosures": "disclosure",
+    "get_news": "news",
 }
 
 TOOL_DEFINITIONS = [
@@ -38,6 +39,11 @@ TOOL_DEFINITIONS = [
     {
         "name": "get_disclosures",
         "description": "최근 90일 DART 공시 제목 목록을 조회한다. 본문은 없다.",
+        "input_schema": _NO_INPUT,
+    },
+    {
+        "name": "get_news",
+        "description": "최근 7일 종목 관련 뉴스의 제목, 요약, 발행 시각을 조회한다. 본문은 없다.",
         "input_schema": _NO_INPUT,
     },
 ]
@@ -63,6 +69,7 @@ class SnapshotTools:
                     "value": f.value,
                     "unit": f.unit,
                     "as_of": f.as_of.isoformat(),
+                    "published_at": f.published_at.isoformat() if f.published_at else None,
                     "inputs": f.inputs or None,
                     "note": f.note or None,
                 }.items()

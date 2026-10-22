@@ -11,7 +11,7 @@ AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 
 ```bash
 brew install uv            # 또는 https://docs.astral.sh/uv/
 uv sync                    # Python 3.12 + 의존성 설치
-cp .env.example .env       # ANTHROPIC_API_KEY, OPENDART_API_KEY 입력
+cp .env.example .env       # ANTHROPIC_API_KEY, OPENDART_API_KEY, NAVER_CLIENT_ID/SECRET 입력
 
 uv run bullbear universe           # 대상 30종목
 uv run bullbear snapshot 삼성전자   # 데이터만 확인 (LLM 호출 없음)
@@ -27,6 +27,7 @@ src/bullbear/
   data/base.py        MarketDataSource 인터페이스 (시세·재무·발행주식수·공시)
   data/pykrx_dart.py  구현체: pykrx(시세) + OpenDART(재무·공시)
   data/kis.py         구현체: 한국투자증권 (미구현 자리)
+  data/naver_news.py  NewsSource 구현체: 네이버 검색 API 뉴스 (제목·요약·링크만)
   snapshot.py         판단 시점 스냅샷. 모든 수치를 ID 붙은 Fact로 고정, 파생 지표 계산
   tools.py            에이전트 도구. 스냅샷에 묶여 있어 같은 시점 데이터만 반환
   verifier.py         근거 검증기 (결정론적). 근거 값을 원본과 대조해 반려
@@ -54,7 +55,9 @@ src/bullbear/
   그래서 밸류에이션은 `snapshot.py`에서 시세 × DART 발행주식수, DART 재무로 직접 계산하고 계산 입력을 `inputs`에 남긴다.
 - PER은 당기순이익(연결, 비지배지분 포함) 기준이라 증권사 PER(지배주주 순이익)과 다를 수 있다.
 - 시가총액은 보통주만 센다.
-- 뉴스는 아직 없다. 뉴스 소스를 정하면 `MarketDataSource`에 메서드를 추가한다.
+- 뉴스는 `NewsSource`로 따로 둔다. 네이버 검색 API로 최근 7일 기사 중 제목에 종목명이 있는 것만, 재전송 기사는 하나로 합쳐 최대 30건.
+  스냅샷 생성 시각 이후 기사는 넣지 않는다. 본문은 가져오지 않는다 (저작권·약관).
+- LG, SK처럼 이름이 짧은 종목은 관련 없는 기사가 섞인다. `naver_news.QUERY_OVERRIDES`로 보정한다.
 - 새 공급자는 `MarketDataSource`를 구현하고 `cli.py`의 `_make_snapshot`에서 고르면 된다.
 
 ## 협업 규칙

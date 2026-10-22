@@ -5,12 +5,12 @@ from bullbear.events import EventLog
 from bullbear.schemas import Decision, Side
 from bullbear.snapshot import build_snapshot
 
-from .fakes import AS_OF, FakeSource, ScriptedDebater, ScriptedModerator, statement
+from .fakes import NOW, FakeNews, FakeSource, ScriptedDebater, ScriptedModerator, statement
 
 
 @pytest.fixture
 def snap():
-    return build_snapshot(FakeSource(), "000000", "가짜전자", today=AS_OF)
+    return build_snapshot(FakeSource(), "000000", "가짜전자", news=FakeNews(), now=NOW)
 
 
 def make(snap, tmp_path, *, actions=(), bad_first=False, max_extra=1):

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 ReportType = Literal["Q1", "H1", "Q3", "FY"]
@@ -107,3 +107,23 @@ class MarketDataSource(ABC):
     @abstractmethod
     def get_disclosures(self, ticker: str, start: date, end: date) -> list[Disclosure]:
         """[start, end] 구간 공시 목록, 최신순."""
+
+
+@dataclass(frozen=True)
+class NewsArticle:
+    source_ref: str  # 기사 URL (중복 판별 키)
+    published_at: datetime
+    title: str
+    summary: str  # 검색 결과 요약. 본문 아님
+    url: str
+    publisher: str | None = None
+
+
+class NewsSource(ABC):
+    """종목 뉴스 조회 인터페이스. 시세·재무와 공급자가 달라 따로 둔다."""
+
+    name: str = "abstract"
+
+    @abstractmethod
+    def search(self, ticker: str, name: str, start: datetime, end: datetime) -> list[NewsArticle]:
+        """[start, end] 구간에 발행된 종목 관련 기사, 최신순."""

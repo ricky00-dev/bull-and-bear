@@ -5,12 +5,12 @@ import pytest
 from bullbear.snapshot import build_snapshot
 from bullbear.tools import SnapshotTools
 
-from .fakes import AS_OF, FakeSource
+from .fakes import AS_OF, NOW, FakeNews, FakeSource
 
 
 @pytest.fixture
 def snap():
-    return build_snapshot(FakeSource(), "000000", "가짜전자", today=AS_OF)
+    return build_snapshot(FakeSource(), "000000", "가짜전자", news=FakeNews(), now=NOW)
 
 
 def test_price_metrics(snap):
@@ -42,8 +42,8 @@ def test_disclosure_fact(snap):
 
 
 def test_snapshot_id_is_content_hash():
-    a = build_snapshot(FakeSource(), "000000", "가짜전자", today=AS_OF)
-    b = build_snapshot(FakeSource(), "000000", "가짜전자", today=AS_OF)
+    a = build_snapshot(FakeSource(), "000000", "가짜전자", news=FakeNews(), now=NOW)
+    b = build_snapshot(FakeSource(), "000000", "가짜전자", news=FakeNews(), now=NOW)
     assert a.snapshot_id == b.snapshot_id
     assert a.snapshot_id.startswith("000000-20261016-")
 
@@ -60,3 +60,15 @@ def test_tools_only_return_their_category(snap):
     out = json.loads(SnapshotTools(snap)("get_valuation", {}))
     assert out["snapshot_id"] == snap.snapshot_id
     assert all(item["id"].startswith("VAL.") for item in out["items"])
+
+
+def test_news_facts_and_cutoff(snap):
+    news = snap.by_category("news")
+    assert [n.label for n in news] == ["가짜전자, 자사주 1조 매입 결정"]  # 생성 시각 이후 기사는 제외
+    assert news[0].value is None and news[0].published_at is not None
+
+
+def test_without_news_source_warns():
+    snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
+    assert not snap.by_category("news")
+    assert "뉴스 소스 미설정" in snap.warnings

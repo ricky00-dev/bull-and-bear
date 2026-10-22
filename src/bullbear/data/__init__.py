@@ -4,6 +4,8 @@ from .base import (
     Disclosure,
     FinancialReport,
     MarketDataSource,
+    NewsArticle,
+    NewsSource,
     PriceBar,
     ShareCount,
 )
@@ -14,6 +16,8 @@ __all__ = [
     "Disclosure",
     "FinancialReport",
     "MarketDataSource",
+    "NewsArticle",
+    "NewsSource",
     "PriceBar",
     "ShareCount",
 ]
