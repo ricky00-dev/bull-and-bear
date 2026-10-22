@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0, 초안)
+# AI 워커 API 계약 (v0.1, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -38,11 +38,28 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 
 ### `GET /stocks/search?q=삼성&limit=10`
 
+종목명 일부, 6자리 코드 앞부분, 초성(`ㅅㅅㅈㅈ`)으로 찾는다. 우선주·ETF처럼 토론할 수 없는 종목도
+숨기지 않고 `eligible: false`와 사유를 붙여 돌려준다 (사용자가 왜 없는지 헷갈리지 않게).
+
 ```json
-{ "items": [ { "ticker": "005930", "name": "삼성전자", "market": "KOSPI", "featured": true } ] }
+{ "items": [
+  { "ticker": "005930", "name": "삼성전자", "market": "KOSPI", "featured": true,
+    "close": 214500, "change_pct": -4.03, "eligible": true, "block_reason": null },
+  { "ticker": "005935", "name": "삼성전자우", "market": "KOSPI", "featured": false,
+    "close": 166600, "change_pct": -3.36, "eligible": false, "block_reason": "우선주는 토론하지 않아요" }
+] }
 ```
 
-`featured`: 추천 30종목 여부.
+`featured`: 추천 종목 여부. `close`, `change_pct`: 최근 거래일 종가와 전일 대비 등락률(%).
+
+### `GET /stocks/{ticker}`
+
+종목 확인 화면용.
+
+```json
+{ "ticker": "005930", "name": "삼성전자", "market": "KOSPI", "close": 214500, "change_pct": -4.03,
+  "as_of": "2026-10-22", "eligible": true, "reasons": [], "sparkline": [249500, 254000, "... 60개, 오래된 순"] }
+```
 
 ### `GET /stocks/{ticker}/eligibility`
 
@@ -76,7 +93,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 
 | event | 언제 | data |
 |---|---|---|
-| `snapshot_created` | 시작 | `{snapshot_id, ticker, name, as_of, warnings[]}` |
+| `snapshot_created` | 시작 | `{snapshot_id, ticker, name, as_of, close, warnings[]}`. `close`는 채점 기준 가격 |
 | `turn_started` | 발언 차례 시작 | `{side, round}` |
 | `tool_call` | 에이전트가 데이터 조회 | `{side, tool}` (진행 표시용) |
 | `statement_rejected` | 검증기 반려 | `{side, round, attempt, issues[]}` |
@@ -177,6 +194,11 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 - 초과수익 = 종목 수익률 − 지수 수익률 (같은 기간, %p)
 - 적중: BUY는 초과수익 > +2%p, SELL은 < −2%p, HOLD는 ±2%p 이내 (구간은 확정 필요)
 - 3일·7일은 거래일 기준
+
+## 변경 이력
+
+- v0.1 (2026-10-23): 검색 결과에 시세·토론 가능 여부 추가, `GET /stocks/{ticker}` 추가, `snapshot_created`에 `close` 추가.
+  Spring 쪽 가짜 워커(`api/.../FakeWorkerClient.java`)가 이 형식을 그대로 재생한다.
 
 ## 워커 담당 메모 (현재 상태)
 
