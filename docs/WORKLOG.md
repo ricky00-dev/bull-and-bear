@@ -1,7 +1,7 @@
 # 작업 로그
 
 작업을 마칠 때(또는 PR을 올릴 때) **맨 위에** 한 항목을 추가한다. 다음 사람이 이것만 읽고 이어서 할 수 있게 쓴다.
-Claude Code를 쓰면 세션 시작 시 이 파일의 최근 항목이 자동으로 보인다 (`.claude/settings.json`의 SessionStart 훅).
+Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보인다 (SessionStart 훅). Codex는 `AGENTS.md` 안내에 따라 `./scripts/session-brief.sh`를 실행해 본다.
 
 형식:
 
@@ -16,7 +16,7 @@ Claude Code를 쓰면 세션 시작 시 이 파일의 최근 항목이 자동으
 ---
 
 ## 2026-10-23 · ricky00-dev · docs
-- 한 것: 작업 로그, CLAUDE.md, 세션 시작 훅, PR 템플릿 추가
+- 한 것: 작업 로그, AGENTS.md(Codex)·CLAUDE.md(Claude Code) 공통 안내, 세션 시작 훅, PR 템플릿 추가
 - 다음: 토론 중복 방지 + LLM 비용 집계·일일 상한 (api) — ricky00-dev
 - 막힘·결정 필요:
   - 전향 운용 종목 수 10개 vs 20개 (팀 결정)

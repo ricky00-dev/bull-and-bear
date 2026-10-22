@@ -39,5 +39,5 @@ echo
 echo "## develop 최근 커밋"
 git log --oneline -6 origin/develop 2>/dev/null || git log --oneline -6 develop 2>/dev/null || echo "- 확인 불가"
 echo
-echo "규칙: CLAUDE.md 참고. 작업을 마치면 docs/WORKLOG.md 맨 위에 항목을 추가할 것."
+echo "규칙: AGENTS.md 참고. 작업을 마치면 docs/WORKLOG.md 맨 위에 항목을 추가할 것."
 exit 0
