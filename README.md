@@ -23,6 +23,20 @@
 
 ## 협업 규칙
 
-- `main` 직접 푸시 금지. 브랜치 → PR → 리뷰 1명.
+브랜치
+
+- `main`: 최종 제출·전시 버전. 마감 시점에 `develop`에서만 합친다.
+- `develop`: 통합 브랜치 (기본 브랜치). 모든 PR은 여기로.
+- 작업 브랜치: `develop`에서 따서 `feat/…`, `fix/…`, `docs/…`, `chore/…` 로 이름 짓는다. 예: `feat/api-debate-relay`.
+
+흐름
+
+1. `git switch develop && git pull` 후 작업 브랜치 생성
+2. 작업, 커밋, 푸시
+3. `develop`으로 PR → 리뷰 1명 승인 → 머지 (squash 권장)
+4. 머지된 작업 브랜치는 삭제
+
+기타
+
 - 워커 API를 바꿀 때는 `docs/worker-api.md`를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
 - `.env`, 데이터 파일은 커밋하지 않는다. 키는 레포 밖에서 공유한다.
