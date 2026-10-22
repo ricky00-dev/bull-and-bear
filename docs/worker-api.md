@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.1, 초안)
+# AI 워커 API 계약 (v0.2, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -176,27 +176,34 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 
 ## 4. 채점용 시세
 
-### `GET /prices/close?ticker=005930&date=2026-10-27`
+Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 거래일 달력은 따로 두지 않고,
+기준일 이후 이 응답에 실제로 있는 날을 세어 N거래일째 종가로 채점한다. 그래서 휴장일은 응답에 넣지 않는다.
 
-해당 날짜 종가. 휴장일이면 직전 거래일 값과 그 날짜.
+### `GET /prices/daily?ticker=005930&from=2026-10-22&to=2026-11-05`
+
+[from, to] 구간 일별 종가, 날짜 오름차순. 아직 오지 않은 날은 없다.
 
 ```json
-{ "ticker": "005930", "requested_date": "2026-10-27", "trade_date": "2026-10-27", "close": 212000 }
+{ "items": [ { "date": "2026-10-22", "close": 214500 }, { "date": "2026-10-23", "close": 216000 } ] }
 ```
 
-### `GET /indices/close?code=KOSPI&date=2026-10-27`
+### `GET /indices/daily?code=KOSPI&from=2026-10-22&to=2026-11-05`
 
-같은 형식. `code`: `KOSPI` | `KOSDAQ`.
+같은 형식. `code`: `KOSPI` | `KOSDAQ`. `close`는 지수 값 (소수 둘째 자리).
 
 ## 채점 규칙 (Spring 구현, 팀 확정 필요)
 
-- 기준 가격: 판정 시점 스냅샷의 `PX.CLOSE` (as_of 종가)
-- 초과수익 = 종목 수익률 − 지수 수익률 (같은 기간, %p)
-- 적중: BUY는 초과수익 > +2%p, SELL은 < −2%p, HOLD는 ±2%p 이내 (구간은 확정 필요)
-- 3일·7일은 거래일 기준
+- 기준 가격: 토론 스냅샷의 종가 (`snapshot_created.close`, 기준일 = `as_of`)
+- N거래일째 = 기준일 다음 날부터 `/prices/daily`에 있는 N번째 날
+- 초과수익 = 종목 수익률 − 코스피 수익률 (같은 기간, %p). 코스닥 종목도 지금은 코스피와 비교
+- 적중: BUY는 초과수익 > +2%p, SELL은 < −2%p, HOLD는 ±2%p 이내 (경계 포함). 구간은 `bullbear.scoring.hold-band`
+- 3일·7일 두 번 채점, 적중률은 7일 기준 (판정 질문이 "7거래일 뒤")
+- 사용자 판정과 중재자 판정을 같은 규칙으로 채점
 
 ## 변경 이력
 
+- v0.2 (2026-10-23): 채점용 시세를 날짜 하나 조회(`/prices/close`, `/indices/close`)에서 구간 조회(`/prices/daily`, `/indices/daily`)로 변경.
+  거래일 달력 없이 실제 시세가 있는 날을 세기 위함.
 - v0.1 (2026-10-23): 검색 결과에 시세·토론 가능 여부 추가, `GET /stocks/{ticker}` 추가, `snapshot_created`에 `close` 추가.
   Spring 쪽 가짜 워커(`api/.../FakeWorkerClient.java`)가 이 형식을 그대로 재생한다.
 
