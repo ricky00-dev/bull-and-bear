@@ -75,5 +75,53 @@ export interface Reveal {
   crowd: { buy: number; hold: number; sell: number; total: number }
 }
 
+export interface ScoreView {
+  horizonDays: number
+  status: 'PENDING' | 'SCORED'
+  /** 주말만 뺀 예상일 */
+  scheduledDate: string
+  scoredTradeDate: string | null
+  /** % 단위 */
+  stockReturn: number | null
+  indexReturn: number | null
+  /** %p 단위 */
+  excessReturn: number | null
+  userHit: boolean | null
+  moderatorHit: boolean | null
+}
+
+export interface JudgmentView {
+  judgmentId: string
+  debateId: string
+  ticker: string
+  stockName: string
+  tradeDate: string
+  basePrice: number
+  decision: Decision
+  confidence: number
+  moderatorDecision: Decision
+  createdAt: string
+  scores: ScoreView[]
+}
+
+export interface JudgmentDetail {
+  judgment: JudgmentView
+  evidencePicks: string[]
+  memo: string | null
+  decisiveEvidence: string[]
+  holdBand: number
+}
+
+export interface MyStats {
+  judged: number
+  scored: number
+  userHits: number
+  moderatorHits: number
+  beatAi: number
+  userHitRate: number | null
+  moderatorHitRate: number | null
+  evidenceHabit: { category: string; label: string; count: number }[]
+}
+
 export const DECISION_LABEL: Record<Decision, string> = { BUY: '매수', HOLD: '보류', SELL: '매도' }
 export const ROUND_LABEL: Record<Round, string> = { opening: '주장', rebuttal: '반박', closing: '최종 변론', extra: '추가 질문' }

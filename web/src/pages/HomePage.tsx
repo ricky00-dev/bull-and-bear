@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useDeferredValue, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { TabBar } from '../components/TabBar'
 import { Icon, Screen } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
-import { changeColor, pct, won } from '../lib/format'
+import { changeColor, monthDay, pct, won } from '../lib/format'
+import { isPending } from '../lib/score'
+import { DECISION_LABEL } from '../lib/types'
 import type { StockItem } from '../lib/types'
 
 const RECENT_KEY = 'bb.recent'
@@ -44,6 +47,11 @@ export function HomePage() {
     saveRecent(s.name)
     navigate(`/stocks/${s.ticker}`)
   }
+
+  // 진행 중인 내 판정 (채점 대기) 중 가장 최근 것
+  const mine = useQuery({ queryKey: ['me', 'judgments'], queryFn: api.myJudgments, staleTime: 60_000 })
+  const pending = mine.data?.items.find(isPending)
+  const nextScore = pending?.scores.find((s) => s.status === 'PENDING')
 
   const items = search.data?.items ?? []
   const eligibleCount = items.filter((i) => i.eligible).length
@@ -95,6 +103,20 @@ export function HomePage() {
       <main className="flex flex-1 flex-col gap-5 px-5 pb-8">
         {!deferred && (
           <>
+            {pending && nextScore && (
+              <Link
+                to={`/me/judgments/${pending.judgmentId}`}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-white"
+              >
+                <span className="flex flex-col gap-1">
+                  <span className="text-xs text-[#c9cdd6]">진행 중인 내 판정</span>
+                  <span className="text-[15px] font-bold">
+                    {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 채점 {monthDay(nextScore.scheduledDate)} 예정
+                  </span>
+                </span>
+                <Icon d={ICONS.chevron} />
+              </Link>
+            )}
             {recent.length > 0 && (
               <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
             )}
@@ -149,6 +171,7 @@ export function HomePage() {
           </div>
         )}
       </main>
+      <TabBar />
     </Screen>
   )
 }

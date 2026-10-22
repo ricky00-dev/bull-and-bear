@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
-import { won } from '../lib/format'
+import { monthDay, won } from '../lib/format'
 import { describe } from '../lib/glossary'
 import type { Decision, Score } from '../lib/types'
 import { DECISION_LABEL } from '../lib/types'
@@ -23,6 +23,9 @@ export function RevealPage() {
   const debate = useQuery({ queryKey: ['debate', id], queryFn: () => api.debate(id) })
   const reveal = useQuery({ queryKey: ['reveal', id], queryFn: () => api.reveal(id), retry: false })
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const mineId = reveal.data?.mine.id
+  const detail = useQuery({ queryKey: ['me', 'judgment', mineId], queryFn: () => api.myJudgment(mineId!), enabled: !!mineId })
+  const schedule = detail.data?.judgment.scores ?? []
 
   // 아직 판정하지 않았으면 판정 화면으로 (봉인)
   const sealed = reveal.error instanceof ApiError && reveal.error.code === 'SEALED'
@@ -110,11 +113,18 @@ export function RevealPage() {
             <Card className="flex items-center gap-3">
               <Icon d={ICONS.calendar} size={22} className="shrink-0" />
               <div className="flex flex-col gap-0.5">
-                <p className="text-sm font-extrabold">3거래일 · 7거래일 뒤 채점</p>
+                <p className="text-sm font-extrabold">
+                  {schedule.length
+                    ? schedule.map((s) => `${monthDay(s.scheduledDate)}(${s.horizonDays}거래일)`).join(' · ') + ' 채점 예정'
+                    : '3거래일 · 7거래일 뒤 채점'}
+                </p>
                 <p className="text-xs text-sub">
                   {d?.tradeDate && d.basePrice ? `${d.tradeDate.slice(5).replace('-', '/')} 종가 ${won(d.basePrice)} 기준, ` : ''}
                   코스피 대비로 채점해요
                 </p>
+                <Link to={`/me/judgments/${r.mine.id}`} className="mt-1 text-xs font-bold text-down">
+                  내 판정에서 결과 보기
+                </Link>
               </div>
             </Card>
 
