@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/session-brief.sh",
+            "timeout": 20,
+            "statusMessage": "작업 현황 불러오는 중"
+          }
+        ]
+      }
+    ]
+  }
+}
