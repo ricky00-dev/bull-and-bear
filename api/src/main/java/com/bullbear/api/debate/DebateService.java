@@ -1,8 +1,9 @@
 package com.bullbear.api.debate;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,7 +20,6 @@ import com.bullbear.api.worker.WorkerStockDetail;
 @Service
 public class DebateService {
 
-	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	private static final List<Debate.Status> REUSABLE = List.of(Debate.Status.RUNNING, Debate.Status.COMPLETED);
 
 	public record Created(Debate debate, boolean reused) {
@@ -28,11 +28,13 @@ public class DebateService {
 	private final DebateRepository debates;
 	private final WorkerClient worker;
 	private final DebateRelay relay;
+	private final Clock clock;
 
-	DebateService(DebateRepository debates, WorkerClient worker, DebateRelay relay) {
+	DebateService(DebateRepository debates, WorkerClient worker, DebateRelay relay, Clock clock) {
 		this.debates = debates;
 		this.worker = worker;
 		this.relay = relay;
+		this.clock = clock;
 	}
 
 	/**
@@ -64,8 +66,12 @@ public class DebateService {
 	}
 
 	public Optional<Debate> findToday(String ticker) {
-		Instant startOfDay = LocalDate.now(KST).atStartOfDay(KST).toInstant();
+		Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
 		return debates.findFirstByTickerAndStatusInAndCreatedAtAfterOrderByCreatedAtDesc(ticker, REUSABLE, startOfDay);
+	}
+
+	public List<Debate> getAll(Collection<UUID> ids) {
+		return debates.findAllById(ids);
 	}
 
 	public Debate get(UUID id) {

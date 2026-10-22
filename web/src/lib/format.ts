@@ -5,6 +5,12 @@ export const pct = (n: number, signed = true) => `${signed && n > 0 ? '+' : ''}$
 /** 상승 빨강, 하락 파랑 */
 export const changeColor = (n: number) => (n > 0 ? 'text-up' : n < 0 ? 'text-down-ink' : 'text-sub')
 
+/** %p (초과수익) */
+export const pctPoint = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(2)}%p`
+
+/** '2026-10-27' → '10/27' */
+export const monthDay = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`
+
 /** 큰 금액을 조·억 단위로 */
 export function bigWon(n: number): string {
   const abs = Math.abs(n)

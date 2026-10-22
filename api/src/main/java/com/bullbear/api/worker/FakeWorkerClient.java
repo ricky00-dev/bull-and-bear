@@ -1,5 +1,9 @@
 package com.bullbear.api.worker;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -51,11 +55,16 @@ public class FakeWorkerClient implements WorkerClient {
 			260000L, 275000L, 277500L, 286500L, 270000L, 275000L, 269500L, 274500L, 276000L, 273000L, 269000L,
 			263000L, 251000L, 234000L, 234500L, 207500L, 217000L, 223500L, 209000L, 223500L, 214500L);
 
+	/** 2026-10-22 실제 코스피 종가 */
+	private static final BigDecimal KOSPI_AS_OF = new BigDecimal("5533.77");
+
 	private final ObjectMapper json;
 	private final Duration delay;
+	private final Clock clock;
 
-	public FakeWorkerClient(ObjectMapper json, BullbearProperties properties) {
+	public FakeWorkerClient(ObjectMapper json, BullbearProperties properties, Clock clock) {
 		this.json = json;
+		this.clock = clock;
 		this.delay = properties.worker().fakeDelay() == null ? Duration.ZERO : properties.worker().fakeDelay();
 	}
 
@@ -88,6 +97,41 @@ public class FakeWorkerClient implements WorkerClient {
 		}
 		String id = "fake-" + ticker + "-" + UUID.randomUUID().toString().substring(0, 8);
 		return new WorkerDebateStarted(id, snapshotId(ticker), "running", false);
+	}
+
+	/**
+	 * 10/22 실제 종가에서 시작해 평일마다 결정적으로(같은 입력 → 같은 값) 움직이는 가짜 시세.
+	 * 오늘(시계) 이후 날짜는 만들지 않는다.
+	 */
+	@Override
+	public List<DailyClose> dailyCloses(String ticker, LocalDate from, LocalDate to) {
+		return series(ticker, BigDecimal.valueOf(find(ticker).close()), 300, from, to);
+	}
+
+	@Override
+	public List<DailyClose> indexCloses(String code, LocalDate from, LocalDate to) {
+		return series(code, KOSPI_AS_OF, 150, from, to);
+	}
+
+	/** @param maxBp 하루 최대 등락 (bp, 300 = ±3%) */
+	private List<DailyClose> series(String key, BigDecimal start, int maxBp, LocalDate from, LocalDate to) {
+		LocalDate today = LocalDate.now(clock);
+		LocalDate end = to.isAfter(today) ? today : to;
+		List<DailyClose> out = new ArrayList<>();
+		BigDecimal price = start;
+		for (LocalDate d = AS_OF; !d.isAfter(end); d = d.plusDays(1)) {
+			if (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY) {
+				continue;
+			}
+			if (d.isAfter(AS_OF)) {
+				int bp = Math.floorMod((key + d).hashCode(), 2 * maxBp + 1) - maxBp;
+				price = price.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(bp, 4))).setScale(2, RoundingMode.HALF_UP);
+			}
+			if (!d.isBefore(from)) {
+				out.add(new DailyClose(d, price));
+			}
+		}
+		return out;
 	}
 
 	@Override

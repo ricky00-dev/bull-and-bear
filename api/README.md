@@ -33,6 +33,9 @@ cd api
 | GET | `/api/debates/{id}/stream` | SSE. 쌓인 이벤트 재생 후 라이브. `Last-Event-ID` 또는 `?after=`로 이어 받기 |
 | POST | `/api/debates/{id}/judgment` | 내 판정 `{decision, confidence, evidencePicks, memo}` → 중재자 판정 공개 |
 | GET | `/api/debates/{id}/reveal` | 내 판정을 낸 뒤에만. 그 전에는 403 `SEALED` |
+| GET | `/api/me/judgments` | 내 판정 목록 + 채점 상태(3·7거래일, 예상일, 결과) |
+| GET | `/api/me/judgments/{id}` | 채점 결과 화면: 내가 고른 근거, 중재자의 결정적 근거, 메모 |
+| GET | `/api/me/stats` | 7거래일 기준 적중률, AI 적중률, AI를 이긴 판정 수, 근거 습관 |
 
 오류는 모두 `{"error": {"code", "message"}}`.
 
@@ -52,11 +55,15 @@ cd api
 **토론 재사용.** 같은 날(KST) 같은 종목이면 스냅샷 데이터가 같으므로 새로 돌리지 않는다.
 동시에 두 요청이 들어오면 지금은 토론이 두 개 생길 수 있다 (다음 단계: 종목·날짜 유니크 제약 또는 advisory lock).
 
+**채점.** 판정을 내면 3·7거래일 채점이 예약된다(`judgment_scores`). 거래일 달력을 하드코딩하지 않고,
+기준일 이후 워커 시세에 실제로 있는 날을 세어 N번째 종가로 채점한다 (휴장일이 끼면 자연히 밀림).
+평일 16:10·18:10·20:10(KST)에 돌고, 시세가 아직 없으면 다음 회차에 다시 본다. 같은 건은 두 번 채점하지 않는다.
+테스트는 `MutableClock`으로 날짜를 옮겨 검증한다.
+
 **판정 1회.** `(user_id, debate_id)` 유니크. 더블 탭으로 두 번 오면 먼저 저장된 판정을 돌려준다.
 
 ## 다음 단계
 
-- 채점 스케줄러 (`judgment_scores`, 3·7거래일, 코스피 대비)
 - 카카오 로그인 (게스트 → 회원 승격, 토큰을 JWT로)
 - 모의체결 원장 (멱등 키, 잔고 동시성)
 - 토론 동시 생성 방지

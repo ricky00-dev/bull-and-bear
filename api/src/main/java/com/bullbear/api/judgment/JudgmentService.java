@@ -3,6 +3,7 @@ package com.bullbear.api.judgment;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,10 @@ public class JudgmentService {
 		}
 	}
 
+	/** 새 판정이 저장됐을 때. 채점 예약이 이 이벤트를 받는다. */
+	public record JudgmentSubmitted(UUID judgmentId, UUID debateId) {
+	}
+
 	/** 이 토론을 본 사람들의 판정 분포. 내 판정 이후에만 보여 남의 판단에 끌려가지 않게 한다. */
 	public record Crowd(long buy, long hold, long sell, long total) {
 	}
@@ -45,13 +50,15 @@ public class JudgmentService {
 	private final DebateService debates;
 	private final ModeratorVerdictRepository verdicts;
 	private final ObjectMapper json;
+	private final ApplicationEventPublisher events;
 
 	JudgmentService(JudgmentRepository judgments, DebateService debates, ModeratorVerdictRepository verdicts,
-			ObjectMapper json) {
+			ObjectMapper json, ApplicationEventPublisher events) {
 		this.judgments = judgments;
 		this.debates = debates;
 		this.verdicts = verdicts;
 		this.json = json;
+		this.events = events;
 	}
 
 	/** 판정은 한 번만. 이미 냈으면 (더블 탭 등) 기존 판정으로 공개 결과를 돌려준다. */
@@ -65,8 +72,10 @@ public class JudgmentService {
 		}
 		Judgment judgment = judgments.findByUserIdAndDebateId(user.getId(), debateId).orElseGet(() -> {
 			try {
-				return judgments.saveAndFlush(new Judgment(user.getId(), debateId, req.decision(), req.confidence(),
-						req.evidencePicks() == null ? List.of() : req.evidencePicks(), req.memo()));
+				Judgment saved = judgments.saveAndFlush(new Judgment(user.getId(), debateId, req.decision(),
+						req.confidence(), req.evidencePicks() == null ? List.of() : req.evidencePicks(), req.memo()));
+				events.publishEvent(new JudgmentSubmitted(saved.getId(), debateId));
+				return saved;
 			} catch (DataIntegrityViolationException e) {
 				// 동시에 두 번 제출된 경우: 먼저 저장된 판정을 쓴다
 				return judgments.findByUserIdAndDebateId(user.getId(), debateId).orElseThrow(() -> e);

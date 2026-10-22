@@ -43,6 +43,7 @@ export function JudgePage() {
     mutationFn: () => api.submitJudgment(id, { decision: decision!, confidence, evidencePicks: picks, memo: memo.trim() || null }),
     onSuccess: (reveal) => {
       queryClient.setQueryData(['reveal', id], reveal)
+      queryClient.invalidateQueries({ queryKey: ['me'] })
       navigate(`/debates/${id}/reveal`, { replace: true })
     },
   })

@@ -1,5 +1,6 @@
 package com.bullbear.api.worker;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import reactor.core.publisher.Flux;
@@ -15,6 +16,12 @@ public interface WorkerClient {
 	WorkerStockDetail stock(String ticker);
 
 	WorkerDebateStarted startDebate(String ticker, String requestId);
+
+	/** [from, to] 구간 종목 일별 종가, 날짜 오름차순. 휴장일은 없다. */
+	List<DailyClose> dailyCloses(String ticker, LocalDate from, LocalDate to);
+
+	/** [from, to] 구간 지수 일별 종가. code: KOSPI | KOSDAQ */
+	List<DailyClose> indexCloses(String code, LocalDate from, LocalDate to);
 
 	/** afterSeq보다 큰 이벤트부터. 완료된 토론이면 끝까지 재생하고 끝난다. */
 	Flux<WorkerEvent> events(String workerDebateId, long afterSeq);

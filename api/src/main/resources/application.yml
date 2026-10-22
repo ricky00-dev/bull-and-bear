@@ -28,6 +28,11 @@ bullbear:
     base-url: http://localhost:8000
     token: dev-worker-token
     fake-delay: 1200ms
+  scoring:
+    hold-band: 2.0
+    index: KOSPI
+    # 장 마감(15:30) 뒤. 시세가 늦게 들어와도 다음 회차에 채점된다
+    cron: "0 10 16,18,20 * * MON-FRI"
 
 management:
   endpoints:
