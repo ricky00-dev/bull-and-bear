@@ -1,0 +1,186 @@
+# AI 워커 API 계약 (v0, 초안)
+
+Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
+바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
+
+## 역할 나누기
+
+| | Spring API 서버 (`api/`) | Python AI 워커 (`ai-worker/`) |
+|---|---|---|
+| 외부 노출 | 브라우저가 호출하는 유일한 서버 | 내부망 전용, Spring만 호출 |
+| 상태 | 사용자, 판정, 원장, 채점, 리그. **DB가 기준 데이터** | 스냅샷, 토론 이벤트 파일. 다시 만들 수 있는 데이터 |
+| 토론 | 요청 → 워커 이벤트 구독 → 저장 → 브라우저로 중계 | 스냅샷 고정, 토론 진행, 검증, 중재자 판정 |
+| 판정 봉인 | **중재자 판정을 사용자 판정 제출 전까지 숨긴다** | 판정을 그대로 돌려준다 (숨기지 않음) |
+| 채점 | 3일·7일 뒤 스케줄러가 종가·지수 조회 후 채점 | 종가·지수 조회 엔드포인트 제공 |
+
+봉인은 Spring 책임이다. 워커 응답에 판정이 들어 있으므로 브라우저로 그대로 넘기면 안 된다.
+
+## 공통
+
+- Base URL: `http://ai-worker:8000` (로컬 `http://localhost:8000`)
+- 인증: 헤더 `X-Worker-Token: <공유 비밀>` (환경변수 `WORKER_TOKEN`)
+- 시간: ISO 8601, KST 오프셋 포함 (`2026-10-22T15:41:02+09:00`). 날짜는 `YYYY-MM-DD`
+- 오류 형식:
+
+```json
+{ "error": { "code": "DATA_UNAVAILABLE", "message": "OpenDART 재무 보고서 없음: 005930" } }
+```
+
+| code | HTTP | 뜻 |
+|---|---|---|
+| `NOT_FOUND` | 404 | 종목, 토론, 스냅샷 없음 |
+| `NOT_ELIGIBLE` | 422 | 토론 불가 종목 (`reasons` 포함) |
+| `DATA_UNAVAILABLE` | 503 | 외부 데이터 공급자 실패 |
+| `LLM_ERROR` | 502 | 모델 호출 실패, 거절 |
+| `BUSY` | 429 | 동시 토론 한도 초과. `Retry-After` 헤더 |
+
+## 1. 종목
+
+### `GET /stocks/search?q=삼성&limit=10`
+
+```json
+{ "items": [ { "ticker": "005930", "name": "삼성전자", "market": "KOSPI", "featured": true } ] }
+```
+
+`featured`: 추천 30종목 여부.
+
+### `GET /stocks/{ticker}/eligibility`
+
+토론 가능 여부. 기준(시가총액, 거래대금, 종목 유형)은 워커가 판단하고 이유를 준다.
+
+```json
+{ "ticker": "123456", "eligible": false, "reasons": ["시가총액 1,000억 원 미만", "최근 20일 평균 거래대금 부족"] }
+```
+
+## 2. 토론
+
+### `POST /debates`
+
+```json
+{ "ticker": "005930", "request_id": "c0a8...uuid", "max_extra_rounds": 1 }
+```
+
+- `request_id`: Spring이 만드는 멱등 키. 같은 키로 다시 보내면 같은 `debate_id`를 돌려준다 (중복 토론 방지).
+- 같은 스냅샷의 토론이 이미 있으면 새로 돌리지 않고 재사용한다 (`reused: true`).
+
+`202 Accepted`
+
+```json
+{ "debate_id": "20261022-154102-005930", "snapshot_id": "005930-20261022-2d76e3f5e8", "status": "running", "reused": false }
+```
+
+### `GET /debates/{debate_id}/events` (SSE)
+
+`text/event-stream`. 각 이벤트에 `id`(순번)가 있어 끊기면 `Last-Event-ID`로 이어 받는다.
+이미 끝난 토론을 구독하면 처음부터 전부 재생하고 닫는다.
+
+| event | 언제 | data |
+|---|---|---|
+| `snapshot_created` | 시작 | `{snapshot_id, ticker, name, as_of, warnings[]}` |
+| `turn_started` | 발언 차례 시작 | `{side, round}` |
+| `tool_call` | 에이전트가 데이터 조회 | `{side, tool}` (진행 표시용) |
+| `statement_rejected` | 검증기 반려 | `{side, round, attempt, issues[]}` |
+| `statement_accepted` | 발언 확정 | 아래 예시 |
+| `extra_round_requested` | 중재자가 추가 질문 | `{question}` |
+| `moderator_started` | 평가 시작 | `{}` |
+| `debate_completed` | 끝 | 아래 예시. **판정 포함 → Spring이 봉인** |
+| `debate_failed` | 실패 | `{error: {code, message}}` |
+
+`side`: `bull` | `bear`. `round`: `opening` | `rebuttal` | `closing` | `extra`.
+
+발언 본문은 검증을 통과한 뒤에만 보낸다 (`statement_accepted`). 검증 전 토큰은 흘리지 않는다.
+화면의 타이핑 효과는 클라이언트에서 낸다.
+
+`statement_accepted`:
+
+```json
+{
+  "side": "bear",
+  "round": "rebuttal",
+  "attempts": 2,
+  "verified": true,
+  "statement": {
+    "claim": "20일 변동성이 연율 70%대다. 반등을 기다리는 동안 손실 폭이 클 수 있다.",
+    "argument": "최근 20일 변동성은 70.4% [E1]로 ...",
+    "evidence": [
+      { "ref": "E1", "source_id": "PX.VOL_20D", "value": 70.4, "interpretation": "변동성은 ..." }
+    ]
+  },
+  "warnings": [ { "code": "unused_evidence", "message": "..." } ]
+}
+```
+
+근거 칩에 원본 정보(라벨, 단위, 출처 링크)가 필요하면 `GET /snapshots/{snapshot_id}`의 `facts[source_id]`를 쓴다.
+
+`debate_completed`:
+
+```json
+{
+  "debate_id": "20261022-154102-005930",
+  "verdict": {
+    "decision": "HOLD",
+    "confidence": 0.55,
+    "reasoning": "...",
+    "decisive_evidence": ["PX.VS_MA120", "PX.VOLUME_RATIO"],
+    "scores": {
+      "bull": { "relevance": 4, "materiality": 3, "rebuttal": 4, "risk_awareness": 3, "comment": "..." },
+      "bear": { "relevance": 4, "materiality": 4, "rebuttal": 3, "risk_awareness": 3, "comment": "..." }
+    }
+  },
+  "stats": {
+    "bull": { "statements": 3, "first_try_pass_rate": 1.0, "rejected_attempts": 0, "evidence_accuracy": 1.0 },
+    "bear": { "statements": 3, "first_try_pass_rate": 0.67, "rejected_attempts": 1, "evidence_accuracy": 0.83 }
+  },
+  "usage": { "input_tokens": 118000, "output_tokens": 29000, "model": "claude-haiku-5-5" }
+}
+```
+
+`decision`: `BUY` | `HOLD` | `SELL`.
+
+### `GET /debates/{debate_id}`
+
+완료된 토론 전체 (확정 발언 목록 + `debate_completed`와 같은 필드). 진행 중이면 `status: "running"`.
+
+## 3. 스냅샷
+
+### `GET /snapshots/{snapshot_id}`
+
+```json
+{
+  "snapshot_id": "005930-20261022-2d76e3f5e8",
+  "ticker": "005930", "name": "삼성전자", "as_of": "2026-10-22",
+  "facts": {
+    "PX.VOL_20D": { "label": "20일 변동성(연율)", "value": 70.4, "unit": "%", "as_of": "2026-10-22", "source": "pykrx" },
+    "NEWS.1a2b3c4d": { "label": "기사 제목", "value": null, "unit": "text", "url": "https://...", "published_at": "2026-10-22T09:30:00+09:00" }
+  },
+  "warnings": []
+}
+```
+
+## 4. 채점용 시세
+
+### `GET /prices/close?ticker=005930&date=2026-10-27`
+
+해당 날짜 종가. 휴장일이면 직전 거래일 값과 그 날짜.
+
+```json
+{ "ticker": "005930", "requested_date": "2026-10-27", "trade_date": "2026-10-27", "close": 212000 }
+```
+
+### `GET /indices/close?code=KOSPI&date=2026-10-27`
+
+같은 형식. `code`: `KOSPI` | `KOSDAQ`.
+
+## 채점 규칙 (Spring 구현, 팀 확정 필요)
+
+- 기준 가격: 판정 시점 스냅샷의 `PX.CLOSE` (as_of 종가)
+- 초과수익 = 종목 수익률 − 지수 수익률 (같은 기간, %p)
+- 적중: BUY는 초과수익 > +2%p, SELL은 < −2%p, HOLD는 ±2%p 이내 (구간은 확정 필요)
+- 3일·7일은 거래일 기준
+
+## 워커 담당 메모 (현재 상태)
+
+- 지금 워커는 CLI만 있다. 위 HTTP 엔드포인트는 FastAPI로 새로 만들어야 한다 (`bullbear.debate.Debate`의 `on_event`를 SSE로 연결).
+- 종목 검색 전체 목록: pykrx 전체 종목 API는 빈 응답. OpenDART 고유번호 파일(`corp_codes.json`)로 만든다.
+- 지수: pykrx 지수 API는 오류. 네이버 차트 엔드포인트는 동작하지만 비공식이다. KIS 연동 시 교체.
+- `Debate.submit_user_verdict`는 CLI용. HTTP 흐름에서는 Spring이 사용자 판정을 저장한다.

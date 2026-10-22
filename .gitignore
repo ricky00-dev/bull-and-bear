@@ -11,6 +11,13 @@ wheels/
 
 # Secrets & local data
 .env
-/data/
+/ai-worker/data/
 .pytest_cache/
 .DS_Store
+
+# Spring / Node
+api/build/
+api/.gradle/
+*.class
+node_modules/
+.idea/
