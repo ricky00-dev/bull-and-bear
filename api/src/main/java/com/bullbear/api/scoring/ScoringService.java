@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -80,6 +81,12 @@ public class ScoringService {
 		if (n > 0) {
 			log.info("채점 {}건 완료", n);
 		}
+	}
+
+	/** 서버가 채점 시각에 꺼져 있었으면 켜질 때 밀린 채점을 한다. */
+	@EventListener(ApplicationReadyEvent.class)
+	public void catchUp() {
+		scheduled();
 	}
 
 	/** @return 이번에 채점한 건수 */
