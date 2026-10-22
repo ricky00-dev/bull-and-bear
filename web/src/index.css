@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* 목업과 같은 토큰. 상승·매수 = 빨강, 하락·매도 = 파랑 (국내 증시 관례) */
+@theme {
+  --font-sans: "Noto Sans KR", system-ui, sans-serif;
+
+  --color-ground: #f4f5f7;
+  --color-ink: #111318;
+  --color-sub: #4e5562;
+  --color-faint: #9aa1ad;
+  --color-line: #e6e8ec;
+  --color-line-soft: #f0f1f4;
+
+  --color-up: #d92d20;
+  --color-up-ink: #b42318;
+  --color-up-soft: #fef3f2;
+  --color-up-line: #f3d2cf;
+
+  --color-down: #2b6fe0;
+  --color-down-ink: #1d4fb0;
+  --color-down-soft: #f0f5fe;
+  --color-down-line: #cfddf7;
+
+  --color-mod: #4a3fc7;
+  --color-mod-ink: #2e2785;
+  --color-mod-soft: #eef0ff;
+  --color-mod-line: #d9dcfb;
+
+  --color-ok: #067647;
+  --color-ok-soft: #dcfae6;
+  --color-warn: #b54708;
+
+  --animate-pulse-dot: pulse-dot 1.2s infinite;
+  --animate-rise: rise 0.35s ease-out;
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+/* 노치·홈 바 영역 비우기 (PWA, Capacitor 앱) */
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}

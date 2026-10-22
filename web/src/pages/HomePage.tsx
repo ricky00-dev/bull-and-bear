@@ -1,0 +1,196 @@
+import { useQuery } from '@tanstack/react-query'
+import { useDeferredValue, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { Icon, Screen } from '../components/ui'
+import { ICONS } from '../components/icons'
+import { api } from '../lib/api'
+import { changeColor, pct, won } from '../lib/format'
+import type { StockItem } from '../lib/types'
+
+const RECENT_KEY = 'bb.recent'
+const SUGGESTIONS = ['삼성전자', 'SK하이닉스', '카카오', '현대차', '에코프로비엠']
+
+function loadRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[]
+  } catch {
+    return []
+  }
+}
+
+function saveRecent(name: string) {
+  try {
+    const next = [name, ...loadRecent().filter((n) => n !== name)].slice(0, 6)
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+  } catch {
+    // 저장 못 해도 검색은 된다
+  }
+}
+
+export function HomePage() {
+  const [query, setQuery] = useState('')
+  const deferred = useDeferredValue(query.trim())
+  const navigate = useNavigate()
+  const recent = loadRecent()
+
+  const search = useQuery({
+    queryKey: ['search', deferred],
+    queryFn: () => api.search(deferred),
+    enabled: deferred.length > 0,
+    staleTime: 60_000,
+  })
+
+  const open = (s: StockItem) => {
+    saveRecent(s.name)
+    navigate(`/stocks/${s.ticker}`)
+  }
+
+  const items = search.data?.items ?? []
+  const eligibleCount = items.filter((i) => i.eligible).length
+
+  return (
+    <Screen>
+      <header className="pt-safe px-5">
+        <div className="flex items-center justify-between pb-2 pt-5">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-ink text-[13px] font-extrabold text-white">B</span>
+            <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
+          </div>
+          <span className="rounded-full border border-line bg-white px-2.5 py-1.5 text-xs text-sub">게스트</span>
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-3.5 px-5 pb-3 pt-2">
+        <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
+          AI 토론을 보고
+          <br />
+          먼저 판정해 보세요
+        </h1>
+        <label
+          className={`flex min-h-13 items-center gap-2.5 rounded-2xl border-[1.5px] bg-white px-4 shadow-sm ${query ? 'border-ink' : 'border-line'}`}
+        >
+          <Icon d={ICONS.search} className="text-sub" />
+          <span className="sr-only">종목 검색</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="종목명, 종목코드, 초성 (예: ㅅㅅㅈㅈ)"
+            autoComplete="off"
+            enterKeyHint="search"
+            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
+          />
+          {query && (
+            <button
+              type="button"
+              aria-label="검색어 지우기"
+              onClick={() => setQuery('')}
+              className="flex size-8 items-center justify-center rounded-full bg-line text-sub"
+            >
+              <Icon d={ICONS.close} size={14} stroke={2.5} />
+            </button>
+          )}
+        </label>
+      </div>
+
+      <main className="flex flex-1 flex-col gap-5 px-5 pb-8">
+        {!deferred && (
+          <>
+            {recent.length > 0 && (
+              <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
+            )}
+            <ChipRow title="이런 종목은 어때요" items={SUGGESTIONS} onPick={setQuery} />
+            <p className="text-[11px] leading-relaxed text-sub">
+              모의·교육 서비스예요. AI 판정은 투자 권유가 아니에요.
+            </p>
+          </>
+        )}
+
+        {deferred && (
+          <div className="flex flex-col gap-2.5">
+            <p className="text-xs text-sub" aria-live="polite">
+              {search.isLoading ? '찾는 중…' : `토론할 수 있는 종목 ${eligibleCount}개 · 우선주·ETF는 토론하지 않아요`}
+            </p>
+            {search.isError && <p className="text-sm text-up-ink">검색에 실패했어요. 잠시 후 다시 시도해 주세요.</p>}
+            {items.length > 0 && (
+              <ul className="overflow-hidden rounded-2xl border border-line bg-white">
+                {items.map((s) => (
+                  <li key={s.ticker} className="border-b border-line-soft last:border-0">
+                    {s.eligible ? (
+                      <button type="button" onClick={() => open(s)} className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left">
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <Highlighted text={s.name} query={deferred} />
+                          <span className="text-xs text-sub">
+                            {s.ticker} · {s.market}
+                          </span>
+                        </span>
+                        <Price close={s.close} change={s.changePct} />
+                      </button>
+                    ) : (
+                      <div className="flex min-h-16 items-center gap-3 bg-[#fafafb] px-4 py-2.5">
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span className="text-[15px] text-sub">{s.name}</span>
+                          <span className="text-xs text-sub">
+                            {s.ticker} · {s.blockReason}
+                          </span>
+                        </span>
+                        <span className="rounded-md bg-line px-2 py-1 text-[11px] font-bold text-sub">토론 불가</span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {search.isSuccess && items.length === 0 && (
+              <div className="flex flex-col gap-1.5 py-8 text-center">
+                <p className="text-[15px] font-bold">'{deferred}'에 맞는 종목이 없어요</p>
+                <p className="text-[13px] text-sub">종목명 일부, 6자리 코드, 초성으로 찾아보세요</p>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </Screen>
+  )
+}
+
+function ChipRow({ title, items, onPick }: { title: string; items: string[]; onPick: (v: string) => void }) {
+  return (
+    <section className="flex flex-col gap-2.5">
+      <h2 className="text-[13px] font-bold text-sub">{title}</h2>
+      <div className="flex flex-wrap gap-2">
+        {items.map((name) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => onPick(name)}
+            className="min-h-9 rounded-full border border-line bg-white px-3.5 text-sm"
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** 검색어와 맞는 부분을 강조 (초성 검색이면 강조 없음) */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const i = text.indexOf(query)
+  if (i < 0) return <span className="text-[15px] font-medium">{text}</span>
+  return (
+    <span className="text-[15px] font-medium">
+      {text.slice(0, i)}
+      <strong className="font-extrabold text-down">{query}</strong>
+      {text.slice(i + query.length)}
+    </span>
+  )
+}
+
+function Price({ close, change }: { close: number; change: number }) {
+  return (
+    <span className="flex flex-col items-end gap-0.5">
+      <span className="text-sm font-bold">{won(close)}</span>
+      <span className={`text-xs font-bold ${changeColor(change)}`}>{pct(change)}</span>
+    </span>
+  )
+}
