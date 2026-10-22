@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: bullbear-api
+  datasource:
+    url: jdbc:postgresql://localhost:5433/bullbear
+    username: bullbear
+    password: bullbear
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+bullbear:
+  cors:
+    # 웹 개발 서버, Capacitor 앱(iOS/Android)
+    allowed-origins:
+      - http://localhost:5173
+      - capacitor://localhost
+      - http://localhost
+  worker:
+    # fake: 계약 문서 예시 이벤트를 재생하는 가짜 워커 / http: 실제 Python 워커
+    mode: fake
+    base-url: http://localhost:8000
+    token: dev-worker-token
+    fake-delay: 1200ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
