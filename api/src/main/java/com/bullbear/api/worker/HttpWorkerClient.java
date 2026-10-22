@@ -1,6 +1,7 @@
 package com.bullbear.api.worker;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -55,6 +56,23 @@ public class HttpWorkerClient implements WorkerClient {
 		return call(() -> http.post().uri("/debates")
 				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, 1))
 				.retrieve().bodyToMono(WorkerDebateStarted.class).block(TIMEOUT));
+	}
+
+	@Override
+	public List<DailyClose> dailyCloses(String ticker, LocalDate from, LocalDate to) {
+		return daily("/prices/daily", "ticker", ticker, from, to);
+	}
+
+	@Override
+	public List<DailyClose> indexCloses(String code, LocalDate from, LocalDate to) {
+		return daily("/indices/daily", "code", code, from, to);
+	}
+
+	private List<DailyClose> daily(String path, String key, String value, LocalDate from, LocalDate to) {
+		var body = call(() -> http.get()
+				.uri(u -> u.path(path).queryParam(key, value).queryParam("from", from).queryParam("to", to).build())
+				.retrieve().bodyToMono(WorkerModels.DailyResponse.class).block(TIMEOUT));
+		return body == null ? List.of() : body.items();
 	}
 
 	@Override

@@ -15,6 +15,8 @@ public interface JudgmentRepository extends JpaRepository<Judgment, UUID> {
 		long getCount();
 	}
 
+	List<Judgment> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
 	Optional<Judgment> findByUserIdAndDebateId(UUID userId, UUID debateId);
 
 	@Query("select j.decision as decision, count(j) as count from Judgment j where j.debateId = :debateId group by j.decision")

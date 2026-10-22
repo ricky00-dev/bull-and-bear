@@ -58,6 +58,14 @@ public class Judgment {
 		return id;
 	}
 
+	public UUID getUserId() {
+		return userId;
+	}
+
+	public UUID getDebateId() {
+		return debateId;
+	}
+
 	public Decision getDecision() {
 		return decision;
 	}

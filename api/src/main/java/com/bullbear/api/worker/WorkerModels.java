@@ -13,6 +13,9 @@ final class WorkerModels {
 	record SearchResponse(List<WorkerStock> items) {
 	}
 
+	record DailyResponse(List<DailyClose> items) {
+	}
+
 	record StartDebateRequest(String ticker, @JsonProperty("request_id") String requestId,
 			@JsonProperty("max_extra_rounds") int maxExtraRounds) {
 	}

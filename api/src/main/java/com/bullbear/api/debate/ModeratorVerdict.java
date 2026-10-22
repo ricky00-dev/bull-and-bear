@@ -50,6 +50,10 @@ public class ModeratorVerdict {
 		this.createdAt = Instant.now();
 	}
 
+	public UUID getDebateId() {
+		return debateId;
+	}
+
 	public String getDecision() {
 		return decision;
 	}
