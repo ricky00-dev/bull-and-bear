@@ -14,7 +14,7 @@
 
 | 폴더 | 내용 | 담당 |
 |---|---|---|
-| `api/` | Spring Boot: 사용자, 판정, 모의체결 원장, 채점, 리그, 웹소켓 중계 | [이름] |
+| `api/` | Spring Boot: 사용자, 판정, 모의체결 원장, 채점, 리그, SSE 중계 | [이름] |
 | `web/` | React + Vite + TypeScript, Tailwind, TanStack Query, SSE 수신 | [이름] |
 | `ai-worker/` | 스냅샷, 토론 에이전트, 근거 검증기, 중재자 | [이름] |
 | `docs/worker-api.md` | Spring ↔ 워커 API 계약 | 공동 |
