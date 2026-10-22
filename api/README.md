@@ -26,7 +26,7 @@ cd api
 |---|---|---|
 | POST | `/api/auth/guest` | 게스트 계정 생성 → `{userId, token}` |
 | GET | `/api/me` | 내 정보 |
-| GET | `/api/stocks/search?q=` | 종목명·코드·초성 검색. 토론 불가 종목은 `eligible:false` + `block_reason` |
+| GET | `/api/stocks/search?q=` | 종목명·코드·초성 검색. 토론 불가 종목은 `eligible:false` + `blockReason` |
 | GET | `/api/stocks/{ticker}` | 종목 확인 화면: 종가, 60일 스파크라인, 토론 가능 여부, 오늘 토론(`todayDebate`) |
 | POST | `/api/debates` | `{ticker}` 토론 시작. 오늘 같은 종목 토론이 있으면 재사용(`reused:true`) |
 | GET | `/api/debates/{id}` | 토론 상태, 스냅샷 기준일·기준가 |

@@ -55,7 +55,7 @@ class DebateFlowTest {
 		mvc.perform(get("/api/stocks/search").param("q", "ㅅㅅㅈㅈ").header("Authorization", bearer()))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.items[0].ticker").value("005930"))
-				.andExpect(jsonPath("$.items[?(@.ticker == '005935')].block_reason").value("우선주는 토론하지 않아요"));
+				.andExpect(jsonPath("$.items[?(@.ticker == '005935')].blockReason").value("우선주는 토론하지 않아요"));
 	}
 
 	@Test

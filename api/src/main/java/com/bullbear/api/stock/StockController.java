@@ -23,7 +23,17 @@ import jakarta.validation.constraints.Pattern;
 @RequestMapping("/api/stocks")
 public class StockController {
 
-	public record SearchResponse(List<WorkerStock> items) {
+	public record SearchResponse(List<StockItem> items) {
+	}
+
+	/** 브라우저용 검색 결과 (camelCase). 워커 형식(snake_case)을 그대로 내보내지 않는다. */
+	public record StockItem(String ticker, String name, String market, long close, double changePct,
+			boolean eligible, String blockReason) {
+
+		static StockItem of(WorkerStock s) {
+			return new StockItem(s.ticker(), s.name(), s.market(), s.close(), s.changePct(), s.eligible(),
+					s.blockReason());
+		}
 	}
 
 	/** @param todayDebate 오늘 이미 진행된 토론. 있으면 기다리지 않고 바로 볼 수 있다 */
@@ -45,7 +55,7 @@ public class StockController {
 	/** 종목명, 6자리 코드, 초성으로 검색. 토론 불가 종목도 이유와 함께 돌려준다. */
 	@GetMapping("/search")
 	public SearchResponse search(@RequestParam String q, @RequestParam(defaultValue = "20") int limit) {
-		return new SearchResponse(worker.search(q, Math.min(limit, 50)));
+		return new SearchResponse(worker.search(q, Math.min(limit, 50)).stream().map(StockItem::of).toList());
 	}
 
 	@GetMapping("/{ticker}")
