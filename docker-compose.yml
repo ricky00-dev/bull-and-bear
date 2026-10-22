@@ -1,0 +1,15 @@
+# 로컬 개발용. 실행: docker compose up -d
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: bullbear
+      POSTGRES_USER: bullbear
+      POSTGRES_PASSWORD: bullbear
+    ports:
+      - "5433:5432" # 로컬에 설치된 Postgres(5432)와 겹치지 않게
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
