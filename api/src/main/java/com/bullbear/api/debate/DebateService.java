@@ -40,8 +40,10 @@ public class DebateService {
 	}
 
 	/**
-	 * 오늘(KST) 같은 종목 토론이 있으면 재사용하고, 없으면 워커에 새로 요청한다.
-	 * 같은 날은 스냅샷 데이터가 같으므로 다시 돌릴 이유가 없다 (LLM 비용·대기 시간 절약).
+	 * 같은 종목·같은 데이터 기준일(최신 종가 날짜) 토론이 있으면 재사용하고, 없으면 워커에 새로 요청한다.
+	 *
+	 * 기준일이 같으면 스냅샷 데이터가 같으므로 다시 돌릴 이유가 없다. 장 마감 뒤 만든 토론은
+	 * 다음 날 장 마감 전까지 재사용되므로, 스케줄러가 미리 돌려 둔 종목은 사용자가 기다리지 않는다.
 	 */
 	public Created create(User user, String ticker) {
 		return create(ticker, user.getId(), Debate.Origin.USER);
@@ -51,11 +53,11 @@ public class DebateService {
 	 * @param requestedBy 시작한 사용자. 스케줄러가 시작하면 null
 	 */
 	public Created create(String ticker, UUID requestedBy, Debate.Origin origin) {
-		Optional<Debate> today = findToday(ticker);
-		if (today.isPresent()) {
-			return new Created(today.get(), true);
-		}
 		WorkerStockDetail stock = worker.stock(ticker);
+		Optional<Debate> existing = findReusable(ticker, stock.asOf());
+		if (existing.isPresent()) {
+			return new Created(existing.get(), true);
+		}
 		if (!stock.eligible()) {
 			throw new ApiException(ErrorCode.NOT_ELIGIBLE, String.join(", ", stock.reasons()));
 		}
@@ -64,10 +66,10 @@ public class DebateService {
 		}
 		Debate debate;
 		try {
-			debate = debates.saveAndFlush(Debate.start(ticker, stock.name(), requestedBy, origin, clock));
+			debate = debates.saveAndFlush(Debate.start(ticker, stock.name(), stock.asOf(), requestedBy, origin, clock));
 		} catch (DataIntegrityViolationException e) {
 			// 같은 종목을 동시에 요청했다. 먼저 들어간 토론을 재사용한다
-			return findToday(ticker).map(d -> new Created(d, true))
+			return findReusable(ticker, stock.asOf()).map(d -> new Created(d, true))
 					.orElseThrow(() -> new ApiException(ErrorCode.WORKER_UNAVAILABLE, "잠시 후 다시 시도해 주세요"));
 		}
 		try {
@@ -84,8 +86,13 @@ public class DebateService {
 		return new Created(debate, false);
 	}
 
-	public Optional<Debate> findToday(String ticker) {
-		return debates.findFirstByTickerAndDebateDayAndStatusInOrderByCreatedAtDesc(ticker, LocalDate.now(clock), REUSABLE);
+	/** @param dataDate 워커가 알려 준 최신 종가 날짜 ({@code GET /stocks/{ticker}}의 as_of) */
+	public Optional<Debate> findReusable(String ticker, LocalDate dataDate) {
+		return debates.findFirstByTickerAndDataDateAndStatusInOrderByCreatedAtDesc(ticker, dataDate, REUSABLE);
+	}
+
+	public long runningScheduled() {
+		return debates.countByOriginAndStatus(Debate.Origin.SCHEDULED, Debate.Status.RUNNING);
 	}
 
 	public List<Debate> getAll(Collection<UUID> ids) {

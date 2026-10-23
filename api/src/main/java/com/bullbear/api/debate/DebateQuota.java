@@ -54,6 +54,12 @@ public class DebateQuota {
 		}
 	}
 
+	/** 전향 운용(스케줄러) 토론을 하나 더 돌려도 되는지. 사용자 상한과 따로 센다. */
+	public boolean scheduledBudgetOpen(BigDecimal dailyUsd) {
+		BigDecimal spent = debates.costOn(LocalDate.now(clock), Debate.Origin.SCHEDULED, budget.estimateUsd());
+		return spent.add(budget.estimateUsd()).compareTo(dailyUsd) <= 0;
+	}
+
 	/** 오늘 사용자 토론에 쓴 비용. 사용량을 아직 모르는 토론은 추정치로 센다. */
 	BigDecimal spentToday(LocalDate today) {
 		return debates.costOn(today, Debate.Origin.USER, budget.estimateUsd());

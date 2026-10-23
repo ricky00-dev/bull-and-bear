@@ -4,7 +4,7 @@ import { Sparkline } from '../components/Sparkline'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
-import { changeColor, pct, won } from '../lib/format'
+import { changeColor, monthDay, pct, won } from '../lib/format'
 import type { StockDetail } from '../lib/types'
 
 export function StockPage() {
@@ -26,7 +26,7 @@ export function StockPage() {
   }
 
   const s = stock.data
-  const today = s?.todayDebate
+  const today = s?.existingDebate
   const startError = start.error instanceof ApiError ? start.error.message : start.error ? '토론을 시작하지 못했어요' : null
   const blocked = quotaBlock(s?.quota)
 
@@ -73,8 +73,7 @@ export function StockPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-mod-line bg-mod-soft px-4 py-3.5">
                 <Icon d={ICONS.clock} className="shrink-0 text-mod" />
                 <p className="text-[13px] leading-normal text-mod-ink">
-                  오늘 {new Date(today.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 진행된
-                  토론이 있어요. 같은 데이터라 바로 볼 수 있어요.
+                  {monthDay(today.dataDate)} 종가 기준 토론이 이미 있어요. 지금과 같은 데이터라 기다리지 않고 바로 볼 수 있어요.
                 </p>
               </div>
             )}
@@ -85,7 +84,7 @@ export function StockPage() {
       <BottomBar>
         {startError && <p className="text-[13px] font-bold text-up-ink">{startError}</p>}
         {today ? (
-          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>오늘 토론 보기</PrimaryButton>
+          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>토론 보기</PrimaryButton>
         ) : (
           <PrimaryButton disabled={!s?.eligible || !!blocked || start.isPending} onClick={() => start.mutate()}>
             {start.isPending ? '토론 준비 중…' : 'AI 토론 시작'}

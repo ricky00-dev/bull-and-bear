@@ -9,7 +9,8 @@ import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("bullbear")
-public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budget budget) {
+public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budget budget,
+		ForwardRun forwardRun) {
 
 	public record Cors(List<String> allowedOrigins) {
 	}
@@ -42,5 +43,16 @@ public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budg
 
 		public record Price(BigDecimal input, BigDecimal output, BigDecimal cacheRead, BigDecimal cacheWrite) {
 		}
+	}
+
+	/**
+	 * 전향 운용: 고정 종목을 장 마감 뒤 매일 토론해 실험 데이터와 퀴즈 문제를 쌓는다 (docs/experiment.md).
+	 * 만들어 둔 토론은 다음 날 장 마감 전까지 사용자도 기다림 없이 재사용한다.
+	 *
+	 * @param maxConcurrent 동시에 돌리는 토론 수. 워커·API 속도 제한을 넘지 않게
+	 * @param dailyUsd 전향 운용 하루 비용 상한 (사용자 상한과 별도)
+	 */
+	public record ForwardRun(boolean enabled, List<String> tickers, String cron, int maxConcurrent,
+			BigDecimal dailyUsd, Duration pollInterval) {
 	}
 }

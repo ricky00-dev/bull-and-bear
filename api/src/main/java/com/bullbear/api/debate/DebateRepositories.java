@@ -13,8 +13,10 @@ import org.springframework.data.repository.query.Param;
 
 interface DebateRepository extends JpaRepository<Debate, UUID> {
 
-	Optional<Debate> findFirstByTickerAndDebateDayAndStatusInOrderByCreatedAtDesc(
-			String ticker, LocalDate day, Collection<Debate.Status> statuses);
+	Optional<Debate> findFirstByTickerAndDataDateAndStatusInOrderByCreatedAtDesc(
+			String ticker, LocalDate dataDate, Collection<Debate.Status> statuses);
+
+	long countByOriginAndStatus(Debate.Origin origin, Debate.Status status);
 
 	/** 그날 이 사용자가 새로 시작한 토론 수. 워커 요청 전에 실패한 건 세지 않는다. */
 	@Query("select count(d) from Debate d where d.requestedBy = :userId and d.debateDay = :day"

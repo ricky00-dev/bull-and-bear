@@ -65,9 +65,13 @@ public class Debate {
 	@Column(nullable = false)
 	private Origin origin;
 
-	/** 토론을 만든 날 (KST). 같은 종목은 하루에 한 번만 토론한다 (DB 유니크 인덱스). */
+	/** 토론을 만든 날 (KST). 하루 비용 상한을 셀 때 쓴다. */
 	@Column(name = "debate_day", nullable = false)
 	private LocalDate debateDay;
+
+	/** 토론 데이터의 기준일 (워커가 알려 준 최신 종가 날짜). 같은 종목·같은 기준일 토론은 하나만 (DB 유니크 인덱스). */
+	@Column(name = "data_date", nullable = false)
+	private LocalDate dataDate;
 
 	@Column(name = "input_tokens")
 	private Long inputTokens;
@@ -87,7 +91,8 @@ public class Debate {
 	protected Debate() {
 	}
 
-	static Debate start(String ticker, String stockName, UUID requestedBy, Origin origin, Clock clock) {
+	static Debate start(String ticker, String stockName, LocalDate dataDate, UUID requestedBy, Origin origin,
+			Clock clock) {
 		Debate d = new Debate();
 		d.id = UUID.randomUUID();
 		d.ticker = ticker;
@@ -96,6 +101,7 @@ public class Debate {
 		d.requestedBy = requestedBy;
 		d.origin = origin;
 		d.debateDay = LocalDate.now(clock);
+		d.dataDate = dataDate;
 		d.createdAt = clock.instant();
 		return d;
 	}
@@ -168,6 +174,10 @@ public class Debate {
 
 	public LocalDate getDebateDay() {
 		return debateDay;
+	}
+
+	public LocalDate getDataDate() {
+		return dataDate;
 	}
 
 	public BigDecimal getCostUsd() {
