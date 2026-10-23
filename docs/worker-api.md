@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.2, 초안)
+# AI 워커 API 계약 (v0.3, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -101,7 +101,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 | `extra_round_requested` | 중재자가 추가 질문 | `{question}` |
 | `moderator_started` | 평가 시작 | `{}` |
 | `debate_completed` | 끝 | 아래 예시. **판정 포함 → Spring이 봉인** |
-| `debate_failed` | 실패 | `{error: {code, message}}` |
+| `debate_failed` | 실패 | `{error: {code, message}, usage?}` |
 
 `side`: `bull` | `bear`. `round`: `opening` | `rebuttal` | `closing` | `extra`.
 
@@ -148,9 +148,22 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
     "bull": { "statements": 3, "first_try_pass_rate": 1.0, "rejected_attempts": 0, "evidence_accuracy": 1.0 },
     "bear": { "statements": 3, "first_try_pass_rate": 0.67, "rejected_attempts": 1, "evidence_accuracy": 0.83 }
   },
-  "usage": { "input_tokens": 118000, "output_tokens": 29000, "model": "claude-haiku-5-5" }
+  "usage": {
+    "calls": [
+      { "model": "claude-haiku-5-5", "input_tokens": 98000, "output_tokens": 21000,
+        "cache_read_input_tokens": 61000, "cache_creation_input_tokens": 9000 },
+      { "model": "claude-opus-5-5", "input_tokens": 20000, "output_tokens": 8000,
+        "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0 }
+    ],
+    "cost_usd": 0.2131
+  }
 }
 ```
+
+`usage`는 이 토론에서 쓴 LLM 사용량을 **모델별로 합친 것**이다 (재시도·반려된 발언 포함).
+`input_tokens`는 캐시를 뺀 입력 토큰 (API 응답 `usage`와 같은 뜻). `cost_usd`는 선택이다.
+워커가 보내면 Spring은 그 값을 쓰고, 없으면 Spring 설정의 모델별 단가로 계산한다.
+Spring은 이 값으로 하루 비용 상한을 건다. `debate_failed`에도 그때까지 쓴 `usage`를 넣어 주면 좋다.
 
 `decision`: `BUY` | `HOLD` | `SELL`.
 
@@ -202,6 +215,8 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 변경 이력
 
+- v0.3 (2026-10-23): `usage`를 모델별 목록(`calls`)과 선택 필드 `cost_usd`로 변경. 토론자 Haiku + 중재자 Opus처럼
+  모델을 섞어 쓸 때 비용을 정확히 계산하기 위함. Spring은 v0.2 형식(`{input_tokens, output_tokens, model}`)도 계속 받는다.
 - v0.2 (2026-10-23): 채점용 시세를 날짜 하나 조회(`/prices/close`, `/indices/close`)에서 구간 조회(`/prices/daily`, `/indices/daily`)로 변경.
   거래일 달력 없이 실제 시세가 있는 날을 세기 위함.
 - v0.1 (2026-10-23): 검색 결과에 시세·토론 가능 여부 추가, `GET /stocks/{ticker}` 추가, `snapshot_created`에 `close` 추가.

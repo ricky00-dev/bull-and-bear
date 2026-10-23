@@ -15,6 +15,15 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-23 · ricky00-dev · api, web, docs
+- 한 것: 토론 비용 상한·중복 방지 (feat/cost-guard)
+  - 같은 종목 같은 날 토론은 DB 유니크 인덱스로 1건만. 동시 요청은 먼저 들어간 토론을 재사용 (테스트로 경합 확인)
+  - 워커 `usage`로 토큰·비용(USD) 저장 → 사용자 토론 하루 $3 상한, 사용자당 하루 새 토론 5회
+  - 종목 화면에 남은 횟수 표시, 막히면 버튼 비활성 + 이유
+  - 워커 계약 v0.3: `usage`를 모델별(`calls`) + 선택 `cost_usd`로. v0.2 형식도 받음
+- 다음: 전향 운용 스케줄러 + 실험 설계 문서 (ricky00-dev)
+- 막힘·결정 필요: **jangwonii** 계약 v0.3 `usage` 형식 확인. Haiku 5.5는 `fallbacks` 미지원 (ROADMAP 위험 참고)
+
 ## 2026-10-23 · ricky00-dev · docs
 - 한 것: 작업 로그, AGENTS.md(Codex)·CLAUDE.md(Claude Code) 공통 안내, 세션 시작 훅, PR 템플릿 추가
 - 다음: 토론 중복 방지 + LLM 비용 집계·일일 상한 (api) — ricky00-dev

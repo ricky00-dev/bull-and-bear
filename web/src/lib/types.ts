@@ -24,6 +24,8 @@ export interface StockDetail {
   reasons: string[]
   sparkline: number[]
   todayDebate: { id: string; status: DebateStatus; createdAt: string } | null
+  /** 오늘 새 토론을 더 시작할 수 있는지. 오늘 이미 있는 토론은 이와 상관없이 볼 수 있다 */
+  quota: { left: number; limit: number; budgetOpen: boolean }
 }
 
 export interface Debate {
