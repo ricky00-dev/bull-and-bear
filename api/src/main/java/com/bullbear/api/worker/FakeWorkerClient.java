@@ -204,7 +204,12 @@ public class FakeWorkerClient implements WorkerClient {
 				"stats", Map.of(
 						"bull", Map.of("statements", 3, "first_try_pass_rate", 1.0, "rejected_attempts", 0, "evidence_accuracy", 1.0),
 						"bear", Map.of("statements", 3, "first_try_pass_rate", 0.67, "rejected_attempts", 1, "evidence_accuracy", 0.83)),
-				"usage", Map.of("input_tokens", 0, "output_tokens", 0, "model", "fake"))));
+				// 토론자 Haiku + 중재자 Opus로 한 번 돌렸을 때와 비슷한 양 (≈ $0.26)
+				"usage", Map.of("calls", List.of(
+						Map.of("model", "claude-haiku-5-5", "input_tokens", 98000, "output_tokens", 21000,
+								"cache_read_input_tokens", 61000, "cache_creation_input_tokens", 9000),
+						Map.of("model", "claude-opus-5-5", "input_tokens", 20000, "output_tokens", 8000,
+								"cache_read_input_tokens", 0, "cache_creation_input_tokens", 0))))));
 
 		List<WorkerEvent> out = new ArrayList<>();
 		for (int i = 0; i < raw.size(); i++) {

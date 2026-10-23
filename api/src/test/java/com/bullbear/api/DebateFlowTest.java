@@ -9,6 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +25,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -33,6 +42,9 @@ class DebateFlowTest {
 
 	@Autowired
 	MockMvc mvc;
+
+	@Autowired
+	JdbcTemplate jdbc;
 
 	String token;
 
@@ -132,6 +144,38 @@ class DebateFlowTest {
 
 	private String bearer() {
 		return "Bearer " + token;
+	}
+
+	@Test
+	void 같은_종목을_동시에_요청해도_토론은_하나만_생긴다() throws Exception {
+		List<String> tokens = new ArrayList<>();
+		for (int i = 0; i < 6; i++) {
+			tokens.add(newGuest());
+		}
+		List<Callable<String>> calls = tokens.stream()
+				.<Callable<String>>map(t -> () -> JsonPath.read(createAs(t, "028260").andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.id"))
+				.toList();
+		Set<String> ids = new HashSet<>();
+		var pool = Executors.newFixedThreadPool(calls.size());
+		try {
+			for (Future<String> f : pool.invokeAll(calls)) {
+				ids.add(f.get());
+			}
+		} finally {
+			pool.shutdown();
+		}
+		assertThat(ids).hasSize(1);
+		assertThat(jdbc.queryForObject("select count(*) from debates where ticker = '028260'", Integer.class))
+				.isEqualTo(1);
+	}
+
+	private ResultActions createAs(String token, String ticker) throws Exception {
+		return mvc.perform(post("/api/debates").header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"ticker\":\"" + ticker + "\"}"));
+	}
+
+	private String newGuest() throws Exception {
+		return JsonPath.read(mvc.perform(post("/api/auth/guest")).andReturn().getResponse().getContentAsString(), "$.token");
 	}
 
 	private String createDebate(String ticker) throws Exception {

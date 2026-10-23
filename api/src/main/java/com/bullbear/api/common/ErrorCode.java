@@ -10,6 +10,10 @@ public enum ErrorCode {
 	NOT_FOUND(HttpStatus.NOT_FOUND),
 	DEBATE_NOT_FINISHED(HttpStatus.CONFLICT),
 	NOT_ELIGIBLE(HttpStatus.UNPROCESSABLE_CONTENT),
+	/** 사용자 한 명의 하루 새 토론 수를 넘었다. */
+	DAILY_LIMIT(HttpStatus.TOO_MANY_REQUESTS),
+	/** 오늘 LLM 비용 상한을 다 썼다. */
+	BUDGET_EXHAUSTED(HttpStatus.SERVICE_UNAVAILABLE),
 	WORKER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE);
 
 	private final HttpStatus status;

@@ -1,6 +1,7 @@
 package com.bullbear.api.debate;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -22,6 +23,11 @@ public class Debate {
 		public boolean isTerminal() {
 			return this != RUNNING;
 		}
+	}
+
+	/** USER: 사용자가 시작, SCHEDULED: 전향 운용 스케줄러. */
+	public enum Origin {
+		USER, SCHEDULED
 	}
 
 	@Id
@@ -55,6 +61,23 @@ public class Debate {
 	@Column(name = "last_event_seq", nullable = false)
 	private long lastEventSeq;
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Origin origin;
+
+	/** 토론을 만든 날 (KST). 같은 종목은 하루에 한 번만 토론한다 (DB 유니크 인덱스). */
+	@Column(name = "debate_day", nullable = false)
+	private LocalDate debateDay;
+
+	@Column(name = "input_tokens")
+	private Long inputTokens;
+
+	@Column(name = "output_tokens")
+	private Long outputTokens;
+
+	@Column(name = "cost_usd")
+	private BigDecimal costUsd;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -64,15 +87,23 @@ public class Debate {
 	protected Debate() {
 	}
 
-	public static Debate start(String ticker, String stockName, UUID requestedBy) {
+	static Debate start(String ticker, String stockName, UUID requestedBy, Origin origin, Clock clock) {
 		Debate d = new Debate();
 		d.id = UUID.randomUUID();
 		d.ticker = ticker;
 		d.stockName = stockName;
 		d.status = Status.RUNNING;
 		d.requestedBy = requestedBy;
-		d.createdAt = Instant.now();
+		d.origin = origin;
+		d.debateDay = LocalDate.now(clock);
+		d.createdAt = clock.instant();
 		return d;
+	}
+
+	void recordUsage(long inputTokens, long outputTokens, BigDecimal costUsd) {
+		this.inputTokens = inputTokens;
+		this.outputTokens = outputTokens;
+		this.costUsd = costUsd;
 	}
 
 	void attachWorker(String workerDebateId, String snapshotId) {
@@ -129,6 +160,18 @@ public class Debate {
 
 	public long getLastEventSeq() {
 		return lastEventSeq;
+	}
+
+	public Origin getOrigin() {
+		return origin;
+	}
+
+	public LocalDate getDebateDay() {
+		return debateDay;
+	}
+
+	public BigDecimal getCostUsd() {
+		return costUsd;
 	}
 
 	public Instant getCreatedAt() {

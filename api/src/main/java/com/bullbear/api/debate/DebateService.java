@@ -1,13 +1,13 @@
 package com.bullbear.api.debate;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.bullbear.api.common.ApiException;
@@ -28,12 +28,14 @@ public class DebateService {
 	private final DebateRepository debates;
 	private final WorkerClient worker;
 	private final DebateRelay relay;
+	private final DebateQuota quota;
 	private final Clock clock;
 
-	DebateService(DebateRepository debates, WorkerClient worker, DebateRelay relay, Clock clock) {
+	DebateService(DebateRepository debates, WorkerClient worker, DebateRelay relay, DebateQuota quota, Clock clock) {
 		this.debates = debates;
 		this.worker = worker;
 		this.relay = relay;
+		this.quota = quota;
 		this.clock = clock;
 	}
 
@@ -42,6 +44,13 @@ public class DebateService {
 	 * 같은 날은 스냅샷 데이터가 같으므로 다시 돌릴 이유가 없다 (LLM 비용·대기 시간 절약).
 	 */
 	public Created create(User user, String ticker) {
+		return create(ticker, user.getId(), Debate.Origin.USER);
+	}
+
+	/**
+	 * @param requestedBy 시작한 사용자. 스케줄러가 시작하면 null
+	 */
+	public Created create(String ticker, UUID requestedBy, Debate.Origin origin) {
 		Optional<Debate> today = findToday(ticker);
 		if (today.isPresent()) {
 			return new Created(today.get(), true);
@@ -50,7 +59,17 @@ public class DebateService {
 		if (!stock.eligible()) {
 			throw new ApiException(ErrorCode.NOT_ELIGIBLE, String.join(", ", stock.reasons()));
 		}
-		Debate debate = debates.save(Debate.start(ticker, stock.name(), user.getId()));
+		if (origin == Debate.Origin.USER) {
+			quota.check(requestedBy);
+		}
+		Debate debate;
+		try {
+			debate = debates.saveAndFlush(Debate.start(ticker, stock.name(), requestedBy, origin, clock));
+		} catch (DataIntegrityViolationException e) {
+			// 같은 종목을 동시에 요청했다. 먼저 들어간 토론을 재사용한다
+			return findToday(ticker).map(d -> new Created(d, true))
+					.orElseThrow(() -> new ApiException(ErrorCode.WORKER_UNAVAILABLE, "잠시 후 다시 시도해 주세요"));
+		}
 		try {
 			// 우리 토론 ID를 멱등 키로 넘겨, 재시도해도 워커에 토론이 두 번 생기지 않게 한다
 			WorkerDebateStarted started = worker.startDebate(ticker, debate.getId().toString());
@@ -66,8 +85,7 @@ public class DebateService {
 	}
 
 	public Optional<Debate> findToday(String ticker) {
-		Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-		return debates.findFirstByTickerAndStatusInAndCreatedAtAfterOrderByCreatedAtDesc(ticker, REUSABLE, startOfDay);
+		return debates.findFirstByTickerAndDebateDayAndStatusInOrderByCreatedAtDesc(ticker, LocalDate.now(clock), REUSABLE);
 	}
 
 	public List<Debate> getAll(Collection<UUID> ids) {

@@ -5,6 +5,7 @@ import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, To
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
 import { changeColor, pct, won } from '../lib/format'
+import type { StockDetail } from '../lib/types'
 
 export function StockPage() {
   const { ticker = '' } = useParams()
@@ -27,6 +28,7 @@ export function StockPage() {
   const s = stock.data
   const today = s?.todayDebate
   const startError = start.error instanceof ApiError ? start.error.message : start.error ? '토론을 시작하지 못했어요' : null
+  const blocked = quotaBlock(s?.quota)
 
   return (
     <Screen>
@@ -85,14 +87,28 @@ export function StockPage() {
         {today ? (
           <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>오늘 토론 보기</PrimaryButton>
         ) : (
-          <PrimaryButton disabled={!s?.eligible || start.isPending} onClick={() => start.mutate()}>
+          <PrimaryButton disabled={!s?.eligible || !!blocked || start.isPending} onClick={() => start.mutate()}>
             {start.isPending ? '토론 준비 중…' : 'AI 토론 시작'}
           </PrimaryButton>
         )}
-        <p className="text-center text-xs text-sub">{today ? '이미 끝난 토론은 처음부터 다시 볼 수 있어요' : '1~2분 걸려요'}</p>
+        <p className="text-center text-xs text-sub">
+          {today ? '이미 끝난 토론은 처음부터 다시 볼 수 있어요' : (blocked ?? quotaHint(s?.quota))}
+        </p>
       </BottomBar>
     </Screen>
   )
+}
+
+/** 새 토론을 시작할 수 없는 이유. 오늘 다른 사람이 시작한 토론은 여전히 볼 수 있다 */
+function quotaBlock(q: StockDetail['quota'] | undefined): string | null {
+  if (!q) return null
+  if (!q.budgetOpen) return '오늘 준비한 AI 토론이 모두 소진됐어요. 내일 다시 열려요'
+  if (q.left === 0) return `새 토론은 하루 ${q.limit}번까지예요. 내일 다시 시작할 수 있어요`
+  return null
+}
+
+function quotaHint(q: StockDetail['quota'] | undefined): string {
+  return q ? `1~2분 걸려요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '1~2분 걸려요'
 }
 
 function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; detail: string }) {

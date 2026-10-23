@@ -44,9 +44,12 @@ public class DebateRelay {
 	private final DebateStreamHub hub;
 	private final TransactionTemplate tx;
 	private final ObjectMapper json;
+	private final LlmUsage usage;
 
 	DebateRelay(WorkerClient worker, DebateRepository debates, DebateEventRepository events,
-			ModeratorVerdictRepository verdicts, DebateStreamHub hub, TransactionTemplate tx, ObjectMapper json) {
+			ModeratorVerdictRepository verdicts, DebateStreamHub hub, TransactionTemplate tx, ObjectMapper json,
+			LlmUsage usage) {
+		this.usage = usage;
 		this.worker = worker;
 		this.debates = debates;
 		this.events = events;
@@ -103,9 +106,13 @@ public class DebateRelay {
 					verdicts.save(new ModeratorVerdict(debateId, v.path("decision").asString(),
 							BigDecimal.valueOf(v.path("confidence").asDouble()), v.path("reasoning").asString(),
 							json.writeValueAsString(v)));
+					recordUsage(d, e.data());
 					d.finish(Debate.Status.COMPLETED);
 				}
-				case WorkerEvent.DEBATE_FAILED -> d.finish(Debate.Status.FAILED);
+				case WorkerEvent.DEBATE_FAILED -> {
+					recordUsage(d, e.data());
+					d.finish(Debate.Status.FAILED);
+				}
 				default -> {
 				}
 			}
@@ -114,6 +121,14 @@ public class DebateRelay {
 		if (Boolean.TRUE.equals(stored)) {
 			hub.publish(debateId, ClientEvent.from(e.seq(), e.type(), e.data()), e.isTerminal());
 		}
+	}
+
+	private void recordUsage(Debate d, String data) {
+		usage.parse(json.readTree(data).get("usage")).ifPresent(u -> {
+			d.recordUsage(u.inputTokens(), u.outputTokens(), u.costUsd());
+			log.info("토론 {} {} 사용량: 입력 {} 출력 {} 토큰, ${}", d.getId(), d.getTicker(), u.inputTokens(),
+					u.outputTokens(), u.costUsd());
+		});
 	}
 
 	/** 재시도까지 실패하면 토론을 실패로 닫고 브라우저에 알린다. 알림은 커밋 뒤에 보낸다. */

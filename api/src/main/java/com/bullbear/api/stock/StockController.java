@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bullbear.api.auth.CurrentUser;
 import com.bullbear.api.debate.Debate;
+import com.bullbear.api.debate.DebateQuota;
 import com.bullbear.api.debate.DebateService;
+import com.bullbear.api.user.User;
 import com.bullbear.api.worker.WorkerClient;
 import com.bullbear.api.worker.WorkerStock;
 import com.bullbear.api.worker.WorkerStockDetail;
@@ -36,9 +39,13 @@ public class StockController {
 		}
 	}
 
-	/** @param todayDebate 오늘 이미 진행된 토론. 있으면 기다리지 않고 바로 볼 수 있다 */
+	/**
+	 * @param todayDebate 오늘 이미 진행된 토론. 있으면 기다리지 않고 바로 볼 수 있다
+	 * @param quota 이 사용자가 오늘 새 토론을 더 시작할 수 있는지
+	 */
 	public record StockResponse(String ticker, String name, String market, long close, double changePct,
-			LocalDate asOf, boolean eligible, List<String> reasons, List<Long> sparkline, TodayDebate todayDebate) {
+			LocalDate asOf, boolean eligible, List<String> reasons, List<Long> sparkline, TodayDebate todayDebate,
+			DebateQuota.Status quota) {
 	}
 
 	public record TodayDebate(UUID id, Debate.Status status, Instant createdAt) {
@@ -46,10 +53,12 @@ public class StockController {
 
 	private final WorkerClient worker;
 	private final DebateService debates;
+	private final DebateQuota quota;
 
-	StockController(WorkerClient worker, DebateService debates) {
+	StockController(WorkerClient worker, DebateService debates, DebateQuota quota) {
 		this.worker = worker;
 		this.debates = debates;
+		this.quota = quota;
 	}
 
 	/** 종목명, 6자리 코드, 초성으로 검색. 토론 불가 종목도 이유와 함께 돌려준다. */
@@ -59,12 +68,12 @@ public class StockController {
 	}
 
 	@GetMapping("/{ticker}")
-	public StockResponse get(@PathVariable @Pattern(regexp = "\\d{6}") String ticker) {
+	public StockResponse get(@CurrentUser User user, @PathVariable @Pattern(regexp = "\\d{6}") String ticker) {
 		WorkerStockDetail s = worker.stock(ticker);
 		TodayDebate today = debates.findToday(ticker)
 				.map(d -> new TodayDebate(d.getId(), d.getStatus(), d.getCreatedAt()))
 				.orElse(null);
 		return new StockResponse(s.ticker(), s.name(), s.market(), s.close(), s.changePct(), s.asOf(), s.eligible(),
-				s.reasons(), s.sparkline(), today);
+				s.reasons(), s.sparkline(), today, quota.status(user.getId()));
 	}
 }
