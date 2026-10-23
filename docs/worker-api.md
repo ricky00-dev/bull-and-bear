@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.3, 초안)
+# AI 워커 API 계약 (v0.4, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -60,6 +60,9 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 { "ticker": "005930", "name": "삼성전자", "market": "KOSPI", "close": 214500, "change_pct": -4.03,
   "as_of": "2026-10-22", "eligible": true, "reasons": [], "sparkline": [249500, 254000, "... 60개, 오래된 순"] }
 ```
+
+`as_of`는 지금 `POST /debates`를 하면 스냅샷이 쓸 날짜(최신 종가 날짜)와 **같아야 한다**. Spring은 `(ticker, as_of)`로
+이미 있는 토론을 재사용하므로, 이 값이 틀리면 지난 데이터 토론을 보여 주거나 같은 토론을 두 번 돌린다.
 
 ### `GET /stocks/{ticker}/eligibility`
 
@@ -215,6 +218,8 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 변경 이력
 
+- v0.4 (2026-10-23): `GET /stocks/{ticker}`의 `as_of`는 **지금 `POST /debates`를 하면 스냅샷이 쓸 날짜**와 같아야 한다.
+  Spring이 이 날짜로 토론 재사용 여부를 정한다 (`docs/ARCHITECTURE.md` ADR-1). 형식 변경은 없음.
 - v0.3 (2026-10-23): `usage`를 모델별 목록(`calls`)과 선택 필드 `cost_usd`로 변경. 토론자 Haiku + 중재자 Opus처럼
   모델을 섞어 쓸 때 비용을 정확히 계산하기 위함. Spring은 v0.2 형식(`{input_tokens, output_tokens, model}`)도 계속 받는다.
 - v0.2 (2026-10-23): 채점용 시세를 날짜 하나 조회(`/prices/close`, `/indices/close`)에서 구간 조회(`/prices/daily`, `/indices/daily`)로 변경.

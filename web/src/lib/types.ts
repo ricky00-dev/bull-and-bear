@@ -23,7 +23,8 @@ export interface StockDetail {
   eligible: boolean
   reasons: string[]
   sparkline: number[]
-  todayDebate: { id: string; status: DebateStatus; createdAt: string } | null
+  /** 같은 데이터(최신 종가)로 이미 진행된 토론. 장 마감 뒤 만든 토론은 다음 날 장 마감 전까지 재사용된다 */
+  existingDebate: { id: string; status: DebateStatus; createdAt: string; dataDate: string } | null
   /** 오늘 새 토론을 더 시작할 수 있는지. 오늘 이미 있는 토론은 이와 상관없이 볼 수 있다 */
   quota: { left: number; limit: number; budgetOpen: boolean }
 }
