@@ -11,6 +11,7 @@ Codex는 이 파일(`AGENTS.md`)을, Claude Code는 `CLAUDE.md`를 통해 같은
    Claude Code는 세션 시작 훅이 자동으로 실행해 주므로 생략해도 된다.
 2. 이어서 할 작업이 다른 사람 영역과 닿으면 `docs/WORKLOG.md`의 "막힘·결정 필요"를 확인한다.
 3. Spring ↔ 워커 사이 일이면 `docs/worker-api.md`(계약)가 기준이다.
+4. 일정·우선순위·결정 사항은 `docs/ROADMAP.md`.
 
 ## 작업 마칠 때 (필수)
 
