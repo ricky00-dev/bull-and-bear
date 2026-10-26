@@ -1,0 +1,82 @@
+# 운영 배포 (EC2 한 대). 사용법은 docs/DEPLOY.md
+#   docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
+# 워커까지 띄울 때: --profile worker (워커 FastAPI 완성 후)
+name: bullbear
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bullbear
+      POSTGRES_USER: bullbear
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 필요}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bullbear"]
+      interval: 5s
+      retries: 10
+    # 외부 포트를 열지 않는다. 접속은 ssh 터널 또는 docker compose exec
+    mem_limit: 384m
+
+  api:
+    build: ../api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bullbear
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # 같은 출처(Caddy)로 받으므로 웹은 CORS가 필요 없다. Capacitor 앱용 출처만 둔다
+      BULLBEAR_CORS_ALLOWED_ORIGINS: capacitor://localhost,http://localhost
+      BULLBEAR_WORKER_MODE: ${WORKER_MODE:-fake}
+      BULLBEAR_WORKER_BASE_URL: http://worker:8000
+      BULLBEAR_WORKER_TOKEN: ${WORKER_TOKEN:?WORKER_TOKEN 필요}
+      BULLBEAR_FORWARD_RUN_ENABLED: ${FORWARD_RUN_ENABLED:-false}
+      BULLBEAR_BUDGET_USER_DAILY_USD: ${BUDGET_USER_DAILY_USD:-3.0}
+      BULLBEAR_BUDGET_PER_USER_DAILY_DEBATES: ${BUDGET_PER_USER_DAILY_DEBATES:-5}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
+      interval: 10s
+      start_period: 60s
+      retries: 6
+    mem_limit: 640m
+
+  worker:
+    build: ../ai-worker
+    profiles: ["worker"]
+    restart: unless-stopped
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENDART_API_KEY: ${DART_API_KEY:-}
+      BULLBEAR_DATA_DIR: /app/data
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      WORKER_TOKEN: ${WORKER_TOKEN}
+    volumes:
+      - worker_data:/app/data
+    mem_limit: 512m
+
+  web:
+    build: ../web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 128m
+
+volumes:
+  pgdata:
+  worker_data:
+  caddy_data:
+  caddy_config:

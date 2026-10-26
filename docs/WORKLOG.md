@@ -15,6 +15,16 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-26 · ricky00-dev · deploy
+- 한 것: 배포 준비 (chore/deploy)
+  - Dockerfile: api(Gradle → JRE), web(Vite 빌드 → Caddy), ai-worker(uv, 비루트 실행)
+  - `deploy/compose.yml`: Caddy(HTTPS 자동, /api 프록시, SPA) + Spring + Postgres + 워커(profile). 외부엔 80/443만
+  - 로컬에서 운영 구성 실행 확인: 정적 파일·딥링크·API·SSE 스트림(버퍼링 없음)·서비스 워커·백업 스크립트
+  - `docs/DEPLOY.md`: EC2 t3.small, sslip.io로 도메인 없이 HTTPS, 처음 설정·업데이트·운영 명령
+- 다음: 워커 FastAPI 골격 초안 (jangwonii 인수인계용), 그다음 M3 타임머신 퀴즈 (ricky00-dev)
+- 막힘·결정 필요:
+  - **ricky00-dev**: AWS 계정 (11/2 전), 키 4종
+  - **jangwonii**: 워커 이미지는 빌드됨. `bullbear.server:app`(FastAPI)과 `fastapi`·`uvicorn` 의존성만 있으면 뜸. 인증은 `X-Worker-Token` == env `WORKER_TOKEN`
 ## 2026-10-26 · ricky00-dev · api, web
 - 한 것: 홈 "오늘의 토론" 피드 + 첫 방문 안내·투자 유의 고지 (feat/home-feed)
   - `GET /api/feed`: 최신 데이터 기준일 토론을 진행 중 → 판정 많은 순으로. 판정 수, 내 판정 여부 포함, 중재자 판정은 제외(봉인)

@@ -10,6 +10,8 @@ export default defineConfig({
     // 홈 화면 설치 + 나중에 웹 푸시(채점 알림). 앱으로 구울 때는 Capacitor가 같은 빌드를 감싼다.
     VitePWA({
       registerType: 'autoUpdate',
+      // API·토론 스트림은 서비스 워커가 건드리지 않는다 (같은 출처로 배포하므로 명시)
+      workbox: { navigateFallbackDenylist: [/^\/api\//] },
       manifest: {
         name: '불앤베어',
         short_name: '불앤베어',
