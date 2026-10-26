@@ -16,6 +16,11 @@ class Settings:
     data_dir: Path
     debater_effort: str
     moderator_effort: str
+    # HTTP 서버 (bullbear.server)
+    worker_token: str = "dev-worker-token"
+    max_concurrent_debates: int = 3  # 동시에 실제로 도는 토론. Anthropic 속도 제한·메모리 기준
+    max_queued_debates: int = 10  # 대기열까지 합쳐 이보다 많으면 BUSY(429)
+    agents: str = "llm"  # llm | scripted (LLM 없이 연동 확인용, server/scripted.py)
 
     @property
     def snapshot_dir(self) -> Path:
@@ -40,4 +45,8 @@ def load_settings() -> Settings:
         data_dir=Path(os.getenv("BULLBEAR_DATA_DIR", "data")),
         debater_effort=os.getenv("BULLBEAR_DEBATER_EFFORT", "medium"),
         moderator_effort=os.getenv("BULLBEAR_MODERATOR_EFFORT", "high"),
+        worker_token=os.getenv("WORKER_TOKEN", "dev-worker-token"),
+        max_concurrent_debates=int(os.getenv("BULLBEAR_MAX_CONCURRENT_DEBATES", "3")),
+        max_queued_debates=int(os.getenv("BULLBEAR_MAX_QUEUED_DEBATES", "10")),
+        agents=os.getenv("BULLBEAR_AGENTS", "llm"),
     )

@@ -44,5 +44,7 @@ cd api && ./gradlew test                  # 통합 테스트 (Docker 필요)
 cd web && npm run dev                     # 웹 :5173
 cd ai-worker && uv run pytest             # 워커 테스트
 cd ai-worker && uv run bullbear snapshot 삼성전자   # 데이터만 확인 (LLM 호출 없음)
+cd ai-worker && BULLBEAR_AGENTS=scripted uv run uvicorn bullbear.server:app --port 8000   # 워커 서버 (LLM 없이)
+cd api && BULLBEAR_WORKER_MODE=http ./gradlew bootRun    # Spring을 실제 워커에 연결
 ./scripts/session-brief.sh                # 작업 현황 요약 (훅과 같은 내용)
 ```

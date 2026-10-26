@@ -29,12 +29,14 @@ class Usage:
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
     requests: int = 0
 
     def add(self, usage: Any) -> None:
         self.input_tokens += usage.input_tokens or 0
         self.output_tokens += usage.output_tokens or 0
         self.cache_read_input_tokens += getattr(usage, "cache_read_input_tokens", 0) or 0
+        self.cache_creation_input_tokens += getattr(usage, "cache_creation_input_tokens", 0) or 0
         self.requests += 1
 
 

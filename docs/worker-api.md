@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.4, 초안)
+# AI 워커 API 계약 (v0.5, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -86,8 +86,13 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 `202 Accepted`
 
 ```json
-{ "debate_id": "20261022-154102-005930", "snapshot_id": "005930-20261022-2d76e3f5e8", "status": "running", "reused": false }
+{ "debate_id": "20261022-154102-005930-a1b2c3", "snapshot_id": null, "status": "queued", "reused": false }
 ```
+
+- 스냅샷은 비동기로 만든다 (DART·뉴스 조회가 수 초 걸려 응답을 붙잡지 않기 위함). 그래서 `snapshot_id`는 보통 `null`이고,
+  첫 이벤트 `snapshot_created`로 확정된다.
+- `status`: `queued`(동시 실행 상한에 걸려 대기) | `running`. 대기열까지 차면 `429 BUSY` + `Retry-After`.
+- 재사용은 Spring이 `(ticker, as_of)`로 한다. 워커는 같은 `request_id`만 같은 토론으로 돌려준다 (`reused`는 항상 `false`).
 
 ### `GET /debates/{debate_id}/events` (SSE)
 
@@ -218,6 +223,8 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 변경 이력
 
+- v0.5 (2026-10-26): `POST /debates` 응답의 `snapshot_id`는 `null`일 수 있음(비동기 스냅샷), `status`에 `queued` 추가,
+  재사용은 Spring 담당으로 명시. 워커 재시작으로 끊긴 토론은 `debate_failed` `WORKER_RESTARTED`로 닫힌다.
 - v0.4 (2026-10-23): `GET /stocks/{ticker}`의 `as_of`는 **지금 `POST /debates`를 하면 스냅샷이 쓸 날짜**와 같아야 한다.
   Spring이 이 날짜로 토론 재사용 여부를 정한다 (`docs/ARCHITECTURE.md` ADR-1). 형식 변경은 없음.
 - v0.3 (2026-10-23): `usage`를 모델별 목록(`calls`)과 선택 필드 `cost_usd`로 변경. 토론자 Haiku + 중재자 Opus처럼
@@ -229,7 +236,14 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 워커 담당 메모 (현재 상태)
 
-- 지금 워커는 CLI만 있다. 위 HTTP 엔드포인트는 FastAPI로 새로 만들어야 한다 (`bullbear.debate.Debate`의 `on_event`를 SSE로 연결).
-- 종목 검색 전체 목록: pykrx 전체 종목 API는 빈 응답. OpenDART 고유번호 파일(`corp_codes.json`)로 만든다.
-- 지수: pykrx 지수 API는 오류. 네이버 차트 엔드포인트는 동작하지만 비공식이다. KIS 연동 시 교체.
+- HTTP 서버 골격: `ai-worker/src/bullbear/server/` (FastAPI, 2026-10-26). 계약 엔드포인트 전부 동작, 테스트 `tests/test_server.py`.
+  - `app.py` 엔드포인트·인증·오류 형식 / `runs.py` 동시 실행·대기열·멱등·이벤트 보관·SSE 구독 /
+    `debate_runner.py` 토론 엔진 연결 / `wire.py` 내부 이벤트 → 계약 형식 / `market.py` 종목·시세
+  - `BULLBEAR_AGENTS=scripted`: LLM 없이 실제 데이터로 전체 흐름 확인 (비용 0). Spring과 실제 연동 확인함.
+- 남은 일 (jangwonii):
+  - 실제 키로 토론 돌려 보고 프롬프트·검증기 점검, 토론자 Haiku 전환 (`llm.py` fallbacks: Haiku 5.5는 미지원)
+  - 발언 병렬화 (`docs/ARCHITECTURE.md` ADR-2), 단일 에이전트 모드 (`docs/experiment.md`)
+  - 종목 검색 전체 목록: 지금은 `UNIVERSE` 30종목. pykrx 전체 종목 API는 빈 응답 → OpenDART 고유번호 파일로 확장
+  - 시장 구분: 지금은 전부 KOSPI로 표시 (UNIVERSE가 모두 코스피)
+- 지수: 네이버 차트 엔드포인트(비공식, `data/naver_index.py`). KIS 연동 시 교체.
 - `Debate.submit_user_verdict`는 CLI용. HTTP 흐름에서는 Spring이 사용자 판정을 저장한다.

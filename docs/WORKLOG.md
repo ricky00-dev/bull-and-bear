@@ -15,6 +15,17 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-26 · ricky00-dev · ai-worker, api
+- 한 것: 워커 FastAPI 서버 골격 (feat/worker-server) + Spring ↔ 실제 워커 첫 연동
+  - 계약 엔드포인트 전부: 검색(초성)·상세·토론 가능 여부·토론 시작·SSE 이벤트·토론 조회·스냅샷·채점용 시세·지수
+  - 동시 실행 3 + 대기열(넘치면 429 BUSY), request_id 멱등, Last-Event-ID 이어 받기, 재시작 시 끊긴 토론은 실패로 닫음
+  - 확정 종가만 사용 (장중 일봉 제외) → 채점 기준 가격·재사용 키가 흔들리지 않음
+  - `BULLBEAR_AGENTS=scripted`: LLM 없이 실제 시세로 전체 흐름 확인. Spring http 모드로 NAVER 토론 → 봉인 → 판정 → 공개 확인
+  - **버그 수정 (api)**: Spring Boot 4에서 WebClient.Builder가 별도 스타터라 http 모드로 아예 못 떴음 → `spring-boot-starter-webclient`, 회귀 테스트 추가
+  - 워커 계약 v0.5
+- 다음: M3 타임머신 퀴즈 (ricky00-dev)
+- 막힘·결정 필요 (**jangwonii**): `docs/worker-api.md` "워커 담당 메모"의 남은 일. 골격은 바꿔도 되지만 계약 형식은 `wire.py`에서만 맞추기
+
 ## 2026-10-23 · ricky00-dev · api, web, docs
 - 한 것: 전향 운용 스케줄러 + 토론 재사용 기준을 데이터 기준일로 (feat/forward-run)
   - 재사용 키 `(종목, 최신 종가 날짜)`: 장 마감 뒤 만든 토론은 다음 날 장 마감 전까지 누구나 대기 없이 재사용

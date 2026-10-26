@@ -97,13 +97,12 @@ def build_snapshot(
     warnings: list[str] = []
     facts: dict[str, Fact] = {}
 
-    bars = source.get_daily_prices(ticker, today - timedelta(days=PRICE_LOOKBACK_DAYS), today)
+    # 확정된 종가만 쓴다. 장중 일봉은 값이 계속 바뀌어 채점 기준 가격이 될 수 없고,
+    # 같은 기준일 토론을 재사용하는 Spring 쪽 전제(docs/ARCHITECTURE.md ADR-1)도 깨진다
+    bars = confirmed_bars(source.get_daily_prices(ticker, today - timedelta(days=PRICE_LOOKBACK_DAYS), today), now)
     if len(bars) < 2:
         raise DataUnavailable(f"시세가 부족합니다: {ticker}")
     as_of = bars[-1].date
-    now_kst = now.astimezone(KST)
-    if as_of == now_kst.date() and now_kst.time() < MARKET_CLOSE:
-        warnings.append("장중 스냅샷: 마지막 일봉이 확정되지 않은 값입니다")
     _add(facts, price_facts(bars))
 
     reports: list[FinancialReport] = []
@@ -157,6 +156,14 @@ def build_snapshot(
         facts=facts,
         warnings=warnings,
     )
+
+
+def confirmed_bars(bars: list[PriceBar], now: datetime) -> list[PriceBar]:
+    """장 마감 전이면 오늘 일봉(아직 확정 안 됨)을 뺀다."""
+    now_kst = now.astimezone(KST)
+    if bars and bars[-1].date == now_kst.date() and now_kst.time() < MARKET_CLOSE:
+        return bars[:-1]
+    return bars
 
 
 def _add(facts: dict[str, Fact], new: list[Fact]) -> None:
