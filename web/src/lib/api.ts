@@ -1,4 +1,4 @@
-import type { Debate, Decision, JudgmentDetail, JudgmentView, MyStats, Reveal, StockDetail, StockItem } from './types'
+import type { Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, Reveal, StockDetail, StockItem } from './types'
 
 /** 웹은 개발 서버, Capacitor 앱은 실제 서버 주소. 쿠키를 쓰지 않으므로 출처가 달라도 된다. */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -97,6 +97,7 @@ export const api = {
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),
   myJudgment: (id: string) => request<JudgmentDetail>(`/api/me/judgments/${id}`),
   myStats: () => request<MyStats>('/api/me/stats'),
+  feed: () => request<{ dataDate: string | null; items: FeedItem[] }>('/api/feed'),
 }
 
 /** EventSource는 헤더를 못 붙여서 토큰을 쿼리로 보낸다. 재연결 시 Last-Event-ID는 브라우저가 붙인다. */
