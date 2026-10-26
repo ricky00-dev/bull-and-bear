@@ -147,6 +147,27 @@ class DebateFlowTest {
 	}
 
 	@Test
+	void 홈_피드는_최신_기준일_토론을_판정_수와_내_판정_여부와_함께_보여주고_판정은_가린다() throws Exception {
+		String id = createDebate("005380");
+		awaitCompleted(id);
+		mvc.perform(post("/api/debates/" + id + "/judgment").header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"decision\":\"BUY\",\"confidence\":60,\"evidencePicks\":[]}"))
+				.andExpect(status().isCreated());
+
+		String item = "$.items[?(@.debateId == '" + id + "')]";
+		mvc.perform(get("/api/feed").header("Authorization", "Bearer " + token))
+				.andExpect(jsonPath("$.dataDate").value("2026-10-22"))
+				.andExpect(jsonPath(item + ".judged").value(1))
+				.andExpect(jsonPath(item + ".mine").value(true))
+				.andExpect(jsonPath(item + ".scheduled").value(false))
+				.andExpect(jsonPath("$..decision").doesNotExist())
+				.andExpect(jsonPath("$..verdict").doesNotExist());
+		mvc.perform(get("/api/feed").header("Authorization", "Bearer " + newGuest()))
+				.andExpect(jsonPath(item + ".mine").value(false));
+	}
+
+	@Test
 	void 같은_종목을_동시에_요청해도_토론은_하나만_생긴다() throws Exception {
 		List<String> tokens = new ArrayList<>();
 		for (int i = 0; i < 6; i++) {

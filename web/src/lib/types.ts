@@ -128,3 +128,17 @@ export interface MyStats {
 
 export const DECISION_LABEL: Record<Decision, string> = { BUY: '매수', HOLD: '보류', SELL: '매도' }
 export const ROUND_LABEL: Record<Round, string> = { opening: '주장', rebuttal: '반박', closing: '최종 변론', extra: '추가 질문' }
+
+/** 홈 "오늘의 토론". 중재자 판정은 들어 있지 않다 (봉인) */
+export interface FeedItem {
+  debateId: string
+  ticker: string
+  stockName: string
+  status: DebateStatus
+  /** 매일 장 마감 뒤 자동으로 토론하는 종목 */
+  scheduled: boolean
+  dataDate: string
+  createdAt: string
+  judged: number
+  mine: boolean
+}

@@ -129,6 +129,9 @@ export function RevealPage() {
             </Card>
 
             {me.data?.guest && <SignupCard />}
+            <p className="text-center text-[11px] leading-relaxed text-sub">
+              교육용 모의 판정이에요. AI 판정은 투자 권유가 아니에요.
+            </p>
           </>
         )}
       </main>
