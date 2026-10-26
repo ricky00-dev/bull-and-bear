@@ -1,0 +1,25 @@
+# SITE_ADDRESS: 운영은 도메인(예: bullbear.example.com → 인증서 자동 발급), 로컬 확인은 ":80"
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	# API와 토론 스트림(SSE). Caddy는 text/event-stream 응답을 버퍼링 없이 바로 흘려보낸다
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	# 헬스체크는 외부에 열지 않는다 (컨테이너 안에서만)
+	handle /actuator/* {
+		respond 404
+	}
+
+	# SPA: 없는 경로는 index.html로. 빌드 산출물(해시 파일명)은 오래 캐시
+	handle {
+		root * /srv
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header /index.html Cache-Control "no-cache"
+		header /sw.js Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

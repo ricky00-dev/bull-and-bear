@@ -45,4 +45,5 @@ cd web && npm run dev                     # 웹 :5173
 cd ai-worker && uv run pytest             # 워커 테스트
 cd ai-worker && uv run bullbear snapshot 삼성전자   # 데이터만 확인 (LLM 호출 없음)
 ./scripts/session-brief.sh                # 작업 현황 요약 (훅과 같은 내용)
+docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build   # 운영 구성 (docs/DEPLOY.md)
 ```
