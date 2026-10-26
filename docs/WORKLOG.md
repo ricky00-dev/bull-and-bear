@@ -15,6 +15,14 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-26 · ricky00-dev · ai-worker, api
+- 한 것:
+  - 워커 HTTP 서버 **틀만** (feat/worker-server-stub): 계약 엔드포인트 시그니처·인증·오류 형식, 내용은 전부 501
+  - Spring http 모드 버그 수정 분리 (#12): Spring Boot 4 WebClient 스타터 누락으로 실제 워커 모드에서 앱이 안 떴음
+  - PR #11(완성형 워커 서버)은 닫음. 에이전트·워커 설계는 jangwonii가 직접 하기로 (브랜치 `feat/worker-server`는 참고용으로 남김, 안 봐도 됨)
+- 다음: M3 타임머신 퀴즈 (ricky00-dev)
+- 막힘·결정 필요 (**jangwonii**): 워커 설계·구현 시작. 기존 10/20 코드는 초안이라 바꿔도 됨. `docs/worker-api.md` "Spring이 기대하는 것" 참고
+
 ## 2026-10-23 · ricky00-dev · api, web, docs
 - 한 것: 전향 운용 스케줄러 + 토론 재사용 기준을 데이터 기준일로 (feat/forward-run)
   - 재사용 키 `(종목, 최신 종가 날짜)`: 장 마감 뒤 만든 토론은 다음 날 장 마감 전까지 누구나 대기 없이 재사용

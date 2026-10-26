@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.4, 초안)
+# AI 워커 API 계약 (v0.5, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -218,6 +218,8 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 변경 이력
 
+- v0.5 (2026-10-26): `POST /debates` 응답의 `snapshot_id`는 `null`이어도 된다 (스냅샷을 비동기로 만들 때).
+  Spring은 첫 이벤트 `snapshot_created`로 확정한다. 형식 변경 없음.
 - v0.4 (2026-10-23): `GET /stocks/{ticker}`의 `as_of`는 **지금 `POST /debates`를 하면 스냅샷이 쓸 날짜**와 같아야 한다.
   Spring이 이 날짜로 토론 재사용 여부를 정한다 (`docs/ARCHITECTURE.md` ADR-1). 형식 변경은 없음.
 - v0.3 (2026-10-23): `usage`를 모델별 목록(`calls`)과 선택 필드 `cost_usd`로 변경. 토론자 Haiku + 중재자 Opus처럼
@@ -229,7 +231,21 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 워커 담당 메모 (현재 상태)
 
-- 지금 워커는 CLI만 있다. 위 HTTP 엔드포인트는 FastAPI로 새로 만들어야 한다 (`bullbear.debate.Debate`의 `on_event`를 SSE로 연결).
-- 종목 검색 전체 목록: pykrx 전체 종목 API는 빈 응답. OpenDART 고유번호 파일(`corp_codes.json`)로 만든다.
-- 지수: pykrx 지수 API는 오류. 네이버 차트 엔드포인트는 동작하지만 비공식이다. KIS 연동 시 교체.
-- `Debate.submit_user_verdict`는 CLI용. HTTP 흐름에서는 Spring이 사용자 판정을 저장한다.
+**워커 설계·구현은 jangwonii 담당.** 지켜야 하는 건 이 문서의 형식뿐이고, 내부 구조는 자유다.
+
+- HTTP 서버: `ai-worker/src/bullbear/server/app.py`에 엔드포인트 틀·인증·오류 형식만 있다 (전부 501).
+  `uv run uvicorn bullbear.server:app --port 8000`, Spring은 `BULLBEAR_WORKER_MODE=http ./gradlew bootRun`.
+- 기존 코드(토론 엔진, 프롬프트, 검증기, 데이터 소스, CLI)는 10/20 초안이다. 갈아엎거나 새로 설계해도 된다.
+- 지수: pykrx 지수 API는 오류. 네이버 차트 `https://fchart.stock.naver.com/sise.nhn?symbol=KOSPI&timeframe=day&count=N&requestType=0`
+  (EUC-KR XML)은 동작한다 (비공식).
+- 종목 전체 목록: pykrx 전체 종목 API는 빈 응답. OpenDART 고유번호 파일로 만들 수 있다.
+
+### Spring이 기대하는 것 (연동하면서 확인한 점)
+
+- `POST /debates`는 15초 안에 응답해야 한다. 스냅샷·토론은 응답 뒤에 진행하는 게 안전하다.
+- SSE: 이벤트마다 `id`(1부터 순번)·`event`·`data`(JSON 한 줄). `id`·`event`가 없는 줄(하트비트 주석 등)은 Spring이 무시한다.
+  Spring은 끊기면 `Last-Event-ID: <마지막 순번>`으로 다시 붙는다 (처음엔 `0`). 끝난 토론은 처음부터 재생하고 닫는다.
+- 토론은 반드시 `debate_completed` 또는 `debate_failed`로 끝나야 한다. 안 오면 Spring은 재시도 5번 뒤 실패 처리한다.
+- `snapshot_created.close`가 채점 기준 가격이다. **장중 값이면 안 된다** (확정 종가). 같은 이유로 `GET /stocks/{ticker}`의 `as_of`,
+  `/prices/daily`, `/indices/daily`도 확정 종가만.
+- 토큰 사용량(`debate_completed.usage`)으로 Spring이 하루 비용 상한을 건다. 빠지면 추정치($0.3)로 센다.

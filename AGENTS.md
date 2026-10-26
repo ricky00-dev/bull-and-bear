@@ -25,7 +25,7 @@ Codex는 이 파일(`AGENTS.md`)을, Claude Code는 `CLAUDE.md`를 통해 같은
 |---|---|---|
 | `api/` | Spring Boot 4.1, Java 17, PostgreSQL, Flyway | ricky00-dev |
 | `web/` | React 19, Vite, TS, Tailwind 4 (모바일 우선, PWA) | ricky00-dev |
-| `ai-worker/` | Python 3.12, uv, Anthropic SDK | jangwonii |
+| `ai-worker/` | Python 3.12, uv, Anthropic SDK. 에이전트·워커 설계와 구현 (기존 코드는 초안, 바꿔도 됨) | jangwonii |
 | `docs/worker-api.md` | Spring ↔ 워커 계약 | 공동 (바꿀 땐 양쪽 승인) |
 
 ## 규칙
