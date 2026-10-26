@@ -15,7 +15,6 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
-<<<<<<< HEAD
 ## 2026-10-26 · ricky00-dev · deploy
 - 한 것: 배포 준비 (chore/deploy)
   - Dockerfile: api(Gradle → JRE), web(Vite 빌드 → Caddy), ai-worker(uv, 비루트 실행)
@@ -26,8 +25,6 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 막힘·결정 필요:
   - **ricky00-dev**: AWS 계정 (11/2 전), 키 4종
   - **jangwonii**: 워커 이미지는 빌드됨. `bullbear.server:app`(FastAPI)과 `fastapi`·`uvicorn` 의존성만 있으면 뜸. 인증은 `X-Worker-Token` == env `WORKER_TOKEN`
-=======
->>>>>>> origin/develop
 ## 2026-10-26 · ricky00-dev · api, web
 - 한 것: 홈 "오늘의 토론" 피드 + 첫 방문 안내·투자 유의 고지 (feat/home-feed)
   - `GET /api/feed`: 최신 데이터 기준일 토론을 진행 중 → 판정 많은 순으로. 판정 수, 내 판정 여부 포함, 중재자 판정은 제외(봉인)

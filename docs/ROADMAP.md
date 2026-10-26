@@ -28,11 +28,7 @@ PM이 관리한다. 일정이 바뀌면 이 파일을 고치고, 날마다 한 �
 - [x] 실험 설계 문서 `docs/experiment.md`: 토론 vs 단일 에이전트, 가설·지표·종목·기간
 - [x] 홈 "오늘의 토론" 피드: 검색 없이 오늘 진행된 토론(전향 운용 종목 포함)을 바로 보기
 - [x] 투자 유의 고지: 첫 진입·공개 화면에 "교육용 모의 판정, 투자 권유 아님"
-<<<<<<< HEAD
 - [x] Docker 이미지(api, web, ai-worker) + 운영용 compose, 환경 변수 정리 (`docs/DEPLOY.md`)
-=======
-- [ ] Docker 이미지(api, web, ai-worker) + 운영용 compose, 환경 변수 정리
->>>>>>> origin/develop
 - [ ] 워커 FastAPI 골격 초안 (jangwonii가 이어받기 쉽게, 계약 그대로)
 
 ### M2 세부 (11/2 – 11/6)
