@@ -142,3 +142,20 @@ export interface FeedItem {
   judged: number
   mine: boolean
 }
+
+/** 판정일 전후 차트. 수익률은 판정일 종가 대비 % */
+export interface ChartPoint {
+  date: string
+  close: number
+  stockPct: number
+  indexPct: number
+}
+
+export interface Chart {
+  ticker: string
+  baseDate: string
+  holdBand: number
+  points: ChartPoint[]
+  /** reached=false면 date는 주말만 뺀 예상일 */
+  marks: { horizonDays: number; date: string; reached: boolean }[]
+}

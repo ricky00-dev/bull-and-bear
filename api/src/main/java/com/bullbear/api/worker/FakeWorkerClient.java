@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SplittableRandom;
 import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -84,7 +85,7 @@ public class FakeWorkerClient implements WorkerClient {
 	public WorkerStockDetail stock(String ticker) {
 		WorkerStock s = find(ticker);
 		List<String> reasons = s.eligible() ? List.of() : List.of(s.blockReason());
-		List<Long> spark = ticker.equals("005930") ? SAMSUNG_60D : List.of();
+		List<Long> spark = ticker.equals("005930") ? SAMSUNG_60D : last60(ticker, s.close());
 		return new WorkerStockDetail(s.ticker(), s.name(), s.market(), s.close(), s.changePct(), AS_OF, s.eligible(),
 				reasons, spark);
 	}
@@ -100,8 +101,8 @@ public class FakeWorkerClient implements WorkerClient {
 	}
 
 	/**
-	 * 10/22 실제 종가에서 시작해 평일마다 결정적으로(같은 입력 → 같은 값) 움직이는 가짜 시세.
-	 * 오늘(시계) 이후 날짜는 만들지 않는다.
+	 * 10/22 실제 종가를 기준으로 평일마다 결정적으로(같은 입력 → 같은 값) 움직이는 가짜 시세.
+	 * 10/22 이전은 거꾸로 되짚어 만든다 (차트용). 오늘(시계) 이후 날짜는 만들지 않는다.
 	 */
 	@Override
 	public List<DailyClose> dailyCloses(String ticker, LocalDate from, LocalDate to) {
@@ -118,20 +119,51 @@ public class FakeWorkerClient implements WorkerClient {
 		LocalDate today = LocalDate.now(clock);
 		LocalDate end = to.isAfter(today) ? today : to;
 		List<DailyClose> out = new ArrayList<>();
+		// 10/22 이전: 그날 등락을 되돌리며 과거로
 		BigDecimal price = start;
+		for (LocalDate d = AS_OF.minusDays(1); !d.isBefore(from); d = d.minusDays(1)) {
+			if (!weekend(d)) {
+				price = price.divide(BigDecimal.ONE.add(move(key, nextWeekday(d), maxBp)), 2, RoundingMode.HALF_UP);
+				out.add(0, new DailyClose(d, price));
+			}
+		}
+		price = start;
 		for (LocalDate d = AS_OF; !d.isAfter(end); d = d.plusDays(1)) {
-			if (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY) {
+			if (weekend(d)) {
 				continue;
 			}
 			if (d.isAfter(AS_OF)) {
-				int bp = Math.floorMod((key + d).hashCode(), 2 * maxBp + 1) - maxBp;
-				price = price.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(bp, 4))).setScale(2, RoundingMode.HALF_UP);
+				price = price.multiply(BigDecimal.ONE.add(move(key, d, maxBp))).setScale(2, RoundingMode.HALF_UP);
 			}
 			if (!d.isBefore(from)) {
 				out.add(new DailyClose(d, price));
 			}
 		}
 		return out;
+	}
+
+	private List<Long> last60(String ticker, long close) {
+		List<DailyClose> all = series(ticker, BigDecimal.valueOf(close), 300, AS_OF.minusDays(100), AS_OF);
+		return all.subList(Math.max(0, all.size() - 60), all.size()).stream().map(c -> c.close().longValue()).toList();
+	}
+
+	/** 그날 등락률 (소수, ±maxBp bp) */
+	private static BigDecimal move(String key, LocalDate d, int maxBp) {
+		// 문자열 해시는 연속한 날짜끼리 값이 비슷해 시세가 직선이 된다. 섞어서 쓴다.
+		int bp = new SplittableRandom((key + d).hashCode()).nextInt(2 * maxBp + 1) - maxBp;
+		return BigDecimal.valueOf(bp, 4);
+	}
+
+	private static boolean weekend(LocalDate d) {
+		return d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
+	}
+
+	private static LocalDate nextWeekday(LocalDate d) {
+		LocalDate n = d.plusDays(1);
+		while (weekend(n)) {
+			n = n.plusDays(1);
+		}
+		return n;
 	}
 
 	@Override
