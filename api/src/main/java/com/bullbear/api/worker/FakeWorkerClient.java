@@ -275,9 +275,10 @@ public class FakeWorkerClient implements WorkerClient {
 	@SafeVarargs
 	private static void accepted(List<Map<String, Object>> raw, String side, String round, int attempts, String claim,
 			Map<String, Object>... evidence) {
+		// 실제 워커처럼 주장 뒤에 근거별 설명을 붙인다
 		StringBuilder argument = new StringBuilder(claim);
 		for (Map<String, Object> e : evidence) {
-			argument.append(" [").append(e.get("ref")).append("]");
+			argument.append("\n").append(e.get("interpretation")).append(" [").append(e.get("ref")).append("]");
 		}
 		raw.add(event("statement_accepted", Map.of(
 				"side", side, "round", round, "attempts", attempts, "verified", true,

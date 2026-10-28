@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { chipText } from '../lib/glossary'
 import type { Evidence, Round, Side, Statement } from '../lib/types'
 import { ROUND_LABEL } from '../lib/types'
@@ -18,6 +19,12 @@ export function StatementBubble({
     ? { badge: 'bg-up', name: 'text-up-ink', border: 'border-up-line', chip: 'border-up-line bg-up-soft', check: 'text-up-ink' }
     : { badge: 'bg-down', name: 'text-down-ink', border: 'border-down-line', chip: 'border-down-line bg-down-soft', check: 'text-down-ink' }
   const retried = s.attempts > 1
+  const [open, setOpen] = useState(false)
+  // 본문의 근거 표시([E1])는 아래 칩이 대신하고, 앞에 주장을 되풀이하면 그 부분도 뺀다
+  const claim = s.statement.claim.trim()
+  const raw = s.statement.argument?.replace(/[ \t]*\[E\d+\]/g, '').trim() ?? ''
+  const argument = (raw.startsWith(claim) ? raw.slice(claim.length) : raw).trim()
+  const hasMore = argument !== ''
 
   return (
     <article className={`animate-rise flex flex-col gap-1.5 ${bull ? 'mr-9' : 'ml-9 items-end'}`}>
@@ -29,6 +36,16 @@ export function StatementBubble({
         <p className="text-[15px] leading-relaxed">
           <TermText text={s.statement.claim} />
         </p>
+        {hasMore && open && (
+          <p className="whitespace-pre-line border-t border-line-soft pt-2.5 text-sm leading-relaxed text-sub">
+            <TermText text={argument} />
+          </p>
+        )}
+        {hasMore && (
+          <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="self-start text-xs font-bold text-sub">
+            {open ? '접기' : '자세히 보기'}
+          </button>
+        )}
         <div className="flex flex-wrap gap-1.5">
           {s.statement.evidence.map((e) => (
             <button
