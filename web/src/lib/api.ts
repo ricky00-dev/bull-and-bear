@@ -1,4 +1,4 @@
-import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, Reveal, StockDetail, StockItem } from './types'
+import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, Reveal, StockDetail, StockItem } from './types'
 
 /** 웹은 개발 서버, Capacitor 앱은 실제 서버 주소. 쿠키를 쓰지 않으므로 출처가 달라도 된다. */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -94,6 +94,10 @@ export const api = {
   ) => request<Reveal>(`/api/debates/${id}/judgment`, { method: 'POST', body: JSON.stringify(body) }),
   reveal: (id: string) => request<Reveal>(`/api/debates/${id}/reveal`),
   chart: (id: string) => request<Chart>(`/api/debates/${id}/chart`),
+  quizStart: () => request<QuizRound>('/api/quiz/rounds', { method: 'POST' }),
+  quizRound: (id: string) => request<QuizRound>(`/api/quiz/rounds/${id}`),
+  quizAnswer: (id: string, idx: number, decision: Decision) =>
+    request<QuizAnswer>(`/api/quiz/rounds/${id}/questions/${idx}/answer`, { method: 'POST', body: JSON.stringify({ decision }) }),
   me: () => request<{ userId: string; guest: boolean; nickname: string | null }>('/api/me'),
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),
   myJudgment: (id: string) => request<JudgmentDetail>(`/api/me/judgments/${id}`),

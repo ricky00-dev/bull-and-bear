@@ -4,6 +4,8 @@ import { DebatePage } from './pages/DebatePage'
 import { HomePage } from './pages/HomePage'
 import { JudgePage } from './pages/JudgePage'
 import { MyJudgmentsPage } from './pages/MyJudgmentsPage'
+import { QuizHomePage } from './pages/QuizHomePage'
+import { QuizPlayPage } from './pages/QuizPlayPage'
 import { RevealPage } from './pages/RevealPage'
 import { ScorePage } from './pages/ScorePage'
 import { StockPage } from './pages/StockPage'
@@ -27,6 +29,8 @@ export default function App() {
         <Route path="/debates/:id" element={<DebatePage />} />
         <Route path="/debates/:id/judge" element={<JudgePage />} />
         <Route path="/debates/:id/reveal" element={<RevealPage />} />
+        <Route path="/quiz" element={<QuizHomePage />} />
+        <Route path="/quiz/:id" element={<QuizPlayPage />} />
         <Route path="/me" element={<MyJudgmentsPage />} />
         <Route path="/me/judgments/:id" element={<ScorePage />} />
         <Route path="*" element={<HomePage />} />

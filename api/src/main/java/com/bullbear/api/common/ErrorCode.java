@@ -9,6 +9,9 @@ public enum ErrorCode {
 	SEALED(HttpStatus.FORBIDDEN),
 	NOT_FOUND(HttpStatus.NOT_FOUND),
 	DEBATE_NOT_FINISHED(HttpStatus.CONFLICT),
+	/** 타임머신 퀴즈로 낼 토론(7거래일 결과가 나온 토론)이 아직 없다. */
+	QUIZ_EMPTY(HttpStatus.CONFLICT),
+	ALREADY_ANSWERED(HttpStatus.CONFLICT),
 	NOT_ELIGIBLE(HttpStatus.UNPROCESSABLE_CONTENT),
 	/** 사용자 한 명의 하루 새 토론 수를 넘었다. */
 	DAILY_LIMIT(HttpStatus.TOO_MANY_REQUESTS),

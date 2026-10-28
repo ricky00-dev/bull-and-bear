@@ -19,3 +19,9 @@ export function bigWon(n: number): string {
   if (abs >= 1e8) return `${sign}${Math.round(abs / 1e8).toLocaleString('ko-KR')}억원`
   return won(n)
 }
+
+/** 오늘(KST) 'YYYY-MM-DD' */
+export const todayKst = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+
+/** 채점 예정일 안내. 예정일이 지났는데 아직 채점 전이면(시세 대기·휴장) 날짜 대신 "곧" */
+export const dueLabel = (iso: string) => (iso < todayKst() ? '곧 채점' : `${monthDay(iso)} 채점 예정`)

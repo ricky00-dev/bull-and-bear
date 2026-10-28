@@ -1,4 +1,4 @@
-import { monthDay, pctPoint } from '../lib/format'
+import { dueLabel, pctPoint } from '../lib/format'
 import type { ScoreView } from '../lib/types'
 
 /** 목록 카드에 붙는 채점 상태 한 줄: "3일 적중 +2.31%p" / "7일 채점 11/2 예정" */
@@ -6,7 +6,7 @@ export function ScoreChip({ s, who = 'user' }: { s: ScoreView; who?: 'user' | 'm
   if (s.status === 'PENDING') {
     return (
       <span className="rounded-md bg-ground px-2 py-1 text-[11px] font-bold text-sub">
-        {s.horizonDays}일 · {monthDay(s.scheduledDate)} 예정
+        {s.horizonDays}일 · {dueLabel(s.scheduledDate)}
       </span>
     )
   }

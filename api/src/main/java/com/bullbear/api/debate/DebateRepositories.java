@@ -37,4 +37,6 @@ interface DebateEventRepository extends JpaRepository<DebateEvent, Long> {
 	List<DebateEvent> findByDebateIdAndSeqGreaterThanOrderBySeq(UUID debateId, long seq);
 
 	boolean existsByDebateIdAndSeq(UUID debateId, long seq);
+
+	List<DebateEvent> findByDebateIdAndTypeOrderBySeq(UUID debateId, String type);
 }
