@@ -68,6 +68,10 @@ export function JudgePage() {
           <p className="text-sm leading-relaxed text-sub">
             코스피보다 2%p 넘게 오르면 매수, 2%p 넘게 내리면 매도, 그 사이면 보류가 맞아요.
           </p>
+          <p className="mt-1 rounded-xl bg-ground px-3.5 py-2.5 text-[13px] leading-relaxed">
+            <span className="font-bold">판정 팁 · </span>
+            누가 말을 잘했는지보다 <b>어느 쪽 근거가 더 탄탄했는지</b> 떠올려 보세요. 상대의 반박에 제대로 답했는지도 중요해요.
+          </p>
         </div>
 
         <fieldset className="flex flex-col gap-2.5">
