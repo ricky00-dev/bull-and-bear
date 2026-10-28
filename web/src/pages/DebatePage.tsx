@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { EvidenceSheet } from '../components/EvidenceSheet'
+import { TermText } from '../components/TermText'
 import { BottomBar, Icon, PrimaryButton, Screen, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
@@ -112,7 +113,9 @@ function Bubble({ s, onChip }: { s: AcceptedStatement; onChip: (e: Evidence) => 
         {ROUND_LABEL[s.round]}
       </header>
       <div className={`flex w-full flex-col gap-2.5 border bg-white p-3.5 ${tone.border} ${bull ? 'rounded-[4px_16px_16px_16px]' : 'rounded-[16px_4px_16px_16px]'}`}>
-        <p className="text-[15px] leading-relaxed">{s.statement.claim}</p>
+        <p className="text-[15px] leading-relaxed">
+          <TermText text={s.statement.claim} />
+        </p>
         <div className="flex flex-wrap gap-1.5">
           {s.statement.evidence.map((e) => (
             <button

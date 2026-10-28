@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 /** 모바일 우선: 폰 폭 기준, 넓은 화면에서는 가운데 480px */
@@ -98,6 +98,31 @@ export function ErrorNotice({ message, onRetry }: { message: string; onRetry?: (
           다시 시도
         </button>
       )}
+    </div>
+  )
+}
+
+/** 아래에서 올라오는 시트. 배경을 누르거나 Esc로 닫는다. */
+export function BottomSheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-30 flex flex-col justify-end">
+      <button type="button" aria-label="닫기" onClick={onClose} className="absolute inset-0 bg-ink/45" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-3.5 rounded-t-[22px] bg-white px-5.5 pt-2.5"
+      >
+        <div className="h-1 w-10 self-center rounded-full bg-line" />
+        {children}
+        <PrimaryButton onClick={onClose}>확인</PrimaryButton>
+      </div>
     </div>
   )
 }

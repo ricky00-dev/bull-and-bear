@@ -25,6 +25,17 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 확인: API 테스트 20개 통과, 브라우저로 SK하이닉스(3일 채점 후)·현대차(판정 직후) 화면 확인
 - 다음: 타임머신 퀴즈 (ricky00-dev). ROADMAP의 주가 차트 항목 체크는 #14 머지 뒤
 - 막힘·결정 필요: 없음. 워커의 `/prices/daily`, `/indices/daily`가 판정일 30일 전부터도 응답해야 차트 앞부분이 나온다 (계약상 기간 조회라 추가 작업 없음)
+## 2026-10-28 · ricky00-dev · web, docs
+- 한 것 (feat/plain-terms):
+  - 토론 발언·중재자 이유 본문의 투자 용어(40여 개)에 점선 밑줄 → 누르면 쉬운 풀이 시트 (`lib/glossary.ts` `TERMS`, `components/TermText.tsx`)
+  - 같은 용어는 발언마다 처음 한 번만 밑줄. 영문 약어는 단어 경계를 지킴 (PERFORMANCE 속 PER 무시)
+  - 시트 공통화 `ui.tsx` `BottomSheet` (근거 시트도 이걸 씀)
+  - 판정 화면 "판정 팁": 말솜씨보다 근거의 탄탄함을 보라는 한 줄
+  - README 맨 위에 서비스 한 줄 정의, ROADMAP에 주가 차트·퀴즈 원칙·11/18 발표 메시지 결정·실시간 시세 제외 이유
+  - worker-api.md "웹 쪽 희망 사항": 입문자 말투, 선택 필드 `statement.plain` 제안 (계약 아님)
+- 확인: 가짜 워커 토론에서 밑줄·시트 동작 브라우저로 확인, tsc·lint 통과
+- 다음: 주가 차트(종가) → 타임머신 퀴즈 → 전시 모드 (ricky00-dev)
+- 막힘·결정 필요 (**jangwonii**): `statement.plain`을 넣을지, 발언 말투를 입문자 기준으로 할지
 ## 2026-10-26 · ricky00-dev · ai-worker, api
 - 한 것:
   - 워커 HTTP 서버 **틀만** (feat/worker-server-stub): 계약 엔드포인트 시그니처·인증·오류 형식, 내용은 전부 501
