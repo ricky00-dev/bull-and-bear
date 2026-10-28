@@ -7,7 +7,7 @@ import { TodayFeed } from '../components/TodayFeed'
 import { Icon, Screen } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
-import { changeColor, monthDay, pct, won } from '../lib/format'
+import { changeColor, dueLabel, pct, won } from '../lib/format'
 import { isPending } from '../lib/score'
 import { DECISION_LABEL } from '../lib/types'
 import type { StockItem } from '../lib/types'
@@ -113,7 +113,7 @@ export function HomePage() {
                 <span className="flex flex-col gap-1">
                   <span className="text-xs text-[#c9cdd6]">진행 중인 내 판정</span>
                   <span className="text-[15px] font-bold">
-                    {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 채점 {monthDay(nextScore.scheduledDate)} 예정
+                    {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 {dueLabel(nextScore.scheduledDate)}
                   </span>
                 </span>
                 <Icon d={ICONS.chevron} />

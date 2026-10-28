@@ -215,7 +215,7 @@ public class FakeWorkerClient implements WorkerClient {
 				"변동성이 연율 76%예요. 바닥을 확인하기 전까지 손실 폭이 클 수 있어요.",
 				evidence("E1", "PX.VOL_20D", 75.96, "하루하루 가격이 얼마나 들쭉날쭉했는지 1년 기준으로 바꾼 값이에요."));
 		turn(raw, "bull", "closing", "get_financials",
-				"추세 지표가 약한 건 인정해요. 그래도 실적이 받쳐준다면 지금은 기회예요.",
+				"추세 지표가 약한 건 인정해요. 그래도 " + s.name() + "의 실적이 받쳐준다면 지금은 기회예요.",
 				evidence("E1", "PX.RET_6M", 1.66, "반년 전과 비교하면 거의 제자리예요."));
 		turn(raw, "bear", "closing", "get_news",
 				"실적 기대는 이미 1년 상승에 반영됐어요. 추세가 돌아설 때까지 기다리는 게 나아요.",

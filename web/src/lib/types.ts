@@ -145,17 +145,66 @@ export interface FeedItem {
 
 /** 판정일 전후 차트. 수익률은 판정일 종가 대비 % */
 export interface ChartPoint {
-  date: string
-  close: number
+  /** 퀴즈 문제에서는 가린다 (null) */
+  date: string | null
+  close: number | null
   stockPct: number
   indexPct: number
 }
 
 export interface Chart {
-  ticker: string
-  baseDate: string
+  /** 퀴즈 문제에서는 ticker·baseDate·marks.date를 가린다 (null) */
+  ticker: string | null
+  baseDate: string | null
   holdBand: number
   points: ChartPoint[]
   /** reached=false면 date는 주말만 뺀 예상일 */
-  marks: { horizonDays: number; date: string; reached: boolean }[]
+  marks: { horizonDays: number; date: string | null; reached: boolean }[]
+}
+
+/** 타임머신 퀴즈 */
+export interface QuizStatement {
+  side: Side
+  round: Round
+  attempts: number
+  statement: Statement
+}
+
+export interface QuizQuestion {
+  idx: number
+  /** "반도체 업종 대형주" */
+  sector: string
+  /** "2026년 11월 첫째 주" */
+  period: string
+  statements: QuizStatement[]
+  chart: Chart
+}
+
+export interface QuizRound {
+  id: string
+  total: number
+  userScore: number
+  aiScore: number
+  questions: { idx: number; decision: Decision | null; userHit: boolean | null; moderatorHit: boolean | null }[]
+  /** 다 풀었으면 null */
+  current: QuizQuestion | null
+}
+
+export interface QuizAnswer {
+  idx: number
+  stockName: string
+  ticker: string
+  baseDate: string
+  decision: Decision
+  correct: Decision
+  userHit: boolean
+  moderatorDecision: Decision
+  moderatorReasoning: string
+  moderatorHit: boolean
+  stockReturn: number
+  indexReturn: number
+  excessReturn: number
+  holdBand: number
+  chart: Chart
+  last: boolean
 }

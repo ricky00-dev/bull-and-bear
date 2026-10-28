@@ -4,7 +4,7 @@ import { ReturnChart } from '../components/ReturnChart'
 import { BandBar } from '../components/ScoreBits'
 import { Card, ErrorNotice, Screen, Skeleton, TopBar } from '../components/ui'
 import { api } from '../lib/api'
-import { monthDay, pct, pctPoint, won } from '../lib/format'
+import { dueLabel, monthDay, pct, pctPoint, won } from '../lib/format'
 import { describe } from '../lib/glossary'
 import { headlineScore } from '../lib/score'
 import type { ScoreView } from '../lib/types'
@@ -54,7 +54,7 @@ export function ScorePage() {
       <main className="flex flex-1 flex-col gap-3.5 px-5 pb-8 pt-1">
         <div className="flex flex-col gap-1">
           <p className="text-[13px] text-sub">
-            {latest ? `${monthDay(latest.scoredTradeDate!)} · 판정 ${latest.horizonDays}거래일 뒤` : `첫 채점 ${monthDay(nextPending!.scheduledDate)} 예정`}
+            {latest ? `${monthDay(latest.scoredTradeDate!)} · 판정 ${latest.horizonDays}거래일 뒤` : `첫 ${dueLabel(nextPending!.scheduledDate)}`}
           </p>
           <h2 className="text-2xl font-extrabold tracking-tight">{headline}</h2>
         </div>
@@ -142,7 +142,7 @@ function EvidenceRow({ title, ids, empty }: { title: string; ids: string[]; empt
 }
 
 function hitLabel(s: ScoreView | undefined, who: 'user' | 'moderator') {
-  if (!s || s.status === 'PENDING') return s ? `${monthDay(s.scheduledDate)} 채점` : '-'
+  if (!s || s.status === 'PENDING') return s ? dueLabel(s.scheduledDate).replace(' 예정', '') : '-'
   const hit = who === 'user' ? s.userHit : s.moderatorHit
   return hit ? '적중' : '빗나감'
 }

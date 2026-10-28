@@ -26,13 +26,16 @@ public class DebateService {
 	}
 
 	private final DebateRepository debates;
+	private final DebateEventRepository events;
 	private final WorkerClient worker;
 	private final DebateRelay relay;
 	private final DebateQuota quota;
 	private final Clock clock;
 
-	DebateService(DebateRepository debates, WorkerClient worker, DebateRelay relay, DebateQuota quota, Clock clock) {
+	DebateService(DebateRepository debates, DebateEventRepository events, WorkerClient worker, DebateRelay relay,
+			DebateQuota quota, Clock clock) {
 		this.debates = debates;
+		this.events = events;
 		this.worker = worker;
 		this.relay = relay;
 		this.quota = quota;
@@ -101,5 +104,11 @@ public class DebateService {
 
 	public Debate get(UUID id) {
 		return debates.findById(id).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "토론을 찾을 수 없습니다"));
+	}
+
+	/** 확정된 발언 이벤트 원본(JSON) 순서대로. 퀴즈처럼 스트림 없이 한 번에 보여줄 때 쓴다. */
+	public List<String> acceptedStatements(UUID debateId) {
+		return events.findByDebateIdAndTypeOrderBySeq(debateId, "statement_accepted").stream()
+				.map(DebateEvent::getPayload).toList();
 	}
 }
