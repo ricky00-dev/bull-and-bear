@@ -24,7 +24,7 @@ export function Sparkline({ closes }: { closes: number[] }) {
         <circle cx={lastX} cy={lastY} r={4} fill={color} />
       </svg>
       <figcaption className="flex justify-between text-[11px] text-sub">
-        <span>최근 {closes.length}거래일</span>
+        <span>최근 {closes.length}거래일 종가 (약 {Math.round(closes.length / 20)}개월)</span>
         <span>
           최고 {won(hi)} · 최저 {won(lo)}
         </span>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
+import { ReturnChart } from '../components/ReturnChart'
 import { BandBar } from '../components/ScoreBits'
 import { Card, ErrorNotice, Screen, Skeleton, TopBar } from '../components/ui'
 import { api } from '../lib/api'
@@ -13,6 +14,8 @@ import { DECISION_LABEL } from '../lib/types'
 export function ScorePage() {
   const { id = '' } = useParams()
   const q = useQuery({ queryKey: ['me', 'judgment', id], queryFn: () => api.myJudgment(id) })
+  const debateId = q.data?.judgment.debateId
+  const chart = useQuery({ queryKey: ['chart', debateId], queryFn: () => api.chart(debateId!), enabled: !!debateId })
 
   if (q.isError) {
     return (
@@ -57,6 +60,11 @@ export function ScorePage() {
         </div>
 
         {latest && <ResultCard s={latest} band={holdBand} />}
+
+        <Card className="flex flex-col gap-2.5">
+          <h3 className="text-sm font-extrabold">판정 뒤 주가는 이렇게 움직였어요</h3>
+          {chart.data ? <ReturnChart chart={chart.data} /> : <Skeleton className="h-44 w-full" />}
+        </Card>
 
         <div className="grid grid-cols-2 gap-2.5">
           <Card className="flex flex-col gap-1">
