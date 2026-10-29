@@ -1,111 +1,151 @@
-"""AI 워커 HTTP 서버 틀 (FastAPI). 계약: docs/worker-api.md
-
-엔드포인트 모양, 인증, 오류 형식만 있다. 각 엔드포인트의 내용은 비어 있다 (501).
-설계·구현은 jangwonii가 한다. 구조(파일 나누기, 동기/비동기, 실행 방식)도 자유롭게 바꿔도 된다.
-지켜야 할 것은 요청·응답·이벤트 형식(계약)뿐이다. Spring은 그 형식만 본다.
-"""
-
+"""Internal HTTP/SSE API (v0.4 + v0.5 asynchronous snapshot acknowledgement)."""
 from __future__ import annotations
 
+import asyncio
 import hmac
 import os
+from contextlib import asynccontextmanager
 from datetime import date
 
+import httpx
 from fastapi import Depends, FastAPI, Header, Query, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException
 
-WORKER_TOKEN = os.getenv("WORKER_TOKEN", "dev-worker-token")  # Spring의 bullbear.worker.token과 같아야 한다
-
-app = FastAPI(title="bullbear ai-worker")
-
-
-class ApiError(Exception):
-    """계약의 오류 형식 {"error": {"code", "message"}}로 응답한다. 코드 목록은 계약 '공통' 절."""
-
-    def __init__(self, status: int, code: str, message: str):
-        self.status, self.code, self.message = status, code, message
-
-
-@app.exception_handler(ApiError)
-async def _api_error(_req: Request, e: ApiError):
-    return JSONResponse({"error": {"code": e.code, "message": e.message}}, status_code=e.status)
-
-
-def auth(x_worker_token: str | None = Header(default=None)) -> None:
-    if not x_worker_token or not hmac.compare_digest(x_worker_token, WORKER_TOKEN):
-        raise ApiError(401, "UNAUTHORIZED", "X-Worker-Token이 맞지 않습니다")
-
-
-def todo(what: str):
-    raise ApiError(501, "NOT_IMPLEMENTED", f"아직 구현하지 않음: {what}")
+from ..config import load_settings
+from ..data.base import DataUnavailable
+from .errors import ApiError
+from .market import Market
+from .service import Service
 
 
 class StartDebate(BaseModel):
-    ticker: str
-    request_id: str  # Spring이 만드는 멱등 키. 같은 키면 같은 debate_id를 돌려준다
-    max_extra_rounds: int = 1
+    ticker: str = Field(pattern=r'^[0-9]{6}$')
+    request_id: str = Field(min_length=1, max_length=128)
+    max_extra_rounds: int = Field(default=1, ge=0, le=3)
 
 
-@app.get("/health")
-def health() -> dict:
-    return {"status": "UP"}
+def create_app(*, settings=None, market=None, runner_factory=None, token=None, max_running=None):
+    settings = settings or load_settings()
+    worker_token = token if token is not None else os.getenv('WORKER_TOKEN', 'dev-worker-token')
+    if not worker_token:
+        raise ValueError('WORKER_TOKEN must not be empty')
+    capacity = max_running if max_running is not None else int(os.getenv('WORKER_MAX_CONCURRENT', '2'))
+    if capacity < 1:
+        raise ValueError('WORKER_MAX_CONCURRENT must be positive')
+
+    @asynccontextmanager
+    async def lifespan(app):
+        app.state.service = Service(settings, market or Market(settings), runner_factory=runner_factory, max_running=capacity)
+        try:
+            yield
+        finally:
+            await asyncio.to_thread(app.state.service.close)
+
+    app = FastAPI(title='bullbear ai-worker', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+
+    def service(request: Request):
+        return request.app.state.service
+
+    def auth(x_worker_token: str | None = Header(default=None)):
+        if not x_worker_token or not hmac.compare_digest(x_worker_token.encode(), worker_token.encode()):
+            raise ApiError(401, 'UNAUTHORIZED', 'X-Worker-Token이 맞지 않습니다')
+
+    @app.exception_handler(ApiError)
+    async def api_error(request, exc):
+        error = {'code': exc.code, 'message': exc.message}
+        if exc.reasons is not None:
+            error['reasons'] = exc.reasons
+        return JSONResponse({'error': error}, status_code=exc.status,
+                            headers={'Retry-After': '5'} if exc.status == 429 else None)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, exc):
+        return await api_error(request, ApiError(400, 'INVALID_REQUEST', '요청 형식이나 범위를 확인하세요'))
+
+    @app.exception_handler(HTTPException)
+    async def http_error(request, exc):
+        return await api_error(request, ApiError(exc.status_code, 'NOT_FOUND' if exc.status_code == 404 else 'INVALID_REQUEST', '요청 경로 또는 메서드를 확인하세요'))
+
+    @app.exception_handler(DataUnavailable)
+    @app.exception_handler(httpx.HTTPError)
+    async def data_error(request, exc):
+        return await api_error(request, ApiError(503, 'DATA_UNAVAILABLE', '시장 데이터 공급자에 연결할 수 없습니다'))
+
+    @app.exception_handler(Exception)
+    async def unexpected_error(request, exc):
+        return await api_error(request, ApiError(500, 'INTERNAL_ERROR', '워커 내부 오류가 발생했습니다'))
+
+    @app.get('/health')
+    def health():
+        return {'status': 'UP'}
+
+    secured = [Depends(auth)]
+
+    @app.get('/stocks/search', dependencies=secured)
+    def search(q: str = Query(max_length=100), limit: int = Query(default=10, ge=1, le=20), svc=Depends(service)):
+        return svc.market.search(q, limit)
+
+    @app.get('/stocks/{ticker}', dependencies=secured)
+    def stock(ticker: str, svc=Depends(service)):
+        return svc.market.quote(ticker).detail()
+
+    @app.get('/stocks/{ticker}/eligibility', dependencies=secured)
+    def eligibility(ticker: str, svc=Depends(service)):
+        quote = svc.market.quote(ticker)
+        return {'ticker': ticker, 'eligible': not quote.reasons, 'reasons': quote.reasons}
+
+    @app.post('/debates', status_code=202, dependencies=secured)
+    def start(body: StartDebate, svc=Depends(service)):
+        return svc.create(body)
+
+    @app.get('/debates/{debate_id}/events', dependencies=secured)
+    async def events(debate_id: str, request: Request, last_event_id: int = Header(default=0, ge=0, alias='Last-Event-ID'), svc=Depends(service)):
+        svc.store.get(debate_id)
+
+        async def stream():
+            after = last_event_id
+            idle = 0
+            while True:
+                if await request.is_disconnected():
+                    return
+                batch = svc.store.events(debate_id, after)
+                for event in batch:
+                    yield f"id: {event['seq']}\nevent: {event['type']}\ndata: {event['data']}\n\n"
+                    after = event['seq']
+                # Terminal state and a final read avoid a completion/read race.
+                if svc.store.get(debate_id)['status'] != 'running':
+                    for event in svc.store.events(debate_id, after):
+                        yield f"id: {event['seq']}\nevent: {event['type']}\ndata: {event['data']}\n\n"
+                    return
+                idle = 0 if batch else idle + 1
+                if idle >= 40:
+                    yield ': heartbeat\n\n'
+                    idle = 0
+                await asyncio.sleep(0.25)
+
+        return StreamingResponse(stream(), media_type='text/event-stream',
+                                 headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+
+    @app.get('/debates/{debate_id}', dependencies=secured)
+    def debate(debate_id: str, svc=Depends(service)):
+        return svc.detail(debate_id)
+
+    @app.get('/snapshots/{snapshot_id}', dependencies=secured)
+    def snapshot(snapshot_id: str, svc=Depends(service)):
+        return svc.store.snapshot(snapshot_id)
+
+    @app.get('/prices/daily', dependencies=secured)
+    def prices(ticker: str, from_: date = Query(alias='from'), to: date = Query(), svc=Depends(service)):
+        return svc.market.daily(ticker, from_, to)
+
+    @app.get('/indices/daily', dependencies=secured)
+    def indices(code: str, from_: date = Query(alias='from'), to: date = Query(), svc=Depends(service)):
+        return svc.market.daily(code, from_, to, index=True)
+
+    return app
 
 
-# 1. 종목 ---------------------------------------------------------------------
-
-@app.get("/stocks/search", dependencies=[Depends(auth)])
-def search(q: str, limit: int = 10):
-    """계약 1절. 종목명·코드·초성 검색, 토론 불가 종목도 이유와 함께."""
-    todo("GET /stocks/search")
-
-
-@app.get("/stocks/{ticker}", dependencies=[Depends(auth)])
-def stock(ticker: str):
-    """계약 1절. as_of는 지금 토론을 시작하면 스냅샷이 쓸 날짜와 같아야 한다 (Spring이 재사용 키로 씀)."""
-    todo("GET /stocks/{ticker}")
-
-
-@app.get("/stocks/{ticker}/eligibility", dependencies=[Depends(auth)])
-def eligibility(ticker: str):
-    todo("GET /stocks/{ticker}/eligibility")
-
-
-# 2. 토론 ---------------------------------------------------------------------
-
-@app.post("/debates", status_code=202, dependencies=[Depends(auth)])
-def start_debate(body: StartDebate):
-    """계약 2절. Spring은 15초 안에 응답을 기다린다."""
-    todo("POST /debates")
-
-
-@app.get("/debates/{debate_id}/events", dependencies=[Depends(auth)])
-async def events(debate_id: str, last_event_id: str | None = Header(default=None, alias="Last-Event-ID")):
-    """계약 2절. text/event-stream, 각 이벤트에 id(순번)·event·data(JSON 한 줄).
-    Spring은 끊기면 Last-Event-ID(마지막으로 받은 순번, 처음엔 0)를 보내 그 뒤부터 받는다."""
-    todo("GET /debates/{id}/events")
-
-
-@app.get("/debates/{debate_id}", dependencies=[Depends(auth)])
-def debate(debate_id: str):
-    todo("GET /debates/{id}")
-
-
-# 3. 스냅샷 -------------------------------------------------------------------
-
-@app.get("/snapshots/{snapshot_id}", dependencies=[Depends(auth)])
-def snapshot(snapshot_id: str):
-    todo("GET /snapshots/{id}")
-
-
-# 4. 채점용 시세 ---------------------------------------------------------------
-
-@app.get("/prices/daily", dependencies=[Depends(auth)])
-def prices(ticker: str, from_: date = Query(alias="from"), to: date = Query()):
-    """계약 4절. 확정된 종가만, 날짜 오름차순."""
-    todo("GET /prices/daily")
-
-
-@app.get("/indices/daily", dependencies=[Depends(auth)])
-def indices(code: str, from_: date = Query(alias="from"), to: date = Query()):
-    todo("GET /indices/daily")
+app = create_app()

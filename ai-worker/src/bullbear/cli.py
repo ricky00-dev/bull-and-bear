@@ -14,12 +14,10 @@ from datetime import datetime
 
 from .config import Settings, load_settings
 from .data import DataUnavailable
-from .data.naver_news import NaverNewsSource
-from .data.pykrx_dart import PykrxDartSource
 from .data.universe import UNIVERSE, UnknownTicker, resolve
 from .events import EventLog
 from .schemas import ROUND_LABELS, Decision, Side
-from .snapshot import Snapshot, build_snapshot
+from .snapshot import Snapshot
 
 _UNIT = {"KRW": "원", "KRW/share": "원", "%": "%", "x": "배", "shares": "주", "count": "", "text": ""}
 
@@ -35,16 +33,10 @@ def _fmt(value: float | None, unit: str) -> str:
 
 
 def _make_snapshot(settings: Settings, query: str) -> Snapshot:
+    from .server.market import Market
     ticker, name = resolve(query)
-    source = PykrxDartSource(settings.dart_api_key, settings.cache_dir)
-    try:
-        news = NaverNewsSource(settings.naver_client_id, settings.naver_client_secret)
-    except DataUnavailable as e:
-        print(f"경고: {e}", file=sys.stderr)
-        news = None
-    snap = build_snapshot(source, ticker, name, news=news)
-    snap.save(settings.snapshot_dir)
-    return snap
+    market = Market(settings)
+    return market.snapshot(market.quote(ticker))
 
 
 def cmd_universe(_args, _settings: Settings) -> None:

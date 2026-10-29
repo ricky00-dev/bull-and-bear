@@ -1,5 +1,4 @@
-# AI 워커. FastAPI 서버(bullbear.server:app)가 완성되면 그대로 뜬다 — 담당 jangwonii
-# 의존성에 fastapi, uvicorn을 추가해야 한다 (docs/DEPLOY.md)
+# AI 워커 HTTP/SSE 서버. 데이터 볼륨당 단일 프로세스로 실행한다.
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
