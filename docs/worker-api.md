@@ -244,12 +244,15 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 **워커 설계·구현은 jangwonii 담당.** 지켜야 하는 건 이 문서의 형식뿐이고, 내부 구조는 자유다.
 
-- HTTP 서버: `ai-worker/src/bullbear/server/app.py`에 엔드포인트 틀·인증·오류 형식만 있다 (전부 501).
-  `uv run uvicorn bullbear.server:app --port 8000`, Spring은 `BULLBEAR_WORKER_MODE=http ./gradlew bootRun`.
-- 기존 코드(토론 엔진, 프롬프트, 검증기, 데이터 소스, CLI)는 10/20 초안이다. 갈아엎거나 새로 설계해도 된다.
-- 지수: pykrx 지수 API는 오류. 네이버 차트 `https://fchart.stock.naver.com/sise.nhn?symbol=KOSPI&timeframe=day&count=N&requestType=0`
-  (EUC-KR XML)은 동작한다 (비공식).
-- 종목 전체 목록: pykrx 전체 종목 API는 빈 응답. OpenDART 고유번호 파일로 만들 수 있다.
+- HTTP 서버: 인증·종목 조회·비동기 토론·스냅샷·종목/지수 기간 시세 및 SSE 재생을 구현했다.
+  SQLite로 이벤트·멱등 키를 보존하며 데이터 디렉터리당 단일 프로세스로 실행한다.
+  `uv run uvicorn bullbear.server:app --port 8000`, Spring은 `worker` 프로필과 같은 `WORKER_TOKEN`을 사용한다.
+- 토론 엔진은 7거래일 판정 기준, 수치·개념·논리·표현 검증과 재작성을 적용한다.
+  HTTP/CLI는 Anthropic 경로이고, OpenAI는 `python -m bullbear.experiment` 비교 실험에서 사용한다.
+- 주가·지수는 KRX 공식 OPEN API, 재무·공시는 OpenDART, 뉴스는 NAVER API HUB를 사용한다.
+  최초 시세 캐시는 `bullbear snapshot`으로 미리 준비한다. 원시 종가의 기업행사 보정은 아직 없다.
+- 종목 검색은 OpenDART 목록으로 확장하며, 토론 허용 대상은 현재 대형주 30종목이다.
+  전체 ETF/우선주 마스터 및 시장 전체 시총·거래대금 필터는 아직 구현하지 않았다.
 
 ### Spring이 기대하는 것 (연동하면서 확인한 점)
 
