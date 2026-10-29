@@ -63,3 +63,35 @@ def test_verdict_sealed_until_user_submits(snap, tmp_path):
     assert [e["type"] for e in events][-2:] == ["user_verdict", "verdict_revealed"]
     assert events[-1]["agrees_with_user"] is False
     assert [e["seq"] for e in events] == list(range(1, len(events) + 1))
+
+
+@pytest.mark.parametrize("first_side", [Side.BULL, Side.BEAR])
+def test_each_turn_receives_exact_prior_statements(snap, tmp_path, first_side):
+    from bullbear import prompts
+    from bullbear.agents import Attempt
+
+    rendered = []
+    seen_sides = []
+
+    class HistoryCheckingDebater:
+        def speak(self, side, round_kind, transcript, *, verify, **kwargs):
+            assert transcript == rendered
+            seen_sides.append(side)
+            st = statement(("E1", "PX.CLOSE", 399))
+            st = st.model_copy(update={"claim": f"Unique turn {len(rendered) + 1}"})
+            rendered.append(prompts.render_statement(side, round_kind, st))
+            return [Attempt(st, verify(st))]
+
+    class HistoryCheckingModerator(ScriptedModerator):
+        def evaluate(self, transcript, stats, *, extra_allowed):
+            assert transcript == rendered
+            assert len(transcript) == 6
+            assert extra_allowed is False
+            return super().evaluate(transcript, stats, extra_allowed=extra_allowed)
+
+    result = Debate(snap, HistoryCheckingDebater(), HistoryCheckingModerator([]),
+                    EventLog(tmp_path / "history.jsonl"), debate_id="history",
+                    first_side=first_side, max_extra_rounds=0).run()
+    other = Side.BEAR if first_side == Side.BULL else Side.BULL
+    assert seen_sides == [first_side, other] * 3
+    assert result.transcript() == rendered

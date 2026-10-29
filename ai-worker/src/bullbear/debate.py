@@ -15,7 +15,7 @@ from typing import Protocol
 from . import prompts
 from .agents import Attempt, Verify
 from .events import EventLog
-from .llm import EventHook
+from .llm import EventHook, LLMError
 from .schemas import Decision, ModeratorDecision, RoundKind, Side, Statement
 from .snapshot import Snapshot
 from .verifier import verify
@@ -91,6 +91,7 @@ class Debate:
         *,
         debate_id: str,
         max_extra_rounds: int = 1,
+        first_side: Side = Side.BULL,
         on_event: Callable[[str, dict], None] | None = None,
     ):
         self.snapshot = snapshot
@@ -98,6 +99,8 @@ class Debate:
         self.moderator = moderator
         self.log = log
         self.max_extra_rounds = max_extra_rounds
+        first_side = Side(first_side)
+        self.order = (first_side, Side.BEAR if first_side == Side.BULL else Side.BULL)
         self.on_event = on_event or (lambda *_: None)
         self.result = DebateResult(debate_id=debate_id, snapshot=snapshot)
 
@@ -109,7 +112,7 @@ class Debate:
         self.on_event(type_, payload)
 
     def _run_round(self, round_kind: RoundKind, question: str | None = None) -> None:
-        for side in ORDER:
+        for side in self.order:
             self.on_event("turn_started", {"side": side, "round": round_kind})
             attempts = self.debater.speak(
                 side, round_kind, self.result.transcript(), verify=self._verify, question=question,
@@ -118,7 +121,12 @@ class Debate:
             for i, a in enumerate(attempts, 1):
                 self.log.append("statement_attempt", side=side, round=round_kind, attempt=i,
                                 statement=a.statement, verification=a.verification)
+                if not a.verification.passed:
+                    self.on_event("statement_rejected", {"side": side, "round": round_kind, "attempt": i,
+                                                          "issues": a.verification.issues})
             turn = Turn(side, round_kind, attempts)
+            if not turn.final.verification.passed:
+                raise LLMError("Statement failed verification after retries")
             self.result.turns.append(turn)
             self._emit("statement_accepted", side=side, round=round_kind, attempts=len(attempts),
                        verified=turn.final.verification.passed, statement=turn.statement,
