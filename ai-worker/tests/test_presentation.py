@@ -62,6 +62,21 @@ def test_empty_new_evidence_does_not_call_llm(snap):
         Debater(llm,snap).speak(Side.BEAR,'rebuttal',history,verify=lambda _:None)
 
 
+def test_rebuttal_requires_actual_opponent_quote():
+    from bullbear.presentation import rebuttal_target_issues
+    own = statement(('E1', 'PX.CLOSE', 399), argument='단일일 반등과 공시를 봤습니다.')
+    other = statement(('E1', 'PX.CLOSE', 399), argument='최근 가격 약세가 누적되었습니다.')
+    history = [prompts.render_statement(Side.BULL, 'opening', own),
+               prompts.render_statement(Side.BEAR, 'opening', other)]
+    missed = statement(('E1', 'PX.CLOSE', 399), argument='상대의 주장은 단일일 반등 관찰과 공시 존재만으로 초과수익을 확신하는 점이 약합니다.')
+    assert 'rebuttal_target' in codes(rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history))
+    missed.argument = '상대의 “단일일 반등과 공시”는 근거가 부족합니다.'
+    assert rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history)
+    missed.argument = '상대의 “최근 가격 약세가 누적”된 점만으로 향후 하락을 단정할 수 없습니다.'
+    assert not rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history)
+    assert not rebuttal_target_issues(own, Side.BULL, 'opening', [])
+
+
 @pytest.mark.parametrize('text,bad',[
     ('영업이익 178,964,931,000,000원',True),
     ('영업이익 1467252.09억 원',True),

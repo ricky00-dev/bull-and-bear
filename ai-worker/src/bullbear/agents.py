@@ -14,7 +14,7 @@ from .snapshot import Snapshot
 from .tools import TOOL_DEFINITIONS, SnapshotTools
 from .verifier import VerificationResult
 from .semantic import SemanticReviewer, horizon_issues, concept_issues
-from .presentation import used_sources, statement_issues, moderator_issues
+from .presentation import used_sources, statement_issues, moderator_issues, rebuttal_target_issues
 
 Verify = Callable[[Statement], VerificationResult]
 
@@ -75,10 +75,12 @@ class Debater:
             result = verify(statement)
             issues = list(result.issues) + horizon_issues(statement.claim)
             issues += statement_issues(statement, round_kind, used)
+            issues += rebuttal_target_issues(statement, side, round_kind, transcript)
             issues += concept_issues("\n".join([statement.claim, statement.argument,
                                                *(e.interpretation for e in statement.evidence)]))
             if not any(i.severity == "error" for i in issues):
-                issues += self.reviewer.check(statement, transcript, [e.source_id for e in statement.evidence])
+                issues += self.reviewer.check(statement, transcript, [e.source_id for e in statement.evidence],
+                                              side=side, round_kind=round_kind)
             result = result.model_copy(update={"issues": issues,
                                               "passed": not any(i.severity == "error" for i in issues)})
             attempts.append(Attempt(statement, result))

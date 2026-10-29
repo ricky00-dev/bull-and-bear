@@ -37,11 +37,19 @@ SYSTEM = """당신은 투자 교육 토론의 독립된 검토 역할이다. 매
    같은 사건을 다룬 기사 ID만 바꾸는 것을 새로운 논거로 취급하지 않는다.
 7. 중재자의 [E1]은 candidate.decisive_evidence[0]이고 [E2]는 [1]이다.
    이전 토론자의 로컬 E1과 혼동하지 말고 해당 번호의 사실이 실제 주장을 뒷받침하는지 검사한다.
+   토론자 역시 매 발언마다 reference_map을 새로 정한다. 서로 다른 발언의 E1이 다른 source_id인 것은 정상이다.
+   candidate_role과 history의 speaker를 확인한다. '상대가 말했다'는 내용은 반대편 speaker의 실제 발언에 있어야 한다.
+   자기의 과거 발언이나 검증 피드백을 상대 주장으로 돌리면 contradiction이다.
 중재자 reasoning/comment는 쉬운 말이어야 하며 내부 ID·검증 통계·투자자별 권고를 출력하지 않는다.
 통계가 입력으로 제공돼도 내부 점검용일 뿐 문장에 쓰라고 요구하지 않는다.
 스냅샷 facts와 history를 기준으로 판단한다. 새 사실이나 수치를 지어내지 않는다.
 합리적인 조건부 가설·명시적인 불확실성·서로 다른 의견은 오류가 아니다.
 단순 표현 취향이나 더 많은 자료를 원한다는 이유로 반려하지 않는다.
+예측의 근거가 약한 것과 논리적으로 틀린 것을 구분한다. +2%p/-2%p는 판정 구간이지 정확한 수익률 보장이 아니다.
+단기 가격 반응의 경로를 설명하고 가정·불확실성을 밝힌 예측에 미래 수급의 확정 증거나 실현 확률 증명을 요구하지 않는다.
+다만 '변동성이 높아 상승 확률이 높다', 확인되지 않은 기관 매수가 이미 발생했다는 설명, 존재하지 않는 상대 발언은 반려한다.
+조건부 가설을 확정 사실처럼 읽지 않는다. 조건 자체를 관찰 사실로 꾸미거나 배경 지표만으로 방향을 보장하면 반려한다.
+자료 부족에 대한 수정 방향은 불확실성 명시이며, 그 이유만으로 HOLD로 바꾸라고 요구하지 않는다.
 오류마다 candidate에 실제 존재하는 문구를 quote로 정확히 인용하고 message에 이유와 수정 방향을 쓴다.
 반대 주장을 인용한 뒤 부정한 문장은 그 오류를 지지한 것으로 보지 않는다.
 수정 방향에서도 7거래일·코스피 대비 기준은 고정한다. 다른 기간으로 변경하라고 제안하지 않는다.
@@ -56,12 +64,26 @@ class SemanticReviewer:
         self.snapshot = snapshot
         self.records = []
 
-    def check(self, candidate, history, source_ids, *, stats=None):
+    def check(self, candidate, history, source_ids, *, stats=None, side=None, round_kind=None):
         payload = candidate.model_dump(mode="json")
+        reference_map = {e["ref"]: e["source_id"] for e in payload.get("evidence", [])}
+        if "decisive_evidence" in payload:
+            reference_map = {f"E{i}": key for i, key in enumerate(payload["decisive_evidence"], 1)}
+        history_turns = []
+        for entry in history:
+            speaker = re.match(r"^\[[^\]]+\] (매수|매도) 측", entry)
+            history_turns.append({
+                "speaker": {"매수": "bull", "매도": "bear"}.get(speaker[1]) if speaker else None,
+                "reference_map": dict(re.findall(r"^\s+(E\d+): (\S+) =", entry, re.M)),
+                "text": entry,
+            })
         facts = {key: self.snapshot.facts[key].model_dump(mode="json")
                  for key in source_ids if key in self.snapshot.facts}
         conversation = Conversation(SYSTEM, [{"role": "user", "content": json.dumps({
-            "candidate": payload, "history": history, "facts": facts,
+            "candidate": payload, "candidate_role": side.value if side is not None else
+                ("moderator" if "decisive_evidence" in payload else None),
+            "candidate_round": round_kind, "reference_map": reference_map,
+            "history": history_turns, "facts": facts,
             "verification_stats": stats,
             "price_as_of": str(self.snapshot.as_of), "snapshot_created_at": str(self.snapshot.created_at),
             "warnings": self.snapshot.warnings,
