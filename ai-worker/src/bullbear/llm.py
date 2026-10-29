@@ -29,12 +29,14 @@ class Usage:
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
     requests: int = 0
 
     def add(self, usage: Any) -> None:
         self.input_tokens += usage.input_tokens or 0
         self.output_tokens += usage.output_tokens or 0
         self.cache_read_input_tokens += getattr(usage, "cache_read_input_tokens", 0) or 0
+        self.cache_creation_input_tokens += getattr(usage, "cache_creation_input_tokens", 0) or 0
         self.requests += 1
 
 
@@ -52,6 +54,13 @@ class LLM:
         self.client = client or anthropic.Anthropic()
         self.max_tool_turns = max_tool_turns
         self.usage = Usage()
+        self.usage_by_model: dict[str, Usage] = {}
+
+    def usage_payload(self) -> dict:
+        return {"calls": [{"model": model, "input_tokens": u.input_tokens,
+                           "output_tokens": u.output_tokens, "cache_read_input_tokens": u.cache_read_input_tokens,
+                           "cache_creation_input_tokens": u.cache_creation_input_tokens}
+                          for model, u in self.usage_by_model.items()]}
 
     def structured(
         self,
@@ -77,8 +86,7 @@ class LLM:
                     messages=conv.messages,
                     tools=tools or anthropic.omit,
                     output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
-                    betas=[FALLBACK_BETA],
-                    fallbacks="default",
+                    **({"betas": [FALLBACK_BETA], "fallbacks": "default"} if "haiku" not in self.model else {}),
                 ) as stream:
                     for event in stream:
                         if event.type == "text":
@@ -93,6 +101,7 @@ class LLM:
                 continue
 
             self.usage.add(msg.usage)
+            self.usage_by_model.setdefault(msg.model, Usage()).add(msg.usage)
             if msg.stop_reason == "refusal":
                 raise LLMError(f"모델이 응답을 거절했습니다: {msg.stop_details}")
             if msg.stop_reason == "max_tokens":
