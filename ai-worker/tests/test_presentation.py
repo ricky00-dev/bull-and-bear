@@ -74,6 +74,8 @@ def test_rebuttal_requires_actual_opponent_quote():
     assert rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history)
     missed.argument = '상대의 “최근 가격 약세가 누적”된 점만으로 향후 하락을 단정할 수 없습니다.'
     assert not rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history)
+    missed.argument = '“최근 가격 약세가 누적”되었다는 상대 말만으로 향후 하락을 단정할 수 없습니다.'
+    assert not rebuttal_target_issues(missed, Side.BULL, 'rebuttal', history)
     assert not rebuttal_target_issues(own, Side.BULL, 'opening', [])
 
 

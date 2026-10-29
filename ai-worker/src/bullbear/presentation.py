@@ -49,7 +49,7 @@ def rebuttal_target_issues(statement, side, round_kind, transcript):
     opponent_texts = [entry.partition("\n")[2].split("\n근거:\n", 1)[0]
                       for entry in transcript
                       if re.match(rf"^\[[^\]]+\] {other} 측\n", entry)]
-    quotes = re.findall(r'''상대(?:의|는)\s*[“"'「]([^”"'」]+)[”"'」]''', statement.argument)
+    quotes = re.findall(r'''(?:^\s*|상대(?:의|는)\s*)[“"'「]([^”"'」]+)[”"'」]''', statement.argument)
     if round_kind == "rebuttal" and not quotes:
         return [error("rebuttal_target", "반박 본문은 상대의 “원문 일부”로 시작하고, 상대 주장·본문의 6자 이상 문구를 그대로 인용하세요. 내 발언이나 검증 피드백은 상대 주장이 아닙니다.")]
     if any(len(q.strip()) < 6 or not any(q in text for text in opponent_texts) for q in quotes):
