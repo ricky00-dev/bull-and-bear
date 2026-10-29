@@ -39,3 +39,24 @@ def test_time_window_and_sorting():
     ]
     out = filter_articles(items, "삼성전자", START, END)
     assert [a.title for a in out] == ["삼성전자 오후 기사", "삼성전자 아침 기사"]
+
+
+def test_hub_endpoint_headers_and_json_query(monkeypatch):
+    import httpx
+    from bullbear.data.naver_news import NaverNewsSource
+    source = NaverNewsSource("test-id", "test-secret")
+    headers = dict(source._http.headers)
+    source._http.close()
+    calls = []
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, json={"items": [item("삼성전자 뉴스", "https://example.com/news")]})
+    source._http = httpx.Client(transport=httpx.MockTransport(handle), headers=headers)
+    try:
+        assert len(source.search("005930", "삼성전자", START, END)) == 1
+        assert str(calls[0].url).startswith("https://naverapihub.apigw.ntruss.com/search/v1/news?")
+        assert calls[0].url.params["format"] == "json"
+        assert calls[0].headers["X-NCP-APIGW-API-KEY-ID"] == "test-id"
+        assert "X-Naver-Client-Id" not in calls[0].headers
+    finally:
+        source._http.close()

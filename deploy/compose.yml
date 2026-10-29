@@ -51,6 +51,7 @@ services:
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENDART_API_KEY: ${DART_API_KEY:-}
+      KRX_API_KEY: ${KRX_API_KEY:-}
       BULLBEAR_DATA_DIR: /app/data
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}

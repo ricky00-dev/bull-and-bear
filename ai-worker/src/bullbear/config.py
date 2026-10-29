@@ -16,6 +16,7 @@ class Settings:
     data_dir: Path
     debater_effort: str
     moderator_effort: str
+    krx_api_key: str | None = None
 
     @property
     def snapshot_dir(self) -> Path:
@@ -40,4 +41,5 @@ def load_settings() -> Settings:
         data_dir=Path(os.getenv("BULLBEAR_DATA_DIR", "data")),
         debater_effort=os.getenv("BULLBEAR_DEBATER_EFFORT", "medium"),
         moderator_effort=os.getenv("BULLBEAR_MODERATOR_EFFORT", "high"),
+        krx_api_key=os.getenv("KRX_API_KEY") or None,
     )

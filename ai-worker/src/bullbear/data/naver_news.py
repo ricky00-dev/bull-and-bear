@@ -1,6 +1,6 @@
 """네이버 검색 API(뉴스) 구현체.
 
-https://developers.naver.com/docs/serviceapi/search/news/news.md
+https://api.ncloud-docs.com/docs/naver-api-hub-search-news
 제목·요약·링크·발행 시각만 준다. 본문은 가져오지 않는다 (저작권·약관).
 
 종목명으로 검색하면 관련 없는 기사가 많이 섞인다. 제목에 종목명이 들어간 기사만 남기고,
@@ -18,7 +18,7 @@ import httpx
 
 from .base import DataUnavailable, NewsArticle, NewsSource
 
-API_URL = "https://openapi.naver.com/v1/search/news.json"
+API_URL = "https://naverapihub.apigw.ntruss.com/search/v1/news"
 PAGE_SIZE = 100
 MAX_PAGES = 3
 
@@ -50,7 +50,7 @@ class NaverNewsSource(NewsSource):
             raise DataUnavailable("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 없습니다")
         self._http = httpx.Client(
             timeout=timeout,
-            headers={"X-Naver-Client-Id": client_id, "X-Naver-Client-Secret": client_secret},
+            headers={"X-NCP-APIGW-API-KEY-ID": client_id, "X-NCP-APIGW-API-KEY": client_secret},
         )
 
     def search(self, ticker: str, name: str, start: datetime, end: datetime) -> list[NewsArticle]:
@@ -58,9 +58,9 @@ class NaverNewsSource(NewsSource):
         raw: list[dict] = []
         for page in range(MAX_PAGES):
             resp = self._http.get(API_URL, params={"query": query, "display": PAGE_SIZE,
-                                                   "start": page * PAGE_SIZE + 1, "sort": "date"})
+                                                   "start": page * PAGE_SIZE + 1, "sort": "date", "format": "json"})
             if resp.status_code != 200:
-                raise DataUnavailable(f"네이버 뉴스 API 오류 {resp.status_code}: {resp.text[:200]}")
+                raise DataUnavailable(f"네이버 API HUB 뉴스 오류 HTTP {resp.status_code}")
             items = resp.json().get("items", [])
             raw.extend(items)
             if len(items) < PAGE_SIZE or parsedate_to_datetime(items[-1]["pubDate"]) < start:

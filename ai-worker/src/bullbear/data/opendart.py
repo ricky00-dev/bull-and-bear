@@ -46,14 +46,14 @@ class OpenDartClient:
         """JSON 엔드포인트 호출. 데이터 없음(013)이면 None."""
         cache_path = self._cache_dir / endpoint / ("_".join(f"{k}={v}" for k, v in sorted(params.items())) + ".json")
         if cache and cache_path.exists():
-            body = json.loads(cache_path.read_text())
+            body = json.loads(cache_path.read_text(encoding="utf-8"))
         else:
             resp = self._http.get(f"/{endpoint}.json", params={"crtfc_key": self._key, **params})
             resp.raise_for_status()
             body = resp.json()
             if cache and body.get("status") in (STATUS_OK, STATUS_NO_DATA):
                 cache_path.parent.mkdir(parents=True, exist_ok=True)
-                cache_path.write_text(json.dumps(body, ensure_ascii=False))
+                cache_path.write_text(json.dumps(body, ensure_ascii=False), encoding="utf-8")
         status = body.get("status")
         if status == STATUS_NO_DATA:
             return None
@@ -64,7 +64,7 @@ class OpenDartClient:
     def _load_corp_codes(self) -> dict[str, str]:
         path = self._cache_dir / "corp_codes.json"
         if path.exists():
-            return json.loads(path.read_text())
+            return json.loads(path.read_text(encoding="utf-8"))
         resp = self._http.get("/corpCode.xml", params={"crtfc_key": self._key})
         resp.raise_for_status()
         try:
@@ -73,12 +73,31 @@ class OpenDartClient:
             raise DataUnavailable(f"corpCode.xml 다운로드 실패: {resp.text[:200]}") from None
         root = ElementTree.fromstring(archive.read(archive.namelist()[0]))
         codes = {}
+        names = {}
         for item in root.iter("list"):
             stock_code = (item.findtext("stock_code") or "").strip()
             if stock_code:
                 codes[stock_code] = item.findtext("corp_code").strip()
-        path.write_text(json.dumps(codes))
+                names[stock_code] = (item.findtext("corp_name") or stock_code).strip()
+        path.write_text(json.dumps(codes), encoding="utf-8")
+        (self._cache_dir / "listed_companies.json").write_text(json.dumps(names, ensure_ascii=False), encoding="utf-8")
         return codes
+
+    def listed_companies(self) -> dict[str, str]:
+        path = self._cache_dir / "listed_companies.json"
+        if not path.exists():
+            # Old corp_codes caches contain only identifiers; download names as well.
+            resp = self._http.get("/corpCode.xml", params={"crtfc_key": self._key}, timeout=5)
+            resp.raise_for_status()
+            try:
+                with zipfile.ZipFile(io.BytesIO(resp.content)) as archive:
+                    root = ElementTree.fromstring(archive.read("CORPCODE.xml"))
+                names = {(item.findtext("stock_code") or "").strip(): (item.findtext("corp_name") or "").strip()
+                         for item in root.iter("list") if (item.findtext("stock_code") or "").strip()}
+            except (zipfile.BadZipFile, ElementTree.ParseError, KeyError) as exc:
+                raise DataUnavailable("OpenDART 종목 목록 다운로드 실패") from exc
+            path.write_text(json.dumps(names, ensure_ascii=False), encoding="utf-8")
+        return json.loads(path.read_text(encoding="utf-8"))
 
 
 def parse_amount(raw: str | None) -> float | None:
