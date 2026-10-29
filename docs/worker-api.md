@@ -140,7 +140,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
   "verdict": {
     "decision": "HOLD",
     "confidence": 0.55,
-    "reasoning": "...",
+    "reasoning": "7거래일 뒤 코스피 대비 비슷하게 움직일 것으로 예상해요 [E1]. 상승과 하락 요인이 상쇄될 것으로 봐요 [E2].",
     "decisive_evidence": ["PX.VS_MA120", "PX.VOLUME_RATIO"],
     "scores": {
       "bull": { "relevance": 4, "materiality": 3, "rebuttal": 4, "risk_awareness": 3, "comment": "..." },
@@ -216,7 +216,18 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 - 3일·7일 두 번 채점, 적중률은 7일 기준 (판정 질문이 "7거래일 뒤")
 - 사용자 판정과 중재자 판정을 같은 규칙으로 채점
 
+### 중재자 글의 번호 인용 (기존 필드 유지)
+
+새 워커 출력의 `reasoning`, `scores.*.comment`에서 `[E1]`은 `verdict.decisive_evidence[0]`,
+`[E2]`는 `[1]`에 대응한다. 토론자 발언 안의 E1과는 별도의 번호 범위다.
+웹은 해당 배열의 source_id로 스냅샷 근거를 찾아 칩을 만들 수 있다. 배열은 인용 순서로 최대 3개이며
+중복 없이 글에서 사용한 번호와 일치한다. 내부 ID·검증 통계는 글에 넣지 않는다.
+기존 저장 판정·가짜 워커 출력에는 번호가 없을 수 있으므로 기존 텍스트 표시도 유지할 수 있다.
+
 ## 변경 이력
+
+- v0.5 설명 보강 (2026-10-29): 사용자 요청에 따라 기존 decisive_evidence 배열 순서와 중재자 글의
+  [E1] 번호 대응을 명시. JSON 필드 추가·삭제 없이 출력 표현을 정리하고 웹 칩 연결 방법을 설명함.
 
 - v0.5 (2026-10-26): `POST /debates` 응답의 `snapshot_id`는 `null`이어도 된다 (스냅샷을 비동기로 만들 때).
   Spring은 첫 이벤트 `snapshot_created`로 확정한다. 형식 변경 없음.
