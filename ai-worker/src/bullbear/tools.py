@@ -67,6 +67,7 @@ class SnapshotTools:
                     "id": f.id,
                     "label": f.label,
                     "value": f.value,
+                    "display": f"약 {f.value / 1e12:,.2f}조 원" if f.unit == "KRW" and f.value is not None and abs(f.value) >= 1e12 else None,
                     "unit": f.unit,
                     "as_of": f.as_of.isoformat(),
                     "published_at": f.published_at.isoformat() if f.published_at else None,

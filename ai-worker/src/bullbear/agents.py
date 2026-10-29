@@ -13,6 +13,8 @@ from .schemas import MODERATOR_SCHEMA, STATEMENT_SCHEMA, ModeratorDecision, Roun
 from .snapshot import Snapshot
 from .tools import TOOL_DEFINITIONS, SnapshotTools
 from .verifier import VerificationResult
+from .semantic import SemanticReviewer, horizon_issues, concept_issues
+from .presentation import used_sources, statement_issues, moderator_issues
 
 Verify = Callable[[Statement], VerificationResult]
 
@@ -30,6 +32,7 @@ class Debater:
         self.tools = SnapshotTools(snapshot)
         self.effort = effort
         self.max_retries = max_retries
+        self.reviewer = SemanticReviewer(llm, snapshot)
 
     def speak(
         self,
@@ -43,12 +46,21 @@ class Debater:
     ) -> list[Attempt]:
         """발언을 생성하고 검증한다. 반려되면 피드백을 붙여 최대 max_retries번 다시 생성한다.
 
-        마지막 시도까지 반려되면 그 시도를 그대로 돌려준다 (호출자가 표시·감점 처리).
+        마지막 시도까지 반려되면 시도 기록을 반환한다. 진행기는 로그를 남기고 중단한다.
         """
         snap = self.snapshot
+        used = used_sources(transcript, snap)
+        available = [f for key, f in snap.facts.items() if key not in used]
+        if round_kind in ("rebuttal", "closing") and not available:
+            raise LLMError("No unused evidence available for this round")
+        preferred = sorted(available, key=lambda f: f.category not in ("news", "disclosure"))
+        guidance = "\n정보 수집 시각: " + snap.created_at.isoformat()
+        if round_kind in ("rebuttal", "closing"):
+            guidance += "\n아직 인용하지 않은 근거 후보(조회 도구에서 원문 확인):\n" + "\n".join(
+                f"{f.id}: {f.label} ({f.as_of})" for f in preferred[:30])
         conv = Conversation(
             system=prompts.debater_system(side, name=snap.name, ticker=snap.ticker, as_of=snap.as_of.isoformat()),
-            messages=[{"role": "user", "content": prompts.debater_turn(side, round_kind, transcript, question)}],
+            messages=[{"role": "user", "content": prompts.debater_turn(side, round_kind, transcript, question) + guidance}],
         )
         attempts: list[Attempt] = []
         for _ in range(self.max_retries + 1):
@@ -61,6 +73,14 @@ class Debater:
             except ValidationError as e:
                 raise LLMError(f"발언 형식 오류: {e}") from e
             result = verify(statement)
+            issues = list(result.issues) + horizon_issues(statement.claim)
+            issues += statement_issues(statement, round_kind, used)
+            issues += concept_issues("\n".join([statement.claim, statement.argument,
+                                               *(e.interpretation for e in statement.evidence)]))
+            if not any(i.severity == "error" for i in issues):
+                issues += self.reviewer.check(statement, transcript, [e.source_id for e in statement.evidence])
+            result = result.model_copy(update={"issues": issues,
+                                              "passed": not any(i.severity == "error" for i in issues)})
             attempts.append(Attempt(statement, result))
             if result.passed:
                 break
@@ -73,6 +93,7 @@ class Moderator:
         self.llm = llm
         self.snapshot = snapshot
         self.effort = effort
+        self.reviewer = SemanticReviewer(llm, snapshot)
 
     def evaluate(self, transcript: list[str], stats: dict, *, extra_allowed: bool) -> ModeratorDecision:
         snap = self.snapshot
@@ -86,5 +107,21 @@ class Moderator:
                 ),
             }],
         )
-        raw = self.llm.structured(conv, schema=MODERATOR_SCHEMA, effort=self.effort)
-        return ModeratorDecision.model_validate(raw)
+        for _ in range(3):
+            raw = self.llm.structured(conv, schema=MODERATOR_SCHEMA, effort=self.effort)
+            decision = ModeratorDecision.model_validate(raw)
+            issues = horizon_issues(decision.reasoning)
+            issues += moderator_issues(decision)
+            issues += concept_issues("\n".join([decision.reasoning, decision.bull.comment, decision.bear.comment]))
+            if any(key not in snap.facts for key in decision.decisive_evidence):
+                from .verifier import Issue
+                issues.append(Issue(severity="error", code="unknown_source", message="판정 근거 ID가 스냅샷에 없습니다."))
+            if not issues:
+                # Include facts used in the transcript as well as decisive evidence.
+                ids = set(decision.decisive_evidence) | {key for key in snap.facts if any(key in t for t in transcript)}
+                issues += self.reviewer.check(decision, transcript, ids, stats=stats)
+            if not issues:
+                return decision
+            conv.messages.append({"role": "user", "content": prompts.verifier_feedback(
+                "\n".join(i.message for i in issues))})
+        raise LLMError("Moderator failed semantic/horizon verification after 3 attempts")

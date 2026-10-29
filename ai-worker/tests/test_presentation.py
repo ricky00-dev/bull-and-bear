@@ -1,0 +1,116 @@
+import json
+import math
+import statistics
+from datetime import timedelta
+
+import pytest
+
+from bullbear import prompts
+from bullbear.agents import Debater
+from bullbear.llm import LLMError
+from bullbear.presentation import sentence_count, money_issues, statement_issues, moderator_issues, used_sources
+from bullbear.schemas import Side
+from bullbear.snapshot import build_snapshot, price_facts
+from bullbear.tools import SnapshotTools
+from .fakes import FakeSource, NOW, statement, ScriptedModerator
+
+
+@pytest.fixture
+def snap():
+    return build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
+
+
+def codes(issues):
+    return {i.code for i in issues}
+
+
+def verdict():
+    d = ScriptedModerator([]).evaluate([], {}, extra_allowed=False)
+    d.decisive_evidence = ["PX.CLOSE", "PX.RET_1M"]
+    d.reasoning = "7거래일 뒤 코스피 대비 비슷하게 움직일 것으로 봅니다 [E1]. 상승과 하락 요인이 상쇄될 것으로 예상합니다 [E2]."
+    d.bull.comment = "가격 근거는 관련이 있습니다 [E1]."
+    d.bear.comment = "하락 위험도 살폈습니다 [E2]."
+    return d
+
+
+def test_limits_and_decimal_citations():
+    assert sentence_count("변동성은 68.17%입니다. [E1] 비율은 9.39배입니다 [E2]. 세 번째입니다.") == 3
+    s = statement(('E1','PX.CLOSE',399), argument='하나. 둘. 셋. 넷.')
+    assert 'argument_length' in codes(statement_issues(s,'opening',set()))
+    s.claim = "첫 줄\n둘째 줄"
+    assert 'claim_length' in codes(statement_issues(s,'opening',set()))
+    s.evidence *= 4
+    assert 'evidence_limit' in codes(statement_issues(s,'opening',set()))
+
+
+@pytest.mark.parametrize('round_kind',['rebuttal','closing'])
+def test_new_means_unused_by_either_side(snap,round_kind):
+    old = statement(('E1','PX.CLOSE',399))
+    history = [prompts.render_statement(Side.BEAR,'opening',old)]
+    used = used_sources(history,snap)
+    assert used == {'PX.CLOSE'}
+    assert 'no_new_evidence' in codes(statement_issues(old,round_kind,used))
+    fresh = statement(('E1','PX.RET_1M',2))
+    assert 'no_new_evidence' not in codes(statement_issues(fresh,round_kind,used))
+
+
+def test_empty_new_evidence_does_not_call_llm(snap):
+    snap = snap.model_copy(update={'facts':{'PX.CLOSE':snap.facts['PX.CLOSE']}})
+    llm = object()
+    history=[prompts.render_statement(Side.BULL,'opening',statement(('E1','PX.CLOSE',399)))]
+    with pytest.raises(LLMError,match='No unused evidence'):
+        Debater(llm,snap).speak(Side.BEAR,'rebuttal',history,verify=lambda _:None)
+
+
+@pytest.mark.parametrize('text,bad',[
+    ('영업이익 178,964,931,000,000원',True),
+    ('영업이익 1467252.09억 원',True),
+    ('약 178.96조 원',False),
+    ('주가 242,000원',False),
+])
+def test_large_money(text,bad):
+    assert bool(money_issues(text)) is bad
+
+
+def test_tool_display_does_not_change_raw_amount(snap):
+    f=snap.facts['FIN.2026H1.OPERATING_INCOME_YTD']
+    snap.facts[f.id]=f.model_copy(update={'value':178964931000000.0})
+    item=next(v for v in json.loads(SnapshotTools(snap)('get_financials',{}))['items'] if v['id']==f.id)
+    assert item['display']=='약 178.96조 원'
+    assert item['value']==178964931000000.0
+
+
+def test_moderator_refs_are_local_to_decisive_list():
+    d=verdict()
+    assert not moderator_issues(d)
+    d.reasoning += ' 다른 근거 [E3].'
+    assert 'verdict_refs' in codes(moderator_issues(d))
+    d=verdict();d.decisive_evidence=['PX.CLOSE','PX.CLOSE']
+    assert 'verdict_refs' in codes(moderator_issues(d))
+
+
+@pytest.mark.parametrize('text,code',[
+    ('PX.CLOSE가 높습니다.','internal_details'),
+    ('반려 횟수는 4회입니다.','internal_details'),
+    ('evidence_accuracy는 1.0입니다.','internal_details'),
+    ('장기 투자자는 분할매수하세요.','investor_advice'),
+])
+def test_moderator_hides_internal_detail_and_advice(text,code):
+    d=verdict();d.bull.comment=text
+    assert code in codes(moderator_issues(d))
+
+
+def test_hold_not_uncertainty_fallback():
+    d=verdict();d.reasoning='7거래일 코스피 대비 방향이 애매해 보류합니다 [E1][E2].'
+    assert 'hold_prediction' in codes(moderator_issues(d))
+    assert '7거래일 뒤 코스피 대비 초과수익이 +2%p 초과면 매수, −2%p 미만이면 매도, 그 사이면 보류' in prompts.JUDGMENT_POLICY
+
+
+def test_volatility_is_annualized_sample_sd():
+    bars=FakeSource().get_daily_prices('000000',NOW.date()-timedelta(days=60),NOW.date())[-21:]
+    from dataclasses import replace
+    bars=[replace(b, close=100*math.exp(.01*i+(.03 if i%2 else 0))) for i,b in enumerate(bars)]
+    returns=[math.log(b.close/a.close) for a,b in zip(bars,bars[1:])]
+    f=next(f for f in price_facts(bars) if f.id=='PX.VOL_20D')
+    assert f.value==round(statistics.stdev(returns)*math.sqrt(252)*100,2)
+    assert '연율화' in f.label and '표본표준편차' in f.note

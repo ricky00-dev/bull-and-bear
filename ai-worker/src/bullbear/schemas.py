@@ -52,13 +52,15 @@ STATEMENT_SCHEMA = {
     "type": "object",
     "properties": {
         "claim": {"type": "string", "description": "한 문장 핵심 주장"},
-        "argument": {"type": "string", "description": "본문. 근거는 [E1] 같은 표식으로 참조"},
+        "argument": {"type": "string", "description": "최대 3문장 본문. 근거는 [E1] 같은 표식으로 참조"},
         "evidence": {
             "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
             "items": {
                 "type": "object",
                 "properties": {
-                    "ref": {"type": "string"},
+                    "ref": {"type": "string", "pattern": "^E[1-9][0-9]*$", "description": "E1, E2 등. 대괄호 없이 작성"},
                     "source_id": {"type": "string"},
                     "value": {"type": ["number", "null"]},
                     "interpretation": {"type": "string"},
@@ -118,8 +120,8 @@ MODERATOR_SCHEMA = {
         "bear": _SIDE_SCORE_SCHEMA,
         "decision": {"type": "string", "enum": ["BUY", "HOLD", "SELL"]},
         "confidence": {"type": "number"},
-        "reasoning": {"type": "string"},
-        "decisive_evidence": {"type": "array", "items": {"type": "string"}},
+        "reasoning": {"type": "string", "description": "쉬운 말로 최대 3문장. [E1]은 decisive_evidence의 첫 번째 항목. 내부 ID·검증 통계·투자자별 권고 금지"},
+        "decisive_evidence": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"type": "string"}},
     },
     "required": ["action", "extra_question", "bull", "bear", "decision", "confidence", "reasoning", "decisive_evidence"],
     "additionalProperties": False,

@@ -72,12 +72,12 @@ class Snapshot(BaseModel):
     def save(self, directory: Path) -> Path:
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{self.snapshot_id}.json"
-        path.write_text(self.model_dump_json(indent=2))
+        path.write_text(self.model_dump_json(indent=2), encoding="utf-8")
         return path
 
     @classmethod
     def load(cls, directory: Path, snapshot_id: str) -> Snapshot:
-        return cls.model_validate_json((directory / f"{snapshot_id}.json").read_text())
+        return cls.model_validate_json((directory / f"{snapshot_id}.json").read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ def build_snapshot(
     now_kst = now.astimezone(KST)
     if as_of == now_kst.date() and now_kst.time() < MARKET_CLOSE:
         warnings.append("장중 스냅샷: 마지막 일봉이 확정되지 않은 값입니다")
-    _add(facts, price_facts(bars))
+    _add(facts, price_facts(bars, provider=source.name.split("+")[0]))
 
     reports: list[FinancialReport] = []
     try:
@@ -176,7 +176,7 @@ _RETURN_WINDOWS = {"1M": 21, "3M": 63, "6M": 126, "1Y": 252}
 _MA_WINDOWS = (20, 60, 120)
 
 
-def price_facts(bars: list[PriceBar]) -> list[Fact]:
+def price_facts(bars: list[PriceBar], *, provider: str = "pykrx") -> list[Fact]:
     last = bars[-1]
     as_of = last.date
     closes = [b.close for b in bars]
@@ -184,7 +184,7 @@ def price_facts(bars: list[PriceBar]) -> list[Fact]:
 
     def fact(fid: str, label: str, value: float, unit: str, note: str | None = None) -> None:
         out.append(Fact(id=fid, category="price", label=label, value=_round(value, unit), unit=unit,
-                        as_of=as_of, source="pykrx", note=note))
+                        as_of=as_of, source=provider, note=note))
 
     fact("PX.CLOSE", "종가", last.close, "KRW/share")
     fact("PX.CHG_1D", "전일 대비 등락률", (last.close / bars[-2].close - 1) * 100, "%")
@@ -213,7 +213,8 @@ def price_facts(bars: list[PriceBar]) -> list[Fact]:
         rets = [math.log(closes[i] / closes[i - 1]) for i in range(len(closes) - 20, len(closes))]
         mean = sum(rets) / len(rets)
         std = math.sqrt(sum((r - mean) ** 2 for r in rets) / (len(rets) - 1))
-        fact("PX.VOL_20D", "20일 변동성(연율)", std * math.sqrt(252) * 100, "%")
+        fact("PX.VOL_20D", "최근 20거래일 일간 수익률의 연율화 변동성", std * math.sqrt(252) * 100, "%",
+             note="최근 21개 종가로 구한 20개 일간 로그수익률의 표본표준편차 × √252 × 100. 20일 누적 등락률이나 예상 하락폭이 아님. 원시 종가 기준으로 기업행사 미보정.")
 
     if len(bars) >= 21:
         avg = sum(b.volume for b in bars[-21:-1]) / 20
@@ -321,7 +322,7 @@ def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int,
                     [f"FIN.{latest.period}.TOTAL_LIABILITIES", eq_id], "부채총계 / 자본총계")
     if op and rev and rev[0] > 0:
         derived("VAL.OP_MARGIN_TTM", "영업이익률(최근 4분기)", op[0] / rev[0] * 100, "%",
-                ["VAL.OPERATING_INCOME_TTM", "VAL.REVENUE_TTM"], "")
+                ["VAL.OPERATING_INCOME_TTM", "VAL.REVENUE_TTM"], "연결/별도는 입력 보고서 기준. 최근 4개 분기 영업이익 합계 / 매출액 합계 × 100. 최신 분기 단독 이익률이 아님.")
     return out
 
 

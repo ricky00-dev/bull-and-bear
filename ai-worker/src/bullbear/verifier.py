@@ -69,6 +69,9 @@ def verify(statement: Statement, snapshot: Snapshot) -> VerificationResult:
 
     refs = set()
     for ev in statement.evidence:
+        if not re.fullmatch(r"E[1-9][0-9]*", ev.ref):
+            issues.append(Issue(severity="error", code="invalid_ref", ref=ev.ref,
+                                message=f"ref '{ev.ref}' 형식 오류: evidence.ref에는 대괄호 없이 E1처럼 쓰고, 본문에만 [E1]을 쓰세요."))
         if ev.ref in refs:
             issues.append(Issue(severity="error", code="duplicate_ref", ref=ev.ref, message=f"{ev.ref} 표식이 중복됩니다"))
         refs.add(ev.ref)
