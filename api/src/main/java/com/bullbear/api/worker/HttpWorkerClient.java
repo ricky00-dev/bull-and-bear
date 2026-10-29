@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.concurrent.TimeoutException;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.ParameterizedTypeReference;
@@ -82,8 +83,12 @@ public class HttpWorkerClient implements WorkerClient {
 				.header("Last-Event-ID", Long.toString(afterSeq))
 				.retrieve()
 				.bodyToFlux(SSE)
+				.timeout(Duration.ofSeconds(45))
 				.filter(e -> e.id() != null && e.event() != null)
-				.map(e -> new WorkerEvent(Long.parseLong(e.id()), e.event(), e.data() == null ? "{}" : e.data()));
+				.map(e -> new WorkerEvent(Long.parseLong(e.id()), e.event(), e.data() == null ? "{}" : e.data()))
+				// A clean socket EOF without a terminal event must also trigger relay retry.
+				.concatWith(Flux.error(new IllegalStateException("워커 스트림이 종료 이벤트 없이 닫혔습니다")))
+				.takeUntil(WorkerEvent::isTerminal);
 	}
 
 	/** 동기 호출의 오류를 API 오류로 바꾼다. */
@@ -94,6 +99,11 @@ public class HttpWorkerClient implements WorkerClient {
 			throw translate(e);
 		} catch (WebClientRequestException e) {
 			throw new ApiException(ErrorCode.WORKER_UNAVAILABLE, "워커에 연결할 수 없습니다");
+		} catch (IllegalStateException e) {
+			if (e.getCause() instanceof TimeoutException) {
+				throw new ApiException(ErrorCode.WORKER_UNAVAILABLE, "워커 응답 시간이 초과되었습니다");
+			}
+			throw e;
 		}
 	}
 

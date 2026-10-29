@@ -15,6 +15,10 @@ cd api
 기본은 **가짜 워커**(`bullbear.worker.mode=fake`)라서 Python 워커 없이 전체 흐름이 돈다.
 실제 워커에 붙일 때는 `application.yml`의 `bullbear.worker.mode`를 `http`로, `base-url`·`token`을 맞춘다.
 
+또는 `WORKER_TOKEN`을 Python 워커와 동일하게 설정하고 `./gradlew bootRun --args='--spring.profiles.active=worker'`로 실행한다.
+`WORKER_BASE_URL` 기본값은 `http://localhost:8000`이다. Windows는 `./gradlew.bat`을 사용한다.
+워커 기동·키 설정·재현 가능한 HTTP 통합 테스트는 [워커 README](../ai-worker/README.md#spring과-실제-워커-연결)를 참고한다.
+
 스택: Spring Boot 4.1, Java 17, PostgreSQL 16, Flyway, JPA, WebClient(워커 SSE 구독).
 
 ## API (브라우저용)
