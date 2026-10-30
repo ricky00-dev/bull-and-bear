@@ -85,7 +85,7 @@ def provenance() -> dict:
     }
     result["rag_source_hashes"] = {
         name: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        for name in ("context.py", "retrieval.py", "index.py")
+        for name in ("context.py", "retrieval.py", "index.py", "replay.py", "store.py", "schemas.py")
         if (path := Path(__file__).with_name("rag") / name).is_file()
     }
     return result

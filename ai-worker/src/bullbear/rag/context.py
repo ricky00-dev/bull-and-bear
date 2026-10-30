@@ -50,6 +50,17 @@ class KnowledgeContext:
             raise ValueError("context character limit exceeded")
         if any(item.get("kind") not in {"knowledge", "research"} for item in items):
             raise ValueError("market facts cannot be knowledge background")
+        counts = {"common": 0, "short": 0}
+        for item in items:
+            path = item.get("path")
+            if path is None:
+                path = next((p for p, cap in (("common", 2), ("short", 3))
+                             if p in item["horizons"] and counts[p] < cap), None)
+            if path not in counts or path not in item["horizons"]:
+                raise ValueError("invalid knowledge path")
+            counts[path] += 1
+        if counts["common"] > 2 or counts["short"] > 3:
+            raise ValueError("knowledge path limit exceeded")
         if token_upper_bound(render_items(items)) > MAX_TOKENS:
             raise ValueError("context token upper bound exceeded")
 

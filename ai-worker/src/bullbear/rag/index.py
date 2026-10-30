@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import sqlite3
+import unicodedata
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,12 +15,12 @@ from uuid import uuid4
 from .schemas import canonical_json, digest, stamp
 from .store import ArchiveCorruptError, RagStore
 
-NORMALIZER_VERSION = "unicode61-alias-v1"
-INDEX_VERSION = "observed-background-fts5-v1"
+NORMALIZER_VERSION = "unicode61-nfc-alias-v2"
+INDEX_VERSION = "observed-background-fts5-v2"
 
 
 def normalize(text: str) -> list[str]:
-    return sorted(set(re.findall(r"[\w]+", text.lower(), flags=re.UNICODE)))
+    return sorted(set(re.findall(r"[\w]+", unicodedata.normalize("NFC", text).lower(), flags=re.UNICODE)))
 
 
 def current_member(db, store: RagStore, chunk_id: str, cutoff: str) -> tuple[dict | None, str]:
@@ -84,7 +86,7 @@ class GenerationIndex:
     def path(self, generation_id: str) -> Path:
         if not re.fullmatch(r"G\.[0-9a-f]{64}", generation_id):
             raise ValueError("invalid generation id")
-        return self.directory / f"{generation_id}.sqlite3"
+        return self.directory / generation_id / "index.sqlite3"
 
     def publish(self, as_of: datetime) -> str:
         cutoff = stamp(as_of)
@@ -101,12 +103,17 @@ class GenerationIndex:
         finally:
             db.close()
         payload = {"index_version": INDEX_VERSION, "normalizer_version": NORMALIZER_VERSION,
-                   "as_of": cutoff, "members": members}
+                   "sqlite_version": sqlite3.sqlite_version, "as_of": cutoff, "members": members}
         generation_id = "G." + digest(payload)
         target = self.path(generation_id)
         if target.exists():
+            existing, _ = self.open(generation_id)
+            existing.close()
             return generation_id
-        temp = self.directory / f".{uuid4().hex}.sqlite3"
+        staging = self.directory / f".{uuid4().hex}"
+        staging.mkdir()
+        temp = staging / "index.sqlite3"
+        receipt_temp = temp.with_suffix(".ready.json")
         try:
             with closing(sqlite3.connect(temp)) as writer, writer:
                 writer.executescript("CREATE TABLE manifest(payload TEXT NOT NULL);"
@@ -115,24 +122,53 @@ class GenerationIndex:
                 writer.execute("INSERT INTO manifest VALUES (?)", (canonical_json(payload),))
                 for number, member in enumerate(members, 1):
                     writer.execute("INSERT INTO members VALUES (?,?)", (number, canonical_json(member)))
-                    text = " ".join([member["title"], member["text"], *member["topics"]])
+                    text = unicodedata.normalize("NFC", " ".join([member["title"], member["text"], *member["topics"]]))
                     writer.execute("INSERT INTO corpus(rowid,search_text) VALUES (?,?)", (number, text))
             # Publish only a closed, committed file. A reader opens it read-only.
-            os.replace(temp, target)
+            with temp.open("rb+") as handle:
+                os.fsync(handle.fileno())
+            receipt = {"sha256": hashlib.sha256(temp.read_bytes()).hexdigest(),
+                       "committed_at": stamp(datetime.now(timezone.utc))}
+            with receipt_temp.open("x", encoding="utf-8") as handle:
+                handle.write(canonical_json(receipt))
+                handle.flush()
+                os.fsync(handle.fileno())
+            # Publish DB and receipt together. Never replace an existing generation.
+            try:
+                os.rename(staging, target.parent)
+            except OSError:
+                if not target.exists():
+                    raise
+                existing, _ = self.open(generation_id)
+                existing.close()
         finally:
-            temp.unlink(missing_ok=True)
+            if staging.exists():
+                temp.unlink(missing_ok=True)
+                receipt_temp.unlink(missing_ok=True)
+                staging.rmdir()
         return generation_id
 
-    def open(self, generation_id: str):
+    def open(self, generation_id: str, *, check=lambda: None):
         path = self.path(generation_id)
+        receipt = json.loads(path.with_suffix(".ready.json").read_text(encoding="utf-8"))
+        checksum = hashlib.sha256()
+        with path.open("rb") as handle:
+            while block := handle.read(65536):
+                check()
+                checksum.update(block)
+        if checksum.hexdigest() != receipt["sha256"]:
+            raise ArchiveCorruptError("generation file hash mismatch")
         db = sqlite3.connect(path.as_uri() + "?mode=ro&immutable=1", uri=True)
-        db.row_factory = sqlite3.Row
-        db.execute("PRAGMA query_only=ON")
-        manifest = json.loads(db.execute("SELECT payload FROM manifest").fetchone()[0])
-        if "G." + digest(manifest) != generation_id:
+        try:
+            db.row_factory = sqlite3.Row
+            db.execute("PRAGMA query_only=ON")
+            manifest = json.loads(db.execute("SELECT payload FROM manifest").fetchone()[0])
+            if "G." + digest(manifest) != generation_id or manifest["index_version"] != INDEX_VERSION:
+                raise ArchiveCorruptError("generation manifest hash/version mismatch")
+            return db, {**manifest, "committed_at": receipt["committed_at"]}
+        except BaseException:
             db.close()
-            raise ArchiveCorruptError("generation manifest hash mismatch")
-        return db, manifest
+            raise
 
 
 def publish_generation(store: RagStore, as_of: datetime) -> str:

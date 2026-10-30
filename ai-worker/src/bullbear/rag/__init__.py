@@ -1,4 +1,4 @@
-"""Offline, point-in-time document archive; no retrieval or model calls."""
+"""Point-in-time document archive and private background retrieval; no model calls."""
 
 from .schemas import CollectionBatch, CollectionResult, DocumentInput, ChunkInput, AnnotationInput
 from .store import RagStore

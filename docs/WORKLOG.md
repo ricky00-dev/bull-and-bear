@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: fetch 후 원격 feat/worker-rag-context HEAD=2f6af9f 및 이후 커밋 없음 확인. 해당 HEAD에서 독립 worktree/feat/worker-rag-retrieval 생성, 포함된 감사·benchmark·ingest 선행 커밋 보존. Retriever 실제 구현(common 2/short 3·경로별 후보 20·6000자/2000 UTF-8 byte 보수 상한·검색 1초), 시점/활성 revision/검수/시장/종목 필터, 고정 세대 BM25·NFC/별칭, 원자적 세대 발행/무결성, 검색 감사·불변 컨텍스트 저장/재생·CLI publish/retrieve/replay 구현. HTTP/benchmark fingerprint에 저장/재생 소스도 포함.
+- 진행 중: 이번 검색·통합 구현은 완료. P1 운영 활성화 검증은 남아 BULLBEAR_RAG_ENABLED=false 유지. 별도 조사 세션에서 공식 문서·논문·GitHub 확인, 조사 문서와 실제 결과를 docs/evaluations/worker-rag-retrieval-research.md 및 worker-rag-retrieval.md에 기록. 추가 검토 세션 생성은 자동 승인 정책으로 차단되어 현재 세션에서 검토·검증.
+- 다음: 실제 검수 corpus/한국어 자연 질문 정답 집합 검색 품질 평가, 명시 모델·가격표·입력 여유·호출 상한으로 실모델 비교, 실제 Spring/공급자 연결·전향 지연/비용/완료율 기준 검증. 이관 v1 색인은 v2로 재발행 필요. P1 활성화 기준 충족 전 P2 위험 검토/LangGraph로 확장하지 않음.
+- 막힘·결정 필요: 최종 Python 225 passed·외부 Spring 2 skipped(25.39초), 집중 회귀 29 passed(14.93초), diff 공백 검사 통과. 실제 SQLite 저장→검색→HTTP/benchmark 사용; 시장/LLM은 fixture. 50문서 30회 30/30 완료·context 1개, 검색 p95 0.031초/max 0.032초·저장 포함 p95 0.047초. 비교 4/4 완료·조건별 16 fixture 요청, 비용/accuracy=null이며 예측 성과 아님. OS I/O 강제 종료/실시간 1초 보장 아님(최대 4 reader·늦은 결과 폐기·저장은 검색 한도 밖). 실제 키·유료 모델·운영 corpus·가격표·성숙한 3/7거래일 결과·Spring 봉인 외부 통합 미검증. 원본 변경/키/.env/로컬 데이터 커밋, push·PR·develop 병합 없음.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: feat/worker-rag-context 독립 worktree를 develop에서 만들고 감사 dc4040f·benchmark e66c062/6edd8ec·ingest c7eb1a7을 명시적으로 cherry-pick. 충돌한 모든 WORKLOG 보존. 불변 KnowledgeContext·별도 세대 FTS5 초안, 토론자/중재자/의미 검토 동일 배경 주입·공개 지식 ID 차단, HTTP 비공개 감사/설정 연결, none/common_short 내부 비교를 구현. 상세 조건·실측·이관 명령은 docs/evaluations/worker-rag-context-checkpoint.md.
 - 진행 중: 사용자 최신 이관 요청에 따라 구현 중단한 WIP 체크포인트. rag/retrieval.py가 없어 실제 검색 활성 경로는 미완성. BULLBEAR_RAG_ENABLED=false 유지. 부모 채팅이 push와 통합 이관 메모를 담당하며 이 채팅은 push·PR·develop 병합하지 않음.
 - 다음: 다른 컴퓨터에서 이 브랜치 체크아웃 후 평가 문서 순서대로 Retriever(common 2/short 3·각 후보 20·시장/시점/검수 필터·1초 상한), 검색 감사/재생·세대 시점/무결성 검증, 실제 저장층→검색→HTTP/benchmark 평가를 이어간다. 38a4516은 적용하지 않았고 상세 설계 9c91086은 별도 docs/worker-rag-design 브랜치 참조.
