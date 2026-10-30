@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: 워커 안정화 코드·회귀 테스트·문서 16개 파일을 검토해 38a4516(fix: 워커 데이터 캐시와 장애 처리 및 초기 시세 조회 개선)으로 커밋하고 codex/fix-worker-data-reliability를 원격에 푸시. develop 대상 PR #17 생성: https://github.com/ricky00-dev/bull-and-bear/pull/17.
+- 진행 중: PR 리뷰 대기. 구현 변경 없이 PR 등록 기록만 추가.
+- 다음: 리뷰 반영 후 develop 병합 검토. 실제 Spring/PostgreSQL 통합 및 외부 공급자·모델 검증은 별도 진행.
+- 막힘·결정 필요: 구현 검증은 앞선 전체 워커 테스트 158개 통과·외부 Spring 2개 건너뜀 기준이며 이번 커밋·PR 등록 과정에서는 코드 변경이나 테스트 재실행 없음. 최초 데이터 준비 시간 및 동기 일별 시세·지수/카탈로그 조회의 잔여 범위를 PR에 명시.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: codex/fix-worker-data-reliability에서 고우선 데이터 안정화 수정. DART 013 응답 비캐시 및 기존 013 캐시 무시, 손상 캐시 재조회, DART HTTP/JSON/회사 ZIP·XML 오류와 뉴스 HTTP/JSON/기사 형식 오류를 안전한 DataUnavailable로 정규화. 실제 공급자+MockTransport로 선택 자료 장애에도 시세 스냅샷·경고가 유지됨을 검증. 설정 객체 repr에서 비밀값 제외.
 - 한 것: 종목 quote의 400일 수집을 제한된 백그라운드 작업으로 이동(스레드 2개·실행/대기 합계 32개). 동일 종목·cutoff 수집 공유, 준비 완료는 최대 1초 대기 후 503, 실패 후 재시도·TTL 만료 재조회·기준일 경계 분리·KRX 종료 중단 구현. 전체 시세·sparkline 60개·스냅샷 날짜/종가 일치 유지. 앱 소유 Market만 lifespan 종료 때 닫으며 주입 Market은 호출자가 정리. 기존 HTTP 계약 필드와 Spring 코드는 변경하지 않음.
 - 진행 중: 없음. Python 전체 158개 통과, 외부 Spring 2개 건너뜀(40.60초), git diff 공백 검사 통과. 기존 cold 조회가 응답을 막는 회귀를 먼저 재현한 뒤 수정 후 통과 확인. README 실행 안내 갱신.
