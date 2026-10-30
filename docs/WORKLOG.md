@@ -22,6 +22,10 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
   - 퀴즈 정답 응답에 `decisiveEvidence` 추가, 퀴즈 홈·결과에 "투자 권유 아님" 안내
 - 다음: 전시 모드 (A/B/C 결정 대기)
 
+## 2026-10-30 · Claude Code · deploy
+- 한 것: 운영 compose가 `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`을 워커에 넘기지 않아 둘 다 기본값(Opus)으로 돌던 문제 수정. 기본값 토론자 `claude-haiku-5-5`, 중재자 `claude-sonnet-5-5` (`deploy/.env.example`의 `DEBATER_MODEL`·`MODERATOR_MODEL`로 바꿀 수 있음)
+- 막힘·결정 필요 (**jangwonii**): 로컬 `ai-worker/.env`에도 같은 두 줄을 넣어야 Opus로 돌지 않는다. 토론 1건의 모델별 토큰 사용량을 재서 공유 (API 크레딧 월 $200 안에서 개발·백테스트·운용을 모두 해결해야 함)
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 워커 안정화 코드·회귀 테스트·문서 16개 파일을 검토해 38a4516(fix: 워커 데이터 캐시와 장애 처리 및 초기 시세 조회 개선)으로 커밋하고 codex/fix-worker-data-reliability를 원격에 푸시. develop 대상 PR #17 생성: https://github.com/ricky00-dev/bull-and-bear/pull/17.
 - 진행 중: PR 리뷰 대기. 구현 변경 없이 PR 등록 기록만 추가.
