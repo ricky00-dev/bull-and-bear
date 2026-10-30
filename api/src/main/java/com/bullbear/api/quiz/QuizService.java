@@ -3,6 +3,7 @@ package com.bullbear.api.quiz;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ public class QuizService {
 
 	public record Answer(int idx, String stockName, String ticker, LocalDate baseDate, Decision decision,
 			Decision correct, boolean userHit, Decision moderatorDecision, String moderatorReasoning,
-			boolean moderatorHit, BigDecimal stockReturn, BigDecimal indexReturn, BigDecimal excessReturn,
+			List<String> decisiveEvidence, boolean moderatorHit, BigDecimal stockReturn, BigDecimal indexReturn, BigDecimal excessReturn,
 			BigDecimal holdBand, ChartResponse chart, boolean last) {
 	}
 
@@ -125,13 +126,13 @@ public class QuizService {
 				.orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "문제를 찾을 수 없습니다"));
 		Debate d = debates.get(row.debateId());
 		var outcome = jdbc.sql("""
-				select o.stock_return, o.index_return, o.excess_return, v.decision, v.reasoning
+				select o.stock_return, o.index_return, o.excess_return, v.decision, v.reasoning, v.payload
 				from debate_outcomes o join moderator_verdicts v on v.debate_id = o.debate_id
 				where o.debate_id = :id
 				""")
 				.param("id", d.getId())
 				.query((rs, i) -> new Object[] { rs.getBigDecimal(1), rs.getBigDecimal(2), rs.getBigDecimal(3),
-						rs.getString(4), rs.getString(5) })
+						rs.getString(4), rs.getString(5), rs.getString(6) })
 				.single();
 		BigDecimal excess = (BigDecimal) outcome[2];
 		String moderator = (String) outcome[3];
@@ -149,8 +150,11 @@ public class QuizService {
 			throw new ApiException(ErrorCode.ALREADY_ANSWERED, "이미 답한 문제예요");
 		}
 		boolean last = rows(user, roundId).stream().noneMatch(r -> r.decision() == null);
+		// 중재자 글의 [E1]은 decisive_evidence[0]에 대응한다 (docs/worker-api.md)
+		List<String> decisive = new ArrayList<>();
+		json.readTree((String) outcome[5]).path("decisive_evidence").forEach(n -> decisive.add(n.asString()));
 		return new Answer(idx, d.getStockName(), d.getTicker(), d.getTradeDate(), decision, correct(excess), userHit,
-				Decision.valueOf(moderator), (String) outcome[4], moderatorHit, (BigDecimal) outcome[0],
+				Decision.valueOf(moderator), (String) outcome[4], decisive, moderatorHit, (BigDecimal) outcome[0],
 				(BigDecimal) outcome[1], excess, holdBand, charts.build(d), last);
 	}
 
@@ -178,7 +182,7 @@ public class QuizService {
 		return rows;
 	}
 
-	/** 답하기 전 문제: 종목명·종목코드는 "이 회사"로, 차트는 판정일까지만, 가격·날짜는 뺀다 */
+	/** 답하기 전 문제: 종목명·종목코드는 "이 회사"로, 차트는 판정일까지만, 가격·날짜·금액은 뺀다 */
 	private Question question(Row row) {
 		Debate d = debates.get(row.debateId());
 		List<JsonNode> statements = debates.acceptedStatements(d.getId()).stream()
@@ -202,6 +206,9 @@ public class QuizService {
 			}
 		}
 		for (JsonNode e : st.path("evidence")) {
+			if (e.path("value").isNumber() && QuizHints.revealing(e.path("source_id").asString(), e.path("value").asDouble())) {
+				((ObjectNode) e).putNull("value");
+			}
 			if (e.has("interpretation")) {
 				((ObjectNode) e).put("interpretation",
 						QuizHints.mask(e.get("interpretation").asString(), d.getStockName(), d.getTicker()));

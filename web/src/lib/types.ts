@@ -200,6 +200,8 @@ export interface QuizAnswer {
   userHit: boolean
   moderatorDecision: Decision
   moderatorReasoning: string
+  /** 중재자 글의 [E1]은 [0] */
+  decisiveEvidence: string[]
   moderatorHit: boolean
   stockReturn: number
   indexReturn: number

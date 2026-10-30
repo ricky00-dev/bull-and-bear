@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Claude Code · api, web
+- 한 것:
+  - 중재자 글의 `[E1]`·`[E2]`를 근거 칩으로 표시 (`VerdictText`, 판정 공개·퀴즈 정답 화면). `[E1]` = `decisive_evidence[0]` (worker-api.md v0.5 설명 보강). 번호 없는 예전 글은 그대로 보임
+  - 퀴즈 답하기 전 가리기 강화: 종가·이동평균·52주 고저·시가총액 등 가격 수준 근거와 1억 이상 금액 근거의 값은 `null`, 본문 속 금액("242,000원", "146.7조 원")과 큰 숫자는 "○○"
+  - 퀴즈 정답 응답에 `decisiveEvidence` 추가, 퀴즈 홈·결과에 "투자 권유 아님" 안내
+- 다음: 전시 모드 (A/B/C 결정 대기)
+
 ## 2026-10-30 · Claude Code · deploy
 - 한 것: 운영 compose가 `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`을 워커에 넘기지 않아 둘 다 기본값(Opus)으로 돌던 문제 수정. 기본값 토론자 `claude-haiku-5-5`, 중재자 `claude-sonnet-5-5` (`deploy/.env.example`의 `DEBATER_MODEL`·`MODERATOR_MODEL`로 바꿀 수 있음)
 - 막힘·결정 필요 (**jangwonii**): 로컬 `ai-worker/.env`에도 같은 두 줄을 넣어야 Opus로 돌지 않는다. 토론 1건의 모델별 토큰 사용량을 재서 공유 (API 크레딧 월 $200 안에서 개발·백테스트·운용을 모두 해결해야 함)

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { TermText } from '../components/TermText'
+import { VerdictText } from '../components/VerdictText'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
@@ -81,7 +81,7 @@ export function RevealPage() {
             <Card className="flex flex-col gap-2.5">
               <h3 className="text-sm font-extrabold">중재자가 이렇게 본 이유</h3>
               <p className="text-[15px] leading-relaxed">
-                <TermText text={r.verdict.reasoning} />
+                <VerdictText text={r.verdict.reasoning} decisive={r.verdict.decisive_evidence} />
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {r.verdict.decisive_evidence.map((id) => (

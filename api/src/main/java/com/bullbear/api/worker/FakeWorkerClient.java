@@ -227,8 +227,8 @@ public class FakeWorkerClient implements WorkerClient {
 				"verdict", Map.of(
 						"decision", "HOLD",
 						"confidence", 0.55,
-						"reasoning", "이동평균을 모두 밑돈다는 매도 측 근거는 탄탄해요. 하지만 하락일 거래량이 평소의 0.6배라 "
-								+ "투매로 단정하기 어렵다는 매수 측 반박도 유효했어요. 실적 근거가 양쪽 모두 없어 한쪽으로 기울기 어려워요.",
+						"reasoning", "이동평균을 모두 밑돈다는 매도 측 근거는 탄탄해요 [E1]. 하지만 하락일 거래량이 평소의 0.6배라 "
+								+ "투매로 단정하기 어렵다는 매수 측 반박도 유효했어요 [E2]. 실적 근거가 양쪽 모두 없어 한쪽으로 기울기 어려워요.",
 						"decisive_evidence", List.of("PX.VS_MA120", "PX.VOLUME_RATIO"),
 						"scores", Map.of(
 								"bull", score(4, 3, 4, 3, "거래량 반박이 좋았지만 실적 근거가 없어요."),
