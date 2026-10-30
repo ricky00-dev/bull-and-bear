@@ -21,6 +21,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 다음: 실제 Spring HTTP 연동과 전향 운용에서 감사 산출물 확인. CLI/내부 비교 실행기 연결은 별도 작업.
 - 막힘·결정 필요: Python 전체 106개 통과, 외부 Spring 통합 2개 건너뜀. Docker·실제 시장 API·유료 LLM 외부 실측은 하지 않음. 응답 직후 저장 전 종료의 미확정 청구량과 저장장치 장애는 복구 보장 없음. 초기 실행 재개·재시작 감사 상태 보정은 미구현이며 마지막 running 기록을 보존. 키와 로컬 실행 데이터는 커밋하지 않음.
 
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-paired-baseline에서 내부 benchmark 실행기 구현(e66c062). 동일 Snapshot JSON을 두 조건에 독립 복원하고 중립 단일 분석가와 기존 3라운드 토론을 비교. 최종 모델·effort와 7거래일 코스피 상대수익 판정 기준을 공유하고 단일 조건도 Fact·수치·표현·기간·의미 검증 및 재작성을 적용. 기존 선공 비교 실행기·운영 HTTP API·당일 캐시·Spring 봉인 계약은 유지.
+- 한 것: fixture/live/주입 테스트 더블 구분, 실제 실행 --allow-paid·명시 모델 필수, 조건별 요청 상한·SDK 재시도/모델 폴백 비활성, 조건/배치 실패·손상 입력 보존, 프롬프트/원응답/검증 시도·시간·실제 모델별 토큰·코드/설정/프롬프트/스키마/스냅샷 해시 기록. 동일 배경 묶음 연결과 실제 최종 모델 불일치 시 비교 제외를 지원. docs/evaluations/worker-paired-baseline.md에 실행·산출물·한계·후속 KnowledgeContext 연결 방법 기록.
+- 진행 중: 없음. 루트 기존 .venv와 전용 worktree PYTHONPATH로 Python 전체 106개 통과·외부 Spring 2개 건너뜀(61.43초). 새 테스트는 동일 입력·6발언·재작성·실패/원문 보존·호출 상한·입력 변조·fixture/실제 구분·SDK 폴백 비활성·실제 응답 모델/캐시 토큰·잘못된 배경 연결을 확인. staged diff 공백 검사 통과.
+- 다음: 공통/단기 KnowledgeContext를 한 번 고정해 두 조건에 같은 JSON으로 주입하고 별도 출력 디렉터리에서 비교. 허용된 실제 호출은 공급자 키·모델·요청 상한을 명시해 실행한 뒤 확정된 3/7거래일 결과를 연결(담당자). root가 원본 develop에 기능별 cherry-pick 통합 예정.
+- 막힘·결정 필요: 실제 공급자·유료 LLM·Spring/PostgreSQL 전체 통합·전향 성과 검증은 실행하지 않음. fixture/판정 일치는 예측 품질 증거가 아니며 confidence는 보정 확률이 아님. 가격표 미구현으로 cost_usd는 null, 응답 없는 요청은 사용량 미확정으로 표시. 자동 실행 재개·운영 API·검색 정책 변경·push·PR은 하지 않음.
+
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.
 - 진행 중: 없음. 첫 GPT-5 mini 실행 중단, v4 mini 두 조건 중단, GPT-5.4 인용 검사 오탐 중단을 모두 보존하고 docs/experiment.md에 기록. 마지막 실행은 검증 완료 첫 주장 2개씩을 원문 그대로 이어받아 남은 4발언·중재자를 새로 생성했으며 재사용 출처를 manifest/report에 명시.
