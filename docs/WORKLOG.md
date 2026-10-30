@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: HTTP 토론 시작·전체 스냅샷 고정·클라이언트 생성·역할별 LLM 호출·성공/실패를 data/audits/<debate_id>/manifest.json에 원자적 교체와 fsync로 저장. 코드 revision/dirty, 정책·프롬프트·스키마 해시, 정확한 snapshot ID/decision_at, 선택/실제 모델과 사용량·단계 시간 기록. 키·원시 예외·토큰 비기록과 공급자 오류 경고 상세 제거. HTTP/SSE·날짜 재사용·판정 봉인 경계 유지.
+- 진행 중: 없음. feat/worker-run-audit에 구현·최종 전체 검증 완료, develop 반영 전. 평가·한계는 docs/evaluations/worker-run-audit.md.
+- 다음: 실제 Spring HTTP 연동과 전향 운용에서 감사 산출물 확인. CLI/내부 비교 실행기 연결은 별도 작업.
+- 막힘·결정 필요: Python 전체 106개 통과, 외부 Spring 통합 2개 건너뜀. Docker·실제 시장 API·유료 LLM 외부 실측은 하지 않음. 응답 직후 저장 전 종료의 미확정 청구량과 저장장치 장애는 복구 보장 없음. 초기 실행 재개·재시작 감사 상태 보정은 미구현이며 마지막 running 기록을 보존. 키와 로컬 실행 데이터는 커밋하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 현재 코드·11/16 프리즈·전향 운용 필요를 기준으로 worker-rag-design.md에 구현 우선순위 추가. P0 실제 연동/최소 실행 기록/전향 운용, 병행 원문 수집·관측/정정 보존, 동일 스냅샷 단일 대비 토론 실행기를 먼저 배치. P1 common+short RAG와 비교 평가, P2 위험 검토·LangGraph 이관으로 구분하고 복구·벡터·중장기 예측·자동 정책 개선은 후속으로 분리.
 - 진행 중: 없음. 우선순위 제안만 문서에 반영, 코드·API 계약·PM ROADMAP 일정은 변경하지 않음.
 - 다음: 워커 첫 구현 묶음은 rag/schemas.py·store.py·최소 ingest/audit. 실제 Spring 연동·기준선 측정과 병행해 첫날부터 버전·실패·비용을 보존하고, 현재 선공 비교 실행기와 별도로 단일 기준선 구현.
