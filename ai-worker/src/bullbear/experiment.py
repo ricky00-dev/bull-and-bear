@@ -13,6 +13,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .agents import Debater, Moderator
+from .audit import selected_models
 from .config import load_settings
 from .debate import Debate, verification_stats
 from .events import EventLog
@@ -31,8 +32,9 @@ def run_condition(snapshot, settings, directory, first_side, *, provider="anthro
     if provider == "openai":
         from .openai_llm import OpenAILLM
         llm_class = OpenAILLM
-    debater_llm = llm_class(model or os.getenv("BULLBEAR_DEBATER_MODEL", settings.model))
-    moderator_llm = llm_class(model or os.getenv("BULLBEAR_MODERATOR_MODEL", settings.model))
+    models = selected_models(settings)
+    debater_llm = llm_class(model or models['debater'])
+    moderator_llm = llm_class(model or models['moderator'])
     history_lengths = []
 
     class ObservedDebater(Debater):

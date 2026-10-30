@@ -2,19 +2,24 @@
 
 - 도구 실행은 호출자가 넘긴 핸들러가 한다. 이 모듈은 스냅샷을 모른다.
 - 대화 기록은 덧붙이기만 한다. 응답 content를 그대로 다시 보내야 thinking 블록이 유지된다.
-- 거절(refusal) 시 서버 측 폴백 모델로 자동 재시도한다 (fallbacks="default").
+- Haiku·Sonnet만 허용하며 서버 측 자동 모델 대체는 사용하지 않는다.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
 
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
+def validate_model(model: str) -> None:
+    # Accept both family-first and older version-first Anthropic model IDs.
+    # Availability is checked separately against the account's model catalogue.
+    if not re.fullmatch(r"claude-(?:(?:haiku|sonnet)-[0-9][a-z0-9-]*|[0-9][0-9-]*-(?:haiku|sonnet)(?:-[a-z0-9]+)*)", model):
+        raise ValueError("Only Claude Haiku or Sonnet models are allowed")
 
 ToolHandler = Callable[[str, dict], str]
 EventHook = Callable[[str, dict], None]
@@ -49,10 +54,16 @@ class Conversation:
 
 
 class LLM:
-    def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8):
+    def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8,
+                 *, allow_fallbacks: bool = False, max_output_tokens: int = 16000):
+        validate_model(model)
+        if allow_fallbacks:
+            raise ValueError("Automatic model fallbacks are disabled")
         self.model = model
         self.client = client or anthropic.Anthropic()
         self.max_tool_turns = max_tool_turns
+        self.allow_fallbacks = allow_fallbacks
+        self.max_output_tokens = max_output_tokens
         self.usage = Usage()
         self.usage_by_model: dict[str, Usage] = {}
 
@@ -81,12 +92,11 @@ class LLM:
             try:
                 with self.client.beta.messages.stream(
                     model=self.model,
-                    max_tokens=16000,
+                    max_tokens=self.max_output_tokens,
                     system=conv.system,
                     messages=conv.messages,
                     tools=tools or anthropic.omit,
                     output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
-                    **({"betas": [FALLBACK_BETA], "fallbacks": "default"} if "haiku" not in self.model else {}),
                 ) as stream:
                     for event in stream:
                         if event.type == "text":
@@ -102,6 +112,11 @@ class LLM:
 
             self.usage.add(msg.usage)
             self.usage_by_model.setdefault(msg.model, Usage()).add(msg.usage)
+            try:
+                validate_model(msg.model)
+            except ValueError:
+                # Keep incurred usage, but never continue with an unexpected family.
+                raise LLMError("Provider returned a disallowed model family") from None
             if msg.stop_reason == "refusal":
                 raise LLMError(f"모델이 응답을 거절했습니다: {msg.stop_details}")
             if msg.stop_reason == "max_tokens":

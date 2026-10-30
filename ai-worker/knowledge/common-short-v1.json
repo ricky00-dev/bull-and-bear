@@ -1,0 +1,24 @@
+{
+  "schema_version": "knowledge-corpus-v1",
+  "corpus_version": "common-short-editorial-20261030-v1",
+  "release_status": "experimental",
+  "authored_at": "2026-10-30T08:58:08+00:00",
+  "reviewed_at": "2026-10-30T08:58:08+00:00",
+  "reviewer": "Codex primary-source cross-check",
+  "review_kind": "agent_source_review",
+  "human_reviewed": false,
+  "sources": [
+    {"id": "sec-statements", "url": "https://www.sec.gov/investor/pubs/begfinstmtguide.htm", "title": "Beginners' Guide to Financial Statement", "publisher": "SEC", "published_on": "2007-02-04", "observed_at": "2026-10-30T08:58:08+00:00"},
+    {"id": "sec-risk", "url": "https://www.investor.gov/introduction-investing/investing-basics/what-risk", "title": "What is Risk?", "publisher": "SEC Investor.gov", "published_on": null, "observed_at": "2026-10-30T08:58:08+00:00"},
+    {"id": "finra-earnings", "url": "https://syndication.finra.org/content/what-earnings-season", "title": "What Is Earnings Season?", "publisher": "FINRA", "published_on": "2024-07-23", "observed_at": "2026-10-30T08:58:08+00:00"},
+    {"id": "finra-momentum", "url": "https://syndication.finra.org/content/what-momentum-investing", "title": "What is Momentum Investing?", "publisher": "FINRA", "published_on": "2025-08-12", "observed_at": "2026-10-30T08:58:08+00:00"}
+  ],
+  "notes": [
+    {"id": "per-definition", "title": "PER 주가수익비율", "text": "PER은 주가를 주당순이익으로 나눈 비율이다. 이익이 양수이고 같은 산식·기간을 비교할 때 낮은 PER은 이익 대비 가격이 낮다는 뜻이며, 이익이 상대적으로 작다는 뜻이 아니다. 적정 비율은 업종에 따라 다를 수 있다.", "source_id": "sec-statements", "source_section": "Financial Statement Ratios and Calculations", "horizons": ["common"], "topics": ["per", "주가수익비율", "valuation"], "applicability": "산식 설명", "limitations": ["7거래일 상승 예측 아님"]},
+    {"id": "operating-margin", "title": "영업이익률과 보고 기간", "text": "영업이익률은 같은 보고 기간의 영업이익을 매출액으로 나눈 비율이다. 영업이익과 순이익은 이자·세금 등의 처리 범위가 다르며, 손익계산서는 특정 기간의 실적을 나타낸다. 서로 다른 기간이나 이익 항목을 섞어 비교하지 않는다.", "source_id": "sec-statements", "source_section": "Income Statements; Financial Statement Ratios and Calculations", "horizons": ["common"], "topics": ["영업이익률", "operating", "earnings", "revenue"], "applicability": "재무 개념", "limitations": ["현재 종목 실적은 Fact만 사용"]},
+    {"id": "volatility-direction", "title": "변동성과 가격 방향", "text": "주가는 회사 내부 사정뿐 아니라 외부 시장 사건으로도 오르거나 내릴 수 있다. 변동성이 크다는 설명은 가격 변화의 폭에 관한 것이며 그 자체를 상승 방향이나 상승 확률의 근거로 바꾸면 안 된다.", "source_id": "sec-risk", "source_section": "Volatility Risk", "horizons": ["common"], "topics": ["volatility", "변동성"], "applicability": "방향과 위험 구분", "limitations": ["한국 단기 효과의 실증 아님"]},
+    {"id": "earnings-expectations", "title": "실적 발표와 기대 차이", "text": "실적 발표 뒤 주가는 실제 수치와 시장 기대의 차이에 반응할 수 있다. 예상치를 웃돌아도 향후 전망이 나쁘면 가격이 떨어질 수 있으므로, 실적 증가만으로 단기 상승을 확정할 수 없다.", "source_id": "finra-earnings", "source_section": "How Does Earnings Season Impact Stocks?", "horizons": ["short"], "topics": ["earnings", "실적", "event_relevance"], "applicability": "발표 해석", "limitations": ["없는 예상치는 생성 금지", "미국 교육 사례"]},
+    {"id": "release-vs-filing", "title": "실적 발표와 공시 시각", "text": "회사는 정기 보고서를 제출하기 전에 실적을 먼저 발표하기도 한다. 따라서 공시가 새로 등록됐다는 사실과 내용이 시장에 처음 알려졌다는 사실은 구분해야 한다. 실제 종목의 공개 시각은 별도 근거가 있어야 판단할 수 있다.", "source_id": "finra-earnings", "source_section": "When Is Earnings Season?; What Happens During Earnings Season?", "horizons": ["short"], "topics": ["disclosure", "공시", "event_relevance"], "applicability": "정보 시점 구분", "limitations": ["미국 제출 기한을 한국에 적용 금지"]},
+    {"id": "momentum-limit", "title": "과거 등락과 단기 추세", "text": "모멘텀 분석은 가격 추세의 지속을 살피지만 외부 사건으로 방향이 바뀌고 지표가 잘못된 신호를 줄 수 있다. 과거 수익률이 양수라는 사실만으로 다음 7거래일의 상승이나 코스피 초과수익을 보장할 수 없다.", "source_id": "finra-momentum", "source_section": "The Risks of Changing Momentum", "horizons": ["short"], "topics": ["momentum", "return", "수익률", "추세"], "applicability": "추세 해석 한계", "limitations": ["7거래일 한국 성과 검증 아님"]}
+  ]
+}

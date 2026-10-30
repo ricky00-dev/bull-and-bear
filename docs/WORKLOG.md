@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: 최신 origin/develop 034d8da에서 feat/worker-operational-readiness 생성, RAG ad8cb26 및 별도 hardening의 검토된 실패 정책 통합. config 비밀값 보호/RAG 설정과 fixture 종료 정리 충돌 해결. 작업 순서·완료 기준·실측은 docs/evaluations/worker-operational-readiness.md에 기록.
+- 한 것: 사용자 지시에 따라 Claude Haiku·Sonnet만 허용, 기본 토론자 Haiku/중재자 Sonnet, Opus 및 자동 모델 대체 차단. 예상 외 응답 계열은 사용량 보존 후 중단. CLI/HTTP/Claude 실험 역할 선택 통일. 네트워크·키 출력 없는 preflight 명령 추가.
+- 진행 중: 실제 Claude HTTP 검증은 ANTHROPIC_API_KEY 누락으로 보류. 원본 .env와 타 작업 폴더 수정 없음. 사용자 모바일 환경으로 지금 키 설정 어려움.
+- 다음: PC에서 Anthropic 키 설정 후 계정 모델 ID/접근 확인, 총비용 상한 확정 및 제한 가능한 실행 경로 준비 → 실제 HTTP 지연/완료율/사용량 검증 → 독립 오류 라벨 평가 → 소수 종목 전향 검증. RAG 기본 비활성 유지.
+- 막힘·결정 필요: 전체 Python 385 passed/외부2 skipped 후 응답 계열 차단 추가분 영향 회귀 12 passed. 실제 로컬 Spring/PostgreSQL/HTTP 2 passed(모델/시장/시계 fixture), Java 단위7개·bootJar 통과, 임시 서버 종료 확인. 실제 외부 공급자/Claude 호출·배포 미실행, 유료 호출0. 개발 기본 WORKER_TOKEN은 운영 전 Spring과 함께 교체 필요. 키 입력 전용 모바일→로컬 경로는 현재 도구에서 확인 못 함. session-brief는 CRLF 오류로 실패해 git/로그 직접 확인. 원본 문서 변경 보존.
+
 ## 2026-10-30 · Claude Code · api, web
 - 한 것: 마이 탭 열기 (계정·학습 허브). 계정 카드(게스트, 카카오 버튼은 준비 중), 퀴즈 누적 기록(`GET /api/quiz/stats`), 용어 사전 화면(`/glossary`, 검색), 서비스 소개 다시 보기. 적중률·근거 습관은 중복이라 "내 판정" 탭에 그대로 둠
 - 다음: AI 성적표(실험 결과 화면) — 마이 탭 메뉴에 자리만 있음 (Claude Code)
@@ -51,6 +58,48 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: 없음. FastAPI 엔드포인트·SQLite 영속 저장·멱등성·재연결은 구현되어 있으며 ROADMAP/DEPLOY의 일부 골격 단계 설명은 갱신 필요.
 - 다음: 최초 KRX 캐시 준비/갱신과 202 이전 시세 조회 지연 개선, DART 미발표 응답 캐시 정책 및 선택 데이터 HTTP 오류 처리 보완. 이후 Spring/PostgreSQL fixture 통합과 실제 Anthropic HTTP 토론의 성공률·전체 지연·비용 측정. 지수 비교 입력·판단 시각 정합성·단일 에이전트 비교 모드도 별도 잔여 작업.
 - 막힘·결정 필요: 현재 Docker 엔진 미기동, 기본 Java는 11로 Spring 전체 통합 미실행. 실제 키/유료 모델 호출 없음. HTTP/CLI는 Anthropic이고 최근 GPT 실험은 별도 경로이며 운영 기본 설정은 토론자·중재자 모두 Opus. 실제 배포 모델과 예산 가정을 맞출 필요 있음. 기업행사 미보정·정적 30종목 허용·재시작 시 진행 중 토론 실패 처리의 운영 범위 유지.
+## 2026-10-30 · Codex 총괄·독립 평가 세션 · ai-worker, docs
+- 한 것: 구현·로컬 평가를 5672ace로 커밋한 뒤 최종 소스를 고정해 gpt-5-mini 실제 4조건 비교 완료. v2 개발 중 진단 0/4·27요청·$0.24590350, 커밋된 v3 검증 1/4·34요청·$0.24445650. v3 RAG single만 HOLD/raw confidence0.48로 통과, none single/debate와 RAG debate는 생성·검증 반려 한도에서 실패. 같은 snapshot/세대/모델/effort/순서 및 모든 실패 원문 보존. 전체 61응답 사용량 가격 $0.49036, 미확정0, 승인총액 $3 원장 유지. 상세 결과·논문/GitHub 조사·검토기 오탐과 모델 실제 오류를 docs/evaluations/worker-rag-live-pilot.md 및 worker-rag-evaluation-research.md에 기록.
+- 진행 중: 요청한 후속 구현·테스트·실제 비교 실행·평가 기록은 완료. P1 운영 활성화/예측 성과 검증은 미충족으로 BULLBEAR_RAG_ENABLED=false 유지. v3 실행 중 소스 변경 false, snapshot/context/주입 경계 일치. 후보14개 내 근거42건 Fact ID/value 일치는 복사 검사이며 추론 정확도/예측 성과가 아니다. 운영 HTTP Anthropic과 별도 OpenAI benchmark의 검증 범위를 구분한다.
+- 다음: 실제 추론 오류와 검증기 오탐을 분리한 독립 정답 집합, 가격 기준일/정보 관측 시각 및 단기 상대수익 근거 보완, 독립 검색 관련성·운영 완료율/p95/비용 기준 검증을 P1 순서로 진행. 38a4516 안정화 통합·전향 운용은 별도 후속. P2 위험 검토/LangGraph 미착수.
+- 막힘·결정 필요: 전체 Python296 passed·외부2 skipped(35.21초), 별도 실제 Spring/PostgreSQL/HTTP2 passed(4.85초), Java 단위7개·bootJar 검증 완료. 외부통합의 시장/모델/시계는 fixture; 실모델은 삼성전자 snapshot1개의 반복이므로 독립 예측 표본/일반적 RAG 인과효과로 해석하지 않음. 실제3/7거래일 확정수익률·대표표본 운영기준 미검증. 추가 비용 승인 불필요(남은총액$2.50964). 원본 ROADMAP/WORKLOG 사용자 변경 보존, 키/.env/로컬 데이터 커밋 및 push·PR·develop 병합 없음.
+
+## 2026-10-30 · Codex 총괄·검색 평가·예산·Spring 하위 세션 · ai-worker, docs
+- 한 것: feat/worker-rag-retrieval에서 P0/P1 후속 구현. 출처 연결 실험용 지식 common/short 6문단 import·별도 provenance·재관측 승인/거절 보존, synthetic 검색 평가 실행기/recall·MRR·precision, 한글 별칭과 실제 큰 snapshot의 핵심 질의 우선순위(v3), 4조건 비교 CLI, gpt-5-mini 입력/출력 상한과 영속 총승인 예산·실제 사용량 정산, 미가격 응답 보존·정산 실패 보고·비교 중 소스 변경 감지 구현. 실제 PostgreSQL/Flyway/Spring/HTTP의 봉인→판정→공개→당일 재사용→3/7거래일 채점 경로 검증. 조사·검토·한계는 docs/evaluations/worker-rag-p1-followup.md에서 주제별 문서로 연결.
+- 진행 중: 사용자 승인 gpt-5-mini/전체 USD 3로 최초 실모델 4조건 파일럿 실행 중. data/rag-p1-live/comparison-1은 v2 고정 context이며 실행 중 코드 검토·개선 사실을 별도 기록한다. 기준선 single/debate는 검증 반려 후 각각 5/8호출로 실패했고 사용량 가격 합계 $0.11472715; RAG 조건 결과는 종료 후 별도 기록. 이 실행을 최종 v3의 성능 증거로 바꾸지 않는다.
+- 다음: 최초 파일럿 실패·비용·원문 보존, 최종 소스와 v3 불변 context의 실모델 검증 및 운영 활성화 판정 기록. 모든 후속 호출은 ai-worker/data/rag-p1-live/authorization.sqlite3와 rag-p1-20261030-user-approved-3usd를 재사용하며 3달러 한도를 재설정하지 않는다. 완료 후 한국어 후속 평가 커밋.
+- 막힘·결정 필요: 전체 Python 296 passed·외부 2 skipped(35.21초), 별도 실제 Spring 2 passed(4.85초), Java HTTP/채점 단위 7개와 bootJar 검증. Spring 시장/LLM/시계는 fixture이고 API 원시 비용·예측 성과가 아니다. 실제 corpus는 인간 검수 전 experimental; 독립 자연 질문 평가·운영 완료율/p95/비용 허용 기준·성숙한 3/7거래일 결과는 미충족. BULLBEAR_RAG_ENABLED=false 유지, P2 미착수. 키/.env/로컬 시장·API 데이터·DB·런타임 커밋, push·PR·develop 병합 없음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: fetch 후 원격 feat/worker-rag-context HEAD=2f6af9f 및 이후 커밋 없음 확인. 해당 HEAD에서 독립 worktree/feat/worker-rag-retrieval 생성, 포함된 감사·benchmark·ingest 선행 커밋 보존. Retriever 실제 구현(common 2/short 3·경로별 후보 20·6000자/2000 UTF-8 byte 보수 상한·검색 1초), 시점/활성 revision/검수/시장/종목 필터, 고정 세대 BM25·NFC/별칭, 원자적 세대 발행/무결성, 검색 감사·불변 컨텍스트 저장/재생·CLI publish/retrieve/replay 구현. HTTP/benchmark fingerprint에 저장/재생 소스도 포함.
+- 진행 중: 이번 검색·통합 구현은 완료. P1 운영 활성화 검증은 남아 BULLBEAR_RAG_ENABLED=false 유지. 별도 조사 세션에서 공식 문서·논문·GitHub 확인, 조사 문서와 실제 결과를 docs/evaluations/worker-rag-retrieval-research.md 및 worker-rag-retrieval.md에 기록. 추가 검토 세션 생성은 자동 승인 정책으로 차단되어 현재 세션에서 검토·검증.
+- 다음: 실제 검수 corpus/한국어 자연 질문 정답 집합 검색 품질 평가, 명시 모델·가격표·입력 여유·호출 상한으로 실모델 비교, 실제 Spring/공급자 연결·전향 지연/비용/완료율 기준 검증. 이관 v1 색인은 v2로 재발행 필요. P1 활성화 기준 충족 전 P2 위험 검토/LangGraph로 확장하지 않음.
+- 막힘·결정 필요: 최종 Python 225 passed·외부 Spring 2 skipped(25.39초), 집중 회귀 29 passed(14.93초), diff 공백 검사 통과. 실제 SQLite 저장→검색→HTTP/benchmark 사용; 시장/LLM은 fixture. 50문서 30회 30/30 완료·context 1개, 검색 p95 0.031초/max 0.032초·저장 포함 p95 0.047초. 비교 4/4 완료·조건별 16 fixture 요청, 비용/accuracy=null이며 예측 성과 아님. OS I/O 강제 종료/실시간 1초 보장 아님(최대 4 reader·늦은 결과 폐기·저장은 검색 한도 밖). 실제 키·유료 모델·운영 corpus·가격표·성숙한 3/7거래일 결과·Spring 봉인 외부 통합 미검증. 원본 변경/키/.env/로컬 데이터 커밋, push·PR·develop 병합 없음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-rag-context 독립 worktree를 develop에서 만들고 감사 dc4040f·benchmark e66c062/6edd8ec·ingest c7eb1a7을 명시적으로 cherry-pick. 충돌한 모든 WORKLOG 보존. 불변 KnowledgeContext·별도 세대 FTS5 초안, 토론자/중재자/의미 검토 동일 배경 주입·공개 지식 ID 차단, HTTP 비공개 감사/설정 연결, none/common_short 내부 비교를 구현. 상세 조건·실측·이관 명령은 docs/evaluations/worker-rag-context-checkpoint.md.
+- 진행 중: 사용자 최신 이관 요청에 따라 구현 중단한 WIP 체크포인트. rag/retrieval.py가 없어 실제 검색 활성 경로는 미완성. BULLBEAR_RAG_ENABLED=false 유지. 부모 채팅이 push와 통합 이관 메모를 담당하며 이 채팅은 push·PR·develop 병합하지 않음.
+- 다음: 다른 컴퓨터에서 이 브랜치 체크아웃 후 평가 문서 순서대로 Retriever(common 2/short 3·각 후보 20·시장/시점/검수 필터·1초 상한), 검색 감사/재생·세대 시점/무결성 검증, 실제 저장층→검색→HTTP/benchmark 평가를 이어간다. 38a4516은 적용하지 않았고 상세 설계 9c91086은 별도 docs/worker-rag-design 브랜치 참조.
+- 막힘·결정 필요: 최종 전체 Python 200 passed·외부 Spring 2 skipped(43.99초), 공백 검사 통과. context/index 4개, 에이전트/의미/표현 71개, benchmark 19개, HTTP/감사/서버 31개+상태 3개 부분 검증도 통과(중복 묶음 합산 금지). fixture none/common_short 모두 2/2 완료·16요청, 셀 경과 0.211380/0.268008초, 비용 미산정 null. 검색 정답/실제 공급자/유료 모델/실제 7거래일 예측·Spring 통합은 이번에 검증하지 않음. HTTP는 주입 Retriever 연결 검증뿐. 원시 confidence는 보정 확률이 아니며 P2 위험 검토/LangGraph는 시작하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: HTTP 토론 시작·전체 스냅샷 고정·클라이언트 생성·역할별 LLM 호출·성공/실패를 data/audits/<debate_id>/manifest.json에 원자적 교체와 fsync로 저장. 코드 revision/dirty, 정책·프롬프트·스키마 해시, 정확한 snapshot ID/decision_at, 선택/실제 모델과 사용량·단계 시간 기록. 키·원시 예외·토큰 비기록과 공급자 오류 경고 상세 제거. HTTP/SSE·날짜 재사용·판정 봉인 경계 유지.
+- 진행 중: 없음. feat/worker-run-audit에 구현·최종 전체 검증 완료, develop 반영 전. 평가·한계는 docs/evaluations/worker-run-audit.md.
+- 다음: 실제 Spring HTTP 연동과 전향 운용에서 감사 산출물 확인. CLI/내부 비교 실행기 연결은 별도 작업.
+- 막힘·결정 필요: Python 전체 106개 통과, 외부 Spring 통합 2개 건너뜀. Docker·실제 시장 API·유료 LLM 외부 실측은 하지 않음. 응답 직후 저장 전 종료의 미확정 청구량과 저장장치 장애는 복구 보장 없음. 초기 실행 재개·재시작 감사 상태 보정은 미구현이며 마지막 running 기록을 보존. 키와 로컬 실행 데이터는 커밋하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-paired-baseline에서 내부 benchmark 실행기 구현(e66c062). 동일 Snapshot JSON을 두 조건에 독립 복원하고 중립 단일 분석가와 기존 3라운드 토론을 비교. 최종 모델·effort와 7거래일 코스피 상대수익 판정 기준을 공유하고 단일 조건도 Fact·수치·표현·기간·의미 검증 및 재작성을 적용. 기존 선공 비교 실행기·운영 HTTP API·당일 캐시·Spring 봉인 계약은 유지.
+- 한 것: fixture/live/주입 테스트 더블 구분, 실제 실행 --allow-paid·명시 모델 필수, 조건별 요청 상한·SDK 재시도/모델 폴백 비활성, 조건/배치 실패·손상 입력 보존, 프롬프트/원응답/검증 시도·시간·실제 모델별 토큰·코드/설정/프롬프트/스키마/스냅샷 해시 기록. 동일 배경 묶음 연결과 실제 최종 모델 불일치 시 비교 제외를 지원. docs/evaluations/worker-paired-baseline.md에 실행·산출물·한계·후속 KnowledgeContext 연결 방법 기록.
+- 진행 중: 없음. 루트 기존 .venv와 전용 worktree PYTHONPATH로 Python 전체 106개 통과·외부 Spring 2개 건너뜀(61.43초). 새 테스트는 동일 입력·6발언·재작성·실패/원문 보존·호출 상한·입력 변조·fixture/실제 구분·SDK 폴백 비활성·실제 응답 모델/캐시 토큰·잘못된 배경 연결을 확인. staged diff 공백 검사 통과.
+- 다음: 공통/단기 KnowledgeContext를 한 번 고정해 두 조건에 같은 JSON으로 주입하고 별도 출력 디렉터리에서 비교. 허용된 실제 호출은 공급자 키·모델·요청 상한을 명시해 실행한 뒤 확정된 3/7거래일 결과를 연결(담당자). root가 원본 develop에 기능별 cherry-pick 통합 예정.
+- 막힘·결정 필요: 실제 공급자·유료 LLM·Spring/PostgreSQL 전체 통합·전향 성과 검증은 실행하지 않음. fixture/판정 일치는 예측 품질 증거가 아니며 confidence는 보정 확률이 아님. 가격표 미구현으로 cost_usd는 null, 응답 없는 요청은 사용량 미확정으로 표시. 자동 실행 재개·운영 API·검색 정책 변경·push·PR은 하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-rag-ingest 전용 worktree에서 최소 RAG 원문 저장·수집 계층 구현. 별도 SQLite WAL 스키마 v1, SHA256 원문 objects, 현재 NewsArticle/Disclosure 캡처 변환, 안정 문서 ID·불변 revision·관측 항목·A→B→A 활성화·철회 사건·수집 상태/거절 수·완료 watermark 보존. 네트워크 없는 bullbear rag import/sync/inspect와 후속 문단·복수 기간 태그·기간 단위·검수 이력 API 추가. 평가/사용 안내는 docs/evaluations/worker-rag-ingest.md.
+- 진행 중: 없음. 실제 worktree 소스를 PYTHONPATH로 지정해 신규 회귀 27개 통과, 최종 전체 Python 118개 통과·외부 Spring 2개 건너뜀(44.51초), git diff 공백 검사 통과. 독립 검토의 늦게 도착한 관측 캡처 재생 문제를 수정하고, capture별 격리·정상 확인 회복 및 document_at 다중 조회의 WAL 스냅샷 일관성까지 검증.
+- 다음: 현재 공급자 캡처 생산자/일별 적재를 연결하고 coverage를 실제 확인. 후속 검색은 document_at으로 당시 활성 버전을 먼저 확정한 뒤 문단·검수 이력과 세대별 색인·고정 KnowledgeContext를 연결. 원문/관측 API와 마이그레이션 DDL은 rag/schemas.py·store.py에 있음.
+- 막힘·결정 필요: 실제 공급자·본문 크롤링·스케줄러·검색/임베딩·LLM/그래프·Spring/PostgreSQL 통합은 이번 범위에서 실행/구현하지 않음. 현재 뉴스 API의 고정 페이지 상한은 완전 수집을 증명하지 않으므로 미확인 범위는 partial로 저장해야 함. 공개 관측 시각은 생산자가 제공한 증거를 신뢰하며, 원문 손상은 실패 처리. 기존 API·워커 계약 변경, push·PR 없음.
 
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.

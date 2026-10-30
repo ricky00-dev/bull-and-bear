@@ -1,6 +1,7 @@
 from types import SimpleNamespace as NS
+import pytest
 
-from bullbear.llm import Conversation, LLM
+from bullbear.llm import Conversation, LLM, LLMError
 
 
 class Stream:
@@ -23,7 +24,7 @@ class Stream:
 
 def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():
     calls = []
-    models = iter(['actual-model-a', 'actual-model-b', 'actual-model-a'])
+    models = iter(['claude-haiku-5-5-20261001', 'claude-haiku-5-5-20261002', 'claude-haiku-5-5-20261001'])
     def stream(**kwargs):
         calls.append(kwargs)
         return Stream(next(models))
@@ -32,6 +33,37 @@ def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():
         llm.structured(Conversation('system'), schema={}, effort='medium')
     assert all('fallbacks' not in c and 'betas' not in c for c in calls)
     usage = {c['model']: c for c in llm.usage_payload()['calls']}
-    assert usage['actual-model-a']['input_tokens'] == 20
-    assert usage['actual-model-a']['cache_creation_input_tokens'] == 4
-    assert usage['actual-model-b']['output_tokens'] == 5
+    assert usage['claude-haiku-5-5-20261001']['input_tokens'] == 20
+    assert usage['claude-haiku-5-5-20261001']['cache_creation_input_tokens'] == 4
+    assert usage['claude-haiku-5-5-20261002']['output_tokens'] == 5
+
+
+@pytest.mark.parametrize('model', ['claude-opus-5-5', 'gpt-5-mini', '', 'claude-haiku-opus'])
+def test_disallowed_models_are_rejected_before_client_creation(monkeypatch, model):
+    monkeypatch.setattr('bullbear.llm.anthropic.Anthropic', lambda: pytest.fail('client created'))
+    with pytest.raises(ValueError, match='Haiku or Sonnet'):
+        LLM(model)
+
+
+def test_sonnet_cannot_enable_unrestricted_server_fallback():
+    with pytest.raises(ValueError, match='fallbacks are disabled'):
+        LLM('claude-sonnet-5-5', allow_fallbacks=True)
+    calls = []
+    def stream(**kwargs):
+        calls.append(kwargs)
+        return Stream('claude-sonnet-5-5')
+    llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
+    llm.structured(Conversation('system'), schema={}, effort='medium')
+    assert 'fallbacks' not in calls[0] and 'betas' not in calls[0]
+
+
+def test_unexpected_response_family_stops_and_preserves_incurred_usage():
+    calls = []
+    def stream(**kwargs):
+        calls.append(kwargs)
+        return Stream('claude-opus-5-5')
+    llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
+    with pytest.raises(LLMError, match='disallowed model family'):
+        llm.structured(Conversation('system'), schema={}, effort='medium')
+    assert len(calls) == 1
+    assert llm.usage_payload()['calls'][0]['input_tokens'] == 10
