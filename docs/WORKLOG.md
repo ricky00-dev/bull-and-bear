@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-rag-ingest 전용 worktree에서 최소 RAG 원문 저장·수집 계층 구현. 별도 SQLite WAL 스키마 v1, SHA256 원문 objects, 현재 NewsArticle/Disclosure 캡처 변환, 안정 문서 ID·불변 revision·관측 항목·A→B→A 활성화·철회 사건·수집 상태/거절 수·완료 watermark 보존. 네트워크 없는 bullbear rag import/sync/inspect와 후속 문단·복수 기간 태그·기간 단위·검수 이력 API 추가. 평가/사용 안내는 docs/evaluations/worker-rag-ingest.md.
+- 진행 중: 없음. 실제 worktree 소스를 PYTHONPATH로 지정해 신규 회귀 27개 통과, 최종 전체 Python 118개 통과·외부 Spring 2개 건너뜀(44.51초), git diff 공백 검사 통과. 독립 검토의 늦게 도착한 관측 캡처 재생 문제를 수정하고, capture별 격리·정상 확인 회복 및 document_at 다중 조회의 WAL 스냅샷 일관성까지 검증.
+- 다음: 현재 공급자 캡처 생산자/일별 적재를 연결하고 coverage를 실제 확인. 후속 검색은 document_at으로 당시 활성 버전을 먼저 확정한 뒤 문단·검수 이력과 세대별 색인·고정 KnowledgeContext를 연결. 원문/관측 API와 마이그레이션 DDL은 rag/schemas.py·store.py에 있음.
+- 막힘·결정 필요: 실제 공급자·본문 크롤링·스케줄러·검색/임베딩·LLM/그래프·Spring/PostgreSQL 통합은 이번 범위에서 실행/구현하지 않음. 현재 뉴스 API의 고정 페이지 상한은 완전 수집을 증명하지 않으므로 미확인 범위는 partial로 저장해야 함. 공개 관측 시각은 생산자가 제공한 증거를 신뢰하며, 원문 손상은 실패 처리. 기존 API·워커 계약 변경, push·PR 없음.
+
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.
 - 진행 중: 없음. 첫 GPT-5 mini 실행 중단, v4 mini 두 조건 중단, GPT-5.4 인용 검사 오탐 중단을 모두 보존하고 docs/experiment.md에 기록. 마지막 실행은 검증 완료 첫 주장 2개씩을 원문 그대로 이어받아 남은 4발언·중재자를 새로 생성했으며 재사용 출처를 manifest/report에 명시.
