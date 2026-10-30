@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-paired-baseline에서 내부 benchmark 실행기 구현(e66c062). 동일 Snapshot JSON을 두 조건에 독립 복원하고 중립 단일 분석가와 기존 3라운드 토론을 비교. 최종 모델·effort와 7거래일 코스피 상대수익 판정 기준을 공유하고 단일 조건도 Fact·수치·표현·기간·의미 검증 및 재작성을 적용. 기존 선공 비교 실행기·운영 HTTP API·당일 캐시·Spring 봉인 계약은 유지.
+- 한 것: fixture/live/주입 테스트 더블 구분, 실제 실행 --allow-paid·명시 모델 필수, 조건별 요청 상한·SDK 재시도/모델 폴백 비활성, 조건/배치 실패·손상 입력 보존, 프롬프트/원응답/검증 시도·시간·실제 모델별 토큰·코드/설정/프롬프트/스키마/스냅샷 해시 기록. 동일 배경 묶음 연결과 실제 최종 모델 불일치 시 비교 제외를 지원. docs/evaluations/worker-paired-baseline.md에 실행·산출물·한계·후속 KnowledgeContext 연결 방법 기록.
+- 진행 중: 없음. 루트 기존 .venv와 전용 worktree PYTHONPATH로 Python 전체 106개 통과·외부 Spring 2개 건너뜀(61.43초). 새 테스트는 동일 입력·6발언·재작성·실패/원문 보존·호출 상한·입력 변조·fixture/실제 구분·SDK 폴백 비활성·실제 응답 모델/캐시 토큰·잘못된 배경 연결을 확인. staged diff 공백 검사 통과.
+- 다음: 공통/단기 KnowledgeContext를 한 번 고정해 두 조건에 같은 JSON으로 주입하고 별도 출력 디렉터리에서 비교. 허용된 실제 호출은 공급자 키·모델·요청 상한을 명시해 실행한 뒤 확정된 3/7거래일 결과를 연결(담당자). root가 원본 develop에 기능별 cherry-pick 통합 예정.
+- 막힘·결정 필요: 실제 공급자·유료 LLM·Spring/PostgreSQL 전체 통합·전향 성과 검증은 실행하지 않음. fixture/판정 일치는 예측 품질 증거가 아니며 confidence는 보정 확률이 아님. 가격표 미구현으로 cost_usd는 null, 응답 없는 요청은 사용량 미확정으로 표시. 자동 실행 재개·운영 API·검색 정책 변경·push·PR은 하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: feat/worker-rag-ingest 전용 worktree에서 최소 RAG 원문 저장·수집 계층 구현. 별도 SQLite WAL 스키마 v1, SHA256 원문 objects, 현재 NewsArticle/Disclosure 캡처 변환, 안정 문서 ID·불변 revision·관측 항목·A→B→A 활성화·철회 사건·수집 상태/거절 수·완료 watermark 보존. 네트워크 없는 bullbear rag import/sync/inspect와 후속 문단·복수 기간 태그·기간 단위·검수 이력 API 추가. 평가/사용 안내는 docs/evaluations/worker-rag-ingest.md.
 - 진행 중: 없음. 실제 worktree 소스를 PYTHONPATH로 지정해 신규 회귀 27개 통과, 최종 전체 Python 118개 통과·외부 Spring 2개 건너뜀(44.51초), git diff 공백 검사 통과. 독립 검토의 늦게 도착한 관측 캡처 재생 문제를 수정하고, capture별 격리·정상 확인 회복 및 document_at 다중 조회의 WAL 스냅샷 일관성까지 검증.
 - 다음: 현재 공급자 캡처 생산자/일별 적재를 연결하고 coverage를 실제 확인. 후속 검색은 document_at으로 당시 활성 버전을 먼저 확정한 뒤 문단·검수 이력과 세대별 색인·고정 KnowledgeContext를 연결. 원문/관측 API와 마이그레이션 DDL은 rag/schemas.py·store.py에 있음.
