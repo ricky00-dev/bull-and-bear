@@ -32,10 +32,17 @@ class KrxOpenApiSource(PykrxDartSource):
         self._lock = threading.RLock()
         self._last_request = 0.0
         self._markets = {}
+        self._closed = threading.Event()
+
+    def close(self):
+        # Stop a cold-history preload between requests during server shutdown.
+        self._closed.set()
 
     def _day(self, endpoint, day):
         path = self._cache / endpoint / f"{day:%Y%m%d}.json.gz"
         with self._lock:
+            if self._closed.is_set():
+                raise DataUnavailable("KRX 시세 조회가 종료되었습니다")
             if path.exists():
                 try:
                     with gzip.open(path, "rt", encoding="utf-8") as f:

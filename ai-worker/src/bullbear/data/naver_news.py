@@ -56,16 +56,46 @@ class NaverNewsSource(NewsSource):
     def search(self, ticker: str, name: str, start: datetime, end: datetime) -> list[NewsArticle]:
         query = QUERY_OVERRIDES.get(ticker, name)
         raw: list[dict] = []
-        for page in range(MAX_PAGES):
-            resp = self._http.get(API_URL, params={"query": query, "display": PAGE_SIZE,
-                                                   "start": page * PAGE_SIZE + 1, "sort": "date", "format": "json"})
-            if resp.status_code != 200:
-                raise DataUnavailable(f"네이버 API HUB 뉴스 오류 HTTP {resp.status_code}")
-            items = resp.json().get("items", [])
-            raw.extend(items)
-            if len(items) < PAGE_SIZE or parsedate_to_datetime(items[-1]["pubDate"]) < start:
-                break
-        return filter_articles(raw, name, start, end)
+        try:
+            for page in range(MAX_PAGES):
+                resp = self._http.get(API_URL, params={"query": query, "display": PAGE_SIZE,
+                                                       "start": page * PAGE_SIZE + 1, "sort": "date", "format": "json"})
+                if resp.status_code != 200:
+                    raise DataUnavailable(f"네이버 API HUB 뉴스 오류 HTTP {resp.status_code}")
+                body = resp.json()
+                items = body.get("items") if isinstance(body, dict) else None
+                _validate_items(items)
+                raw.extend(items)
+                if len(items) < PAGE_SIZE or _published_at(items[-1]["pubDate"]) < start:
+                    break
+            return filter_articles(raw, name, start, end)
+        except httpx.HTTPError:
+            # Provider exceptions can include request details; only expose a safe summary.
+            raise DataUnavailable("네이버 API HUB 뉴스 요청에 실패했습니다") from None
+        except (ValueError, OverflowError):
+            raise DataUnavailable("네이버 API HUB 뉴스 응답 형식이 올바르지 않습니다") from None
+
+
+def _published_at(raw: str) -> datetime:
+    published = parsedate_to_datetime(raw)
+    if published.tzinfo is None or published.utcoffset() is None:
+        raise ValueError("News publication time must include a timezone")
+    return published
+
+
+def _validate_items(items) -> None:
+    # A 200 error payload without items is not a successful empty news search.
+    if not isinstance(items, list):
+        raise ValueError("News items must be an array")
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("News item must be an object")
+        if not all(isinstance(item.get(key), str) for key in ("title", "pubDate")):
+            raise ValueError("News item is missing text fields")
+        url = item.get("originallink") or item.get("link")
+        if not isinstance(url, str) or not url.strip() or not isinstance(item.get("description", ""), str):
+            raise ValueError("News item has invalid link or description")
+        _published_at(item["pubDate"])
 
 
 def filter_articles(items: list[dict], name: str, start: datetime, end: datetime) -> list[NewsArticle]:
@@ -73,7 +103,7 @@ def filter_articles(items: list[dict], name: str, start: datetime, end: datetime
     seen_titles: set[str] = set()
     out = []
     for item in items:
-        published = parsedate_to_datetime(item["pubDate"])
+        published = _published_at(item["pubDate"])
         if not (start <= published <= end):
             continue
         title = clean(item["title"])

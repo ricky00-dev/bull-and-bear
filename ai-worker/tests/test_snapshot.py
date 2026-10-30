@@ -1,7 +1,10 @@
 from datetime import date
 
+import httpx
 import pytest
 
+from bullbear.data.naver_news import NaverNewsSource
+from bullbear.data.pykrx_dart import PykrxDartSource
 from bullbear.snapshot import build_snapshot
 from bullbear.tools import SnapshotTools
 
@@ -72,3 +75,74 @@ def test_without_news_source_warns():
     snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
     assert not snap.by_category("news")
     assert "뉴스 소스 미설정" in snap.warnings
+
+
+@pytest.mark.parametrize("failure", ["timeout", "http", "invalid-json", "api-error", "invalid-date"])
+def test_optional_news_failure_warns_and_preserves_price_snapshot(failure):
+    def handle(request):
+        if failure == "timeout":
+            raise httpx.ReadTimeout("PRIVATE news request", request=request)
+        if failure == "http":
+            return httpx.Response(503, text="PRIVATE provider response")
+        if failure == "invalid-json":
+            return httpx.Response(200, text="PRIVATE invalid JSON")
+        if failure == "api-error":
+            return httpx.Response(200, json={"errorMessage": "PRIVATE"})
+        return httpx.Response(200, json={"items": [{"title": "가짜전자", "link": "https://example.test/news",
+                                                   "pubDate": "PRIVATE invalid date"}]})
+
+    news = NaverNewsSource("test-id", "test-secret")
+    news._http.close()
+    news._http = httpx.Client(transport=httpx.MockTransport(handle))
+    try:
+        snap = build_snapshot(FakeSource(), "000000", "가짜전자", news=news, now=NOW)
+    finally:
+        news._http.close()
+
+    assert snap.as_of == AS_OF
+    assert snap.facts["PX.CLOSE"].value == 399
+    assert snap.facts["VAL.PER_TTM"].value == pytest.approx(3990 / 80, abs=0.01)
+    assert not snap.by_category("news")
+    assert any(warning.startswith("뉴스 없음:") for warning in snap.warnings)
+    assert "PRIVATE" not in " ".join(snap.warnings)
+
+
+@pytest.mark.parametrize("failure", ["timeout", "http", "invalid-json"])
+def test_optional_dart_failure_warns_and_preserves_price_snapshot(failure, tmp_path, monkeypatch):
+    import io
+    import zipfile
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as company_file:
+        company_file.writestr("CORPCODE.xml", "<result><list><stock_code>000000</stock_code>"
+                             "<corp_code>test-corp</corp_code><corp_name>가짜전자</corp_name></list></result>")
+
+    calls = []
+
+    def handle(request):
+        calls.append(request.url.path)
+        if request.url.path.endswith("/corpCode.xml"):
+            return httpx.Response(200, content=archive.getvalue())
+        if failure == "timeout":
+            raise httpx.ReadTimeout("PRIVATE DART request: test-key", request=request)
+        if failure == "http":
+            return httpx.Response(503, text="PRIVATE provider response: test-key")
+        return httpx.Response(200, text="PRIVATE invalid JSON: test-key")
+
+    source = PykrxDartSource("test-key", tmp_path)
+    monkeypatch.setattr(source, "get_daily_prices", FakeSource().get_daily_prices)
+    source._dart._http.close()
+    source._dart._http = httpx.Client(base_url="https://opendart.example.test/api", transport=httpx.MockTransport(handle))
+    try:
+        snap = build_snapshot(source, "000000", "가짜전자", news=FakeNews(), now=NOW)
+    finally:
+        source._dart._http.close()
+
+    assert snap.as_of == AS_OF and snap.facts["PX.CLOSE"].value == 399
+    assert snap.by_category("news")
+    assert not snap.by_category("financials") and not snap.by_category("valuation") and not snap.by_category("disclosure")
+    for prefix in ("재무 데이터 없음:", "발행주식수 없음:", "공시 없음:"):
+        assert any(warning.startswith(prefix) for warning in snap.warnings)
+    assert {path.rsplit("/", 1)[-1] for path in calls} == {
+        "corpCode.xml", "fnlttSinglAcnt.json", "stockTotqySttus.json", "list.json"}
+    assert "PRIVATE" not in " ".join(snap.warnings) and "test-key" not in " ".join(snap.warnings)

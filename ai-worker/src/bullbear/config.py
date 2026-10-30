@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -10,13 +10,13 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Settings:
     model: str
-    dart_api_key: str | None
-    naver_client_id: str | None
-    naver_client_secret: str | None
+    dart_api_key: str | None = field(repr=False)
+    naver_client_id: str | None = field(repr=False)
+    naver_client_secret: str | None = field(repr=False)
     data_dir: Path
     debater_effort: str
     moderator_effort: str
-    krx_api_key: str | None = None
+    krx_api_key: str | None = field(default=None, repr=False)
 
     @property
     def snapshot_dir(self) -> Path:

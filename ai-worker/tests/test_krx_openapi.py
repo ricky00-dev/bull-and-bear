@@ -1,5 +1,7 @@
 from datetime import date
 from dataclasses import replace
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 import pytest
@@ -54,6 +56,31 @@ def test_missing_key_does_not_make_network_request(tmp_path, monkeypatch):
     with pytest.raises(DataUnavailable, match="KRX_API_KEY"):
         KrxOpenApiSource(None, None, tmp_path).get_daily_prices("005930", date(2026, 10, 16), date(2026, 10, 16))
     assert not calls
+
+
+def test_close_stops_cold_history_before_next_provider_request(tmp_path, monkeypatch):
+    gate, entered = threading.Event(), threading.Event()
+    calls = []
+
+    def get(url, **kwargs):
+        day = kwargs['params']['basDd']
+        calls.append(day)
+        entered.set()
+        assert gate.wait(5)
+        return httpx.Response(200, json={'OutBlock_1': [row(day=day)]}, request=httpx.Request('GET', url))
+
+    monkeypatch.setattr('bullbear.data.krx_openapi.httpx.get', get)
+    source = KrxOpenApiSource('test-key', None, tmp_path)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        pending = pool.submit(source.get_daily_prices, '005930', date(2026, 10, 15), date(2026, 10, 16))
+        try:
+            assert entered.wait(2)
+            source.close()
+        finally:
+            gate.set()
+        with pytest.raises(DataUnavailable, match='종료'):
+            pending.result(timeout=2)
+    assert calls == ['20261015']
 
 
 def test_closed_market_day_and_suspended_stock_are_excluded(tmp_path, monkeypatch):

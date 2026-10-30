@@ -1,6 +1,10 @@
 from datetime import datetime
 
-from bullbear.data.naver_news import filter_articles
+import httpx
+import pytest
+
+from bullbear.data.base import DataUnavailable
+from bullbear.data.naver_news import NaverNewsSource, filter_articles
 from bullbear.snapshot import KST
 
 START = datetime(2026, 10, 10, tzinfo=KST)
@@ -60,3 +64,64 @@ def test_hub_endpoint_headers_and_json_query(monkeypatch):
         assert "X-Naver-Client-Id" not in calls[0].headers
     finally:
         source._http.close()
+
+
+@pytest.fixture
+def make_source():
+    sources = []
+
+    def create(handler):
+        source = NaverNewsSource("test-id", "test-secret")
+        source._http.close()
+        source._http = httpx.Client(transport=httpx.MockTransport(handler))
+        sources.append(source)
+        return source
+
+    yield create
+    for source in sources:
+        source._http.close()
+
+
+@pytest.mark.parametrize("error", [httpx.ReadTimeout, httpx.ConnectError])
+def test_transport_failure_is_safe_data_unavailable(make_source, error):
+    def handle(request):
+        raise error("PRIVATE request details: test-secret", request=request)
+
+    source = make_source(handle)
+    with pytest.raises(DataUnavailable) as caught:
+        source.search("005930", "삼성전자", START, END)
+    assert "뉴스 요청" in str(caught.value)
+    assert "PRIVATE" not in str(caught.value) and "test-secret" not in str(caught.value)
+
+
+def test_http_failure_does_not_expose_response_body(make_source):
+    source = make_source(lambda request: httpx.Response(503, text="PRIVATE test-secret"))
+    with pytest.raises(DataUnavailable, match="HTTP 503") as caught:
+        source.search("005930", "삼성전자", START, END)
+    assert "PRIVATE" not in str(caught.value) and "test-secret" not in str(caught.value)
+
+
+@pytest.mark.parametrize("response", [
+    httpx.Response(200, text="PRIVATE invalid JSON"),
+    httpx.Response(200, json={"errorMessage": "PRIVATE"}),
+    httpx.Response(200, json=[]),
+    httpx.Response(200, json={"items": None}),
+    httpx.Response(200, json={"items": {}}),
+    httpx.Response(200, json={"items": [None]}),
+    httpx.Response(200, json={"items": [{"title": "삼성전자"}]}),
+    httpx.Response(200, json={"items": [item("삼성전자", "u1", pub="PRIVATE invalid date")]}),
+    httpx.Response(200, json={"items": [item("삼성전자", "u1", pub="16 Oct 2026 10:00:00")]}),
+    httpx.Response(200, json={"items": [item("삼성전자", "", desc="내용")]}),
+    httpx.Response(200, json={"items": [item("삼성전자", "u1", desc=None)]}),
+], ids=["invalid-json", "api-error", "non-object", "null-items", "non-list-items",
+        "non-object-item", "missing-fields", "invalid-date", "naive-date", "empty-link", "invalid-description"])
+def test_malformed_provider_response_is_safe_data_unavailable(make_source, response):
+    source = make_source(lambda request: response)
+    with pytest.raises(DataUnavailable, match="응답 형식") as caught:
+        source.search("005930", "삼성전자", START, END)
+    assert "PRIVATE" not in str(caught.value)
+
+
+def test_empty_items_is_a_successful_search(make_source):
+    source = make_source(lambda request: httpx.Response(200, json={"items": []}))
+    assert source.search("005930", "삼성전자", START, END) == []
