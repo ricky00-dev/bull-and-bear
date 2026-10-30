@@ -73,6 +73,7 @@ class QuizFlowTest {
 				.andExpect(jsonPath("$.stockName").exists())
 				.andExpect(jsonPath("$.moderatorDecision").exists())
 				.andExpect(jsonPath("$.chart.ticker").exists())
+				.andExpect(jsonPath("$.decisiveEvidence[0]").value("PX.VS_MA120"))
 				.andExpect(jsonPath("$.last").value(false))
 				.andReturn().getResponse().getContentAsString();
 		BigDecimal excess = new BigDecimal(JsonPath.read(answer, "$.excessReturn").toString());

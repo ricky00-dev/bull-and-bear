@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Claude Code · api, web
+- 한 것:
+  - 중재자 글의 `[E1]`·`[E2]`를 근거 칩으로 표시 (`VerdictText`, 판정 공개·퀴즈 정답 화면). `[E1]` = `decisive_evidence[0]` (worker-api.md v0.5 설명 보강). 번호 없는 예전 글은 그대로 보임
+  - 퀴즈 답하기 전 가리기 강화: 종가·이동평균·52주 고저·시가총액 등 가격 수준 근거와 1억 이상 금액 근거의 값은 `null`, 본문 속 금액("242,000원", "146.7조 원")과 큰 숫자는 "○○"
+  - 퀴즈 정답 응답에 `decisiveEvidence` 추가, 퀴즈 홈·결과에 "투자 권유 아님" 안내
+- 다음: 전시 모드 (A/B/C 결정 대기)
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 워커 안정화 코드·회귀 테스트·문서 16개 파일을 검토해 38a4516(fix: 워커 데이터 캐시와 장애 처리 및 초기 시세 조회 개선)으로 커밋하고 codex/fix-worker-data-reliability를 원격에 푸시. develop 대상 PR #17 생성: https://github.com/ricky00-dev/bull-and-bear/pull/17.
 - 진행 중: PR 리뷰 대기. 구현 변경 없이 PR 등록 기록만 추가.

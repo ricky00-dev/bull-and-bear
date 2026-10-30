@@ -48,7 +48,7 @@ export function QuizHomePage() {
           ))}
         </Card>
         <p className="text-[11px] leading-relaxed text-sub">
-          문제는 결과와 상관없이 무작위로 골라요. AI가 맞힌 문제도, 틀린 문제도 섞여 있어요. 퀴즈 기록은 내 판정 통계에 들어가지 않아요.
+          문제는 결과와 상관없이 무작위로 골라요. AI가 맞힌 문제도, 틀린 문제도 섞여 있어요. 퀴즈 기록은 내 판정 통계에 들어가지 않아요. 교육용 모의 퀴즈이며 AI 판정은 투자 권유가 아니에요.
         </p>
         <div className="mt-auto flex flex-col gap-2">
           {error && <p className="text-[13px] font-bold text-up-ink">{error}</p>}

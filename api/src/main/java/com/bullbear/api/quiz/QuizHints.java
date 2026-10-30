@@ -3,6 +3,8 @@ package com.bullbear.api.quiz;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * 퀴즈에서 종목·날짜를 가릴 때 대신 보여줄 힌트.
@@ -27,6 +29,14 @@ final class QuizHints {
 			Map.entry("017670", List.of("SK텔레콤", "SKT")),
 			Map.entry("012450", List.of("한화에어로스페이스", "한화에어로")));
 
+	/** 값만 봐도 종목이 드러나는 근거: 가격 수준, 주식 수, 시가총액 */
+	private static final Set<String> REVEALING = Set.of("PX.CLOSE", "PX.HIGH_52W", "PX.LOW_52W", "PX.MA20",
+			"PX.MA60", "PX.MA120", "PX.AVG_VOLUME_20D", "VAL.MKTCAP", "VAL.SHARES");
+
+	/** 본문 속 금액("242,000원", "146.7조 원")과 큰 숫자("146,725,209,000,000")도 종목을 드러낸다 */
+	private static final Pattern AMOUNT = Pattern
+			.compile("\\d[\\d,]*(?:\\.\\d+)?\\s*(?:조|억|만)?\\s*원|\\d{1,3}(?:,\\d{3}){2,}(?:\\.\\d+)?|\\d{7,}(?:\\.\\d+)?");
+
 	private static final String[] NTH = { "첫째", "둘째", "셋째", "넷째", "다섯째" };
 
 	private QuizHints() {
@@ -42,7 +52,7 @@ final class QuizHints {
 		return d.getYear() + "년 " + d.getMonthValue() + "월 " + NTH[(d.getDayOfMonth() - 1) / 7] + " 주";
 	}
 
-	/** 본문에서 종목명·종목코드를 "이 회사"로 바꾼다. */
+	/** 본문에서 종목명·종목코드를 "이 회사"로, 금액·큰 숫자를 "○○"로 바꾼다. */
 	static String mask(String text, String stockName, String ticker) {
 		if (text == null) {
 			return null;
@@ -51,6 +61,11 @@ final class QuizHints {
 		for (String alias : ALIASES.getOrDefault(ticker, List.of())) {
 			out = out.replace(alias, "이 회사");
 		}
-		return out;
+		return AMOUNT.matcher(out).replaceAll(m -> m.group().endsWith("원") ? "○○원" : "○○");
+	}
+
+	/** 근거 값을 공개 전에 가려야 하는지. 비율·배수는 두고, 가격 수준과 금액(1억 이상)은 가린다. */
+	static boolean revealing(String sourceId, double value) {
+		return REVEALING.contains(sourceId) || Math.abs(value) >= 1e8;
 	}
 }

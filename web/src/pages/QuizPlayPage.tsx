@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { EvidenceSheet } from '../components/EvidenceSheet'
 import { ReturnChart } from '../components/ReturnChart'
 import { StatementBubble } from '../components/StatementBubble'
-import { TermText } from '../components/TermText'
+import { VerdictText } from '../components/VerdictText'
 import { BottomBar, Card, ErrorNotice, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { api, ApiError } from '../lib/api'
 import { monthDay, pct, pctPoint } from '../lib/format'
@@ -185,7 +185,7 @@ function AnswerView({ a, round, onNext }: { a: QuizAnswer; round: QuizRound; onN
         <Card className="flex flex-col gap-2">
           <h3 className="text-sm font-extrabold">AI 중재자가 그때 이렇게 봤어요</h3>
           <p className="text-[15px] leading-relaxed">
-            <TermText text={a.moderatorReasoning} />
+            <VerdictText text={a.moderatorReasoning} decisive={a.decisiveEvidence} />
           </p>
         </Card>
       </main>
@@ -246,6 +246,7 @@ function Summary({ round }: { round: QuizRound }) {
         <Link to="/" className="text-center text-sm font-bold text-down underline-offset-2 hover:underline">
           오늘 토론을 실제로 판정해 보기
         </Link>
+        <p className="text-center text-[11px] leading-relaxed text-sub">교육용 모의 퀴즈예요. AI 판정은 투자 권유가 아니에요.</p>
       </main>
       <BottomBar>
         <PrimaryButton disabled={again.isPending} onClick={() => again.mutate()}>
