@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: feat/worker-rag-ingest 전용 worktree에서 최소 RAG 원문 저장·수집 계층 구현. 별도 SQLite WAL 스키마 v1, SHA256 원문 objects, 현재 NewsArticle/Disclosure 캡처 변환, 안정 문서 ID·불변 revision·관측 항목·A→B→A 활성화·철회 사건·수집 상태/거절 수·완료 watermark 보존. 네트워크 없는 bullbear rag import/sync/inspect와 후속 문단·복수 기간 태그·기간 단위·검수 이력 API 추가. 평가/사용 안내는 docs/evaluations/worker-rag-ingest.md.
+- 진행 중: 없음. 실제 worktree 소스를 PYTHONPATH로 지정해 신규 회귀 27개 통과, 최종 전체 Python 118개 통과·외부 Spring 2개 건너뜀(44.51초), git diff 공백 검사 통과. 독립 검토의 늦게 도착한 관측 캡처 재생 문제를 수정하고, capture별 격리·정상 확인 회복 및 document_at 다중 조회의 WAL 스냅샷 일관성까지 검증.
+- 다음: 현재 공급자 캡처 생산자/일별 적재를 연결하고 coverage를 실제 확인. 후속 검색은 document_at으로 당시 활성 버전을 먼저 확정한 뒤 문단·검수 이력과 세대별 색인·고정 KnowledgeContext를 연결. 원문/관측 API와 마이그레이션 DDL은 rag/schemas.py·store.py에 있음.
+- 막힘·결정 필요: 실제 공급자·본문 크롤링·스케줄러·검색/임베딩·LLM/그래프·Spring/PostgreSQL 통합은 이번 범위에서 실행/구현하지 않음. 현재 뉴스 API의 고정 페이지 상한은 완전 수집을 증명하지 않으므로 미확인 범위는 partial로 저장해야 함. 공개 관측 시각은 생산자가 제공한 증거를 신뢰하며, 원문 손상은 실패 처리. 기존 API·워커 계약 변경, push·PR 없음.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: HTTP 토론 시작·전체 스냅샷 고정·클라이언트 생성·역할별 LLM 호출·성공/실패를 data/audits/<debate_id>/manifest.json에 원자적 교체와 fsync로 저장. 코드 revision/dirty, 정책·프롬프트·스키마 해시, 정확한 snapshot ID/decision_at, 선택/실제 모델과 사용량·단계 시간 기록. 키·원시 예외·토큰 비기록과 공급자 오류 경고 상세 제거. HTTP/SSE·날짜 재사용·판정 봉인 경계 유지.
 - 진행 중: 없음. feat/worker-run-audit에 구현·최종 전체 검증 완료, develop 반영 전. 평가·한계는 docs/evaluations/worker-run-audit.md.
 - 다음: 실제 Spring HTTP 연동과 전향 운용에서 감사 산출물 확인. CLI/내부 비교 실행기 연결은 별도 작업.

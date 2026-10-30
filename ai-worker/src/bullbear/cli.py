@@ -155,8 +155,13 @@ def cmd_replay(args, settings: Settings) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "rag":
+        from .rag.cli import main as rag_main
+        raise SystemExit(rag_main(arguments[1:]))
     parser = argparse.ArgumentParser(prog="bullbear")
     sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("rag", help="로컬 RAG 원문 import/sync/inspect (네트워크 없음)")
     sub.add_parser("universe")
     p = sub.add_parser("snapshot")
     p.add_argument("ticker")
