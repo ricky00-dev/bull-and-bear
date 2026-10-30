@@ -5,6 +5,7 @@ No production switch enables these fixtures.
 """
 import argparse
 from dataclasses import replace
+from datetime import timedelta
 from pathlib import Path
 
 from bullbear.config import load_settings
@@ -12,7 +13,7 @@ from bullbear.debate import Debate, verification_stats
 from bullbear.events import EventLog
 from bullbear.server.app import create_app
 from bullbear.server.market import Market
-from .fakes import NOW, FakeNews, FakeSource, ScriptedDebater, ScriptedModerator, statement
+from .fakes import AS_OF, NOW, FakeNews, FakeSource, ScriptedDebater, ScriptedModerator, statement
 
 
 class TestRunner:
@@ -48,9 +49,30 @@ class TestRunner:
         pass
 
 
-def fixture_market(settings, now=lambda: NOW):
+class SettledFixtureMarket(Market):
+    """Test-only later closes; quote/snapshot retain the original fixed date."""
+
+    def daily(self, symbol, start, end, *, index=False):
+        result = super().daily(symbol, start, end, index=index)
+        # Validate symbols even when the normal fixture's cutoff precedes start.
+        super().daily(symbol, AS_OF, AS_OF, index=index)
+        rows = {row['date']: row['close'] for row in result['items']}
+        day = AS_OF
+        step = 0
+        while day < min(end, AS_OF + timedelta(days=14)):
+            day += timedelta(days=1)
+            if day.weekday() >= 5:
+                continue
+            step += 1
+            if start <= day:
+                rows[day.isoformat()] = float((1399 if index else 399) + step)
+        return {'items': [{'date': day, 'close': close} for day, close in sorted(rows.items())]}
+
+
+def fixture_market(settings, now=lambda: NOW, *, settled_prices=False):
     source = FakeSource()
-    return Market(settings, source=source, news=FakeNews(),
+    market_type = SettledFixtureMarket if settled_prices else Market
+    return market_type(settings, source=source, news=FakeNews(),
                   catalog={'005930': ('삼성전자', 'KOSPI'), '005935': ('삼성전자우', 'KOSPI'),
                            '000660': ('SK하이닉스', 'KOSPI')}, now=now,
                   index_loader=lambda code, start, end: [(b.date, 1000 + b.close) for b in source.get_daily_prices('005930', start, end)])
@@ -61,9 +83,11 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--port', type=int, default=18000)
     p.add_argument('--data', type=Path, required=True)
+    p.add_argument('--settled-prices', action='store_true',
+                   help='test-only fixed later prices for end-to-end 3/7-session scoring')
     args = p.parse_args()
     settings = replace(load_settings(), data_dir=args.data)
-    market = fixture_market(settings)
+    market = fixture_market(settings, settled_prices=args.settled_prices)
     app = create_app(settings=settings, market=market,
                      runner_factory=lambda: TestRunner(settings), token='integration-test-token')
     try:

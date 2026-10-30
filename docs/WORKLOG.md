@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, api, docs
+- 한 것: 실제 Spring worker 프로필·격리 PostgreSQL·Python HTTP fixture로 두 종목의 검색→토론→판정 봉인→사용자 판정→공개→재사용·3/7거래일 채점 검증. 테스트 전용 --settled-prices와 후속 평일 시세 회귀, docs/evaluations/worker-integration-evaluation.md 추가.
+- 진행 중: chore/worker-integration-evaluation 평가 체크포인트 정리. 실제 LLM·시장 데이터는 사용하지 않음.
+- 다음: 감사/수집/비교 실행기를 연결한 RAG 검색·고정 지식 입력 구현과 역할별 실제 모델·예산을 명시한 운영 검증.
+- 막힘·결정 필요: 타깃 11개·전체 Python 93개 통과/외부 2개 건너뜀, 별도 실제 HTTP 통합 2개 통과, Java 전체 23개 통과(HTTP/채점 7개 포함). Anthropic 키 부재로 유료 운영·전향 운용 미실행. 키/원문/임시 DB는 커밋하지 않음.
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: feat/worker-paired-baseline에서 내부 benchmark 실행기 구현(e66c062). 동일 Snapshot JSON을 두 조건에 독립 복원하고 중립 단일 분석가와 기존 3라운드 토론을 비교. 최종 모델·effort와 7거래일 코스피 상대수익 판정 기준을 공유하고 단일 조건도 Fact·수치·표현·기간·의미 검증 및 재작성을 적용. 기존 선공 비교 실행기·운영 HTTP API·당일 캐시·Spring 봉인 계약은 유지.
 - 한 것: fixture/live/주입 테스트 더블 구분, 실제 실행 --allow-paid·명시 모델 필수, 조건별 요청 상한·SDK 재시도/모델 폴백 비활성, 조건/배치 실패·손상 입력 보존, 프롬프트/원응답/검증 시도·시간·실제 모델별 토큰·코드/설정/프롬프트/스키마/스냅샷 해시 기록. 동일 배경 묶음 연결과 실제 최종 모델 불일치 시 비교 제외를 지원. docs/evaluations/worker-paired-baseline.md에 실행·산출물·한계·후속 KnowledgeContext 연결 방법 기록.
