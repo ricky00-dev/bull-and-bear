@@ -139,6 +139,8 @@ def test_cli_defaults_to_fixture_and_does_not_fetch_data(tmp_path, snapshot, cap
     path = tmp_path / "input.json"
     path.write_text(snapshot.model_dump_json(), encoding="utf-8")
     assert benchmark.main(["--snapshot-file", str(path), "--output-dir", str(tmp_path / "cli")]) == 0
+    assert (tmp_path / "cli/batch.json").exists()
+    assert not (tmp_path / "cli/rag-comparison.json").exists()
     assert "Results:" in capsys.readouterr().out
     with pytest.raises(SystemExit) as exc:
         benchmark.main(["--snapshot-file", str(path), "--provider", "openai", "--model", "gpt-test"])
@@ -187,43 +189,16 @@ def test_openai_transport_records_raw_output_actual_usage_and_stops_before_over_
     client.close()
 
 
-def test_anthropic_benchmark_factory_disables_sdk_retries_and_model_fallbacks(tmp_path, snapshot, monkeypatch):
-    from contextlib import contextmanager
-    from types import SimpleNamespace
+def test_unpriced_anthropic_benchmark_fails_before_sdk_initialization(tmp_path, snapshot, monkeypatch):
     import anthropic
-    captured = {}
-
-    class RawClient:
-        def __init__(self, **kwargs):
-            captured["client_options"] = kwargs
-            self.beta = SimpleNamespace(messages=SimpleNamespace(stream=usable_stream))
-
-        def close(self):
-            pass
-
-    class RawStream:
-        def __iter__(self):
-            return iter(())
-
-        def get_final_message(self):
-            return SimpleNamespace(model="resolved-model", stop_reason="end_turn",
-                                   content=[SimpleNamespace(type="text", text='{"ok":true}')],
-                                   usage=SimpleNamespace(input_tokens=1, output_tokens=1),
-                                   model_dump=lambda **kw: {"model": "resolved-model"})
-
-    @contextmanager
-    def usable_stream(**kwargs):
-        captured["request"] = kwargs
-        yield RawStream()
-
-    monkeypatch.setattr(anthropic, "Anthropic", RawClient)
+    from bullbear.budget import BudgetError
+    called = []
+    monkeypatch.setattr(anthropic, "Anthropic", lambda **kwargs: called.append(kwargs))
     budget = benchmark.RequestBudget(3, EventLog(tmp_path / "calls.jsonl"))
     config = BenchmarkConfig(provider="anthropic", final_model="claude-test", allow_paid=True)
-    llm = benchmark.make_llm(config, config.final_model, snapshot, budget)
-    assert llm.structured(Conversation("s"), schema={}, effort="medium") == {"ok": True}
-    assert captured["client_options"]["max_retries"] == 0
-    assert "fallbacks" not in captured["request"] and "betas" not in captured["request"]
-    assert llm.usage_payload()["calls"][0]["model"] == "resolved-model"
+    with pytest.raises(BudgetError):
+        benchmark.make_llm(config, config.final_model, snapshot, budget)
+    assert not called
 
 
 def test_malformed_snapshot_does_not_erase_valid_batch_cell(tmp_path, snapshot):
@@ -262,3 +237,44 @@ def test_mismatched_context_is_rejected_before_execution(tmp_path, snapshot):
         benchmark.run_pair(snapshot, BenchmarkConfig(), tmp_path / "context",
                            context_bundle={"snapshot_id": "another-snapshot"})
     assert not (tmp_path / "context").exists()
+
+
+def test_cli_rag_comparison_runs_four_fixture_arms(tmp_path, snapshot):
+    from .test_rag_benchmark import context_for
+    context = context_for(snapshot)
+    path = tmp_path / 'snapshot.json'
+    path.write_text(snapshot.model_dump_json(), encoding='utf-8')
+    context_path = tmp_path / 'context.json'
+    context_path.write_text(context.payload_json, encoding='utf-8')
+    output = tmp_path / 'rag-cli'
+    assert benchmark.main(['--rag-comparison', '--snapshot-file', str(path),
+                           '--context-file', str(context_path), '--output-dir', str(output)]) == 0
+    result = json.loads((output / 'rag-comparison.json').read_text(encoding='utf-8'))
+    assert result['completed_arms'] == 4
+    assert result['conditions']['none']['context_id'] is None
+    assert result['conditions']['common_short']['context_id'] == context.context_id
+    assert result['accuracy'] is None and result['cost_usd'] is None
+    assert not (output / 'batch.json').exists()
+
+
+@pytest.mark.parametrize('case', ['missing_context', 'multiple_snapshots', 'legacy_context', 'null_context'])
+def test_cli_rag_comparison_rejects_invalid_setup_before_output(tmp_path, snapshot, case):
+    from .test_rag_benchmark import context_for
+    path = tmp_path / 'snapshot.json'
+    path.write_text(snapshot.model_dump_json(), encoding='utf-8')
+    context_path = tmp_path / 'context.json'
+    context_path.write_text(context_for(snapshot).payload_json, encoding='utf-8')
+    output = tmp_path / 'invalid-rag'
+    args = ['--rag-comparison', '--snapshot-file', str(path), '--output-dir', str(output)]
+    if case != 'missing_context':
+        args += ['--context-file', str(context_path)]
+    if case == 'multiple_snapshots':
+        args += ['--snapshot-file', str(path)]
+    elif case == 'legacy_context':
+        context_path.write_text(json.dumps({'snapshot_id': snapshot.snapshot_id}), encoding='utf-8')
+    elif case == 'null_context':
+        context_path.write_text('null', encoding='utf-8')
+    with pytest.raises(SystemExit) as exc:
+        benchmark.main(args)
+    assert exc.value.code == 2
+    assert not output.exists()

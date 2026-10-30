@@ -21,6 +21,7 @@ from uuid import uuid4
 from pydantic import ConfigDict, Field, ValidationError
 
 from . import prompts
+from .budget import BudgetError, PRICE, SpendLedger, TOKEN_POLICY
 from .agents import Debater, Moderator
 from .debate import Debate, verification_stats
 from .events import EventLog
@@ -85,6 +86,10 @@ class BenchmarkConfig:
     max_tool_turns: int = 4
     max_pairs: int = 10
     allow_paid: bool = False
+    max_output_tokens: int = 16000
+    budget_ledger: str | None = None
+    authorization_id: str | None = None
+    max_total_usd: str | None = None
 
     def validate(self) -> None:
         if self.provider not in ("fixture", "anthropic", "openai"):
@@ -99,6 +104,18 @@ class BenchmarkConfig:
             raise ValueError("Pair/request limit out of range")
         if not 1 <= self.max_tool_turns <= 8:
             raise ValueError("Tool-turn limit out of range")
+        if type(self.max_output_tokens) is not int or not 1 <= self.max_output_tokens <= 128000:
+            raise ValueError("Output token limit out of range")
+
+
+def paid_ledger(config: BenchmarkConfig) -> SpendLedger:
+    if config.provider != "openai":
+        raise BudgetError("live pricing currently supports OpenAI gpt-5-mini only")
+    if any(model not in PRICE.actual_models for model in (config.final_model, config.debater_model or config.final_model)):
+        raise BudgetError("unknown live model price")
+    if not config.budget_ledger or not config.authorization_id or config.max_total_usd is None:
+        raise BudgetError("live run requires persistent authorization ledger and total USD cap")
+    return SpendLedger(config.budget_ledger, config.authorization_id, config.max_total_usd)
 
 
 class RequestLimit(LLMError):
@@ -107,18 +124,25 @@ class RequestLimit(LLMError):
 
 class RequestBudget:
     """One shared limit across generation and semantic review in a condition."""
-    def __init__(self, limit: int, log: EventLog):
+    def __init__(self, limit: int, log: EventLog, *, ledger=None, scope=None):
         self.limit = limit
         self.log = log
         self.requests = 0
         self.responses_received = 0
         self.usage_reports_received = 0
+        self.provider_observations = []
+        self.ledger = ledger
+        self.scope = scope or "condition." + uuid4().hex
+        self.reservations = {}
 
-    def admit(self, model: str) -> int:
+    def admit(self, model: str, payload=None) -> int:
         if self.requests >= self.limit:
             raise RequestLimit("Condition request limit reached")
+        reservation = self.ledger.reserve(payload, scope=self.scope) if self.ledger else None
         self.requests += 1
-        self.log.append("request_started", request=self.requests, requested_model=model)
+        self.reservations[self.requests] = reservation
+        self.log.append("request_started", request=self.requests, requested_model=model,
+                        reservation_id=reservation, budget_scope=self.scope)
         return self.requests
 
 
@@ -140,12 +164,23 @@ class ObservedClient:
     def _response(self, request, response):
         self.budget.responses_received += 1
         self.budget.usage_reports_received += int(getattr(response, "usage", None) is not None)
+        payload = response.model_dump(mode="json")
+        observation = {"request": request, "model": payload.get("model"), "usage": payload.get("usage"),
+                       "settlement_status": "pending" if self.budget.ledger else "not_applicable"}
+        self.budget.provider_observations.append(observation)
         self.budget.log.append("provider_response", request=request,
-                               response=response.model_dump(mode="json"))
+                               response=payload)
+        if self.budget.ledger:
+            try:
+                self.budget.ledger.settle(self.budget.reservations[request], response)
+            except Exception:
+                observation["settlement_status"] = "rejected"
+                raise
+            observation["settlement_status"] = "accepted" if observation["usage"] is not None else "missing_usage"
 
     @contextmanager
     def stream(self, **kwargs):
-        request = self.budget.admit(kwargs["model"])
+        request = self.budget.admit(kwargs["model"], kwargs)
         try:
             with self.raw.beta.messages.stream(**kwargs) as raw_stream:
                 owner = self
@@ -161,16 +196,20 @@ class ObservedClient:
 
                 yield Stream()
         except Exception as exc:
+            if self.budget.ledger:
+                self.budget.ledger.unconfirmed(self.budget.reservations[request])
             self.budget.log.append("provider_error", request=request, error_type=type(exc).__name__)
             raise
 
     def create(self, **kwargs):
-        request = self.budget.admit(kwargs["model"])
+        request = self.budget.admit(kwargs["model"], kwargs)
         try:
             response = self.raw.responses.create(**kwargs)
             self._response(request, response)
             return response
         except Exception as exc:
+            if self.budget.ledger:
+                self.budget.ledger.unconfirmed(self.budget.reservations[request])
             self.budget.log.append("provider_error", request=request, error_type=type(exc).__name__)
             raise
 
@@ -243,14 +282,12 @@ class FixtureLLM:
 def make_llm(config: BenchmarkConfig, model: str, snapshot: Snapshot, budget: RequestBudget):
     if config.provider == "fixture":
         return FixtureLLM(model, snapshot, budget)
-    if config.provider == "anthropic":
-        import anthropic
-        client = ObservedClient(anthropic.Anthropic(max_retries=0, timeout=180.0), budget)
-        return LLM(model, client=client, max_tool_turns=config.max_tool_turns, allow_fallbacks=False)
+    if budget.ledger is None or config.provider != "openai":
+        raise BudgetError("live factory requires authorization ledger")
     from openai import OpenAI
     from .openai_llm import OpenAILLM
     return OpenAILLM(model, client=ObservedClient(OpenAI(max_retries=0, timeout=180.0), budget),
-                     max_tool_turns=config.max_tool_turns)
+                     max_tool_turns=config.max_tool_turns, max_output_tokens=config.max_output_tokens)
 
 
 def run_single(llm, snapshot: Snapshot, log: EventLog, *, effort: str, review_records=None,
@@ -301,7 +338,8 @@ def source_identity() -> dict:
             return None
     modules = ("benchmark.py", "agents.py", "debate.py", "prompts.py", "schemas.py", "semantic.py",
                "verifier.py", "presentation.py", "llm.py", "openai_llm.py", "tools.py", "snapshot.py", "events.py",
-               "rag/context.py", "rag/retrieval.py", "rag/index.py", "rag/replay.py", "rag/store.py", "rag/schemas.py")
+               "rag/context.py", "rag/retrieval.py", "rag/index.py", "rag/replay.py", "rag/store.py", "rag/schemas.py",
+               "rag/corpus.py", "rag/evaluation.py", "budget.py")
     sources = {name: (hashlib.sha256(Path(__file__).parent.joinpath(name).read_bytes()).hexdigest()
                       if Path(__file__).parent.joinpath(name).is_file() else None) for name in modules}
     return {"commit": git("rev-parse", "HEAD"), "dirty": bool(git("status", "--porcelain")),
@@ -310,9 +348,13 @@ def source_identity() -> dict:
 
 def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
              context_bundle: KnowledgeContext | dict | None = None, llm_factory=None,
-             order=("single", "debate")) -> dict:
+             order=("single", "debate"), _code_identity: dict | None = None) -> dict:
     """Run independent arms from identical serialized input; never stop after one arm fails."""
     config.validate()
+    # Parent experiments freeze one identity for every arm. A later disk read
+    # cannot describe code already loaded in this process.
+    code_at_start = json.loads(canonical(_code_identity if _code_identity is not None else source_identity()))
+    ledger = paid_ledger(config) if config.provider != "fixture" and llm_factory is None else None
     if set(order) != {"single", "debate"} or len(order) != 2:
         raise ValueError("Both conditions must run exactly once")
     if isinstance(context_bundle, dict) and context_bundle.get("schema_version") == "knowledge-context-v1":
@@ -340,7 +382,7 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
     manifest = {"schema_version": BENCHMARK_VERSION, "purpose": "paired_decision_wiring_not_forecasting_evidence",
                 "execution_mode": ("injected_test_double" if llm_factory is not None else
                                    "fixture" if config.provider == "fixture" else "live"),
-                "config": settings, "config_hash": digest(settings), "code": source_identity(),
+                "config": settings, "config_hash": digest(settings), "code": code_at_start,
                 "prompt_hash": digest({"single": SINGLE_SYSTEM, "debater": prompts._DEBATER,
                                        "moderator": prompts.MODERATOR_SYSTEM, "policy": prompts.JUDGMENT_POLICY,
                                        "semantic": REVIEW_SYSTEM, "round_tasks": prompts._ROUND_TASK}),
@@ -356,7 +398,9 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
                            "benchmark": "KOSPI", "entry_basis": "snapshot_close",
                            "buy_above_percentage_points": 2, "sell_below_percentage_points": -2,
                            "hold_includes_boundaries": True},
-                "fallbacks": False, "sdk_retries": 0, "max_extra_rounds": 0}
+                "fallbacks": False, "sdk_retries": 0, "max_extra_rounds": 0,
+                "budget": ledger.summary() if ledger else None,
+                "token_policy": TOKEN_POLICY if ledger else None}
     manifest["run_fingerprint"] = digest(manifest)
     save(directory / "manifest.json", manifest)
     reports = {}
@@ -366,7 +410,7 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
         arm_dir.mkdir()
         log = EventLog(arm_dir / "events.jsonl")
         calls = EventLog(arm_dir / "generations.jsonl")
-        budget = RequestBudget(config.max_requests_per_condition, calls)
+        budget = RequestBudget(config.max_requests_per_condition, calls, ledger=ledger)
         clients, agents, single_reviews = {}, {}, []
         frozen = Snapshot.model_validate_json(snapshot_text)
         report = {"condition": condition, "snapshot_id": frozen.snapshot_id, "snapshot_sha256": snapshot_hash,
@@ -411,9 +455,20 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
             report["elapsed_seconds"] = round(time.perf_counter() - started, 6)
             report["requests_attempted"] = budget.requests
             report["responses_received"] = budget.responses_received
+            report["provider_observations"] = budget.provider_observations
+            report["provider_usage_reports_received"] = budget.usage_reports_received
+            report["provider_actual_models"] = sorted({row["model"] for row in budget.provider_observations
+                                                       if isinstance(row["model"], str)})
+            report["adapter_usage_requests"] = sum(client.inner.usage.requests for client in clients.values())
+            report["usage_basis"] = "adapter_aggregated_usage; provider_observations_preserve_pre_settlement_usage"
             report["usage_status"] = ("injected_test_double_usage" if llm_factory is not None else
                                       "fixture_no_real_usage" if config.provider == "fixture" else
-                                      "reported" if budget.usage_reports_received == budget.requests else
+                                      "no_requests" if not budget.requests else
+                                      "partial_unpriced_or_rejected_usage" if any(
+                                          row["settlement_status"] in ("pending", "rejected")
+                                          for row in budget.provider_observations) else
+                                      "reported" if budget.usage_reports_received == budget.requests
+                                      and report["adapter_usage_requests"] == budget.requests else
                                       "partial_unconfirmed_requests")
             report["usage"] = {role: client.usage_payload() for role, client in clients.items()}
             report["actual_models"] = {role: [row["model"] for row in usage["calls"]]
@@ -422,6 +477,11 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
                 role: agent.reviewer.records for role, agent in agents.items()})
             report["cost_usd"] = None
             report["cost_status"] = "not_priced_use_recorded_actual_usage"
+            if ledger:
+                report["spend"] = ledger.summary(budget.scope)
+                report["budget_scope"] = budget.scope
+                report["cost_usd"] = report["spend"]["cost_usd"]
+                report["cost_status"] = report["spend"]["cost_status"]
             save(arm_dir / "report.json", report)
             for client in clients.values():
                 try:
@@ -433,14 +493,19 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
     single_actual = reports["single"]["actual_models"].get("final", [])
     debate_actual = reports["debate"]["actual_models"].get("final", [])
     model_evidence_complete = manifest["execution_mode"] != "live" or bool(single_actual and debate_actual)
-    comparable = completed and model_evidence_complete and set(single_actual) == set(debate_actual)
+    code_at_end = source_identity()
+    code_changed = code_at_start["source_hash"] != code_at_end["source_hash"]
+    comparable = completed and model_evidence_complete and set(single_actual) == set(debate_actual) and not code_changed
     comparison = {"snapshot_id": snapshot.snapshot_id, "snapshot_sha256": snapshot_hash,
                   "run_fingerprint": manifest["run_fingerprint"], "execution_mode": manifest["execution_mode"],
                   "status": "completed" if completed else "partial_failure", "comparable": comparable,
+                  "code": code_at_start, "code_at_end": code_at_end, "code_changed_during_run": code_changed,
                   "conditions": reports, "confidence_meaning": CONFIDENCE_MEANING,
                   "forecast_scoring": "pending_no_realized_returns", "accuracy": None,
                   "decision_agreement": (reports["single"]["decision"] == reports["debate"]["decision"]) if comparable else None,
                   "limitation": "Fixture success or decision agreement is not forecasting performance; confidence is not calibrated probability."}
+    if ledger:
+        comparison["authorization_budget"] = ledger.summary()
     save(directory / "comparison.json", comparison)
     return comparison
 
@@ -455,6 +520,7 @@ def run_rag_comparison(snapshot: Snapshot, config: BenchmarkConfig, directory: P
     repeated samples should alternate config.first_side separately.
     """
     config.validate()
+    ledger = paid_ledger(config) if config.provider != "fixture" and llm_factory is None else None
     if not isinstance(context, KnowledgeContext):
         raise ValueError("RAG comparison requires a validated KnowledgeContext")
     if context.snapshot_id != snapshot.snapshot_id:
@@ -469,8 +535,9 @@ def run_rag_comparison(snapshot: Snapshot, config: BenchmarkConfig, directory: P
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
     order = ("single", "debate")
+    code_at_start = source_identity()
     setup = {"schema_version": "rag-ablation-v1", "purpose": "background_wiring_not_forecasting_evidence",
-             "code": source_identity(), "policy_version": prompts.POLICY_VERSION,
+             "code": code_at_start, "policy_version": prompts.POLICY_VERSION,
              "snapshot_id": snapshot.snapshot_id, "snapshot_sha256": digest(snapshot.model_dump(mode="json")),
              "context_id": context.context_id, "context_sha256": digest(payload),
              "config": {k: v for k, v in asdict(config).items() if k != "allow_paid"},
@@ -486,9 +553,10 @@ def run_rag_comparison(snapshot: Snapshot, config: BenchmarkConfig, directory: P
         started = time.perf_counter()
         try:
             pair = run_pair(snapshot, config, directory / name, context_bundle=background,
-                            llm_factory=llm_factory, order=order)
+                            llm_factory=llm_factory, order=order, _code_identity=code_at_start)
             arms = pair["conditions"]
             cells[name] = {"status": pair["status"], "comparable": pair["comparable"],
+                           "code_changed_during_run": pair["code_changed_during_run"],
                            "run_fingerprint": pair["run_fingerprint"], "execution_mode": pair["execution_mode"],
                            "context_id": context.context_id if background else None,
                            "completed_arms": sum(row["status"] == "completed" for row in arms.values()),
@@ -508,34 +576,55 @@ def run_rag_comparison(snapshot: Snapshot, config: BenchmarkConfig, directory: P
         cells["none"].get("arms", {}).get(arm, {}).get("actual_models") ==
         cells["common_short"].get("arms", {}).get(arm, {}).get("actual_models")
         for arm in order)
+    code_at_end = source_identity()
+    code_changed = (code_at_start["source_hash"] != code_at_end["source_hash"] or
+                    any(cell.get("code_changed_during_run", False) for cell in cells.values()))
     report = {**setup, "conditions": cells, "completed_arms": completed, "total_arms": 4,
+              "code_at_end": code_at_end, "code_changed_during_run": code_changed,
               "completion_rate": completed / 4, "status": "completed" if completed == 4 else "partial_failure",
-              "comparable": all(c["comparable"] for c in cells.values()) and same_actual_models,
+              "comparable": all(c["comparable"] for c in cells.values()) and same_actual_models and not code_changed,
               "cost_usd": None, "background_added": True,
               "limitation": "Fixture wiring and retrieval labels do not establish prediction accuracy; raw confidence is not calibrated probability."}
+    if ledger:
+        report["authorization_budget"] = ledger.summary()
+        costs = [cell.get("arms", {}).get(arm, {}).get("cost_usd") for cell in cells.values() for arm in order]
+        report["cost_usd"] = sum(costs) if all(value is not None for value in costs) else None
+        report["cost_status"] = "priced_actual_usage" if report["cost_usd"] is not None else "partial_unconfirmed_or_failed_setup"
     save(directory / "rag-comparison.json", report)
     return report
 
 
 def run_batch(snapshots, config: BenchmarkConfig, directory: Path, *, context_bundle=None, llm_factory=None):
     config.validate()
+    if config.provider != "fixture" and llm_factory is None:
+        paid_ledger(config)
     snapshots = list(snapshots)
     if not snapshots or len(snapshots) > config.max_pairs:
         raise ValueError("Batch must contain 1..max_pairs snapshots")
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
+    code_at_start = source_identity()
     cells = []
+    code_changed = False
     for index, source in enumerate(snapshots):
         snapshot = None
         try:
             snapshot = source if isinstance(source, Snapshot) else Snapshot.model_validate_json(Path(source).read_text(encoding="utf-8"))
             result = run_pair(snapshot, config, directory / f"pair-{index + 1:03}", context_bundle=context_bundle,
-                              llm_factory=llm_factory, order=("single", "debate") if index % 2 == 0 else ("debate", "single"))
-            cells.append({"pair": index + 1, "snapshot_id": snapshot.snapshot_id, "status": result["status"]})
+                              llm_factory=llm_factory, order=("single", "debate") if index % 2 == 0 else ("debate", "single"),
+                              _code_identity=code_at_start)
+            cells.append({"pair": index + 1, "snapshot_id": snapshot.snapshot_id, "status": result["status"],
+                          "comparable": result["comparable"], "code_changed_during_run": result["code_changed_during_run"]})
         except Exception as exc:
             cells.append({"pair": index + 1, "snapshot_id": snapshot.snapshot_id if snapshot is not None else None,
-                          "status": "failed", "error_type": type(exc).__name__})
+                          "status": "failed", "comparable": False, "error_type": type(exc).__name__})
+        code_at_end = source_identity()
+        code_changed = (code_changed or code_at_start["source_hash"] != code_at_end["source_hash"] or
+                        any(cell.get("code_changed_during_run", False) for cell in cells))
         save(directory / "batch.json", {"schema_version": BENCHMARK_VERSION, "cells": cells,
+                                       "code": code_at_start, "code_at_end": code_at_end,
+                                       "code_changed_during_run": code_changed,
+                                       "comparable": all(cell["comparable"] for cell in cells) and not code_changed,
                                        "execution_mode": ("injected_test_double" if llm_factory is not None else
                                                           "fixture" if config.provider == "fixture" else "live"),
                                        "forecast_accuracy": None})
@@ -557,15 +646,25 @@ def main(argv=None):
     parser.add_argument("--max-pairs", type=int, default=10)
     parser.add_argument("--max-requests-per-condition", type=int, default=120)
     parser.add_argument("--max-tool-turns", type=int, default=4)
+    parser.add_argument("--max-output-tokens", type=int, default=16000)
+    parser.add_argument("--budget-ledger", help="Reuse the same SQLite ledger for the entire authorization, including reruns")
+    parser.add_argument("--authorization-id")
+    parser.add_argument("--max-total-usd", help="Total authorization cap, not a per-condition cap")
     parser.add_argument("--context-file", type=Path, help="Optional same frozen JSON background bundle for both arms")
+    parser.add_argument("--rag-comparison", action="store_true",
+                        help="Run none/common_short × single/debate; requires one snapshot and a formal KnowledgeContext JSON")
     args = parser.parse_args(argv)
     config = BenchmarkConfig(provider=args.provider, final_model=args.model, debater_model=args.debater_model,
                              allow_paid=args.allow_paid, max_pairs=args.max_pairs,
                              max_requests_per_condition=args.max_requests_per_condition,
                              max_tool_turns=args.max_tool_turns, first_side=args.first_side,
-                             final_effort=args.final_effort, debater_effort=args.debater_effort)
+                             final_effort=args.final_effort, debater_effort=args.debater_effort,
+                             max_output_tokens=args.max_output_tokens, budget_ledger=args.budget_ledger,
+                             authorization_id=args.authorization_id, max_total_usd=args.max_total_usd)
     try:
         config.validate()
+        if args.rag_comparison and (len(args.snapshot_file) != 1 or args.context_file is None):
+            raise ValueError("RAG comparison requires exactly one snapshot and --context-file")
         if len(args.snapshot_file) > config.max_pairs:
             raise ValueError("Snapshot count exceeds --max-pairs")
         if config.provider != "fixture":
@@ -574,12 +673,21 @@ def main(argv=None):
                 raise ValueError(f"{key} is missing")
         context = json.loads(args.context_file.read_text(encoding="utf-8")) if args.context_file else None
         output = args.output_dir or Path("data/benchmarks") / (datetime.now(KST).strftime("%Y%m%d-%H%M%S") + "-" + uuid4().hex[:8])
-        cells = run_batch(args.snapshot_file, config, output, context_bundle=context)
-    except (ValueError, OSError) as exc:
+        if args.rag_comparison:
+            if not isinstance(context, dict):
+                raise ValueError("RAG comparison requires a KnowledgeContext object")
+            formal_context = KnowledgeContext.from_payload(context)
+            snapshot = Snapshot.model_validate_json(args.snapshot_file[0].read_text(encoding="utf-8"))
+            result = run_rag_comparison(snapshot, config, output, formal_context)
+            succeeded = result["status"] == "completed"
+        else:
+            cells = run_batch(args.snapshot_file, config, output, context_bundle=context)
+            succeeded = all(cell["status"] == "completed" for cell in cells)
+    except (ValueError, OSError, BudgetError) as exc:
         # File/provider exception payloads are intentionally not echoed.
         parser.exit(2, f"Benchmark setup failed: {type(exc).__name__}; no automatic fallback.\n")
     print(f"Results: {output}")
-    return 0 if all(cell["status"] == "completed" for cell in cells) else 1
+    return 0 if succeeded else 1
 
 
 if __name__ == "__main__":

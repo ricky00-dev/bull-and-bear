@@ -329,11 +329,18 @@ class RagStore:
                 raise ValueError("chunk ordinal already has different immutable content")
         return chunk.chunk_id
 
-    def annotate(self, annotation: AnnotationInput) -> str:
+    def annotate(self, annotation: AnnotationInput, *, initial_only: bool = False) -> str:
         annotation = AnnotationInput.model_validate(annotation.model_dump(mode="json"))
         data = annotation.model_dump(mode="json")
         annotation_id = "A." + digest(data)
         with self.transaction() as db:
+            if initial_only:
+                # Importers must not renew approval or override a later human
+                # rejection/proposal merely by observing the same revision again.
+                existing = db.execute("SELECT annotation_id FROM chunk_annotations WHERE chunk_id=? "
+                                      "ORDER BY annotation_seq DESC LIMIT 1", (annotation.chunk_id,)).fetchone()
+                if existing:
+                    return existing["annotation_id"]
             original = db.execute("SELECT revision_id FROM chunks WHERE chunk_id=?", (annotation.chunk_id,)).fetchone()
             revision = self.revision(original["revision_id"]) if original else None
             if not revision or stamp(annotation.created_at) < revision["first_observed_at"]:

@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex 총괄·검색 평가·예산·Spring 하위 세션 · ai-worker, docs
+- 한 것: feat/worker-rag-retrieval에서 P0/P1 후속 구현. 출처 연결 실험용 지식 common/short 6문단 import·별도 provenance·재관측 승인/거절 보존, synthetic 검색 평가 실행기/recall·MRR·precision, 한글 별칭과 실제 큰 snapshot의 핵심 질의 우선순위(v3), 4조건 비교 CLI, gpt-5-mini 입력/출력 상한과 영속 총승인 예산·실제 사용량 정산, 미가격 응답 보존·정산 실패 보고·비교 중 소스 변경 감지 구현. 실제 PostgreSQL/Flyway/Spring/HTTP의 봉인→판정→공개→당일 재사용→3/7거래일 채점 경로 검증. 조사·검토·한계는 docs/evaluations/worker-rag-p1-followup.md에서 주제별 문서로 연결.
+- 진행 중: 사용자 승인 gpt-5-mini/전체 USD 3로 최초 실모델 4조건 파일럿 실행 중. data/rag-p1-live/comparison-1은 v2 고정 context이며 실행 중 코드 검토·개선 사실을 별도 기록한다. 기준선 single/debate는 검증 반려 후 각각 5/8호출로 실패했고 사용량 가격 합계 $0.11472715; RAG 조건 결과는 종료 후 별도 기록. 이 실행을 최종 v3의 성능 증거로 바꾸지 않는다.
+- 다음: 최초 파일럿 실패·비용·원문 보존, 최종 소스와 v3 불변 context의 실모델 검증 및 운영 활성화 판정 기록. 모든 후속 호출은 ai-worker/data/rag-p1-live/authorization.sqlite3와 rag-p1-20261030-user-approved-3usd를 재사용하며 3달러 한도를 재설정하지 않는다. 완료 후 한국어 후속 평가 커밋.
+- 막힘·결정 필요: 전체 Python 296 passed·외부 2 skipped(35.21초), 별도 실제 Spring 2 passed(4.85초), Java HTTP/채점 단위 7개와 bootJar 검증. Spring 시장/LLM/시계는 fixture이고 API 원시 비용·예측 성과가 아니다. 실제 corpus는 인간 검수 전 experimental; 독립 자연 질문 평가·운영 완료율/p95/비용 허용 기준·성숙한 3/7거래일 결과는 미충족. BULLBEAR_RAG_ENABLED=false 유지, P2 미착수. 키/.env/로컬 시장·API 데이터·DB·런타임 커밋, push·PR·develop 병합 없음.
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: fetch 후 원격 feat/worker-rag-context HEAD=2f6af9f 및 이후 커밋 없음 확인. 해당 HEAD에서 독립 worktree/feat/worker-rag-retrieval 생성, 포함된 감사·benchmark·ingest 선행 커밋 보존. Retriever 실제 구현(common 2/short 3·경로별 후보 20·6000자/2000 UTF-8 byte 보수 상한·검색 1초), 시점/활성 revision/검수/시장/종목 필터, 고정 세대 BM25·NFC/별칭, 원자적 세대 발행/무결성, 검색 감사·불변 컨텍스트 저장/재생·CLI publish/retrieve/replay 구현. HTTP/benchmark fingerprint에 저장/재생 소스도 포함.
 - 진행 중: 이번 검색·통합 구현은 완료. P1 운영 활성화 검증은 남아 BULLBEAR_RAG_ENABLED=false 유지. 별도 조사 세션에서 공식 문서·논문·GitHub 확인, 조사 문서와 실제 결과를 docs/evaluations/worker-rag-retrieval-research.md 및 worker-rag-retrieval.md에 기록. 추가 검토 세션 생성은 자동 승인 정책으로 차단되어 현재 세션에서 검토·검증.

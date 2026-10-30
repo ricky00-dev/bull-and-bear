@@ -7,8 +7,10 @@ Persistence is outside the search deadline and must succeed before returning.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import time
+import unicodedata
 from datetime import datetime
 
 from .context import (KnowledgeContext, MAX_CHARS, MAX_TOKENS, PROFILE_VERSION,
@@ -19,7 +21,7 @@ from .schemas import digest, stamp
 
 SEARCH_SECONDS = 1.0
 CANDIDATES = 20
-POLICY_VERSION = "filtered-bm25-v1"
+POLICY_VERSION = "filtered-bm25-v3-concept-priority"
 _READERS = threading.BoundedSemaphore(4)
 # Versioned, deliberately small alias set. No generated claims/news text in query.
 ALIASES = {
@@ -30,18 +32,46 @@ ALIASES = {
     "revenue": ("revenue", "매출액", "earnings"),
     "operating": ("operating", "영업이익", "earnings"),
 }
+# Only curated spellings and complete Korean particles, never general stemming.
+_SPACED_ALIASES = {
+    "주가수익비율": r"주가\s*수익\s*비율",
+    "주가순자산비율": r"주가\s*순자산\s*비율",
+    "자기자본이익률": r"자기\s*자본\s*이익률",
+}
+_PARTICLES = r"(?:으로|에서|까지|부터|은|는|이|가|을|를|의|에|와|과|로|도|만)?"
+_ALIAS_PATTERNS = {
+    concept: re.compile(r"(?<!\w)(?:" + "|".join(_SPACED_ALIASES.get(alias, re.escape(alias))
+                                               for alias in aliases) + ")" + _PARTICLES + r"(?!\w)")
+    for concept, aliases in ALIASES.items()
+}
 
 
 def query_terms(snapshot) -> list[str]:
-    terms = {"kospi", "코스피", "초과수익", "거래일", "event_relevance"}
-    terms.update(normalize(snapshot.name + " " + snapshot.ticker))
+    # Budget by meaning before lexicographic tie-breaking. News/disclosure IDs
+    # and headlines are market facts, not background concept vocabulary; a full
+    # daily snapshot must not evict PER/volatility just by carrying more articles.
+    target = {"kospi", "코스피", "초과수익", "거래일", "event_relevance"}
+    identity = normalize(snapshot.ticker) + normalize(snapshot.name)[:8]
+    aliases_found, concepts = set(), set()
+    categories = {fact.category for fact in snapshot.facts.values()}
+    if "news" in categories:
+        concepts.update(("news", "뉴스"))
+    if "disclosure" in categories:
+        concepts.update(("disclosure", "공시"))
     for key, fact in sorted(snapshot.facts.items()):
-        tokens = normalize(key.replace("_", " ") + " " + fact.label)
-        terms.update(tokens)
+        if fact.category in {"news", "disclosure"}:
+            continue
+        concept_text = unicodedata.normalize("NFC", key.replace("_", " ") + " " + fact.label).lower()
+        tokens = normalize(concept_text)
+        concepts.update(token for token in tokens
+                        if token not in {"px", "fin", "val", "eval", "probe"}
+                        and not token.isdecimal()
+                        and not re.fullmatch(r"[0-9a-f]{8,}|(?:\d{4})?(?:h[12]|q[1-4]|fy)", token))
         for concept, aliases in ALIASES.items():
-            if concept in tokens or set(aliases) & set(tokens):
-                terms.update(aliases)
-    return sorted(terms)[:128]
+            if concept in tokens or set(aliases) & set(tokens) or _ALIAS_PATTERNS[concept].search(concept_text):
+                aliases_found.update(aliases)
+    ranked = dict.fromkeys([*sorted(target), *identity, *sorted(aliases_found), *sorted(concepts)])
+    return list(ranked)[:128]
 
 
 class Retriever:

@@ -71,3 +71,52 @@ def test_rag_comparison_retains_bounded_failures_in_every_cell(tmp_path, snapsho
     assert not result["comparable"]
     assert result["provider_request_upper_bound"] == 4
     assert all(cell["requests_attempted"] == 2 for cell in result["conditions"].values())
+
+
+def changing_source(monkeypatch):
+    calls = []
+
+    def identity():
+        value = "initial" if not calls else "edited"
+        calls.append(value)
+        return {"commit": "same-commit", "dirty": True, "source_hash": value,
+                "module_hashes": {"benchmark.py": value}}
+
+    monkeypatch.setattr(benchmark, "source_identity", identity)
+
+
+def test_rag_freezes_initial_code_identity_and_rejects_changed_sources(tmp_path, snapshot, monkeypatch):
+    changing_source(monkeypatch)
+    directory = tmp_path / "changed-rag"
+    result = benchmark.run_rag_comparison(snapshot, BenchmarkConfig(), directory, context_for(snapshot))
+    assert result["completed_arms"] == 4  # Raw runs still complete and remain available.
+    assert result["code_changed_during_run"] and not result["comparable"]
+    assert result["code"]["source_hash"] == "initial"
+    assert result["code_at_end"]["source_hash"] == "edited"
+    for name in ("none", "common_short"):
+        manifest = json.loads((directory / name / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["code"] == result["code"]
+        assert result["conditions"][name]["code_changed_during_run"]
+        for arm in ("single", "debate"):
+            assert (directory / name / arm / "report.json").is_file()
+
+
+def test_standalone_pair_detects_disk_changes_without_erasing_decisions(tmp_path, snapshot, monkeypatch):
+    changing_source(monkeypatch)
+    result = benchmark.run_pair(snapshot, BenchmarkConfig(), tmp_path / "changed-pair")
+    assert result["status"] == "completed"
+    assert result["code_changed_during_run"] and not result["comparable"]
+    assert result["decision_agreement"] is None
+    assert all(row["decision"] for row in result["conditions"].values())
+
+
+def test_batch_reuses_code_identity_and_records_source_changes(tmp_path, snapshot, monkeypatch):
+    changing_source(monkeypatch)
+    directory = tmp_path / "changed-batch"
+    cells = benchmark.run_batch([snapshot, snapshot], BenchmarkConfig(), directory)
+    report = json.loads((directory / "batch.json").read_text(encoding="utf-8"))
+    assert all(cell["status"] == "completed" for cell in cells)
+    assert report["code_changed_during_run"] and not report["comparable"]
+    for i in (1, 2):
+        manifest = json.loads((directory / f"pair-{i:03}" / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["code"] == report["code"]

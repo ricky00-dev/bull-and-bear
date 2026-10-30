@@ -50,11 +50,12 @@ class Conversation:
 
 class LLM:
     def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8,
-                 *, allow_fallbacks: bool = True):
+                 *, allow_fallbacks: bool = True, max_output_tokens: int = 16000):
         self.model = model
         self.client = client or anthropic.Anthropic()
         self.max_tool_turns = max_tool_turns
         self.allow_fallbacks = allow_fallbacks
+        self.max_output_tokens = max_output_tokens
         self.usage = Usage()
         self.usage_by_model: dict[str, Usage] = {}
 
@@ -83,7 +84,7 @@ class LLM:
             try:
                 with self.client.beta.messages.stream(
                     model=self.model,
-                    max_tokens=16000,
+                    max_tokens=self.max_output_tokens,
                     system=conv.system,
                     messages=conv.messages,
                     tools=tools or anthropic.omit,
