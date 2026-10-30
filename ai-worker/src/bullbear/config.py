@@ -17,6 +17,9 @@ class Settings:
     debater_effort: str
     moderator_effort: str
     krx_api_key: str | None = None
+    rag_enabled: bool = False
+    rag_generation_id: str | None = None
+    rag_profile: str = "knowledge-short-v1"
 
     @property
     def snapshot_dir(self) -> Path:
@@ -42,4 +45,7 @@ def load_settings() -> Settings:
         debater_effort=os.getenv("BULLBEAR_DEBATER_EFFORT", "medium"),
         moderator_effort=os.getenv("BULLBEAR_MODERATOR_EFFORT", "high"),
         krx_api_key=os.getenv("KRX_API_KEY") or None,
+        rag_enabled=os.getenv("BULLBEAR_RAG_ENABLED", "false").strip().lower() == "true",
+        rag_generation_id=os.getenv("BULLBEAR_RAG_GENERATION_ID") or None,
+        rag_profile=os.getenv("BULLBEAR_RAG_PROFILE", "knowledge-short-v1"),
     )

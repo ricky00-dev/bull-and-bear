@@ -26,6 +26,7 @@ from .debate import Debate, verification_stats
 from .events import EventLog
 from .llm import Conversation, LLM, LLMError, Usage
 from .presentation import statement_issues
+from .rag.context import KnowledgeContext
 from .schemas import Decision, MODERATOR_SCHEMA, STATEMENT_SCHEMA, Side, Statement
 from .semantic import Review, SYSTEM as REVIEW_SYSTEM, SemanticReviewer, concept_issues, horizon_issues
 from .snapshot import KST, Snapshot
@@ -252,13 +253,14 @@ def make_llm(config: BenchmarkConfig, model: str, snapshot: Snapshot, budget: Re
                      max_tool_turns=config.max_tool_turns)
 
 
-def run_single(llm, snapshot: Snapshot, log: EventLog, *, effort: str, review_records=None) -> SingleDecision:
-    conv = Conversation(SINGLE_SYSTEM, [{"role": "user", "content": canonical({
+def run_single(llm, snapshot: Snapshot, log: EventLog, *, effort: str, review_records=None,
+               background_context: KnowledgeContext | None = None) -> SingleDecision:
+    reviewer = SemanticReviewer(llm, snapshot, background_context=background_context)
+    conv = Conversation(SINGLE_SYSTEM + reviewer.background, [{"role": "user", "content": canonical({
         "ticker": snapshot.ticker, "name": snapshot.name, "price_as_of": str(snapshot.as_of),
         "decision_at": snapshot.created_at.isoformat(), "warnings": snapshot.warnings,
         "task": "도구로 고정된 자료를 확인하고 중립적으로 판정하세요.",
     })}])
-    reviewer = SemanticReviewer(llm, snapshot)
     if review_records is not None:
         reviewer.records = review_records
     for attempt in range(1, 4):
@@ -298,18 +300,28 @@ def source_identity() -> dict:
         except (OSError, subprocess.SubprocessError):
             return None
     modules = ("benchmark.py", "agents.py", "debate.py", "prompts.py", "schemas.py", "semantic.py",
-               "verifier.py", "presentation.py", "llm.py", "openai_llm.py", "tools.py", "snapshot.py", "events.py")
-    sources = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in modules}
+               "verifier.py", "presentation.py", "llm.py", "openai_llm.py", "tools.py", "snapshot.py", "events.py",
+               "rag/context.py", "rag/retrieval.py", "rag/index.py")
+    sources = {name: (hashlib.sha256(Path(__file__).parent.joinpath(name).read_bytes()).hexdigest()
+                      if Path(__file__).parent.joinpath(name).is_file() else None) for name in modules}
     return {"commit": git("rev-parse", "HEAD"), "dirty": bool(git("status", "--porcelain")),
             "module_hashes": sources, "source_hash": digest(sources)}
 
 
 def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
-             context_bundle: dict | None = None, llm_factory=None, order=("single", "debate")) -> dict:
+             context_bundle: KnowledgeContext | dict | None = None, llm_factory=None,
+             order=("single", "debate")) -> dict:
     """Run independent arms from identical serialized input; never stop after one arm fails."""
     config.validate()
     if set(order) != {"single", "debate"} or len(order) != 2:
         raise ValueError("Both conditions must run exactly once")
+    if isinstance(context_bundle, dict) and context_bundle.get("schema_version") == "knowledge-context-v1":
+        context_bundle = KnowledgeContext.from_payload(context_bundle)
+    background_context = context_bundle if isinstance(context_bundle, KnowledgeContext) else None
+    if background_context is not None:
+        if datetime.fromisoformat(background_context.payload["decision_at"]) != snapshot.created_at:
+            raise ValueError("Context decision time does not match the frozen snapshot")
+        context_bundle = background_context.payload
     if context_bundle is not None and not isinstance(context_bundle, dict):
         raise ValueError("Context bundle must be a JSON object")
     if context_bundle and context_bundle.get("snapshot_id", snapshot.snapshot_id) != snapshot.snapshot_id:
@@ -336,7 +348,8 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
                                        "moderator": MODERATOR_SCHEMA, "review": Review.model_json_schema()}),
                 "policy_version": prompts.POLICY_VERSION, "judgment_policy": prompts.JUDGMENT_POLICY,
                 "snapshot_id": snapshot.snapshot_id, "snapshot_sha256": snapshot_hash,
-                "context_sha256": digest(context), "condition_order": list(order),
+                "context_sha256": digest(context), "context_id": background_context.context_id if background_context else None,
+                "condition_order": list(order),
                 "confidence_meaning": CONFIDENCE_MEANING, "forecast_scoring": "pending_no_realized_returns",
                 "target": {"primary_horizon": {"value": 7, "unit": "trading_day"},
                            "secondary_horizon": {"value": 3, "unit": "trading_day"},
@@ -357,7 +370,8 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
         clients, agents, single_reviews = {}, {}, []
         frozen = Snapshot.model_validate_json(snapshot_text)
         report = {"condition": condition, "snapshot_id": frozen.snapshot_id, "snapshot_sha256": snapshot_hash,
-                  "context_sha256": digest(context), "execution_mode": manifest["execution_mode"],
+                  "context_sha256": digest(context), "context_id": manifest["context_id"],
+                  "execution_mode": manifest["execution_mode"],
                   "final_model": config.final_model, "confidence_meaning": CONFIDENCE_MEANING}
         started = time.perf_counter()
         try:
@@ -366,15 +380,19 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
                 models["debater"] = config.debater_model or config.final_model
             for role, model in models.items():
                 inner = factory(config, model, frozen, budget)
-                clients[role] = RecordedLLM(inner, calls, role, context)
+                # Legacy arbitrary JSON bundles retain their original wrapper path.
+                # Validated KnowledgeContext uses agent/reviewer constructors once.
+                clients[role] = RecordedLLM(inner, calls, role, None if background_context else context)
             if condition == "single":
                 decision = run_single(clients["final"], frozen, log, effort=config.final_effort,
-                                      review_records=single_reviews)
+                                      review_records=single_reviews, background_context=background_context)
                 report.update(decision=decision.decision.value, confidence=decision.confidence,
                               output=decision.model_dump(mode="json"))
             else:
-                agents["debater"] = Debater(clients["debater"], frozen, effort=config.debater_effort)
-                agents["moderator"] = Moderator(clients["final"], frozen, effort=config.final_effort)
+                agents["debater"] = Debater(clients["debater"], frozen, effort=config.debater_effort,
+                                             background_context=background_context)
+                agents["moderator"] = Moderator(clients["final"], frozen, effort=config.final_effort,
+                                                 background_context=background_context)
                 result = Debate(frozen, agents["debater"], agents["moderator"], log,
                                 debate_id=f"benchmark-{directory.name}", max_extra_rounds=0,
                                 first_side=Side(config.first_side)).run()
@@ -425,6 +443,78 @@ def run_pair(snapshot: Snapshot, config: BenchmarkConfig, directory: Path, *,
                   "limitation": "Fixture success or decision agreement is not forecasting performance; confidence is not calibrated probability."}
     save(directory / "comparison.json", comparison)
     return comparison
+
+
+def run_rag_comparison(snapshot: Snapshot, config: BenchmarkConfig, directory: Path,
+                       context: KnowledgeContext, *, llm_factory=None) -> dict:
+    """Compare no background with one already frozen common/short bundle.
+
+    Four independent arms run: two single/debate pairs, each with at most
+    max_requests_per_condition provider requests. Retrieval and network data
+    collection never occur here. Both pairs retain identical condition order;
+    repeated samples should alternate config.first_side separately.
+    """
+    config.validate()
+    if not isinstance(context, KnowledgeContext):
+        raise ValueError("RAG comparison requires a validated KnowledgeContext")
+    if context.snapshot_id != snapshot.snapshot_id:
+        raise ValueError("Context bundle does not match the frozen snapshot")
+    payload = context.payload
+    if payload.get("profile_version") != "knowledge-short-v1":
+        raise ValueError("RAG comparison supports common/short profile only")
+    if payload.get("status") not in ("completed", "empty"):
+        raise ValueError("Failed retrieval is not a valid no-background condition")
+    if not payload.get("items"):
+        raise ValueError("RAG comparison requires an added background paragraph")
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=False)
+    order = ("single", "debate")
+    setup = {"schema_version": "rag-ablation-v1", "purpose": "background_wiring_not_forecasting_evidence",
+             "code": source_identity(), "policy_version": prompts.POLICY_VERSION,
+             "snapshot_id": snapshot.snapshot_id, "snapshot_sha256": digest(snapshot.model_dump(mode="json")),
+             "context_id": context.context_id, "context_sha256": digest(payload),
+             "config": {k: v for k, v in asdict(config).items() if k != "allow_paid"},
+             "condition_order": list(order), "conditions": ["none", "common_short"],
+             "provider_request_upper_bound": 4 * config.max_requests_per_condition,
+             "confidence_meaning": CONFIDENCE_MEANING, "cost_status": "not_priced_use_recorded_actual_usage",
+             "forecast_scoring": "pending_no_realized_returns", "accuracy": None}
+    setup["run_fingerprint"] = digest(setup)
+    save(directory / "rag-manifest.json", setup)
+    save(directory / "context.json", payload)
+    cells = {}
+    for name, background in (("none", None), ("common_short", context)):
+        started = time.perf_counter()
+        try:
+            pair = run_pair(snapshot, config, directory / name, context_bundle=background,
+                            llm_factory=llm_factory, order=order)
+            arms = pair["conditions"]
+            cells[name] = {"status": pair["status"], "comparable": pair["comparable"],
+                           "run_fingerprint": pair["run_fingerprint"], "execution_mode": pair["execution_mode"],
+                           "context_id": context.context_id if background else None,
+                           "completed_arms": sum(row["status"] == "completed" for row in arms.values()),
+                           "total_arms": 2, "requests_attempted": sum(row["requests_attempted"] for row in arms.values()),
+                           "arms": {arm: {key: row.get(key) for key in (
+                               "status", "decision", "confidence", "elapsed_seconds", "usage", "usage_status",
+                               "actual_models", "cost_usd", "cost_status", "error_type")}
+                                    for arm, row in arms.items()}}
+        except Exception as exc:
+            # Setup failures must not erase the other cell or disclose provider text.
+            cells[name] = {"status": "failed", "comparable": False, "error_type": type(exc).__name__,
+                           "completed_arms": 0, "total_arms": 2, "context_id": context.context_id if background else None}
+        cells[name]["elapsed_seconds"] = round(time.perf_counter() - started, 6)
+        save(directory / "rag-progress.json", {"run_fingerprint": setup["run_fingerprint"], "conditions": cells})
+    completed = sum(cell["completed_arms"] for cell in cells.values())
+    same_actual_models = all(
+        cells["none"].get("arms", {}).get(arm, {}).get("actual_models") ==
+        cells["common_short"].get("arms", {}).get(arm, {}).get("actual_models")
+        for arm in order)
+    report = {**setup, "conditions": cells, "completed_arms": completed, "total_arms": 4,
+              "completion_rate": completed / 4, "status": "completed" if completed == 4 else "partial_failure",
+              "comparable": all(c["comparable"] for c in cells.values()) and same_actual_models,
+              "cost_usd": None, "background_added": True,
+              "limitation": "Fixture wiring and retrieval labels do not establish prediction accuracy; raw confidence is not calibrated probability."}
+    save(directory / "rag-comparison.json", report)
+    return report
 
 
 def run_batch(snapshots, config: BenchmarkConfig, directory: Path, *, context_bundle=None, llm_factory=None):

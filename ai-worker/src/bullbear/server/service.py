@@ -24,6 +24,7 @@ class LiveRunner:
         self.settings = settings
         self.clients = []
         self.audit = None
+        self.background_context = None
 
     def usage(self):
         totals = {}
@@ -48,8 +49,10 @@ class LiveRunner:
 
         debater_llm = client('debater')
         moderator_llm = client('moderator')
-        result = Debate(snapshot, Debater(debater_llm, snapshot, effort=settings.debater_effort),
-                        Moderator(moderator_llm, snapshot, effort=settings.moderator_effort),
+        result = Debate(snapshot, Debater(debater_llm, snapshot, effort=settings.debater_effort,
+                                         background_context=self.background_context),
+                        Moderator(moderator_llm, snapshot, effort=settings.moderator_effort,
+                                  background_context=self.background_context),
                         EventLog(settings.debate_dir / f'{debate_id}.jsonl'), debate_id=debate_id,
                         max_extra_rounds=max_extra_rounds, on_event=emit).run()
         verdict = result.verdict.model_dump(mode='json')
@@ -125,10 +128,30 @@ class Service:
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
                             ticker=snapshot.ticker, name=snapshot.name, as_of=snapshot.as_of,
                             close=snapshot.facts['PX.CLOSE'].value, warnings=snapshot.warnings))
+            background_context = None
+            retrieval_config = {'enabled': self.settings.rag_enabled,
+                                'generation_id': self.settings.rag_generation_id,
+                                'profile': self.settings.rag_profile}
+            if self.settings.rag_enabled:
+                with audit.stage('knowledge_context'):
+                    if not self.settings.rag_generation_id:
+                        raise ValueError('RAG requires an explicit ready generation')
+                    if self.settings.rag_profile != 'knowledge-short-v1':
+                        raise ValueError('unsupported RAG profile')
+                    from ..rag.retrieval import Retriever
+                    from ..rag.store import RagStore
+                    with RagStore(self.settings.data_dir / 'rag') as rag_store:
+                        background_context = Retriever(rag_store).retrieve(
+                            snapshot, generation_id=self.settings.rag_generation_id)
+            audit.attach_context(background_context, retrieval_config=retrieval_config)
+            if background_context is not None and background_context.payload['status'] not in ('completed', 'empty'):
+                raise RuntimeError('knowledge retrieval did not complete')
             with audit.stage('runner_initialization'):
                 runner = self.runner_factory()
                 if isinstance(runner, LiveRunner):
                     runner.audit = audit
+                if hasattr(runner, 'background_context'):
+                    runner.background_context = background_context
                 audit.attach_runner(runner)
 
             def emit(event, payload):
