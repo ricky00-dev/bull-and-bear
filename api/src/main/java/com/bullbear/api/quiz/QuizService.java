@@ -58,6 +58,10 @@ public class QuizService {
 			BigDecimal holdBand, ChartResponse chart, boolean last) {
 	}
 
+	/** 마이 탭 누적 기록. rounds는 다 푼 판 수 */
+	public record Stats(int rounds, int answered, int userHits, int aiHits) {
+	}
+
 	private record Row(int idx, UUID debateId, String decision, Boolean userHit, Boolean moderatorHit) {
 	}
 
@@ -156,6 +160,21 @@ public class QuizService {
 		return new Answer(idx, d.getStockName(), d.getTicker(), d.getTradeDate(), decision, correct(excess), userHit,
 				Decision.valueOf(moderator), (String) outcome[4], decisive, moderatorHit, (BigDecimal) outcome[0],
 				(BigDecimal) outcome[1], excess, holdBand, charts.build(d), last);
+	}
+
+	public Stats stats(User user) {
+		return jdbc.sql("""
+				select count(distinct r.id) filter (where not exists (
+				           select 1 from quiz_questions u where u.round_id = r.id and u.decision is null)),
+				       count(q.decision),
+				       count(*) filter (where q.user_hit),
+				       count(*) filter (where q.moderator_hit)
+				from quiz_rounds r join quiz_questions q on q.round_id = r.id
+				where r.user_id = :u
+				""")
+				.param("u", user.getId())
+				.query((rs, i) -> new Stats(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getInt(4)))
+				.single();
 	}
 
 	private Decision correct(BigDecimal excess) {

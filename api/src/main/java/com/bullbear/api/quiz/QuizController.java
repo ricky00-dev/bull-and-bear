@@ -20,7 +20,7 @@ import jakarta.validation.constraints.NotNull;
 
 /** 타임머신 퀴즈: 한 판 5문제, 답하면 실제 결과를 바로 공개 */
 @RestController
-@RequestMapping("/api/quiz/rounds")
+@RequestMapping("/api/quiz")
 public class QuizController {
 
 	public record AnswerRequest(@NotNull Decision decision) {
@@ -32,20 +32,25 @@ public class QuizController {
 		this.quiz = quiz;
 	}
 
-	@PostMapping
+	@PostMapping("/rounds")
 	@ResponseStatus(HttpStatus.CREATED)
 	public QuizService.RoundView start(@CurrentUser User user) {
 		return quiz.start(user);
 	}
 
-	@GetMapping("/{id}")
+	@GetMapping("/rounds/{id}")
 	public QuizService.RoundView round(@CurrentUser User user, @PathVariable UUID id) {
 		return quiz.round(user, id);
 	}
 
-	@PostMapping("/{id}/questions/{idx}/answer")
+	@PostMapping("/rounds/{id}/questions/{idx}/answer")
 	public QuizService.Answer answer(@CurrentUser User user, @PathVariable UUID id, @PathVariable int idx,
 			@Valid @RequestBody AnswerRequest request) {
 		return quiz.answer(user, id, idx, request.decision());
+	}
+
+	@GetMapping("/stats")
+	public QuizService.Stats stats(@CurrentUser User user) {
+		return quiz.stats(user);
 	}
 }
