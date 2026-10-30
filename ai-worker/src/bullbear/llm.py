@@ -49,10 +49,12 @@ class Conversation:
 
 
 class LLM:
-    def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8):
+    def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8,
+                 *, allow_fallbacks: bool = True):
         self.model = model
         self.client = client or anthropic.Anthropic()
         self.max_tool_turns = max_tool_turns
+        self.allow_fallbacks = allow_fallbacks
         self.usage = Usage()
         self.usage_by_model: dict[str, Usage] = {}
 
@@ -86,7 +88,8 @@ class LLM:
                     messages=conv.messages,
                     tools=tools or anthropic.omit,
                     output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
-                    **({"betas": [FALLBACK_BETA], "fallbacks": "default"} if "haiku" not in self.model else {}),
+                    **({"betas": [FALLBACK_BETA], "fallbacks": "default"}
+                       if self.allow_fallbacks and "haiku" not in self.model else {}),
                 ) as stream:
                     for event in stream:
                         if event.type == "text":
