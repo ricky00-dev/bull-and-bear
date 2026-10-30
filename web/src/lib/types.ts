@@ -115,6 +115,14 @@ export interface JudgmentDetail {
   holdBand: number
 }
 
+/** 마이 탭 퀴즈 누적 기록. rounds는 다 푼 판 수 */
+export interface QuizStats {
+  rounds: number
+  answered: number
+  userHits: number
+  aiHits: number
+}
+
 export interface MyStats {
   judged: number
   scored: number

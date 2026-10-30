@@ -17,12 +17,13 @@ const STEPS = [
   ['실제 주가로 채점해요', '판정을 내면 AI 판정이 공개되고, 3·7거래일 뒤 실제 주가로 나와 AI를 함께 채점해요.'],
 ] as const
 
-/** 첫 방문 안내 + 투자 유의 고지. 한 번 확인하면 다시 뜨지 않는다. */
-export function IntroSheet() {
-  const [open, setOpen] = useState(() => !seen())
+/** 첫 방문 안내 + 투자 유의 고지. 한 번 확인하면 다시 뜨지 않는다. onClose를 주면 마이 탭처럼 언제든 다시 연다. */
+export function IntroSheet({ onClose }: { onClose?: () => void }) {
+  const [open, setOpen] = useState(() => !!onClose || !seen())
   if (!open) return null
 
   const close = () => {
+    onClose?.()
     try {
       localStorage.setItem(KEY, '1')
     } catch {

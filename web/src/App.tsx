@@ -3,7 +3,9 @@ import { Route, Routes, useLocation } from 'react-router'
 import { DebatePage } from './pages/DebatePage'
 import { HomePage } from './pages/HomePage'
 import { JudgePage } from './pages/JudgePage'
+import { GlossaryPage } from './pages/GlossaryPage'
 import { MyJudgmentsPage } from './pages/MyJudgmentsPage'
+import { MyPage } from './pages/MyPage'
 import { QuizHomePage } from './pages/QuizHomePage'
 import { QuizPlayPage } from './pages/QuizPlayPage'
 import { RevealPage } from './pages/RevealPage'
@@ -33,6 +35,8 @@ export default function App() {
         <Route path="/quiz/:id" element={<QuizPlayPage />} />
         <Route path="/me" element={<MyJudgmentsPage />} />
         <Route path="/me/judgments/:id" element={<ScorePage />} />
+        <Route path="/my" element={<MyPage />} />
+        <Route path="/glossary" element={<GlossaryPage />} />
         <Route path="*" element={<HomePage />} />
       </Routes>
     </>

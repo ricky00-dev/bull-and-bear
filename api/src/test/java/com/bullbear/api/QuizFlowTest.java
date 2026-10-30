@@ -98,6 +98,11 @@ class QuizFlowTest {
 				.andExpect(status().isNotFound());
 		mvc.perform(get("/api/me/stats").header("Authorization", "Bearer " + player))
 				.andExpect(jsonPath("$.judged").value(0));
+		// 마이 탭 퀴즈 기록: 한 문제만 풀었으니 다 푼 판은 0
+		mvc.perform(get("/api/quiz/stats").header("Authorization", "Bearer " + player))
+				.andExpect(jsonPath("$.rounds").value(0))
+				.andExpect(jsonPath("$.answered").value(1))
+				.andExpect(jsonPath("$.userHits").value(userHit ? 1 : 0));
 	}
 
 	private String guest() throws Exception {
