@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 
 from fastapi.encoders import jsonable_encoder
 
 from ..agents import Debater, Moderator
+from ..audit import AuditedLLM, RunAudit, normalized_usage, selected_models
 from ..data.base import DataUnavailable
 from ..debate import Debate, verification_stats
 from ..events import EventLog
@@ -22,6 +23,7 @@ class LiveRunner:
     def __init__(self, settings):
         self.settings = settings
         self.clients = []
+        self.audit = None
 
     def usage(self):
         totals = {}
@@ -36,10 +38,16 @@ class LiveRunner:
 
     def run(self, snapshot, debate_id, max_extra_rounds, emit):
         settings = self.settings
-        debater_llm = LLM(os.getenv('BULLBEAR_DEBATER_MODEL', settings.model))
-        self.clients.append(debater_llm)
-        moderator_llm = LLM(os.getenv('BULLBEAR_MODERATOR_MODEL', settings.model))
-        self.clients.append(moderator_llm)
+        models = self.audit.data['config']['selected_models'] if self.audit else selected_models(settings)
+
+        def client(role):
+            with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
+                llm = LLM(models[role])
+                self.clients.append(llm)
+                return AuditedLLM(llm, self.audit, role) if self.audit else llm
+
+        debater_llm = client('debater')
+        moderator_llm = client('moderator')
         result = Debate(snapshot, Debater(debater_llm, snapshot, effort=settings.debater_effort),
                         Moderator(moderator_llm, snapshot, effort=settings.moderator_effort),
                         EventLog(settings.debate_dir / f'{debate_id}.jsonl'), debate_id=debate_id,
@@ -87,16 +95,45 @@ class Service:
 
     def run(self, debate_id, quote, max_extra_rounds):
         runner = None
+        audit = None
+
+        def collect_usage():
+            try:
+                return runner.usage()
+            except Exception as exc:
+                log.warning('debate %s usage unavailable (%s)', debate_id, type(exc).__name__)
+                if audit is not None:
+                    try:
+                        audit.usage_error(exc)
+                    except OSError:
+                        log.warning('debate %s usage audit persistence failed', debate_id)
+                    return normalized_usage(audit.data['usage'])
+                return {'calls': []}
+
         try:
-            snapshot = self.market.snapshot(quote)
-            self.store.save_snapshot(debate_id, snapshot)
+            audit = RunAudit(self.settings.data_dir, debate_id, ticker=quote.ticker,
+                             data_date=quote.bars[-1].date.isoformat(),
+                             max_extra_rounds=max_extra_rounds, models=selected_models(self.settings),
+                             efforts={'debater': self.settings.debater_effort,
+                                      'moderator': self.settings.moderator_effort},
+                             secrets=(self.settings.dart_api_key, self.settings.krx_api_key,
+                                      self.settings.naver_client_id, self.settings.naver_client_secret))
+            with audit.stage('snapshot'):
+                snapshot = self.market.snapshot(quote)
+                audit.attach_snapshot(snapshot)
+                self.store.save_snapshot(debate_id, snapshot)
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
                             ticker=snapshot.ticker, name=snapshot.name, as_of=snapshot.as_of,
                             close=snapshot.facts['PX.CLOSE'].value, warnings=snapshot.warnings))
-            runner = self.runner_factory()
+            with audit.stage('runner_initialization'):
+                runner = self.runner_factory()
+                if isinstance(runner, LiveRunner):
+                    runner.audit = audit
+                audit.attach_runner(runner)
 
             def emit(event, payload):
                 # Never forward raw tokens or private moderator/audit events.
+                audit.observe_event(event, payload)
                 data = jsonable_encoder(payload)
                 if event == 'statement_accepted':
                     if not data['verified']:
@@ -108,19 +145,35 @@ class Service:
                     return
                 self.store.emit(debate_id, event, data)
 
-            completed = runner.run(snapshot, debate_id, max_extra_rounds, emit)
-            self.store.emit(debate_id, 'debate_completed', {**completed, 'usage': runner.usage()})
+            with audit.stage('debate'):
+                completed = runner.run(snapshot, debate_id, max_extra_rounds, emit)
+            usage = collect_usage()
+            audit.finish('success', usage=usage, result=completed)
+            self.store.emit(debate_id, 'debate_completed', {**completed, 'usage': usage})
         except Exception as exc:
             # Provider exception strings may contain API keys. Keep public errors generic.
             code = 'DATA_UNAVAILABLE' if isinstance(exc, DataUnavailable) or runner is None else 'LLM_ERROR'
             log.warning('debate %s failed (%s)', debate_id, type(exc).__name__)
             payload = {'error': {'code': code, 'message': '데이터 조회에 실패했습니다' if code == 'DATA_UNAVAILABLE' else 'AI 토론을 완료하지 못했습니다'}}
             if runner is not None:
-                payload['usage'] = runner.usage()
+                payload['usage'] = collect_usage()
+            if audit is not None:
+                try:
+                    audit.finish('failure', usage=payload.get('usage'), error=exc)
+                except OSError:
+                    log.warning('debate %s audit persistence failed', debate_id)
             self.store.emit(debate_id, 'debate_failed', payload)
         finally:
             if runner is not None:
-                runner.close()
+                try:
+                    runner.close()
+                except Exception as exc:
+                    log.warning('debate %s cleanup failed (%s)', debate_id, type(exc).__name__)
+                    if audit is not None:
+                        try:
+                            audit.cleanup_error(exc)
+                        except OSError:
+                            log.warning('debate %s cleanup audit persistence failed', debate_id)
 
     def detail(self, debate_id):
         row = self.store.get(debate_id)
