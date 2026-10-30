@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex 총괄·독립 평가 세션 · ai-worker, docs
+- 한 것: 구현·로컬 평가를 5672ace로 커밋한 뒤 최종 소스를 고정해 gpt-5-mini 실제 4조건 비교 완료. v2 개발 중 진단 0/4·27요청·$0.24590350, 커밋된 v3 검증 1/4·34요청·$0.24445650. v3 RAG single만 HOLD/raw confidence0.48로 통과, none single/debate와 RAG debate는 생성·검증 반려 한도에서 실패. 같은 snapshot/세대/모델/effort/순서 및 모든 실패 원문 보존. 전체 61응답 사용량 가격 $0.49036, 미확정0, 승인총액 $3 원장 유지. 상세 결과·논문/GitHub 조사·검토기 오탐과 모델 실제 오류를 docs/evaluations/worker-rag-live-pilot.md 및 worker-rag-evaluation-research.md에 기록.
+- 진행 중: 요청한 후속 구현·테스트·실제 비교 실행·평가 기록은 완료. P1 운영 활성화/예측 성과 검증은 미충족으로 BULLBEAR_RAG_ENABLED=false 유지. v3 실행 중 소스 변경 false, snapshot/context/주입 경계 일치. 후보14개 내 근거42건 Fact ID/value 일치는 복사 검사이며 추론 정확도/예측 성과가 아니다. 운영 HTTP Anthropic과 별도 OpenAI benchmark의 검증 범위를 구분한다.
+- 다음: 실제 추론 오류와 검증기 오탐을 분리한 독립 정답 집합, 가격 기준일/정보 관측 시각 및 단기 상대수익 근거 보완, 독립 검색 관련성·운영 완료율/p95/비용 기준 검증을 P1 순서로 진행. 38a4516 안정화 통합·전향 운용은 별도 후속. P2 위험 검토/LangGraph 미착수.
+- 막힘·결정 필요: 전체 Python296 passed·외부2 skipped(35.21초), 별도 실제 Spring/PostgreSQL/HTTP2 passed(4.85초), Java 단위7개·bootJar 검증 완료. 외부통합의 시장/모델/시계는 fixture; 실모델은 삼성전자 snapshot1개의 반복이므로 독립 예측 표본/일반적 RAG 인과효과로 해석하지 않음. 실제3/7거래일 확정수익률·대표표본 운영기준 미검증. 추가 비용 승인 불필요(남은총액$2.50964). 원본 ROADMAP/WORKLOG 사용자 변경 보존, 키/.env/로컬 데이터 커밋 및 push·PR·develop 병합 없음.
+
 ## 2026-10-30 · Codex 총괄·검색 평가·예산·Spring 하위 세션 · ai-worker, docs
 - 한 것: feat/worker-rag-retrieval에서 P0/P1 후속 구현. 출처 연결 실험용 지식 common/short 6문단 import·별도 provenance·재관측 승인/거절 보존, synthetic 검색 평가 실행기/recall·MRR·precision, 한글 별칭과 실제 큰 snapshot의 핵심 질의 우선순위(v3), 4조건 비교 CLI, gpt-5-mini 입력/출력 상한과 영속 총승인 예산·실제 사용량 정산, 미가격 응답 보존·정산 실패 보고·비교 중 소스 변경 감지 구현. 실제 PostgreSQL/Flyway/Spring/HTTP의 봉인→판정→공개→당일 재사용→3/7거래일 채점 경로 검증. 조사·검토·한계는 docs/evaluations/worker-rag-p1-followup.md에서 주제별 문서로 연결.
 - 진행 중: 사용자 승인 gpt-5-mini/전체 USD 3로 최초 실모델 4조건 파일럿 실행 중. data/rag-p1-live/comparison-1은 v2 고정 context이며 실행 중 코드 검토·개선 사실을 별도 기록한다. 기준선 single/debate는 검증 반려 후 각각 5/8호출로 실패했고 사용량 가격 합계 $0.11472715; RAG 조건 결과는 종료 후 별도 기록. 이 실행을 최종 v3의 성능 증거로 바꾸지 않는다.

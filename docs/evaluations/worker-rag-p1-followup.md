@@ -17,6 +17,8 @@
 공식 출처의 주장, 자체 적용 해석, synthetic 검사 결과를 각 문서에서 구분했다.
 기존 SQLite/BM25·시점·문단 검색 논문/GitHub 조사는 [검색 조사](worker-rag-retrieval-research.md)에 있다.
 위 연구와 fixture의 성공을 단기 주가 예측 성과로 해석하지 않는다.
+검토기 반려와 선택 precision의 해석은 [LLM judge 논문·Ragas 후속 조사](worker-rag-evaluation-research.md)에
+별도로 정리했다.
 
 ## 실험용 지식의 적재·시간 의미
 
@@ -79,4 +81,7 @@ Python 3.12.15, 기존 venv, 현재 worktree에서 `-o pythonpath=src`로 실행
 실제 삼성전자 snapshot에서 v3 검색을 다시 실행해 98개 질의어, common 2/short 2문단을 얻었다.
 PER·영업이익률·발표/공시 시각·모멘텀 한계가 선택됐고 원래 context의 SHA256은 그대로였다.
 로컬 `data/rag-p1-live/preparation-v3.json`에 원래 context 보존과 새 context ID를 기록했다.
-실제 모델 파일럿 결과는 종료 후 별도 문서에 연결한다.
+실제 모델 비교와 독립 오류 검토는 [실모델 파일럿](worker-rag-live-pilot.md)에 기록했다.
+최초 v2 개발 중 진단은 0/4, 커밋된 v3의 최종 검증은 1/4 완료였다. 전체 61요청 사용량 가격
+**$0.49036**(승인 $3), 미확정 0건. 최종 비교 중 소스 변경 없음·입력/배경 주입 경계는 확인했으나
+운영 활성화와 예측 성과 검증은 통과하지 못했다. 기본 비활성 유지가 이번 운영 판정이다.
