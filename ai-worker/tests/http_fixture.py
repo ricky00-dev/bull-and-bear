@@ -63,9 +63,13 @@ def main():
     p.add_argument('--data', type=Path, required=True)
     args = p.parse_args()
     settings = replace(load_settings(), data_dir=args.data)
-    app = create_app(settings=settings, market=fixture_market(settings),
+    market = fixture_market(settings)
+    app = create_app(settings=settings, market=market,
                      runner_factory=lambda: TestRunner(settings), token='integration-test-token')
-    uvicorn.run(app, host='127.0.0.1', port=args.port)
+    try:
+        uvicorn.run(app, host='127.0.0.1', port=args.port)
+    finally:
+        market.close()
 
 
 if __name__ == '__main__':

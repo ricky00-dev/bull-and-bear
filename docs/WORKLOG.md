@@ -15,6 +15,19 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: codex/fix-worker-data-reliability에서 고우선 데이터 안정화 수정. DART 013 응답 비캐시 및 기존 013 캐시 무시, 손상 캐시 재조회, DART HTTP/JSON/회사 ZIP·XML 오류와 뉴스 HTTP/JSON/기사 형식 오류를 안전한 DataUnavailable로 정규화. 실제 공급자+MockTransport로 선택 자료 장애에도 시세 스냅샷·경고가 유지됨을 검증. 설정 객체 repr에서 비밀값 제외.
+- 한 것: 종목 quote의 400일 수집을 제한된 백그라운드 작업으로 이동(스레드 2개·실행/대기 합계 32개). 동일 종목·cutoff 수집 공유, 준비 완료는 최대 1초 대기 후 503, 실패 후 재시도·TTL 만료 재조회·기준일 경계 분리·KRX 종료 중단 구현. 전체 시세·sparkline 60개·스냅샷 날짜/종가 일치 유지. 앱 소유 Market만 lifespan 종료 때 닫으며 주입 Market은 호출자가 정리. 기존 HTTP 계약 필드와 Spring 코드는 변경하지 않음.
+- 진행 중: 없음. Python 전체 158개 통과, 외부 Spring 2개 건너뜀(40.60초), git diff 공백 검사 통과. 기존 cold 조회가 응답을 막는 회귀를 먼저 재현한 뒤 수정 후 통과 확인. README 실행 안내 갱신.
+- 다음: 실제 Spring/PostgreSQL fixture 통합, 실제 Anthropic HTTP 경로의 지연·비용·성공률 측정. /prices/daily·/indices/daily의 동기 조회 대기, DART 검색 카탈로그의 동기 조회, 판단 시각·코스피 비교 입력·기업행사 보정은 후속 검토.
+- 막힘·결정 필요: 실제 외부 데이터/유료 LLM 호출 및 Spring 전체 통합은 실행하지 않음. cold 수집 자체는 여전히 여러 분 걸릴 수 있으며, 준비 전 재시도가 필요하므로 시연 전 캐시 준비 권장. 커밋·푸시는 하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: develop 83247f2 기준 워커 엔진·FastAPI/SSE·Spring 계약 연동·운영 설정을 분석. 잠금 파일 버전으로 로컬 .venv 구성 후 Python 91개 통과, 외부 Spring 2개 건너뜀. OpenDART 자료 없음(013) 응답이 만료 없이 재사용되는 문제를 MockTransport로 재현(두 번 조회에도 외부 요청 1회, 두 번째도 None). 구현 코드는 변경하지 않음.
+- 진행 중: 없음. FastAPI 엔드포인트·SQLite 영속 저장·멱등성·재연결은 구현되어 있으며 ROADMAP/DEPLOY의 일부 골격 단계 설명은 갱신 필요.
+- 다음: 최초 KRX 캐시 준비/갱신과 202 이전 시세 조회 지연 개선, DART 미발표 응답 캐시 정책 및 선택 데이터 HTTP 오류 처리 보완. 이후 Spring/PostgreSQL fixture 통합과 실제 Anthropic HTTP 토론의 성공률·전체 지연·비용 측정. 지수 비교 입력·판단 시각 정합성·단일 에이전트 비교 모드도 별도 잔여 작업.
+- 막힘·결정 필요: 현재 Docker 엔진 미기동, 기본 Java는 11로 Spring 전체 통합 미실행. 실제 키/유료 모델 호출 없음. HTTP/CLI는 Anthropic이고 최근 GPT 실험은 별도 경로이며 운영 기본 설정은 토론자·중재자 모두 Opus. 실제 배포 모델과 예산 가정을 맞출 필요 있음. 기업행사 미보정·정적 30종목 허용·재시작 시 진행 중 토론 실패 처리의 운영 범위 유지.
+
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.
 - 진행 중: 없음. 첫 GPT-5 mini 실행 중단, v4 mini 두 조건 중단, GPT-5.4 인용 검사 오탐 중단을 모두 보존하고 docs/experiment.md에 기록. 마지막 실행은 검증 완료 첫 주장 2개씩을 원문 그대로 이어받아 남은 4발언·중재자를 새로 생성했으며 재사용 출처를 manifest/report에 명시.

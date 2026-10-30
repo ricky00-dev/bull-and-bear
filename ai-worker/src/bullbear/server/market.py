@@ -56,7 +56,8 @@ class FrozenPrices:
 
 
 class Market:
-    def __init__(self, settings, *, source=None, news=None, catalog=None, index_loader=None, now=None):
+    def __init__(self, settings, *, source=None, news=None, catalog=None, index_loader=None, now=None,
+                 quote_wait_seconds=1.0):
         self.settings = settings
         self.source = source or KrxOpenApiSource(settings.krx_api_key, settings.dart_api_key, settings.cache_dir)
         self.now = now or (lambda: datetime.now(KST))
@@ -75,6 +76,18 @@ class Market:
         self.index_loader = index_loader or self._source_index
         self.cache = {}
         self.lock = threading.RLock()
+        self.quote_wait_seconds = quote_wait_seconds
+        self.quote_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='market-quote')
+        self.quote_jobs = {}
+        self.closed = False
+
+    def close(self):
+        with self.lock:
+            self.closed = True
+        close_source = getattr(self.source, 'close', None)
+        if close_source is not None:
+            close_source()
+        self.quote_pool.shutdown(wait=True, cancel_futures=True)
 
     def load_catalog(self):
         # OpenDART has company names/codes but no market classification; do not invent it.
@@ -95,9 +108,35 @@ class Market:
         cutoff = confirmed_date(self.now())
         key = (ticker, cutoff)
         with self.lock:
+            if self.closed:
+                raise DataUnavailable('시세 조회가 종료되었습니다')
+            self.cache = {k: v for k, v in self.cache.items() if time.monotonic() - v[0] < 60}
+            self.quote_jobs = {k: v for k, v in self.quote_jobs.items() if not v.done()}
             cached = self.cache.get(key)
-            if cached and time.monotonic() - cached[0] < 60:
+            if cached:
                 return cached[1]
+            job = self.quote_jobs.get(key)
+            if job is None:
+                # Bound queued work as well as active provider requests.
+                if len(self.quote_jobs) >= 32:
+                    raise DataUnavailable('시세 데이터를 준비 중입니다. 잠시 후 다시 시도하세요')
+                job = self.quote_pool.submit(self._load_quote, ticker, cutoff)
+                self.quote_jobs[key] = job
+        try:
+            return job.result(timeout=self.quote_wait_seconds)
+        except TimeoutError:
+            if job.done():
+                return job.result()
+            # The shared task continues; subsequent requests reuse its full result.
+            raise DataUnavailable('시세 데이터를 준비 중입니다. 잠시 후 다시 시도하세요') from None
+        finally:
+            if job.done():
+                with self.lock:
+                    if self.quote_jobs.get(key) is job:
+                        del self.quote_jobs[key]
+
+    def _load_quote(self, ticker, cutoff):
+        # Freeze the request's cutoff even when loading spans the market close.
         bars = self.source.get_daily_prices(ticker, cutoff - timedelta(days=PRICE_LOOKBACK_DAYS), cutoff)
         bars = sorted({b.date: b for b in bars if b.date <= cutoff and math.isfinite(b.close) and b.close > 0}.values(), key=lambda b: b.date)
         if len(bars) < 2:
@@ -110,9 +149,7 @@ class Market:
             reasons = ['ETF는 토론하지 않습니다']
         quote = Quote(ticker, name, market, bars, reasons)
         with self.lock:
-            # Keep only current cache entries; snapshots themselves live in Store.
-            self.cache = {k: v for k, v in self.cache.items() if k[1] == cutoff}
-            self.cache[key] = (time.monotonic(), quote)
+            self.cache[(ticker, cutoff)] = (time.monotonic(), quote)
         return quote
 
     def search(self, query, limit):

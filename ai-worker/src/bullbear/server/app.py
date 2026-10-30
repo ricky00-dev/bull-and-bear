@@ -38,11 +38,17 @@ def create_app(*, settings=None, market=None, runner_factory=None, token=None, m
 
     @asynccontextmanager
     async def lifespan(app):
-        app.state.service = Service(settings, market or Market(settings), runner_factory=runner_factory, max_running=capacity)
+        active_market = market if market is not None else Market(settings)
+        app.state.service = Service(settings, active_market, runner_factory=runner_factory, max_running=capacity)
         try:
             yield
         finally:
-            await asyncio.to_thread(app.state.service.close)
+            try:
+                await asyncio.to_thread(app.state.service.close)
+            finally:
+                # Injected providers belong to the caller and may span lifespans.
+                if market is None:
+                    await asyncio.to_thread(active_market.close)
 
     app = FastAPI(title='bullbear ai-worker', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 

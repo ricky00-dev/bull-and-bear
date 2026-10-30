@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+from importlib import import_module
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import date
@@ -22,7 +23,10 @@ AUTH = {'X-Worker-Token': 'test-token'}
 def setup(tmp_path):
     settings = replace(load_settings(), data_dir=tmp_path)
     market = fixture_market(settings)
-    return settings, market
+    try:
+        yield settings, market
+    finally:
+        market.close()
 
 
 def app_for(setup, **kw):
@@ -68,6 +72,14 @@ def test_auth_validation_and_not_found(setup):
         assert c.get('/prices/daily?ticker=005930&from=bad&to=2026-10-16', headers=AUTH).status_code == 400
         assert c.get('/indices/daily?code=INVALID&from=2026-10-15&to=2026-10-16', headers=AUTH).status_code == 404
         assert start(c, ticker='005935').json()['error']['reasons']
+
+
+def test_application_closes_its_own_market(setup, monkeypatch):
+    owned_market = fixture_market(setup[0])
+    monkeypatch.setattr(import_module('bullbear.server.app'), 'Market', lambda settings: owned_market)
+    with TestClient(create_app(settings=setup[0], token='test-token')) as c:
+        assert c.get('/health').status_code == 200
+    assert owned_market.closed
 
 
 def test_quote_search_confirmed_prices_and_snapshot_agree(setup):
@@ -151,9 +163,13 @@ def test_durable_replay_idempotency_and_restart_failure(setup):
     with TestClient(app_for(setup)) as c:
         assert start(c).json()['debate_id'] == d
         assert c.get(f'/debates/{d}/events', headers=AUTH).text == before
+        # A caller-owned Market remains usable across application lifespans.
+        restarted = start(c, key='after-restart', ticker='000660')
+        assert restarted.status_code == 202
+        assert completed(c, restarted.json()['debate_id'])['status'] == 'completed'
     path = setup[0].data_dir / 'http'
     store = Store(path)
-    row, _ = store.create('crashed', 'fingerprint', '000660', '2026-10-16', 2)
+    row, _ = store.create('crashed', 'fingerprint', '000660', '2026-10-19', 2)
     store.emit(row['id'], 'turn_started', {'side': 'bull', 'round': 'opening'})
     with pytest.raises(RuntimeError, match='프로세스 하나'):
         Store(path)
@@ -173,6 +189,53 @@ def test_provider_failure_is_sanitized(setup):
     with TestClient(app_for(setup)) as c:
         res = c.get('/stocks/005930', headers=AUTH)
         assert res.status_code == 503 and 'secret-key' not in res.text
+
+
+def test_cold_quote_is_bounded_shared_and_keeps_snapshot_consistent(setup):
+    market = setup[1]
+    market.quote_wait_seconds = 0.01
+    original = market.source.get_daily_prices
+    gate, entered = threading.Event(), threading.Event()
+    calls = []
+
+    def slow_prices(ticker, start, end):
+        calls.append((ticker, start, end))
+        entered.set()
+        assert gate.wait(10)
+        return original(ticker, start, end)
+
+    market.source.get_daily_prices = slow_prices
+    with TestClient(app_for(setup)) as c:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            try:
+                requests = [pool.submit(c.get, '/stocks/005930', headers=AUTH) for _ in range(8)]
+                assert entered.wait(2)
+                # All requests finish while the provider remains blocked.
+                responses = [request.result(timeout=2) for request in requests]
+                assert all(response.status_code == 503 for response in responses)
+                assert all(response.json()['error']['code'] == 'DATA_UNAVAILABLE' for response in responses)
+                pending_debate = pool.submit(start, c)
+                assert pending_debate.result(timeout=2).status_code == 503
+                assert len(calls) == 1
+            finally:
+                gate.set()
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            quote = c.get('/stocks/005930', headers=AUTH)
+            if quote.status_code == 200:
+                break
+            time.sleep(0.01)
+        assert quote.status_code == 200
+        quote = quote.json()
+        assert len(quote['sparkline']) == 60
+        created = start(c)
+        assert created.status_code == 202 and not created.json()['reused']
+        result = completed(c, created.json()['debate_id'])
+        snap = c.get('/snapshots/' + result['snapshot_id'], headers=AUTH).json()
+        assert snap['as_of'] == quote['as_of']
+        assert snap['facts']['PX.CLOSE']['value'] == quote['close']
+        assert 'PX.RET_1Y' in snap['facts']
+        assert len(calls) == 1
 
 
 def test_snapshot_is_built_after_202_and_failure_is_terminal(setup):
