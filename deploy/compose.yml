@@ -50,6 +50,9 @@ services:
     restart: unless-stopped
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # 토론자는 싸고 빠른 모델, 최종 판정만 상위 모델. 비우면 워커 기본값(Opus)이라 비용이 크게 늘어난다
+      BULLBEAR_DEBATER_MODEL: ${DEBATER_MODEL:-claude-haiku-5-5}
+      BULLBEAR_MODERATOR_MODEL: ${MODERATOR_MODEL:-claude-sonnet-5-5}
       OPENDART_API_KEY: ${DART_API_KEY:-}
       KRX_API_KEY: ${KRX_API_KEY:-}
       BULLBEAR_DATA_DIR: /app/data
