@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: HTTP 토론 시작·전체 스냅샷 고정·클라이언트 생성·역할별 LLM 호출·성공/실패를 data/audits/<debate_id>/manifest.json에 원자적 교체와 fsync로 저장. 코드 revision/dirty, 정책·프롬프트·스키마 해시, 정확한 snapshot ID/decision_at, 선택/실제 모델과 사용량·단계 시간 기록. 키·원시 예외·토큰 비기록과 공급자 오류 경고 상세 제거. HTTP/SSE·날짜 재사용·판정 봉인 경계 유지.
+- 진행 중: 없음. feat/worker-run-audit에 구현·최종 전체 검증 완료, develop 반영 전. 평가·한계는 docs/evaluations/worker-run-audit.md.
+- 다음: 실제 Spring HTTP 연동과 전향 운용에서 감사 산출물 확인. CLI/내부 비교 실행기 연결은 별도 작업.
+- 막힘·결정 필요: Python 전체 106개 통과, 외부 Spring 통합 2개 건너뜀. Docker·실제 시장 API·유료 LLM 외부 실측은 하지 않음. 응답 직후 저장 전 종료의 미확정 청구량과 저장장치 장애는 복구 보장 없음. 초기 실행 재개·재시작 감사 상태 보정은 미구현이며 마지막 running 기록을 보존. 키와 로컬 실행 데이터는 커밋하지 않음.
+
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.
 - 진행 중: 없음. 첫 GPT-5 mini 실행 중단, v4 mini 두 조건 중단, GPT-5.4 인용 검사 오탐 중단을 모두 보존하고 docs/experiment.md에 기록. 마지막 실행은 검증 완료 첫 주장 2개씩을 원문 그대로 이어받아 남은 4발언·중재자를 새로 생성했으며 재사용 출처를 manifest/report에 명시.
