@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: 사용자 이관 요청으로 후속 채팅의 추가 구현을 중단하고 RAG WIP 2f6af9f까지 보존. 최신 origin/develop 447cdf4(PR #17 병합)에 설계·감사·원문 저장·단일/토론 비교·HTTP 채점 평가·RAG WIP를 chore/worker-handoff-20261030으로 통합. config의 비밀값 repr 보호와 fixture의 Market.close/새 채점 옵션을 함께 유지하며 충돌 해결. docs/HANDOFF-20261030.md에 새 컴퓨터 checkout·환경·브랜치 관계·평가·남은 작업 작성.
+- 진행 중: 이관 브랜치와 기능별 브랜치의 명시적 원격 푸시 및 원격 SHA 확인. 원본 체크아웃의 기존 문서 변경은 보존.
+- 다음: 다른 컴퓨터에서 이관 브랜치를 받고 새 기능 브랜치로 rag/retrieval.py 구현. 실제 저장→검색→HTTP/benchmark 평가와 검색 감사·시점/무결성·예산 경계 완성 후 활성화 검토.
+- 막힘·결정 필요: 통합 Python 269 passed/외부 Spring 2 skipped(59.95초), 독립 HTTP 통합 2 passed, Java 전체 23 passed. RAG 실제 Retriever는 없어 BULLBEAR_RAG_ENABLED=false 유지. 실제 시장/유료 모델/예측 성과·운영 전향 운용은 미검증. 키·원문·DB·가상환경은 푸시하지 않음.
+
+## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: feat/worker-rag-context 독립 worktree를 develop에서 만들고 감사 dc4040f·benchmark e66c062/6edd8ec·ingest c7eb1a7을 명시적으로 cherry-pick. 충돌한 모든 WORKLOG 보존. 불변 KnowledgeContext·별도 세대 FTS5 초안, 토론자/중재자/의미 검토 동일 배경 주입·공개 지식 ID 차단, HTTP 비공개 감사/설정 연결, none/common_short 내부 비교를 구현. 상세 조건·실측·이관 명령은 docs/evaluations/worker-rag-context-checkpoint.md.
 - 진행 중: 사용자 최신 이관 요청에 따라 구현 중단한 WIP 체크포인트. rag/retrieval.py가 없어 실제 검색 활성 경로는 미완성. BULLBEAR_RAG_ENABLED=false 유지. 부모 채팅이 push와 통합 이관 메모를 담당하며 이 채팅은 push·PR·develop 병합하지 않음.
 - 다음: 다른 컴퓨터에서 이 브랜치 체크아웃 후 평가 문서 순서대로 Retriever(common 2/short 3·각 후보 20·시장/시점/검수 필터·1초 상한), 검색 감사/재생·세대 시점/무결성 검증, 실제 저장층→검색→HTTP/benchmark 평가를 이어간다. 38a4516은 적용하지 않았고 상세 설계 9c91086은 별도 docs/worker-rag-design 브랜치 참조.
