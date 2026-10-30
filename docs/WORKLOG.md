@@ -17,7 +17,7 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 사용자 이관 요청으로 후속 채팅의 추가 구현을 중단하고 RAG WIP 2f6af9f까지 보존. 최신 origin/develop 447cdf4(PR #17 병합)에 설계·감사·원문 저장·단일/토론 비교·HTTP 채점 평가·RAG WIP를 chore/worker-handoff-20261030으로 통합. config의 비밀값 repr 보호와 fixture의 Market.close/새 채점 옵션을 함께 유지하며 충돌 해결. docs/HANDOFF-20261030.md에 새 컴퓨터 checkout·환경·브랜치 관계·평가·남은 작업 작성.
-- 진행 중: 이관 브랜치와 기능별 브랜치의 명시적 원격 푸시 및 원격 SHA 확인. 원본 체크아웃의 기존 문서 변경은 보존.
+- 진행 중: 없음. 기능별 6개와 통합 이관 1개 브랜치의 원격 푸시 및 로컬/원격 SHA 일치 확인 완료. 후속 채팅은 WIP 커밋 후 중단했으며 원본 체크아웃의 기존 문서 변경은 보존.
 - 다음: 다른 컴퓨터에서 이관 브랜치를 받고 새 기능 브랜치로 rag/retrieval.py 구현. 실제 저장→검색→HTTP/benchmark 평가와 검색 감사·시점/무결성·예산 경계 완성 후 활성화 검토.
 - 막힘·결정 필요: 통합 Python 269 passed/외부 Spring 2 skipped(59.95초), 독립 HTTP 통합 2 passed, Java 전체 23 passed. RAG 실제 Retriever는 없어 BULLBEAR_RAG_ENABLED=false 유지. 실제 시장/유료 모델/예측 성과·운영 전향 운용은 미검증. 키·원문·DB·가상환경은 푸시하지 않음.
 
