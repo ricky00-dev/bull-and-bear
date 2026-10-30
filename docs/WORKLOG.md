@@ -15,6 +15,9 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Claude Code · api
+- 한 것: 예산 단가표에 `claude-sonnet-5-5` 추가 (없으면 중재자 호출이 추정치로 잡혀 하루 상한이 부정확). 사용량 모를 때 추정치 $0.3 → $0.15 (토론자 Haiku + 중재자 Sonnet)
+
 ## 2026-10-30 · Claude Code · api, web
 - 한 것:
   - 중재자 글의 `[E1]`·`[E2]`를 근거 칩으로 표시 (`VerdictText`, 판정 공개·퀴즈 정답 화면). `[E1]` = `decisive_evidence[0]` (worker-api.md v0.5 설명 보강). 번호 없는 예전 글은 그대로 보임
