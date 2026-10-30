@@ -4,6 +4,7 @@ BULLBEAR_TEST_API_URL=http://127.0.0.1:18080 uv run pytest tests/test_spring_int
 """
 import os
 import time
+from decimal import Decimal, ROUND_HALF_UP
 
 import httpx
 import pytest
@@ -53,6 +54,23 @@ def test_search_debate_sse_seal_reveal_and_scoring_reservation(ticker):
         judgments.raise_for_status()
         assert len(judgments.json()['items']) == 1
         assert {s['horizonDays'] for s in judgments.json()['items'][0]['scores']} == {3, 7}
+        if os.getenv('BULLBEAR_TEST_EXPECT_SCORED') == '1':
+            deadline = time.monotonic() + 20
+            while time.monotonic() < deadline:
+                graded = c.get('/api/me/judgments')
+                graded.raise_for_status()
+                scores = graded.json()['items'][0]['scores']
+                if all(s['status'] == 'SCORED' for s in scores):
+                    break
+                time.sleep(0.1)
+            assert all(s['status'] == 'SCORED' for s in scores), scores
+            for score in scores:
+                horizon = score['horizonDays']
+                assert score['scoredTradeDate'] == {3: '2026-10-21', 7: '2026-10-27'}[horizon]
+                stock = (Decimal(horizon) / Decimal(399) * 100).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+                index = (Decimal(horizon) / Decimal(1399) * 100).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+                assert Decimal(str(score['excessReturn'])) == stock - index
+                assert score['userHit'] is True and score['moderatorHit'] is True
         reused = c.post('/api/debates', json={'ticker': ticker})
         reused.raise_for_status()
         assert reused.json()['id'] == debate_id and reused.json()['reused']

@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-30 · Codex · ai-worker, api, docs
+- 한 것: 실제 Spring worker 프로필·격리 PostgreSQL·Python HTTP fixture로 두 종목의 검색→토론→판정 봉인→사용자 판정→공개→재사용·3/7거래일 채점 검증. 테스트 전용 --settled-prices와 후속 평일 시세 회귀, docs/evaluations/worker-integration-evaluation.md 추가.
+- 진행 중: chore/worker-integration-evaluation 평가 체크포인트 정리. 실제 LLM·시장 데이터는 사용하지 않음.
+- 다음: 감사/수집/비교 실행기를 연결한 RAG 검색·고정 지식 입력 구현과 역할별 실제 모델·예산을 명시한 운영 검증.
+- 막힘·결정 필요: 타깃 11개·전체 Python 93개 통과/외부 2개 건너뜀, 별도 실제 HTTP 통합 2개 통과, Java 전체 23개 통과(HTTP/채점 7개 포함). Anthropic 키 부재로 유료 운영·전향 운용 미실행. 키/원문/임시 DB는 커밋하지 않음.
+
 ## 2026-10-29 · Codex · ai-worker, docs
 - 한 것: 사용자 요청대로 기능별 커밋을 develop에 직접 푸시하고(머지 커밋 없음), 실제 양쪽 선공 6발언·중재자 완료. 최종 결과 20261029-171045-91cbd6f9, GPT-5.4/7d-concise-v4: 매수 선공 SELL·0.68, 매도 선공 SELL·0.71. 동일 삼성전자 스냅샷 사용. 전체 원문 debate-transcript-ko.txt와 출력 재검사 output-audit.json 저장.
 - 진행 중: 없음. 첫 GPT-5 mini 실행 중단, v4 mini 두 조건 중단, GPT-5.4 인용 검사 오탐 중단을 모두 보존하고 docs/experiment.md에 기록. 마지막 실행은 검증 완료 첫 주장 2개씩을 원문 그대로 이어받아 남은 4발언·중재자를 새로 생성했으며 재사용 출처를 manifest/report에 명시.
