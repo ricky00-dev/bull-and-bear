@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-31 · Codex 통합 검증 세션 · ai-worker, docs
+- 한 것: HTTP 변경을 4b27d93으로 보존, fix/worker-integrated-validation에서 9176afc를 70021d1로 로컬 통합. worker-quality/worker-data-consistency 완료 파일 12개와 WORKLOG 항목을 원본 수정 없이 반영하고 test_server.py 양쪽 보존. 최종 코드 27f61611fe7dec317e61b9ecb2104917b5eab784.
+- 한 것: 실제 Spring/PostgreSQL에서 사용량 미확정 실패·워커 os._exit 후 재시작/SSE 재구독 검증 추가. 비용/토큰 NULL 및 $0.15 추정치, 실패 이벤트1개, 원본 감사·부분 사용량 보존 확인. psql 미설치로 새 E2E2개가 처음 실패했으나 JDBC 조회 보조 도구로 해결. 기존 4조건14후보 해시 연결 재검증, 전부 미검수·품질비율 null 유지.
+- 진행 중: 요청된 통합·검증 완료. 전체 Python451 통과/실패0/외부2 생략(45.91초), 마지막 fixture 변경 후 영향 범위115 통과/실패0/외부2 생략(19.35초). 실제 Spring4 통과/실패0/생략0(13.61초), Java 관련7개 및 bootJar는 코드 변화 없어 Gradle 성공 캐시 재사용. 생성 서버와 재시작 프로세스 종료·포트 해제 확인. 상세 출처·증거·한계는 docs/evaluations/worker-integrated-validation.md.
+- 다음: 총괄이 로컬 통합 브랜치/보고서를 검토. 실제 키·모델 접근·별도 총비용 상한/예약 준비 후 Claude HTTP 검증, 독립 사람 라벨 후 품질 평가. HTTP 단일 모드/v0.6은 양측 승인과 별도 구현 범위 결정 필요, 이번 통합 범위에 포함하지 않음.
+- 막힘·결정 필요: 재현된 미해결 회귀 없음. 실제 공급자/유료 호출0, $0.15 추정치는 결제 상한 아님. 사람 검수·실시장 관측/기업행사 정책·성숙한 성과는 미확인. 사용자 판단 대기로 중단한 작업 없음; 외부 선행 조건 없는 임의 재개 금지. 원본/타 세션/환경파일 보존, RAG 기본 비활성, 공개 계약/config/budget/Spring 제품 코드·원격 push/develop/main 병합/배포/스케줄 활성화 없음.
+
 ## 2026-10-31 · Codex 데이터 정합성 세션 · ai-worker, docs
 - 한 것: 5d2a8e5에서 별도 worker-data-consistency worktree/브랜치 fix/worker-data-consistency 생성. CLI/HTTP 확정 종가 cutoff 통일, timezone 없는 시각 거부, 범위 밖 시세·미래 뉴스/공시 필터, 주식수 공시일 보존. KRX 캐시 읽기/저장 전 가격·지수 형식 검증, 장중 캐시 재조회, 빈 응답 TTL 60초. 동일 날짜의 과거 3·7·21종목 거래일 코스피/종목 수익률과 초과수익률 Fact 추가(누락 날짜 비보간).
 - 진행 중: 담당 구현·오프라인 검증 완료, 전용 폴더 미커밋 변경으로 통합 대기. 최초 결함 6개 재현 후 수정. 최종 전체 Python 402 passed·외부 Spring 2 skipped(45.88초), diff 공백 검사 통과. 기존 KRX 캐시 287개 읽기 전용 검사(비어 있지 않은 정상265/빈22/실패0). 상세: docs/evaluations/worker-data-consistency-session.md.
