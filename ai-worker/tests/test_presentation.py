@@ -33,6 +33,23 @@ def verdict():
     return d
 
 
+@pytest.mark.parametrize('field', ['reasoning', 'bull', 'bear', 'extra_question'])
+def test_mkt_fact_ids_are_private_in_all_moderator_text(field):
+    d = verdict()
+    text = '7거래일 코스피 대비 비슷하게 움직입니다 MKT.KOSPI_RET_7D [E1].'
+    if field in ('bull', 'bear'):
+        getattr(d, field).comment = text
+    else:
+        setattr(d, field, text)
+    assert 'internal_details' in codes(moderator_issues(d))
+
+
+def test_mkt_decisive_id_is_allowed_when_prose_uses_numbered_reference():
+    d = verdict()
+    d.decisive_evidence[0] = 'MKT.KOSPI_RET_7D'
+    assert not moderator_issues(d)
+
+
 def test_limits_and_decimal_citations():
     assert sentence_count("변동성은 68.17%입니다. [E1] 비율은 9.39배입니다 [E2]. 세 번째입니다.") == 3
     s = statement(('E1','PX.CLOSE',399), argument='하나. 둘. 셋. 넷.')

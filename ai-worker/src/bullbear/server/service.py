@@ -27,6 +27,10 @@ class LiveRunner:
         self.audit = None
         self.background_context = None
 
+    @property
+    def usage_complete(self):
+        return all(getattr(client, 'usage_complete', True) for client in self.clients)
+
     def usage(self):
         totals = {}
         for client in self.clients:
@@ -110,6 +114,8 @@ class Service:
 
         def collect_usage():
             try:
+                if not getattr(runner, 'usage_complete', True):
+                    raise RuntimeError('incomplete provider usage')
                 if audit is not None and (not audit.data['usage_complete'] or any(
                     call['status'] in ('running', 'failure')
                     for call in audit.data['llm_calls'])):
