@@ -87,7 +87,7 @@ public class QuizService {
 		List<UUID> picked = jdbc.sql("""
 				select d.id
 				from debates d
-				join debate_outcomes o on o.debate_id = d.id
+				join debate_outcomes o on o.debate_id = d.id and o.horizon_days = 7
 				join moderator_verdicts v on v.debate_id = d.id
 				where d.status = 'COMPLETED'
 				order by (exists (select 1 from quiz_questions q join quiz_rounds r on r.id = q.round_id
@@ -132,7 +132,7 @@ public class QuizService {
 		var outcome = jdbc.sql("""
 				select o.stock_return, o.index_return, o.excess_return, v.decision, v.reasoning, v.payload
 				from debate_outcomes o join moderator_verdicts v on v.debate_id = o.debate_id
-				where o.debate_id = :id
+				where o.debate_id = :id and o.horizon_days = 7
 				""")
 				.param("id", d.getId())
 				.query((rs, i) -> new Object[] { rs.getBigDecimal(1), rs.getBigDecimal(2), rs.getBigDecimal(3),

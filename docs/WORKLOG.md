@@ -73,6 +73,16 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: PR 리뷰 대기. PR에는 기존 5d2a8e5의 RAG·Claude 모델 정책·preflight 통합도 포함.
 - 다음: 리뷰 반영 후 develop 병합 검토. 실제 Claude 호출 보류와 RAG 기본 비활성 유지.
 - 막힘·결정 필요: 최종 코드 전체 Python392 passed/외부2 skipped. 이후 병합은 문서만 변경되어 테스트 재실행하지 않음. 키/.env/로컬 원본 데이터 제외, 유료 호출 없음. PR 생성은 완료했으며 develop 자체 병합은 하지 않음.
+## 2026-10-31 · Claude Code · api, web, docs(계약)
+- 한 것 (feat/single-mode-report):
+  - **계약 v0.6**: `POST /debates`에 선택 필드 `mode`(`debate`|`single`)·`snapshot_id`. 단일 모드 = 실험 조건 B (중재자와 같은 모델이 같은 스냅샷으로 바로 판정, `scores`·`stats`는 null)
+  - Spring: `SingleVerdictRunner`가 정식 운용(`bullbear.experiment.start`, 기본 11/11) 전향 운용 토론이 끝나면 단일 판정을 한 번 받아 `single_verdicts`에 저장 (실패 시 3회까지, 전향 운용 하루 비용 상한에 합산). 스위치 `BULLBEAR_SINGLE_ENABLED`(기본 false)
+  - `debate_outcomes`에 3거래일 결과도 기록 (PK를 (debate_id, horizon_days)로). 퀴즈는 7거래일만 사용
+  - `GET /api/report?scope=official|all`: 7·3거래일 적중률 (토론 AI, 단일 AI, 항상 보류/매수/매도), 판정 분포, 사람 vs AI
+  - 웹 `/report` AI 성적표 (마이 → AI 성적표). 정식/예비 포함 토글, 7일/3일 토글, 표본 한계 문구
+  - 가짜 워커 단일 모드 (종목마다 다른 판정)
+- 확인: API 테스트 28개 통과 (`ExperimentReportTest`, `StartDebateRequestTest` 추가), 웹 tsc·lint, 브라우저에서 성적표 확인 (로컬 DB 토론을 SCHEDULED로 바꾸고 시작일을 앞당겨 확인)
+- 막힘·결정 필요 (**jangwonii**): 계약 v0.6 리뷰·승인 후 머지. 워커 단일 모드 구현 → 정식 운용(11/11) 전에 `SINGLE_ENABLED=true`
 
 ## 2026-10-31 · Claude Code · docs
 - 한 것: 일정 변경 반영 (ROADMAP, experiment.md). 예비 운용 11/4(현재 엔진, 퀴즈·시연용, 실험 집계 제외) → 정식 운용 11/11(엔진 고정, 실험 집계). 전시 전 7거래일 채점 약 50건, 발표 메시지 결정 11/18 → 11/21. 모델 Haiku+Sonnet 반영, 비용 추정 갱신

@@ -56,6 +56,14 @@ bullbear:
     daily-usd: 4.0
     poll-interval: 10s
 
+  experiment:
+    # 정식 운용 시작일. 그 전 전향 운용은 예비 운용 (퀴즈·시연용, 실험 집계 제외)
+    start: 2026-11-11
+    # 정식 운용 토론마다 단일 판정(조건 B)을 요청. 워커가 단일 모드(계약 v0.6)를 지원하면 켠다
+    single-enabled: ${BULLBEAR_SINGLE_ENABLED:false}
+    max-attempts: 3
+    poll-interval: 5m
+
 management:
   endpoints:
     web:
