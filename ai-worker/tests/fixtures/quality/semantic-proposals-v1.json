@@ -1,0 +1,67 @@
+{
+  "schema_version": "quality-semantic-proposals-v1",
+  "purpose": "Synthetic review exercises inspired by documented pilot failure patterns; not historical quotations or ground truth",
+  "human_reviewed_cases": 0,
+  "cases": [
+    {
+      "id": "conditional-flow",
+      "status": "proposed",
+      "facts": ["거래량 증가 및 기관 순매수 Fact는 제공되지 않았다"],
+      "candidate": "추가 거래량과 기관 순매수가 확인된다면 가격 반응을 강화할 수 있지만, 현재 관측되었다는 뜻은 아니다.",
+      "review": "기관 순매수가 이미 발생했다고 단정했다.",
+      "proposed_label": "reviewer_false_positive",
+      "rationale": "조건을 관측 사실 주장으로 읽었을 가능성. 이 문장만으로 전체 후보의 7거래일 상대수익 논거가 충분하다고 결론내리지는 않는다.",
+      "reviewer": null
+    },
+    {
+      "id": "invented-flow",
+      "status": "proposed",
+      "facts": ["거래량 증가 및 기관 순매수 Fact는 제공되지 않았다"],
+      "candidate": "기관 순매수가 이미 발생했으므로 다음 7거래일 코스피 대비 상승한다.",
+      "review": "확인되지 않은 기관 순매수를 사실로 사용했다.",
+      "proposed_label": "candidate_error",
+      "rationale": "같은 수급 소재라도 조건부와 관측 사실 단정을 구분해야 한다.",
+      "reviewer": null
+    },
+    {
+      "id": "per-reciprocal",
+      "status": "proposed",
+      "facts": ["양의 순이익이며 PER=시가총액/순이익"],
+      "candidate": "PER 5는 PER 10보다 시가총액 대비 순이익이 작다는 뜻이다.",
+      "review": "양의 이익 조건에서 역수 관계를 뒤집었다.",
+      "proposed_label": "candidate_error",
+      "rationale": "순이익/시가총액은 각각 1/5와 1/10. 산술적 정의와 저평가 판단을 별개로 평가한다.",
+      "reviewer": null
+    },
+    {
+      "id": "per-classification",
+      "status": "proposed",
+      "facts": ["PER=9", "비교기업 및 위험 프리미엄 Fact는 없다"],
+      "candidate": "PER은 시가총액/순이익이다. PER 9이므로 저평가 완충이 확실하다.",
+      "review": "PER 분모를 영업이익으로 정의했다.",
+      "proposed_label": "both",
+      "rationale": "후보의 정의는 순이익인데 검토기는 영업이익으로 읽었다. 별도로 저평가 확정은 비교 기준 없이 도출했다.",
+      "reviewer": null
+    },
+    {
+      "id": "volatility-direction",
+      "status": "proposed",
+      "facts": ["주가 변동성은 크다"],
+      "candidate": "변동성이 크므로 하락 확률이 상승 확률보다 높다.",
+      "review": "변동성 크기만으로 방향 확률의 우열을 도출했다.",
+      "proposed_label": "candidate_error",
+      "rationale": "변동성의 크기는 상승·하락 중 어느 쪽이 더 자주 발생하는지를 단독으로 정하지 않는다.",
+      "reviewer": null
+    },
+    {
+      "id": "missing-history",
+      "status": "proposed",
+      "facts": ["이전 토론 history가 제공되지 않았다"],
+      "candidate": "상대가 단기 반등은 불가능하다고 말했지만 조건에 따라 다를 수 있다.",
+      "review": "상대가 하지 않은 주장을 반박했다.",
+      "proposed_label": "insufficient_evidence",
+      "rationale": "history 없이 상대 발언 존재 여부를 확정할 수 없다. 정확한 인용 일치도 실제 주장 지지 여부와 다르다.",
+      "reviewer": null
+    }
+  ]
+}

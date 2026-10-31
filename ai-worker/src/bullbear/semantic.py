@@ -130,7 +130,9 @@ class SemanticReviewer:
 
 
 def horizon_issues(text):
-    if "7거래일" not in text or "코스피 대비" not in text:
+    # Spacing is presentation, not a change of investment horizon/benchmark.
+    # Keep the existing lexical guard: this is not proof of semantic correctness.
+    if not re.search(r"(?<![\d.])7\s*거래일", text) or not re.search(r"코스피\s*대비", text):
         return [Issue(severity="error", code="horizon_mismatch",
                       message="핵심 주장/판정 이유에 7거래일·코스피 대비 판단을 명시하세요.")]
     return []

@@ -15,6 +15,19 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-31 · Codex 데이터 정합성 세션 · ai-worker, docs
+- 한 것: 5d2a8e5에서 별도 worker-data-consistency worktree/브랜치 fix/worker-data-consistency 생성. CLI/HTTP 확정 종가 cutoff 통일, timezone 없는 시각 거부, 범위 밖 시세·미래 뉴스/공시 필터, 주식수 공시일 보존. KRX 캐시 읽기/저장 전 가격·지수 형식 검증, 장중 캐시 재조회, 빈 응답 TTL 60초. 동일 날짜의 과거 3·7·21종목 거래일 코스피/종목 수익률과 초과수익률 Fact 추가(누락 날짜 비보간).
+- 진행 중: 담당 구현·오프라인 검증 완료, 전용 폴더 미커밋 변경으로 통합 대기. 최초 결함 6개 재현 후 수정. 최종 전체 Python 402 passed·외부 Spring 2 skipped(45.88초), diff 공백 검사 통과. 기존 KRX 캐시 287개 읽기 전용 검사(비어 있지 않은 정상265/빈22/실패0). 상세: docs/evaluations/worker-data-consistency-session.md.
+- 다음: KRX 공급자 파일 → snapshot.py와 server/market.py 함께 → 신규 test_data_consistency.py 및 test_server.py fixture 보완 → 보고서/이 로그 항목 순으로 통합. 통합 후 전체 회귀 및 프롬프트/검토기의 신규 과거 비교 Fact 해석 확인.
+- 막힘·결정 필요: 실제 공급자/유료 모델 호출0, 성숙한 3·7거래일 성과·공급자별 observed_at·기업행사 보정·특별 거래시간/발표지연 미검증. 지수 cold 조회 지연 추가 가능. service/store의 시각·캐시 해시 감사 및 재사용 정책 보완은 범위 밖 제안으로 기록. 공통 schemas/config·공개 계약·프롬프트/검증기 변경 없음. RAG 기본 비활성, 배포/스케줄 활성화/push/merge 없음. 다른 작업 폴더·원본 데이터·환경 파일 보존.
+
+## 2026-10-31 · Codex 품질 평가 세션 · ai-worker, docs
+- 한 것: 5d2a8e5 기준 격리 worktree worker-quality / fix/worker-quality-evaluation에서 기존 미커밋 diagnostics를 읽고 후속 quality_evaluation 구현. queue 원본/후보/자동 결과 및 snapshot 연결 검증, 미검수·제안·사람 검수 분리, 사람 확인·분모 있는 집계와 원문 없는 결과 생성. 기존 4조건 14후보 읽기 전용 적용 모두 미검수·오류율 null 유지.
+- 한 것: 기간 검사 공백 오탐 수정과 17/7.7거래일 누락 차단, 합성 기간 회귀9개 및 의미 검수 제안6개 작성. 전체 Python 414 passed/외부2 skipped(43.37초), 공백 검사 통과. 유료 호출0, 기존 원본 데이터/.env 및 타 세션 수정 없음.
+- 진행 중: 사람 검수와 실제 Claude 품질 측정 미완료. 저장 후보14개는 이번 기간 수정으로 판정 변화 없음. 의미 검토 과잉반려는 확정 라벨 없이 규칙을 완화하지 않음. 구현 변경은 이 브랜치에 미커밋 상태로 보존.
+- 다음: worker-integration의 기존 diagnostics 먼저 통합 → 새 모듈/fixture/test 및 semantic 변경 반영 → 독립 사람 검수 → 후속 Claude HTTP 실험. 변경 파일/실험표/통합 순서는 docs/evaluations/worker-quality-session.md 참고.
+- 막힘·결정 필요: 사용자가 토론자 Haiku·중재자 Sonnet 선택 완료. 정확한 계정 모델 ID/키 접근·새 총비용 상한 확인 전 유료 호출 보류. HTTP audit 변환은 범위 밖 제안. RAG 기본 비활성, 계약/배포/스케줄/push/merge 변경 없음. session-brief CRLF 실패 후 로그 직접 확인.
+
 ## 2026-10-31 · Codex HTTP 안정화 세션 · ai-worker, docs
 - 한 것: 5d2a8e5에서 전용 worker-http-stability worktree 생성. executor 제출 실패의 영구 running/용량 누수, SSE Last-Event-ID 정수 범위 오류, 상세 조회 종료 상태 경쟁을 재현·수정. 인증 실패·멱등성·실패 SSE·실제 프로세스 강제 종료 회귀 보강.
 - 한 것: 사용량 조회 실패/미완료·실패한 모델 호출의 부분 사용량을 확정 비용으로 보내지 않도록 usage 생략. 감사 부분 사용량/usage_complete=false 보존. 재시작은 원본 manifest를 수정하지 않고 SQLite recoveries에 부분 사용량·미완료 호출 ID·미확정 상태를 보존하며 실패 이벤트 1회 기록. 상세·통합 순서는 docs/evaluations/worker-http-stability-session.md.

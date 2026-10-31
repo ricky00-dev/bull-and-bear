@@ -206,6 +206,10 @@ def test_cold_quote_is_bounded_shared_and_keeps_snapshot_consistent(setup):
     market = setup[1]
     market.quote_wait_seconds = 0.01
     original = market.source.get_daily_prices
+    # The production index endpoint is independent of the stock-price loader.
+    # Keep this fixture's synthetic index from counting as a stock re-fetch.
+    market.index_loader = lambda code, start, end: [
+        (b.date, 1000 + b.close) for b in original('005930', start, end)]
     gate, entered = threading.Event(), threading.Event()
     calls = []
 
