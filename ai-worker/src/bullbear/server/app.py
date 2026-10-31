@@ -108,7 +108,7 @@ def create_app(*, settings=None, market=None, runner_factory=None, token=None, m
         return svc.create(body)
 
     @app.get('/debates/{debate_id}/events', dependencies=secured)
-    async def events(debate_id: str, request: Request, last_event_id: int = Header(default=0, ge=0, alias='Last-Event-ID'), svc=Depends(service)):
+    async def events(debate_id: str, request: Request, last_event_id: int = Header(default=0, ge=0, le=2**63-1, alias='Last-Event-ID'), svc=Depends(service)):
         svc.store.get(debate_id)
 
         async def stream():

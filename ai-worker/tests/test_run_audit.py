@@ -196,7 +196,7 @@ def test_usage_collection_failure_does_not_prevent_terminal_result(setup, invali
     result, manifest = run_once(setup, lambda: MissingUsage(settings, invalid=invalid))
     assert result['status'] == ('failed' if invalid else 'completed')
     assert manifest['status'] == ('failure' if invalid else 'success')
-    assert result['usage'] == {'calls': []}
+    assert 'usage' not in result
     assert manifest['usage_complete'] is False
     assert manifest['usage_errors'] == [{'error_type': 'RuntimeError'}]
     assert manifest.get('error_type') == ('LLMError' if invalid else None)

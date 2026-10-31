@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-31 · Codex HTTP 안정화 세션 · ai-worker, docs
+- 한 것: 5d2a8e5에서 전용 worker-http-stability worktree 생성. executor 제출 실패의 영구 running/용량 누수, SSE Last-Event-ID 정수 범위 오류, 상세 조회 종료 상태 경쟁을 재현·수정. 인증 실패·멱등성·실패 SSE·실제 프로세스 강제 종료 회귀 보강.
+- 한 것: 사용량 조회 실패/미완료·실패한 모델 호출의 부분 사용량을 확정 비용으로 보내지 않도록 usage 생략. 감사 부분 사용량/usage_complete=false 보존. 재시작은 원본 manifest를 수정하지 않고 SQLite recoveries에 부분 사용량·미완료 호출 ID·미확정 상태를 보존하며 실패 이벤트 1회 기록. 상세·통합 순서는 docs/evaluations/worker-http-stability-session.md.
+- 진행 중: 구현 완료, 이 전용 worktree에 미커밋 변경으로 보존. 전체 Python399 passed/외부2 skipped(49.42초) 후 강제 종료·부분 실패 사용량 회귀 보강, 최종 영향 범위65 passed(19.69초). Java 단위7개·bootJar 및 실제 임시 PostgreSQL/Spring/HTTP fixture2 passed(5.40초), 서버 잔여 프로세스 없음. git diff 공백 검사 통과.
+- 다음: 총괄이 server app/service/store와 HTTP/audit 테스트를 함께 통합하고 공통 config/budget/LLM 변경 후 회귀·Spring fixture 재실행. 실제 유료 검증은 키·모델 접근·총비용 상한 확보 후 진행.
+- 막힘·결정 필요: 유료/외부 데이터 호출0, 공개 계약·기본 RAG 비활성·타 소유 파일 유지. Spring 성공 fixture E2E는 통과했지만 재시작 미확정 비용의 PostgreSQL 정산 E2E는 미실행. 기존 Spring 추정치($0.15)는 실제 지출 상한이 아니므로 공통 예산 예약/미확정분 대조는 별도 담당 후속. session-brief는 기존 CRLF 오류로 실패해 문서/Git 직접 확인. 원본·타 세션·.env·기존 데이터 수정 및 커밋/push/merge/배포/스케줄 활성화 없음.
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 최신 origin/develop 034d8da에서 feat/worker-operational-readiness 생성, RAG ad8cb26 및 별도 hardening의 검토된 실패 정책 통합. config 비밀값 보호/RAG 설정과 fixture 종료 정리 충돌 해결. 작업 순서·완료 기준·실측은 docs/evaluations/worker-operational-readiness.md에 기록.
 - 한 것: 사용자 지시에 따라 Claude Haiku·Sonnet만 허용, 기본 토론자 Haiku/중재자 Sonnet, Opus 및 자동 모델 대체 차단. 예상 외 응답 계열은 사용량 보존 후 중단. CLI/HTTP/Claude 실험 역할 선택 통일. 네트워크·키 출력 없는 preflight 명령 추가.

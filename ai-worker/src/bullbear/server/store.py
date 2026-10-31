@@ -12,6 +12,7 @@ from uuid import uuid4
 from fastapi.encoders import jsonable_encoder
 
 from ..snapshot import KST
+from ..audit import normalized_usage
 from .errors import ApiError
 
 
@@ -40,10 +41,38 @@ class Store:
                 debate_id TEXT NOT NULL REFERENCES debates(id), seq INTEGER NOT NULL,
                 type TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(debate_id, seq));
             CREATE TABLE IF NOT EXISTS snapshots (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS recoveries (
+                debate_id TEXT PRIMARY KEY REFERENCES debates(id), data TEXT NOT NULL);
         """)
         for row in self.db.execute("SELECT id FROM debates WHERE status='running'").fetchall():
-            self.emit(row['id'], 'debate_failed', {
-                'error': {'code': 'LLM_ERROR', 'message': '워커 재시작으로 토론이 중단되었습니다. 새 요청으로 재시도하세요.'}})
+            recovery = self.recovery_record(directory.parent, row['id'])
+            with self.transaction() as db:
+                db.execute('INSERT INTO recoveries VALUES (?,?)',
+                           (row['id'], json.dumps(recovery, ensure_ascii=False)))
+                self.emit(row['id'], 'debate_failed', {
+                    'error': {'code': 'LLM_ERROR', 'message': '워커 재시작으로 토론이 중단되었습니다. 새 요청으로 재시도하세요.'}})
+
+    @staticmethod
+    def recovery_record(data_dir, debate_id):
+        # Never overwrite the crash evidence or call a model during recovery.
+        # Even known counters are a lower bound after interruption. Omit public
+        # usage to preserve Spring's existing unknown-cost estimate behavior.
+        record = {'reason': 'worker_restart', 'recovered_at': datetime.now(KST).isoformat(),
+                  'usage_complete': False, 'known_usage': None, 'unfinished_call_ids': []}
+        try:
+            manifest = json.loads((data_dir / 'audits' / debate_id / 'manifest.json').read_text(encoding='utf-8'))
+            if not isinstance(manifest, dict) or manifest.get('run_id') != debate_id:
+                raise ValueError('invalid audit identity')
+            calls = manifest.get('llm_calls', [])
+            if not isinstance(calls, list) or not all(isinstance(call, dict) for call in calls):
+                raise ValueError('invalid audit calls')
+            record['known_usage'] = normalized_usage(manifest.get('usage'))
+            record['unfinished_call_ids'] = [call['call_id'] for call in calls
+                if call.get('status') == 'running' and type(call.get('call_id')) is int]
+            record['audit_state'] = 'readable'
+        except (OSError, ValueError, TypeError):
+            record['audit_state'] = 'unavailable'
+        return record
 
     @contextmanager
     def transaction(self):

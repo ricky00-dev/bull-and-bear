@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import threading
 import time
 from importlib import import_module
@@ -72,6 +74,15 @@ def test_auth_validation_and_not_found(setup):
         assert c.get('/prices/daily?ticker=005930&from=bad&to=2026-10-16', headers=AUTH).status_code == 400
         assert c.get('/indices/daily?code=INVALID&from=2026-10-15&to=2026-10-16', headers=AUTH).status_code == 404
         assert start(c, ticker='005935').json()['error']['reasons']
+
+
+@pytest.mark.parametrize('token', ['', 'wrong', 'test-token ', 'test-toke'])
+def test_invalid_token_cannot_create_or_read_a_debate(setup, token):
+    with TestClient(app_for(setup)) as c:
+        headers = {'X-Worker-Token': token}
+        assert c.post('/debates', json={'ticker': '005930', 'request_id': 'unauthorized'}, headers=headers).status_code == 401
+        assert c.get('/debates/missing/events', headers=headers).status_code == 401
+        assert c.app.state.service.store.db.execute('SELECT count(*) FROM debates').fetchone()[0] == 0
 
 
 def test_application_closes_its_own_market(setup, monkeypatch):
@@ -278,3 +289,122 @@ def test_live_runner_uses_pipeline_and_contract_verdict(setup, monkeypatch):
         assert 'bull' not in result['verdict'] and 'action' not in result['verdict']
         assert set(result['verdict']['scores']) == {'bull', 'bear'}
         assert result['usage']['calls'][0]['cache_creation_input_tokens'] == 2
+
+
+def test_submit_failure_is_terminal_and_capacity_is_released(setup, monkeypatch):
+    app = app_for(setup, max_running=1)
+    with TestClient(app) as c:
+        original = app.state.service.pool.submit
+        def rejected(*args):
+            raise RuntimeError('private executor detail')
+        monkeypatch.setattr(app.state.service.pool, 'submit', rejected)
+        response = start(c)
+        assert response.status_code == 202
+        failed = completed(c, response.json()['debate_id'])
+        assert failed['status'] == 'failed'
+        assert 'private executor' not in json.dumps(failed)
+        assert start(c).json()['debate_id'] == failed['debate_id']
+        monkeypatch.setattr(app.state.service.pool, 'submit', original)
+        assert completed(c, start(c, key='retry').json()['debate_id'])['status'] == 'completed'
+
+
+def test_sse_cursor_outside_sqlite_range_is_bad_request(setup):
+    with TestClient(app_for(setup)) as c:
+        d = start(c).json()['debate_id']
+        completed(c, d)
+        for cursor in ('-1', str(2**63), '9' * 100):
+            assert c.get(f'/debates/{d}/events', headers={**AUTH, 'Last-Event-ID': cursor}).status_code == 400
+
+
+def test_detail_terminal_event_cannot_return_stale_running_status(setup, monkeypatch):
+    app = app_for(setup)
+    with TestClient(app) as c:
+        d = start(c).json()['debate_id']
+        completed(c, d)
+        original = app.state.service.store.get
+        monkeypatch.setattr(app.state.service.store, 'get', lambda key: {**original(key), 'status': 'running'})
+        assert c.get(f'/debates/{d}', headers=AUTH).json()['status'] == 'completed'
+
+
+@pytest.mark.parametrize('audit_kind', ['running', 'missing', 'corrupt'])
+def test_restart_preserves_unknown_usage_and_original_audit(setup, audit_kind):
+    settings, _ = setup
+    store = Store(settings.data_dir / 'http')
+    row, _ = store.create('interrupted', 'fingerprint', '005930', '2026-10-16', 1)
+    d = row['id']
+    store.emit(d, 'turn_started', {'side': 'bull', 'round': 'opening'})
+    store.close()
+    manifest = settings.data_dir / 'audits' / d / 'manifest.json'
+    known = {'calls': [{'model': 'claude-haiku-5-5', 'input_tokens': 123, 'output_tokens': 7}]}
+    raw = None
+    if audit_kind != 'missing':
+        manifest.parent.mkdir(parents=True)
+        raw = json.dumps({'run_id': d, 'status': 'running', 'usage': known,
+                          'llm_calls': [{'call_id': 2, 'status': 'running'}]}) if audit_kind == 'running' else '{broken'
+        manifest.write_text(raw, encoding='utf-8')
+    with TestClient(app_for(setup)) as c:
+        detail = c.get(f'/debates/{d}', headers=AUTH).json()
+        assert detail['status'] == 'failed' and 'usage' not in detail
+        events = parse_sse(c.get(f'/debates/{d}/events', headers={**AUTH, 'Last-Event-ID': '1'}).text)
+        assert len(events) == 1 and events[0][1] == 'debate_failed'
+        recovery = json.loads(c.app.state.service.store.db.execute(
+            'SELECT data FROM recoveries WHERE debate_id=?', (d,)).fetchone()[0])
+        assert recovery['usage_complete'] is False
+        if audit_kind == 'running':
+            assert recovery['known_usage'] == known
+            assert recovery['unfinished_call_ids'] == [2]
+    if raw is not None:
+        assert manifest.read_text(encoding='utf-8') == raw
+    with TestClient(app_for(setup)) as c:
+        assert len(parse_sse(c.get(f'/debates/{d}/events', headers=AUTH).text)) == 2
+
+
+@pytest.mark.parametrize('failure', ['usage_reader', 'unfinished_call', 'failed_call_without_usage', 'failed_call_with_partial_usage'])
+def test_partial_usage_stays_in_audit_but_is_not_settled_as_final(setup, failure):
+    from bullbear.server.service import LiveRunner
+    known = {'calls': [{'model': 'claude-haiku-5-5', 'input_tokens': 123, 'output_tokens': 7}]}
+    class InterruptedRunner(LiveRunner):
+        def run(self, snapshot, debate_id, max_extra_rounds, emit):
+            self.audit.data['usage'] = known
+            if failure != 'usage_reader':
+                self.audit.data['llm_calls'].append({
+                    'call_id': 2, 'status': 'running' if failure == 'unfinished_call' else 'failure',
+                    'usage': known if failure == 'failed_call_with_partial_usage' else {'calls': []}})
+            raise RuntimeError('private provider detail')
+        def usage(self):
+            if failure == 'usage_reader':
+                raise RuntimeError('private usage detail')
+            return known
+    with TestClient(app_for(setup, runner_factory=lambda: InterruptedRunner(setup[0]))) as c:
+        d = start(c).json()['debate_id']
+        result = completed(c, d)
+        assert result['status'] == 'failed' and 'usage' not in result
+        events = parse_sse(c.get(f'/debates/{d}/events', headers=AUTH).text)
+        assert events[-1][1] == 'debate_failed' and 'usage' not in events[-1][2]
+        manifest = json.loads((setup[0].data_dir / 'audits' / d / 'manifest.json').read_text(encoding='utf-8'))
+        assert manifest['usage'] == known and manifest['usage_complete'] is False
+        assert 'private provider' not in json.dumps(manifest)
+
+
+def test_abrupt_process_exit_releases_owner_and_replays_one_terminal_event(tmp_path):
+    script = '''
+import os, sys
+from pathlib import Path
+from bullbear.server.store import Store
+store = Store(Path(sys.argv[1]))
+row, _ = store.create('crash', 'same-body', '005930', '2026-10-16', 1)
+store.emit(row['id'], 'turn_started', {'side': 'bull', 'round': 'opening'})
+os._exit(23)
+'''
+    result = subprocess.run([sys.executable, '-c', script, str(tmp_path / 'http')],
+                            capture_output=True, timeout=20)
+    assert result.returncode == 23, result.stderr.decode(errors='replace')
+    for _ in range(2):
+        store = Store(tmp_path / 'http')
+        try:
+            row = store.request('crash', 'same-body')
+            assert row['status'] == 'failed'
+            assert [event['type'] for event in store.events(row['id'])] == ['turn_started', 'debate_failed']
+            assert 'usage' not in json.loads(store.events(row['id'])[-1]['data'])
+        finally:
+            store.close()
