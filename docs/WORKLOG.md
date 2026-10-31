@@ -15,6 +15,16 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-31 · Codex · docs
+- 한 것: 미커밋 진단 도구·아키텍처 문서를 0f9f295로 커밋하고 브랜치 푸시 완료. develop 대상 PR #24 생성: https://github.com/ricky00-dev/bull-and-bear/pull/24. 최신 develop 7e48f7c 일정 변경을 통합하고 WORKLOG 충돌은 양쪽 기록을 모두 보존해 해결.
+- 진행 중: PR 리뷰 대기. PR에는 기존 5d2a8e5의 RAG·Claude 모델 정책·preflight 통합도 포함.
+- 다음: 리뷰 반영 후 develop 병합 검토. 실제 Claude 호출 보류와 RAG 기본 비활성 유지.
+- 막힘·결정 필요: 최종 코드 전체 Python392 passed/외부2 skipped. 이후 병합은 문서만 변경되어 테스트 재실행하지 않음. 키/.env/로컬 원본 데이터 제외, 유료 호출 없음. PR 생성은 완료했으며 develop 자체 병합은 하지 않음.
+
+## 2026-10-31 · Claude Code · docs
+- 한 것: 일정 변경 반영 (ROADMAP, experiment.md). 예비 운용 11/4(현재 엔진, 퀴즈·시연용, 실험 집계 제외) → 정식 운용 11/11(엔진 고정, 실험 집계). 전시 전 7거래일 채점 약 50건, 발표 메시지 결정 11/18 → 11/21. 모델 Haiku+Sonnet 반영, 비용 추정 갱신
+- 막힘·결정 필요 (**jangwonii**): 11/10까지 엔진 고정, 단일 모드(`mode: "single"`) 구현. KRX·DART·네이버 키 공유 (로컬 연동 테스트용)
+
 ## 2026-10-31 · Codex · ai-worker, docs
 - 한 것: 사용자 요청으로 미커밋 9개 파일(오프라인 진단 CLI/테스트, 평가 기록, README Mermaid/PNG 3개, 작업 로그)을 검토하고 커밋 준비. 앞선 RAG·Claude 제한 통합 커밋 5d2a8e5와 함께 feat/worker-operational-readiness를 develop 대상 PR로 게시할 범위 정리.
 - 진행 중: 커밋·푸시·PR 등록. 최신 origin/develop 7e48f7c 확인; 추가 변경은 일정 문서이며 워커 공개 계약/Spring·웹 코드는 이번 PR에서 변경하지 않음.
