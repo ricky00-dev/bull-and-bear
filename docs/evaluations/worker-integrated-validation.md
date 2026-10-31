@@ -1,5 +1,9 @@
 # 워커 완료 변경 통합 검증
 
+후속 정정(2026-11-01): 아래 결과는 당시 검증 범위다. 독립 검토에서 내부 재시도 사용량
+미확정 유실과 MKT 표시 검사 누락 2건이 재현되어 `71af77b`에서 수정했다.
+최신 검증·한계는 [독립 검토 수정 기록](worker-integrated-review-fixes.md)을 참고한다.
+
 2026-10-31. 로컬 브랜치 `fix/worker-integrated-validation`, 작업 폴더
 `C:/Users/이장원/.codex/worktrees/worker-http-stability/bull-and-bear`.
 검증한 최종 코드 revision은 **`27f61611fe7dec317e61b9ecb2104917b5eab784`**다.

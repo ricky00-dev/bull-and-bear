@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex 독립 검토 수정 세션 · ai-worker, docs
+- 한 것: 독립 검토 원본을 읽기 전용 확인 후 P1 내부 재시도 성공 시 미확정 사용량 유실과 P2 MKT 내부 ID 표시 누락을 회귀로 재현(수정 전5 실패/정상 대조2 통과). llm→audit→LiveRunner/Service에 요청별 영속 관측·지속 미확정 상태를 연결하고 정상 완전 usage 공개 유지. presentation 기존 차단 prefix에 MKT 추가. 수정 코드71af77bd5c0ae57ea384325496199f3ad1e6cf97.
+- 진행 중: 두 재현 결함 수정 완료. 최초 영향46 통과 후 요청 기록 저장 실패/호출 전 영속화 회귀 보강, 전체460 통과/실패0/외부4 생략(45.80초). 실제 Spring/PostgreSQL4 통과/실패0/생략0(16.04초), 생성·재시작 프로세스/포트 정리 확인. 이전 통과 검사가 놓친 성공 재시도 분기와 새 MKT prefix 통합 경계를 docs/evaluations/worker-integrated-review-fixes.md에 기록.
+- 다음: 총괄이 수정 revision과 재현/대조군을 확인. 실제 모델 검증은 키·접근·총비용 상한 확보 후 진행하고 사람 평가셋·청구 대조는 별도 수행.
+- 막힘·결정 필요: 유료/실제 공급자 호출0, SDK stream 시도 관측이 SDK 내부 전송 재시도·실제 청구액 전체의 원장은 아님. 공통 예산 예약/단가/공개 계약 정책 및 기본 RAG 비활성 유지. 검토 세션·기존 데이터/.env 변경, push·배포·원격 병합 없음. 사용자 판단 대기로 중지한 작업 없음.
+
 ## 2026-10-31 · Codex 통합 검증 세션 · ai-worker, docs
 - 한 것: HTTP 변경을 4b27d93으로 보존, fix/worker-integrated-validation에서 9176afc를 70021d1로 로컬 통합. worker-quality/worker-data-consistency 완료 파일 12개와 WORKLOG 항목을 원본 수정 없이 반영하고 test_server.py 양쪽 보존. 최종 코드 27f61611fe7dec317e61b9ecb2104917b5eab784.
 - 한 것: 실제 Spring/PostgreSQL에서 사용량 미확정 실패·워커 os._exit 후 재시작/SSE 재구독 검증 추가. 비용/토큰 NULL 및 $0.15 추정치, 실패 이벤트1개, 원본 감사·부분 사용량 보존 확인. psql 미설치로 새 E2E2개가 처음 실패했으나 JDBC 조회 보조 도구로 해결. 기존 4조건14후보 해시 연결 재검증, 전부 미검수·품질비율 null 유지.
