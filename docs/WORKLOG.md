@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex PR #24 스냅샷 정합성 수정 · ai-worker, docs
+- 한 것: 51cf34f에서 전용 worker-canonical-snapshot worktree와 fix/worker-canonical-snapshot 브랜치 생성. Service의 snapshot 단계에서 저장 후 DB의 canonical 객체를 다시 읽고 audit/RAG/runner에 동일 객체 전달. ID 해시·정책·공개 계약 변경 없음.
+- 한 것: 감독 폴더의 회귀를 읽기 전용 참고해 기존 실패 스냅샷 저장 → 같은 ID/새 created_at으로 토론 재시도 → single 실행을 검증. 수정 전1 실패로 재현, 수정 후 두 runner와 두 audit의 전체 snapshot이 옛 canonical 객체와 같음을 확인. 관련 single/HTTP/audit/RAG 테스트64 passed(15.76초), diff 공백 검사 통과.
+- 진행 중: 최소 수정·회귀·본 기록의 로컬 커밋 완료 후 감독에게 전달. 다른 worktree와 원본 데이터/환경 파일 보존.
+- 다음: 감독이 #24에 커밋 반영 및 push/merge 수행. 통합 브랜치의 사용량·복구·MKT 보완을 보존해 통합 검증.
+- 막힘·결정 필요: 실제 공급자·유료 호출 및 Spring 외부 통합은 미실행. 추가 정책 판단이나 사용자 판단 대기 없음. 이 세션에서는 push/merge/배포하지 않음.
+
 ## 2026-10-31 · Codex · ai-worker, docs
 - 한 것: 사용자 요청으로 #23 계약 v0.6을 그대로 반영하고 HTTP single 구현. mode/snapshot_id 검증, 저장 스냅샷 실행, 모드별 재사용, SQLite 이관, 중재자와 같은 모델의 중립 판정, scores/stats=null·SSE·감사·RAG 경로 추가. README 아키텍처와 PNG 갱신.
 - 한 것: 전체 Python407 passed/외부 Spring2 skipped(40.13초). 병렬 중복 방지·구버전 호환·실패 재시도·스냅샷 분리·독립 의미 검토 확인. 실제 Claude 스키마 maxItems 거절을 발견해 전송용 변환과 회귀 테스트 추가.
