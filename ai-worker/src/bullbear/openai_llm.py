@@ -9,10 +9,11 @@ from .llm import LLM, LLMError, Usage
 
 
 class OpenAILLM(LLM):
-    def __init__(self, model, client=None, max_tool_turns=8):
+    def __init__(self, model, client=None, max_tool_turns=8, *, max_output_tokens=16000):
         self.model = model
         self.client = client or OpenAI(timeout=180.0, max_retries=1)
         self.max_tool_turns = max_tool_turns
+        self.max_output_tokens = max_output_tokens
         self.usage = Usage()
         self.usage_by_model = {}
 
@@ -27,7 +28,8 @@ class OpenAILLM(LLM):
                 tools=functions, reasoning={"effort": effort},
                 text={"format": {"type": "json_schema", "name": "debate_output",
                                   "schema": schema, "strict": True}},
-                max_output_tokens=16000, store=False, include=["reasoning.encrypted_content"],
+                max_output_tokens=self.max_output_tokens, store=False, service_tier="default",
+                truncation="disabled", include=["reasoning.encrypted_content"],
             )
             if response.usage is not None:
                 cached = getattr(response.usage.input_tokens_details, "cached_tokens", 0) or 0

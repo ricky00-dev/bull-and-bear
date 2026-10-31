@@ -1,0 +1,45 @@
+import json
+
+from bullbear.config import load_settings
+from bullbear.preflight import inspect_settings
+
+
+def configured(monkeypatch):
+    monkeypatch.setattr('bullbear.config.load_dotenv', lambda: None)
+    for key in ('BULLBEAR_MODEL', 'BULLBEAR_DEBATER_MODEL', 'BULLBEAR_MODERATOR_MODEL',
+                'BULLBEAR_RAG_ENABLED', 'BULLBEAR_RAG_GENERATION_ID', 'BULLBEAR_RAG_PROFILE'):
+        monkeypatch.delenv(key, raising=False)
+    for key in ('ANTHROPIC_API_KEY', 'KRX_API_KEY', 'OPENDART_API_KEY',
+                'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET', 'WORKER_TOKEN'):
+        monkeypatch.setenv(key, 'private-test-value')
+    return load_settings()
+
+
+def test_default_roles_and_no_secret_values(monkeypatch):
+    report = inspect_settings(configured(monkeypatch))
+    assert report['models'] == {'debater': 'claude-haiku-5-5', 'moderator': 'claude-sonnet-5-5'}
+    assert report['configuration_ready']
+    assert 'private-test-value' not in json.dumps(report)
+    assert not report['model_access_verified']
+    assert not report['operational_readiness_verified']
+
+
+def test_old_opus_override_and_missing_key_block_readiness(monkeypatch):
+    configured(monkeypatch)
+    monkeypatch.setenv('BULLBEAR_MODEL', 'claude-opus-5-5')
+    monkeypatch.delenv('ANTHROPIC_API_KEY')
+    report = inspect_settings(load_settings())
+    assert not report['configuration_ready']
+    assert set(report['errors']) == {'debater_model_not_allowed', 'moderator_model_not_allowed',
+                                     'missing_ANTHROPIC_API_KEY'}
+
+
+def test_role_overrides_and_rag_generation_requirement(monkeypatch):
+    configured(monkeypatch)
+    monkeypatch.setenv('BULLBEAR_DEBATER_MODEL', 'claude-sonnet-5-5')
+    monkeypatch.setenv('BULLBEAR_MODERATOR_MODEL', 'claude-haiku-5-5')
+    monkeypatch.setenv('BULLBEAR_RAG_ENABLED', 'true')
+    report = inspect_settings(load_settings())
+    assert report['models']['moderator'] == 'claude-haiku-5-5'
+    assert 'missing_rag_generation' in report['errors']
+    assert report['network_calls'] == 0

@@ -1,0 +1,33 @@
+{
+  "schema_version": "rag-search-evaluation-v1",
+  "dataset_version": "concept-probes-v1",
+  "evidence_type": "synthetic_not_human_reviewed",
+  "as_of": "2026-10-16T18:00:00+09:00",
+  "ticker": "000000",
+  "documents": [
+    {"key":"volatility","text":"변동성 변동 폭에 관한 평가용 개념 문단이다."},
+    {"key":"per","text":"주가수익비율 주가를 주당순이익으로 나눈 비율이다.","basis_urls":["https://www.sec.gov/investor/pubs/begfinstmtguide.htm"]},
+    {"key":"short_event","text":"발표일정 정보 공개 이전과 이후를 구분하는 평가용 문단이다.","horizons":["short"]},
+    {"key":"future","text":"미래전용개념 미래 관측 문단이다.","observed_hours":1,"published_hours":-48},
+    {"key":"foreign","text":"해외전용개념 해외 시장 문단이다.","markets":["US"]},
+    {"key":"ticker","text":"종목한정개념 다른 종목 문단이다.","tickers":["999999"]},
+    {"key":"rejected","text":"반려전용개념 검수 반려 문단이다.","review_status":"rejected"},
+    {"key":"long","text":"장기전용개념 장기 문단이다.","horizons":["long"]},
+    {"key":"news","text":"뉴스전용개념 시장 사실 문단이다.","kind":"news"}
+  ],
+  "cases": [
+    {"id":"volatility_exact","description":"기본 개념 일치","concept_label":"변동성","relevant":["volatility"]},
+    {"id":"volatility_english_alias","description":"검수된 고정 영어 별칭","concept_label":"volatility","relevant":["volatility"]},
+    {"id":"volatility_particle","description":"조사 결합으로 인한 현재 검색 누락 측정","concept_label":"변동성은 무엇인가","relevant":["volatility"]},
+    {"id":"per_alias","description":"PER 별칭 확장","concept_label":"PER","relevant":["per"]},
+    {"id":"per_spacing","description":"복합명사 띄어쓰기 차이","concept_label":"주가 수익 비율","relevant":["per"]},
+    {"id":"short_event","description":"단기 경로 일치","concept_label":"발표일정","path":"short","relevant":["short_event"]},
+    {"id":"unrelated","description":"관련 문단이 없는 질문","concept_label":"광합성 식물세포"},
+    {"id":"future_observation","description":"과거 발행이지만 미래에 관측한 문단 제외","concept_label":"미래전용개념","forbidden":["future"]},
+    {"id":"foreign_market","description":"시장 필터","concept_label":"해외전용개념","forbidden":["foreign"]},
+    {"id":"other_ticker","description":"종목 필터","concept_label":"종목한정개념","forbidden":["ticker"]},
+    {"id":"review_rejected","description":"검수 반려","concept_label":"반려전용개념","forbidden":["rejected"]},
+    {"id":"long_only","description":"중장기 자료를 단기로 승격하지 않음","concept_label":"장기전용개념","path":"short","forbidden":["long"]},
+    {"id":"news_not_knowledge","description":"시장 Fact 자료형 제외","concept_label":"뉴스전용개념","forbidden":["news"]}
+  ]
+}

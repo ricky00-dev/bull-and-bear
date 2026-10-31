@@ -6,7 +6,9 @@ Spring API 서버가 호출하는 Python 서비스. API 계약은 [`../docs/work
 AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 법을 배우는 모의투자 교육 서비스.
 
 현재 단계: **CLI + HTTP/SSE 서버**. Spring·웹과 연결해 검색 → 토론 → 판정 봉인·공개 → 채점 예약을 실행한다.
-HTTP는 계약 v0.4의 엔드포인트·이벤트와 v0.5의 비동기 스냅샷 응답을 지원한다.
+HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응답을 지원한다.
+
+구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
 ## 시작하기
 
@@ -71,10 +73,50 @@ KST 15:40 이전 당일 값과 미래 날짜는 제외한다. 종목 화면·스
 DART에 시장 구분이 없는 추가 종목은 `market: null`이며, 전체 ETF·우선주 목록은 제공하지 않는다.
 현재 토론 허용 기준은 `UNIVERSE`의 대형주 30종목이다. 시장 전체의 시총·거래대금 필터는 아직 구현하지 않았다.
 
-모델은 `BULLBEAR_MODEL`을 기본으로 쓰고, `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`로 역할별 지정할 수 있다.
-실제 응답 모델별 입력·출력·캐시 읽기/생성 토큰을 합산한다. Haiku에는 서버 측 `fallbacks` 옵션을 보내지 않는다.
+운영 HTTP와 Claude CLI는 **Haiku·Sonnet만 허용**한다. 기본 역할은 토론자
+`claude-haiku-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
+`BULLBEAR_MODEL`은 공통 재정의, `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`은
+역할별 재정의다. 기존 Opus 설정은 호출 전에 거부한다. 서버 측 자동 모델 대체는 사용하지 않는다.
+모델 ID가 계정에서 실제 사용 가능한지는 별도 확인해야 하며, 위 기본값만으로 접근을 보장하지 않는다.
+실제 응답 모델별 입력·출력·캐시 읽기/생성 토큰을 합산한다.
+
+유료 호출 없이 설정을 점검하려면 워커 폴더에서 실행한다:
+
+```bash
+uv run python -m bullbear.preflight --env-file /absolute/path/to/.env
+```
+
+키 값은 출력하지 않고 존재 여부만 표시한다. 필수 설정 누락·Opus 등 비허용 모델·개발 기본 토큰은
+종료 코드 2로 알린다. 선택한 환경 파일은 해당 프로세스에서만 기존 환경값보다 우선한다.
+이 점검은 네트워크를 사용하지 않으며 키 인증·모델 접근·RAG 원문 무결성·운영 준비 완료를 보증하지 않는다.
+이전 OpenAI 비교 도구와 기록은 과거 실험 재현용으로 보존하며 운영 워커가 사용하지 않는다.
+
+RAG는 기본 비활성이다. 활성화 시 명시적 세대가 필요하며 검색 결과 없음과 명시적 시간 초과만
+배경 없이 진행한다. 무결성·시점·감사 저장 오류는 모델 호출 전에 중단한다. 대체 진행 사유는
+비공개 감사에 저장하고 공개 HTTP/SSE 계약에는 추가하지 않는다.
 
 ## HTTP 통합 검증
+
+`POST /debates`는 `mode`를 생략하면 기존 토론을 실행한다. `mode: "single"`은 저장된
+`snapshot_id`가 필수이며, 현재 시장 데이터를 새로 조회하지 않는다.
+
+```json
+{"ticker":"005930","request_id":"single-example","mode":"single","snapshot_id":"저장된 스냅샷 ID"}
+```
+
+단일 분석가는 `BULLBEAR_MODERATOR_MODEL`과 같은 모델로 스냅샷을 직접 조회해 판정한다.
+토론 내역·양측 점수는 입력하지 않으며, 같은 7거래일·코스피 대비 ±2%p 기준과 표현·근거·의미 검증을 적용한다.
+SSE는 `snapshot_created → moderator_started → debate_completed` 또는 `debate_failed`다.
+완료 응답의 `verdict.scores`·`stats`는 `null`, 발언 목록은 비어 있고 모델별 `usage`는 유지된다.
+
+- 같은 스냅샷·같은 모드의 실행 중/완료 결과만 재사용한다. 실패 후 새 요청 ID는 다시 실행한다.
+- 같은 요청 ID에 모드·스냅샷 등 다른 본문을 보내면 409, 없는 스냅샷은 404, 종목 불일치는 400이다.
+- 토론 모드도 명시적 `snapshot_id`를 지원한다. 생략 시 기존 종목·기준일 재사용을 유지한다.
+- 기존 SQLite는 시작 시 `mode=debate`로 이관되며 과거 요청 멱등 키도 유지한다.
+- Spring의 단일 모드 운용 스위치는 별도다. 워커 구현만으로 운영 스위치를 활성화하지 않는다.
+
+[단일 모드 검증 기록](docs/single-http-validation.md): 자동 테스트는 통과했다. 실제 Sonnet 실험 2건은
+판정 검증에서 반려되어 실패 이벤트·사용량 기록까지 확인했으며, 실제 완료 판정과 Spring #23 연결은 미확인이다.
 
 기본 `uv run pytest`는 외부 데이터·유료 LLM 호출 없이 서버와 토론 엔진을 검증한다.
 실제 Spring/PostgreSQL까지 확인하려면 다음 테스트 전용 워커를 실행한다 (운영 진입점에는 테스트 모드가 없다).
@@ -94,35 +136,153 @@ uv run pytest tests/test_spring_integration.py -q
 실제 HTTP/SSE·DB 저장·판정 봉인·공개·채점 예약을 확인한다. 이 테스트는 게스트와 판정을 생성하므로 테스트 DB에서 실행한다.
 외부 API 키와 실제 모델 응답 품질은 별도로 확인해야 한다.
 
-## 구조
+## 기능 아키텍처
 
+아래는 현재 코드의 **운영 HTTP 경로**다. 데이터 수집 → 고정 스냅샷 → 토론 또는 단일 판정·검증 →
+이벤트 저장·전달을 워커가 맡는다. 사용자 계정·판정 저장·중재자 판정 봉인·3/7거래일 채점은 Spring의 책임이다.
+그림은 구현 구조이며 실제 Claude 호출·운영 검증 완료를 뜻하지 않는다.
+
+Mermaid가 표시되지 않는 뷰어에서는 렌더링된 PNG를 열 수 있다:
+[전체 구성](docs/images/architecture-overview.png) ·
+[토론 처리 흐름](docs/images/architecture-debate-flow.png) ·
+[RAG 흐름](docs/images/architecture-rag-flow.png).
+PNG는 현재 Mermaid 원본의 스냅샷이므로 다이어그램 수정 시 함께 다시 렌더링한다.
+
+### 전체 구성과 책임 경계
+
+```mermaid
+flowchart TB
+    Browser["사용자 브라우저"] <-->|"사용자 API · 토론 이벤트"| Spring["Spring API<br/>사용자 판정 · 중재자 판정 봉인 · 채점"]
+    Spring <--> PG[("PostgreSQL<br/>서비스의 기준 데이터")]
+
+    subgraph Worker["ai-worker · 단일 프로세스"]
+        HTTP["FastAPI<br/>인증 · 입력 검증 · HTTP/SSE"]
+        Market["Market<br/>종목 조회 · 시세 준비 · 공급자 연결"]
+        Service["Service<br/>중복 방지 · 재사용 · 동시 실행 제한"]
+        Snapshot["Snapshot<br/>시점과 ID가 고정된 시장 Fact"]
+        Engine["LiveRunner / Debate<br/>매수·매도 → 검증 → 중재자"]
+        Single["LiveRunner / SingleAnalyst<br/>중립 판정 → 검증<br/>중재자와 같은 모델"]
+        RAG["선택적 RAG<br/>고정된 비공개 배경지식<br/>기본 비활성"]
+        Store[("HTTP SQLite<br/>요청 · 상태 · 스냅샷 · 전달 이벤트")]
+        Audit[("비공개 실행 기록<br/>JSONL · 감사 manifest · 사용량")]
+
+        HTTP -->|"종목 · 시세 · 지수"| Market
+        HTTP -->|"토론 생성"| Service
+        Service -->|"시세 확인 및 스냅샷 생성"| Market
+        Market --> Snapshot
+        Service -->|"백그라운드 실행"| Engine
+        Service -->|"mode=single"| Single
+        Store -->|"저장 스냅샷 · 새 시세 조회 없음"| Single
+        Single -->|"판정 · 사용량 · scores/stats=null"| Service
+        Single --> Audit
+        Snapshot -->|"공개 근거의 원본"| Engine
+        Snapshot -.->|"검색 질의 · 기준 시각"| RAG
+        RAG -.->|"해석용 배경 · 근거 ID로 사용 금지"| Engine
+        RAG -.->|"같은 검색·검증 정책"| Single
+        Service <--> Store
+        Engine -->|"검증 통과 발언 · 최종 결과 · 사용량"| Service
+        Store -->|"저장된 이벤트 재생"| HTTP
+        Service --> Audit
+        Engine --> Audit
+    end
+
+    Spring -->|"내부 HTTP · X-Worker-Token"| HTTP
+    HTTP -->|"SSE · 최종 판정 포함, Spring에서 봉인"| Spring
+    Market <--> Sources["외부 데이터<br/>KRX: 시세·지수<br/>OpenDART: 재무·주식수·공시<br/>네이버: 뉴스"]
+    Engine <--> Claude["Anthropic API<br/>Haiku / Sonnet만 허용<br/>자동 모델 대체 없음"]
+    Single <--> Claude
 ```
-src/bullbear/
-  data/base.py        MarketDataSource 인터페이스 (시세·재무·발행주식수·공시)
-  data/krx_openapi.py 현재 시세·지수: KRX 공식 API, 날짜별 공통 캐시
-  data/pykrx_dart.py  재사용하는 OpenDART 재무·공시 구현 (기존 pykrx 시세 메서드는 현재 경로에서 호출하지 않음)
-  data/kis.py         구현체: 한국투자증권 (미구현 자리)
-  data/naver_news.py  NewsSource 구현체: 네이버 검색 API 뉴스 (제목·요약·링크만)
-  snapshot.py         판단 시점 스냅샷. 모든 수치를 ID 붙은 Fact로 고정, 파생 지표 계산
-  tools.py            에이전트 도구. 스냅샷에 묶여 있어 같은 시점 데이터만 반환
-  verifier.py         근거 검증기 (결정론적). 근거 값을 원본과 대조해 반려
-  agents.py           매수·매도 토론자, 중재자
-  llm.py              Claude 호출: 스트리밍, 도구 루프, 구조화 출력, 거절 시 폴백
-  debate.py           토론 진행: 3라운드, 검증 재시도, 추가 질문 라운드, 판정 봉인
-  events.py           JSONL 이벤트 기록 (재현용, 덧붙이기만)
-  cli.py
+
+- 브라우저는 워커에 직접 연결하지 않는다. 워커의 완료 응답에는 중재자 판정이 있으므로
+  **Spring이 사용자 판정 전까지 이를 숨겨야 한다.** 워커 SQLite는 Spring PostgreSQL을 대체하지 않는다.
+- 토론 작업 풀은 기본 2개, 시세 준비 작업 풀도 별도 2개다. 실행 중 토론 수와 시세 준비 대기열을 각각 제한한다.
+- LLM의 도구는 `SnapshotTools`로 고정된 Fact를 조회한다. 토론 중 도구가 외부 시세·뉴스를 새로 수집하지 않는다.
+- SSE는 검증을 통과한 발언을 전달한다. LLM 원시 토큰, 반려된 후보 본문, 비공개 RAG 원문은 전달하지 않는다.
+  진행 상태와 반려 알림은 별도 이벤트이며, 최종 중재자 판정은 Spring까지만 전달한다.
+
+### 토론 한 건의 처리 흐름
+
+```mermaid
+flowchart TD
+    Request["POST /debates"] --> Reuse{"같은 요청 ID 또는<br/>스냅샷·모드 재사용?<br/>스냅샷 생략: 종목·기준일"}
+    Reuse -->|"예"| Existing["기존 토론 반환<br/>저장 이벤트 재생 · 추가 LLM 호출 없음"]
+    Reuse -->|"아니오"| Ready{"시세 준비 · 토론 가능 종목<br/>동시 실행 여유 확인"}
+    Ready -->|"미충족"| Reject["접수 전 오류 응답<br/>시세 준비 중 503 · 대상 제외 422 · 용량 초과 429"]
+    Ready -->|"충족"| Accepted["요청 저장 · 202 반환<br/>이후 백그라운드 처리"]
+    Accepted --> Freeze["스냅샷 고정 · 저장<br/>snapshot_created 이벤트"]
+    Freeze --> Context["RAG 설정·검색 정책 확인<br/>컨텍스트 또는 대체 진행 사유 감사 저장"]
+    Context -->|"저장·무결성·시점 오류"| Failed["debate_failed<br/>사용량은 수집 가능한 범위 기록"]
+    Context -->|"debate"| Generate["매수 → 매도 순차 발언<br/>주장 → 반박 → 최종 변론<br/>이전 통과 발언 누적 전달"]
+    Context -->|"single"| Single["중립 분석가 · 스냅샷 직접 조회<br/>기간·표현·근거 ID·의미 검증<br/>반려 시 최대 3회 생성"]
+    Single -->|"검증 실패 또는 호출 실패"| Failed
+    Single -->|"통과 · scores/stats=null"| SingleDone["debate_completed<br/>단일 판정 · 모델별 사용량"]
+    SingleDone --> Experiment["Spring 실험 결과 저장<br/>사용자 비공개"]
+    Generate --> Rules["결정론적 검사<br/>Fact ID·값 · 표현 · 기간 · 상대 인용"]
+    Rules -->|"통과"| Meaning["LLM 의미 검토<br/>별도 대화, 해당 역할과 같은 모델"]
+    Rules -->|"반려"| Retry{"해당 발언 생성<br/>3회 미만?"}
+    Meaning -->|"반려"| Retry
+    Retry -->|"예 · 피드백"| Generate
+    Retry -->|"아니오"| Failed
+    Meaning -->|"호출 실패"| Failed
+    Meaning -->|"통과"| Publish["발언 저장 · SSE 전달"]
+    Publish --> More{"남은 기본 발언?"}
+    More -->|"예"| Generate
+    More -->|"아니오"| Moderator["중재자 평가 · 출력 검증<br/>반려 시 최대 3회 생성"]
+    Moderator -->|"검증 실패 또는 호출 실패"| Failed
+    Moderator -->|"추가 질문 · 허용 횟수 내"| Extra["추가 질문 라운드<br/>양측 발언도 같은 검증 적용"]
+    Extra -->|"통과 후 재평가"| Moderator
+    Extra -->|"검증 실패 또는 호출 실패"| Failed
+    Moderator -->|"최종 판정"| Completed["debate_completed<br/>판정 · 검증 통계 · 모델별 사용량"]
+    Completed --> Seal["Spring 저장·봉인<br/>사용자 판정 제출 뒤 공개"]
 ```
 
-흐름:
+위 그림의 접수 단계는 개념적으로 묶었다. 실제로는 요청 ID를 먼저 확인하고 시세를 조회한 뒤,
+명시적 스냅샷이면 시세 조회를 건너뛴다. DB 트랜잭션에서 요청 ID·스냅샷/모드 재사용과 실행 한도를 다시 확인한다. 같은 요청 ID에 다른 본문을
+보내면 409다. 시세 준비 중 503이 나면 토론·LLM 작업은 시작되지 않지만 시세 수집은 계속된다.
+추가 질문은 기본 최대 1회이며 요청의 `max_extra_rounds`로 제한한다. 발언 생성·파싱·도구 호출 중 오류도
+성공으로 처리하지 않고 실패 경로로 보낸다. 의미 검토 통과는 사실·추론·투자 성과의 정확성 보장이 아니다.
 
-1. `build_snapshot`이 데이터 소스에서 한 번 받아와 스냅샷을 고정한다. ID는 내용 해시라서 같은 데이터면 같은 ID다.
-2. 매수 → 매도 순으로 주장, 반박, 최종 변론. 토론자는 도구로 스냅샷 Fact를 조회하고,
-   발언을 `{claim, argument, evidence[{ref, source_id, value, interpretation}]}` 형식으로 낸다.
-3. 검증기가 근거의 `source_id`와 `value`를 스냅샷과 대조한다. 틀리면 같은 대화에 피드백을 붙여
-   최대 2번 다시 쓰게 한다.
-4. 중재자가 기준표(관련성·중요도·반박·리스크 인식)와 검증 통계로 평가한다. 쟁점이 남았다고 보면
-   추가 질문 라운드를 요청한다 (기본 최대 1회).
-5. 중재자 판정은 봉인된 채 기록되고, 사용자 판정이 기록된 뒤에 공개된다.
+### RAG: 공개 시장 근거와 비공개 배경지식 분리
+
+```mermaid
+flowchart LR
+    Knowledge["지식·연구 원문"] --> Ingest["수집 · 버전 보존<br/>문단 분할 · 검수 주석"]
+    Ingest --> Index[("RagStore / GenerationIndex<br/>고정 세대 · SQLite FTS5")]
+    Facts["시장 스냅샷<br/>Fact · 판단 시각"] --> Query["질의 생성<br/>개념 · 한글 별칭 정규화"]
+    Query --> Retrieve["BM25 검색<br/>검수 · 시점 · 시장 · 종목 · 유효 기간 필터"]
+    Index --> Retrieve
+    Retrieve --> Fixed["KnowledgeContext<br/>선정/제외 기록 · 불변 저장 · 재생"]
+    Fixed --> Policy{"HTTP 실패 정책"}
+    Policy -->|"정상"| Background["토론자 · 중재자 · 의미 검토에<br/>같은 배경 주입"]
+    Policy -->|"결과 없음 · 명시적 시간 초과"| Without["RAG 없이 진행<br/>대체 사유 비공개 감사"]
+    Policy -->|"무결성·시점 위반 등"| Stop["모델 호출 전 중단"]
+```
+
+RAG는 **기본 꺼짐**이며 활성화하려면 명시적인 검색 세대가 필요하다. 검색·감사 저장 실패도 모델 호출 전에 중단한다.
+지식은 개념·조건·한계를 해석하는 배경이고, 공개 `evidence.source_id`는 스냅샷 Fact만 가리킨다.
+HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 RAG 없는 조건으로 바꾸지 않는다.
+
+### 코드와 저장소 대응
+
+| 기능 | 주요 모듈 | 역할 |
+|---|---|---|
+| HTTP 진입점 | `server/app.py` | 인증, 엔드포인트, SSE 재생·하트비트 |
+| HTTP 단일 판정 | `single.py` | 스냅샷 직접 조회, 중립 판정, 근거·표현·의미 검증 |
+| 실행 관리 | `server/service.py` | 중복/재사용, 백그라운드 실행, 이벤트 선별, `LiveRunner` |
+| 시장 데이터 | `server/market.py`, `data/` | 공급자·캐시 연결, 종목/시세/지수, 시세 준비 작업 풀 |
+| 고정 근거 | `snapshot.py`, `tools.py` | Fact·파생 지표 고정, 스냅샷 조회 도구 |
+| 토론·모델 | `debate.py`, `agents.py`, `prompts.py`, `llm.py` | 순차 토론, 누적 기록, 중재자, Claude 호출 |
+| 검증 | `verifier.py`, `presentation.py`, `semantic.py` | 수치/ID·표현·인용 규칙, LLM 의미 검토 |
+| RAG | `rag/ingest.py`, `store.py`, `index.py`, `retrieval.py`, `context.py`, `replay.py` | 수집·검수 이력, 검색, 배경 저장·재생 (`rag/` 하위 파일) |
+| 전달 상태 | `server/store.py` | `data/http/worker.sqlite3`: 요청·토론 상태·스냅샷·SSE 이벤트 |
+| 비공개 기록 | `events.py`, `audit.py` | `data/debates/*.jsonl`, `data/audits/<run_id>/manifest.json`: 시도·검증·사용량·실행 출처 |
+| 별도 실행·평가 도구 | `cli.py`, `experiment.py`, `benchmark.py`, `budget.py` | CLI, 선공 비교, 단일/토론·RAG 비교, benchmark 예산 원장 |
+| 비용 없는 점검 | `preflight.py`, `diagnostics.py` | 설정 검사, 저장된 benchmark 결과의 오프라인 진단·검수 목록 |
+
+표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다. RAG 저장은 `data/rag/` 아래 별도 원문·색인·컨텍스트로 관리한다.
+실험/진단 도구는 운영 HTTP 요청에서 자동 실행되지 않는다. `budget.py`의 benchmark 예산 원장을
+운영 HTTP의 강제 비용 상한으로 해석하면 안 된다. 운영 비용 제한은 현재 Spring 정책과 구분해야 한다.
+CLI는 토론 엔진을 직접 호출하며 HTTP 요청 관리·SSE 경로를 거치지 않는다.
 
 ## 데이터 소스 메모
 

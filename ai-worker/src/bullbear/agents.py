@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from . import prompts
 from .llm import LLM, Conversation, EventHook, LLMError
 from .schemas import MODERATOR_SCHEMA, STATEMENT_SCHEMA, ModeratorDecision, RoundKind, Side, Statement
+from .rag.context import KnowledgeContext
 from .snapshot import Snapshot
 from .tools import TOOL_DEFINITIONS, SnapshotTools
 from .verifier import VerificationResult
@@ -26,13 +27,16 @@ class Attempt:
 
 
 class Debater:
-    def __init__(self, llm: LLM, snapshot: Snapshot, *, effort: str = "medium", max_retries: int = 2):
+    def __init__(self, llm: LLM, snapshot: Snapshot, *, effort: str = "medium", max_retries: int = 2,
+                 background_context: KnowledgeContext | None = None):
         self.llm = llm
         self.snapshot = snapshot
         self.tools = SnapshotTools(snapshot)
         self.effort = effort
         self.max_retries = max_retries
-        self.reviewer = SemanticReviewer(llm, snapshot)
+        self.reviewer = SemanticReviewer(llm, snapshot, background_context=background_context)
+        self.background_context = background_context
+        self.background = self.reviewer.background
 
     def speak(
         self,
@@ -59,7 +63,7 @@ class Debater:
             guidance += "\n아직 인용하지 않은 근거 후보(조회 도구에서 원문 확인):\n" + "\n".join(
                 f"{f.id}: {f.label} ({f.as_of})" for f in preferred[:30])
         conv = Conversation(
-            system=prompts.debater_system(side, name=snap.name, ticker=snap.ticker, as_of=snap.as_of.isoformat()),
+            system=prompts.debater_system(side, name=snap.name, ticker=snap.ticker, as_of=snap.as_of.isoformat()) + self.background,
             messages=[{"role": "user", "content": prompts.debater_turn(side, round_kind, transcript, question) + guidance}],
         )
         attempts: list[Attempt] = []
@@ -91,16 +95,19 @@ class Debater:
 
 
 class Moderator:
-    def __init__(self, llm: LLM, snapshot: Snapshot, *, effort: str = "high"):
+    def __init__(self, llm: LLM, snapshot: Snapshot, *, effort: str = "high",
+                 background_context: KnowledgeContext | None = None):
         self.llm = llm
         self.snapshot = snapshot
         self.effort = effort
-        self.reviewer = SemanticReviewer(llm, snapshot)
+        self.reviewer = SemanticReviewer(llm, snapshot, background_context=background_context)
+        self.background_context = background_context
+        self.background = self.reviewer.background
 
     def evaluate(self, transcript: list[str], stats: dict, *, extra_allowed: bool) -> ModeratorDecision:
         snap = self.snapshot
         conv = Conversation(
-            system=prompts.MODERATOR_SYSTEM,
+            system=prompts.MODERATOR_SYSTEM + self.background,
             messages=[{
                 "role": "user",
                 "content": prompts.moderator_turn(

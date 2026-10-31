@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from contextlib import ExitStack
 from datetime import datetime
 
 from .config import Settings, load_settings
@@ -96,7 +97,8 @@ def _ask_user() -> tuple[Decision, str]:
 def cmd_debate(args, settings: Settings) -> None:
     from .agents import Debater, Moderator  # anthropic 클라이언트는 토론할 때만 만든다
     from .debate import Debate, verification_stats
-    from .llm import LLM
+    from .llm import LLM, validate_model
+    from .audit import selected_models
 
     snap = Snapshot.load(settings.snapshot_dir, args.snapshot) if args.snapshot else _make_snapshot(settings, args.ticker)
     for w in snap.warnings:
@@ -104,17 +106,24 @@ def cmd_debate(args, settings: Settings) -> None:
     debate_id = f"{datetime.now():%Y%m%d-%H%M%S}-{snap.ticker}"
     print(f"{snap.name}({snap.ticker}) 토론 {debate_id}  스냅샷 {snap.snapshot_id}  기준일 {snap.as_of}")
 
-    llm = LLM(settings.model)
-    debate = Debate(
-        snap,
-        Debater(llm, snap, effort=settings.debater_effort),
-        Moderator(llm, snap, effort=settings.moderator_effort),
-        EventLog(settings.debate_dir / f"{debate_id}.jsonl"),
-        debate_id=debate_id,
-        max_extra_rounds=args.max_extra_rounds,
-        on_event=_printer,
-    )
-    result = debate.run()
+    models = selected_models(settings)
+    for model in models.values():
+        validate_model(model)
+    with ExitStack() as clients:
+        llm = LLM(models['debater'])
+        clients.callback(llm.client.close)
+        moderator_llm = LLM(models['moderator'])
+        clients.callback(moderator_llm.client.close)
+        debate = Debate(
+            snap,
+            Debater(llm, snap, effort=settings.debater_effort),
+            Moderator(moderator_llm, snap, effort=settings.moderator_effort),
+            EventLog(settings.debate_dir / f"{debate_id}.jsonl"),
+            debate_id=debate_id,
+            max_extra_rounds=args.max_extra_rounds,
+            on_event=_printer,
+        )
+        result = debate.run()
 
     if args.no_judge:
         user, reason = None, ""
@@ -155,8 +164,13 @@ def cmd_replay(args, settings: Settings) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "rag":
+        from .rag.cli import main as rag_main
+        raise SystemExit(rag_main(arguments[1:]))
     parser = argparse.ArgumentParser(prog="bullbear")
     sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("rag", help="로컬 RAG 원문 import/sync/inspect (네트워크 없음)")
     sub.add_parser("universe")
     p = sub.add_parser("snapshot")
     p.add_argument("ticker")
