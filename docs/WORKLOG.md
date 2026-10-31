@@ -17,7 +17,7 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ## 2026-11-01 · Codex · api, ai-worker, web, docs
 - 한 것: PR #23 비용/복구 수정 d8a5c27과 #24 snapshot 수정 2e389e3을 통합한 9867a14에서 최종 Python476 통과/외부5 생략, 별도 실제 Spring/PostgreSQL/HTTP5 통과, Java 관련9+DB복구7 통과, 웹 build/lint 성공. 초기 import 경로 오류와 fixture 오류 수정·재실행을 상세 보고서에 기록.
-- 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 완료, 나머지 최신 base 정리 및 원격 반영. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.
+- 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 및 #24 병합 2ef53e2 완료. #24와 #25의 base 통합 충돌은 WORKLOG만 발생해 모든 기록을 보존. #25 최종 원격 반영 중. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.
 - 다음: PR head 고정 병합 후 원격 상태와 제품 tree 동일성 확인. 상세 docs/evaluations/pr-23-24-25-merge-validation.md.
 - 막힘·결정 필요: 재현된 미해결 결함/사용자 판단 대기 없음. Docker Java 전체·실모델 성공률·독립 사람 평가·실청구/실시장 검증은 미완료. 운영 single/RAG 기본 비활성, 배포/추가 유료 호출 없음. 이전 V6 소실 비용 복구 불가.
 
@@ -93,6 +93,7 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: PR 리뷰 대기. PR에는 기존 5d2a8e5의 RAG·Claude 모델 정책·preflight 통합도 포함.
 - 다음: 리뷰 반영 후 develop 병합 검토. 실제 Claude 호출 보류와 RAG 기본 비활성 유지.
 - 막힘·결정 필요: 최종 코드 전체 Python392 passed/외부2 skipped. 이후 병합은 문서만 변경되어 테스트 재실행하지 않음. 키/.env/로컬 원본 데이터 제외, 유료 호출 없음. PR 생성은 완료했으며 develop 자체 병합은 하지 않음.
+
 ## 2026-11-01 · Codex PR #23 복구 수정 · api, web, docs
 - 한 것: d431ce2에서 별도 single-mode-recovery worktree/fix 브랜치 생성. V7 시도별 비용 원장과 기존 V6 최신 행 이관, 날짜별 확정/미확정 비용 합산, 동일 request_id/worker_id 재시작 복구, SSE 전송 오류와 실제 terminal 실패 분리, 원장/결과 원자적 저장 구현. 7일 표본0에서도 3일 토글 표시.
 - 한 것: 독립 실제 PostgreSQL/Flyway 회귀7개 + 기존 HTTP/직렬화4개 = 11 통과/실패0/생략0. bootJar·웹 tsc/Vite build·lint 통과. 임시 PostgreSQL 종료와 포트 해제 확인. 제품 파일 외 test fixture 초기 컴파일/Mockito agent 환경 문제는 표준 Java fixture로 해결, 검증 조건 유지.
