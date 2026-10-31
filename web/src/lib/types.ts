@@ -115,6 +115,39 @@ export interface JudgmentDetail {
   holdBand: number
 }
 
+/** AI 성적표 (docs/experiment.md). Rate는 맞힌 수 / 채점된 수 */
+export interface Rate {
+  hits: number
+  n: number
+}
+
+export interface ReportHorizon {
+  days: number
+  /** 토론 AI, 채점된 전체 */
+  debate: Rate
+  /** 단일 판정이 있는 토론만 (혼자 판단 AI와 같은 문제) */
+  debatePaired: Rate
+  single: Rate
+  alwaysHold: Rate
+  alwaysBuy: Rate
+  alwaysSell: Rate
+  debateDecisions: { buy: number; hold: number; sell: number }
+  singleDecisions: { buy: number; hold: number; sell: number }
+}
+
+export interface Report {
+  /** true면 정식 운용만, false면 예비 운용 포함 */
+  official: boolean
+  start: string
+  from: string | null
+  to: string | null
+  stocks: number
+  holdBand: number
+  /** [7거래일, 3거래일] */
+  horizons: ReportHorizon[]
+  visitors: { n: number; userHits: number; aiHits: number }
+}
+
 /** 마이 탭 퀴즈 누적 기록. rounds는 다 푼 판 수 */
 export interface QuizStats {
   rounds: number

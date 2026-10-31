@@ -20,9 +20,9 @@ import tools.jackson.databind.JsonNode;
  * v0.3 형식({calls: [...], cost_usd?})과 v0.2 형식({model, input_tokens, output_tokens})을 모두 받는다.
  */
 @Component
-class LlmUsage {
+public class LlmUsage {
 
-	record Usage(long inputTokens, long outputTokens, BigDecimal costUsd) {
+	public record Usage(long inputTokens, long outputTokens, BigDecimal costUsd) {
 	}
 
 	private static final BigDecimal MILLION = BigDecimal.valueOf(1_000_000);
@@ -34,7 +34,7 @@ class LlmUsage {
 		this.budget = properties.budget();
 	}
 
-	Optional<Usage> parse(JsonNode usage) {
+	public Optional<Usage> parse(JsonNode usage) {
 		if (usage == null || !usage.isObject()) {
 			return Optional.empty();
 		}

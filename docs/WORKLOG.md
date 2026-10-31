@@ -15,6 +15,24 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex PR #23 복구 수정 · api, web, docs
+- 한 것: d431ce2에서 별도 single-mode-recovery worktree/fix 브랜치 생성. V7 시도별 비용 원장과 기존 V6 최신 행 이관, 날짜별 확정/미확정 비용 합산, 동일 request_id/worker_id 재시작 복구, SSE 전송 오류와 실제 terminal 실패 분리, 원장/결과 원자적 저장 구현. 7일 표본0에서도 3일 토글 표시.
+- 한 것: 독립 실제 PostgreSQL/Flyway 회귀7개 + 기존 HTTP/직렬화4개 = 11 통과/실패0/생략0. bootJar·웹 tsc/Vite build·lint 통과. 임시 PostgreSQL 종료와 포트 해제 확인. 제품 파일 외 test fixture 초기 컴파일/Mockito agent 환경 문제는 표준 Java fixture로 해결, 검증 조건 유지.
+- 진행 중: 로컬 fix 브랜치 커밋 후 감독 통합 대기. 보고서 docs/evaluations/single-mode-recovery.md. 기존 품질 worktree 및 감독 통합 폴더 보존.
+- 다음: 감독이 PR #23에 로컬 수정 커밋 반영 후 최종 검증·push/merge. 실제 worker single HTTP 지원·양측 v0.6 승인 전 SINGLE_ENABLED=false 유지.
+- 막힘·결정 필요: V6에서 이미 사라진 과거 시도 비용은 복구 불가, 현재 저장된 증거만 이관. 전체 Docker API 통합/실제 single HTTP/프로세스 강제 종료 E2E/브라우저 클릭 미실행. 재시작은 실제 DB 유지·runner 인스턴스 교체로 검증. 새 예산 정책·계약 변경·유료 호출·push/merge 없음. 사용자 판단 대기 중단 항목 없음.
+
+## 2026-10-31 · Claude Code · api, web, docs(계약)
+- 한 것 (feat/single-mode-report):
+  - **계약 v0.6**: `POST /debates`에 선택 필드 `mode`(`debate`|`single`)·`snapshot_id`. 단일 모드 = 실험 조건 B (중재자와 같은 모델이 같은 스냅샷으로 바로 판정, `scores`·`stats`는 null)
+  - Spring: `SingleVerdictRunner`가 정식 운용(`bullbear.experiment.start`, 기본 11/11) 전향 운용 토론이 끝나면 단일 판정을 한 번 받아 `single_verdicts`에 저장 (실패 시 3회까지, 전향 운용 하루 비용 상한에 합산). 스위치 `BULLBEAR_SINGLE_ENABLED`(기본 false)
+  - `debate_outcomes`에 3거래일 결과도 기록 (PK를 (debate_id, horizon_days)로). 퀴즈는 7거래일만 사용
+  - `GET /api/report?scope=official|all`: 7·3거래일 적중률 (토론 AI, 단일 AI, 항상 보류/매수/매도), 판정 분포, 사람 vs AI
+  - 웹 `/report` AI 성적표 (마이 → AI 성적표). 정식/예비 포함 토글, 7일/3일 토글, 표본 한계 문구
+  - 가짜 워커 단일 모드 (종목마다 다른 판정)
+- 확인: API 테스트 28개 통과 (`ExperimentReportTest`, `StartDebateRequestTest` 추가), 웹 tsc·lint, 브라우저에서 성적표 확인 (로컬 DB 토론을 SCHEDULED로 바꾸고 시작일을 앞당겨 확인)
+- 막힘·결정 필요 (**jangwonii**): 계약 v0.6 리뷰·승인 후 머지. 워커 단일 모드 구현 → 정식 운용(11/11) 전에 `SINGLE_ENABLED=true`
+
 ## 2026-10-31 · Claude Code · docs
 - 한 것: 일정 변경 반영 (ROADMAP, experiment.md). 예비 운용 11/4(현재 엔진, 퀴즈·시연용, 실험 집계 제외) → 정식 운용 11/11(엔진 고정, 실험 집계). 전시 전 7거래일 채점 약 50건, 발표 메시지 결정 11/18 → 11/21. 모델 Haiku+Sonnet 반영, 비용 추정 갱신
 - 막힘·결정 필요 (**jangwonii**): 11/10까지 엔진 고정, 단일 모드(`mode: "single"`) 구현. KRX·DART·네이버 키 공유 (로컬 연동 테스트용)

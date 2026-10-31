@@ -17,6 +17,9 @@ public interface WorkerClient {
 
 	WorkerDebateStarted startDebate(String ticker, String requestId);
 
+	/** 단일 모드(실험 조건 B, 계약 v0.6): 같은 스냅샷으로 모델 하나가 바로 판정. 이벤트는 events()로 받는다 */
+	WorkerDebateStarted startSingle(String ticker, String snapshotId, String requestId);
+
 	/** [from, to] 구간 종목 일별 종가, 날짜 오름차순. 휴장일은 없다. */
 	List<DailyClose> dailyCloses(String ticker, LocalDate from, LocalDate to);
 
