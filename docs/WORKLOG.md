@@ -59,6 +59,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: 구현 완료, 이 전용 worktree에 미커밋 변경으로 보존. 전체 Python399 passed/외부2 skipped(49.42초) 후 강제 종료·부분 실패 사용량 회귀 보강, 최종 영향 범위65 passed(19.69초). Java 단위7개·bootJar 및 실제 임시 PostgreSQL/Spring/HTTP fixture2 passed(5.40초), 서버 잔여 프로세스 없음. git diff 공백 검사 통과.
 - 다음: 총괄이 server app/service/store와 HTTP/audit 테스트를 함께 통합하고 공통 config/budget/LLM 변경 후 회귀·Spring fixture 재실행. 실제 유료 검증은 키·모델 접근·총비용 상한 확보 후 진행.
 - 막힘·결정 필요: 유료/외부 데이터 호출0, 공개 계약·기본 RAG 비활성·타 소유 파일 유지. Spring 성공 fixture E2E는 통과했지만 재시작 미확정 비용의 PostgreSQL 정산 E2E는 미실행. 기존 Spring 추정치($0.15)는 실제 지출 상한이 아니므로 공통 예산 예약/미확정분 대조는 별도 담당 후속. session-brief는 기존 CRLF 오류로 실패해 문서/Git 직접 확인. 원본·타 세션·.env·기존 데이터 수정 및 커밋/push/merge/배포/스케줄 활성화 없음.
+## 2026-11-01 · Codex PR #24 스냅샷 정합성 수정 · ai-worker, docs
+- 한 것: 51cf34f에서 전용 worker-canonical-snapshot worktree와 fix/worker-canonical-snapshot 브랜치 생성. Service의 snapshot 단계에서 저장 후 DB의 canonical 객체를 다시 읽고 audit/RAG/runner에 동일 객체 전달. ID 해시·정책·공개 계약 변경 없음.
+- 한 것: 감독 폴더의 회귀를 읽기 전용 참고해 기존 실패 스냅샷 저장 → 같은 ID/새 created_at으로 토론 재시도 → single 실행을 검증. 수정 전1 실패로 재현, 수정 후 두 runner와 두 audit의 전체 snapshot이 옛 canonical 객체와 같음을 확인. 관련 single/HTTP/audit/RAG 테스트64 passed(15.76초), diff 공백 검사 통과.
+- 진행 중: 최소 수정·회귀·본 기록의 로컬 커밋 완료 후 감독에게 전달. 다른 worktree와 원본 데이터/환경 파일 보존.
+- 다음: 감독이 #24에 커밋 반영 및 push/merge 수행. 통합 브랜치의 사용량·복구·MKT 보완을 보존해 통합 검증.
+- 막힘·결정 필요: 실제 공급자·유료 호출 및 Spring 외부 통합은 미실행. 추가 정책 판단이나 사용자 판단 대기 없음. 이 세션에서는 push/merge/배포하지 않음.
+
 ## 2026-10-31 · Codex · ai-worker, docs
 - 한 것: 사용자 요청으로 #23 계약 v0.6을 그대로 반영하고 HTTP single 구현. mode/snapshot_id 검증, 저장 스냅샷 실행, 모드별 재사용, SQLite 이관, 중재자와 같은 모델의 중립 판정, scores/stats=null·SSE·감사·RAG 경로 추가. README 아키텍처와 PNG 갱신.
 - 한 것: 전체 Python407 passed/외부 Spring2 skipped(40.13초). 병렬 중복 방지·구버전 호환·실패 재시도·스냅샷 분리·독립 의미 검토 확인. 실제 Claude 스키마 maxItems 거절을 발견해 전송용 변환과 회귀 테스트 추가.
