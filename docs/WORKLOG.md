@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 사용자 푸시 요청에 따라 통합 HEAD d7f315c와 독립 검토 수정 71af77b의 사용량 미확정 보존·MKT 표시 검사, 데이터/복구 변경 및 기존 평가 증거 검토. origin fetch 후 워커 전체 460 passed/외부 4 skipped(44.97초), 별도 Spring/PostgreSQL fixture 4 passed(15.12초) 재확인. Java 관련 테스트·bootJar는 Gradle UP-TO-DATE 성공. 공백 검사 통과, 추적 .env/원본 data 없음, 임시 프로세스 잔존 없음.
+- 진행 중: 검증 기록 커밋 후 fix/worker-integrated-validation 원격 푸시. 제품 소스 추가 변경 없음.
+- 다음: 원격 HEAD 일치 확인 후 실제 모델 접근·호출 예산·독립 사람 검수 준비. develop/main 병합·배포는 별도.
+- 막힘·결정 필요: 오프라인 구현/통합 검증 완료로 평가하며 실제 운영 완료는 아님. 실제 유료/시장 공급자 호출, SDK 내부 전송 재시도 청구 대조, 지출 상한, 기업행사 정책은 미검증. 실행 증거 ai-worker/data/spring-integration/run-eaf78afb99ad42e7bee3dd0700a68433(ignored). 원본 작업 폴더 변경 보존.
+
 ## 2026-11-01 · Codex 독립 검토 수정 세션 · ai-worker, docs
 - 한 것: 독립 검토 원본을 읽기 전용 확인 후 P1 내부 재시도 성공 시 미확정 사용량 유실과 P2 MKT 내부 ID 표시 누락을 회귀로 재현(수정 전5 실패/정상 대조2 통과). llm→audit→LiveRunner/Service에 요청별 영속 관측·지속 미확정 상태를 연결하고 정상 완전 usage 공개 유지. presentation 기존 차단 prefix에 MKT 추가. 수정 코드71af77bd5c0ae57ea384325496199f3ad1e6cf97.
 - 진행 중: 두 재현 결함 수정 완료. 최초 영향46 통과 후 요청 기록 저장 실패/호출 전 영속화 회귀 보강, 전체460 통과/실패0/외부4 생략(45.80초). 실제 Spring/PostgreSQL4 통과/실패0/생략0(16.04초), 생성·재시작 프로세스/포트 정리 확인. 이전 통과 검사가 놓친 성공 재시도 분기와 새 MKT prefix 통합 경계를 docs/evaluations/worker-integrated-review-fixes.md에 기록.
