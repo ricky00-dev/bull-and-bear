@@ -1,4 +1,4 @@
-"""Internal HTTP/SSE API (v0.4 + v0.5 asynchronous snapshot acknowledgement)."""
+"""Internal HTTP/SSE API v0.6: debate and frozen-snapshot single mode."""
 from __future__ import annotations
 
 import asyncio
@@ -6,12 +6,13 @@ import hmac
 import os
 from contextlib import asynccontextmanager
 from datetime import date
+from typing import Literal
 
 import httpx
 from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from starlette.exceptions import HTTPException
 
 from ..config import load_settings
@@ -25,6 +26,14 @@ class StartDebate(BaseModel):
     ticker: str = Field(pattern=r'^[0-9]{6}$')
     request_id: str = Field(min_length=1, max_length=128)
     max_extra_rounds: int = Field(default=1, ge=0, le=3)
+    mode: Literal['debate', 'single'] = 'debate'
+    snapshot_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @model_validator(mode='after')
+    def require_single_snapshot(self):
+        if self.mode == 'single' and self.snapshot_id is None:
+            raise ValueError('single mode requires snapshot_id')
+        return self
 
 
 def create_app(*, settings=None, market=None, runner_factory=None, token=None, max_running=None):

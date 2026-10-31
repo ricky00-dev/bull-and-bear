@@ -14,6 +14,8 @@ from ..debate import Debate, verification_stats
 from ..events import EventLog
 from ..llm import LLM, LLMError
 from ..rag.context import execution_policy
+from ..single import SingleAnalyst
+from ..snapshot import Snapshot
 from .errors import ApiError
 from .store import Store
 
@@ -66,6 +68,18 @@ class LiveRunner:
         for client in self.clients:
             client.client.close()
 
+    def run_single(self, snapshot, debate_id, emit):
+        models = self.audit.data['config']['selected_models'] if self.audit else selected_models(self.settings)
+        with self.audit.stage('moderator_client_initialization') if self.audit else nullcontext():
+            llm = LLM(models['moderator'])
+            self.clients.append(llm)
+            wrapped = AuditedLLM(llm, self.audit, 'moderator') if self.audit else llm
+        emit('moderator_started', {})
+        verdict = SingleAnalyst(wrapped, snapshot, effort=self.settings.moderator_effort,
+                                background_context=self.background_context).evaluate(
+            EventLog(self.settings.debate_dir / f'{debate_id}.jsonl'))
+        return {'debate_id': debate_id, 'verdict': {**verdict.model_dump(mode='json'), 'scores': None}, 'stats': None}
+
 
 class Service:
     def __init__(self, settings, market, *, runner_factory=None, max_running=2):
@@ -80,24 +94,36 @@ class Service:
         self.store.close()
 
     def create(self, body):
-        fingerprint = json.dumps({'ticker': body.ticker, 'max_extra_rounds': body.max_extra_rounds}, sort_keys=True)
+        identity = {'ticker': body.ticker, 'max_extra_rounds': body.max_extra_rounds}
+        # Preserve fingerprints for pre-v0.6 and explicit default requests.
+        if body.mode != 'debate' or body.snapshot_id is not None:
+            identity.update(mode=body.mode, snapshot_id=body.snapshot_id)
+        fingerprint = json.dumps(identity, sort_keys=True)
         existing = self.store.request(body.request_id, fingerprint)
         if existing:
             return self.response(existing, True)
-        quote = self.market.quote(body.ticker)
-        if quote.reasons:
-            raise ApiError(422, 'NOT_ELIGIBLE', '토론할 수 없는 종목입니다', reasons=quote.reasons)
+        snapshot, quote = None, None
+        if body.snapshot_id is not None:
+            snapshot = Snapshot.model_validate(self.store.snapshot(body.snapshot_id))
+            if snapshot.ticker != body.ticker:
+                raise ApiError(400, 'INVALID_REQUEST', '스냅샷과 요청 종목이 다릅니다')
+            data_date = snapshot.as_of.isoformat()
+        else:
+            quote = self.market.quote(body.ticker)
+            if quote.reasons:
+                raise ApiError(422, 'NOT_ELIGIBLE', '토론할 수 없는 종목입니다', reasons=quote.reasons)
+            data_date = quote.bars[-1].date.isoformat()
         row, reused = self.store.create(body.request_id, fingerprint, body.ticker,
-                                        quote.bars[-1].date.isoformat(), self.max_running)
+                                        data_date, self.max_running, mode=body.mode, snapshot_id=body.snapshot_id)
         if not reused:
-            self.pool.submit(self.run, row['id'], quote, body.max_extra_rounds)
+            self.pool.submit(self.run, row['id'], quote, body.max_extra_rounds, mode=body.mode, snapshot=snapshot)
         return self.response(row, reused)
 
     @staticmethod
     def response(row, reused):
         return {'debate_id': row['id'], 'snapshot_id': row['snapshot_id'], 'status': row['status'], 'reused': reused}
 
-    def run(self, debate_id, quote, max_extra_rounds):
+    def run(self, debate_id, quote, max_extra_rounds, *, mode='debate', snapshot=None):
         runner = None
         audit = None
 
@@ -115,15 +141,16 @@ class Service:
                 return {'calls': []}
 
         try:
-            audit = RunAudit(self.settings.data_dir, debate_id, ticker=quote.ticker,
-                             data_date=quote.bars[-1].date.isoformat(),
-                             max_extra_rounds=max_extra_rounds, models=selected_models(self.settings),
+            audit = RunAudit(self.settings.data_dir, debate_id, ticker=snapshot.ticker if snapshot else quote.ticker,
+                             data_date=snapshot.as_of.isoformat() if snapshot else quote.bars[-1].date.isoformat(),
+                             max_extra_rounds=0 if mode == 'single' else max_extra_rounds,
+                             mode=mode, models=selected_models(self.settings),
                              efforts={'debater': self.settings.debater_effort,
                                       'moderator': self.settings.moderator_effort},
                              secrets=(self.settings.dart_api_key, self.settings.krx_api_key,
                                       self.settings.naver_client_id, self.settings.naver_client_secret))
             with audit.stage('snapshot'):
-                snapshot = self.market.snapshot(quote)
+                snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
                 audit.attach_snapshot(snapshot)
                 self.store.save_snapshot(debate_id, snapshot)
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
@@ -164,6 +191,8 @@ class Service:
             def emit(event, payload):
                 # Never forward raw tokens or private moderator/audit events.
                 audit.observe_event(event, payload)
+                if mode == 'single' and event != 'moderator_started':
+                    return
                 data = jsonable_encoder(payload)
                 if event == 'statement_accepted':
                     if not data['verified']:
@@ -175,8 +204,9 @@ class Service:
                     return
                 self.store.emit(debate_id, event, data)
 
-            with audit.stage('debate'):
-                completed = runner.run(snapshot, debate_id, max_extra_rounds, emit)
+            with audit.stage(mode):
+                completed = (runner.run_single(snapshot, debate_id, emit) if mode == 'single' else
+                             runner.run(snapshot, debate_id, max_extra_rounds, emit))
             usage = collect_usage()
             audit.finish('success', usage=usage, result=completed)
             self.store.emit(debate_id, 'debate_completed', {**completed, 'usage': usage})

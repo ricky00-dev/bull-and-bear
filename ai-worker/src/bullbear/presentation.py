@@ -68,12 +68,17 @@ def rebuttal_target_issues(statement, side, round_kind, transcript):
 
 
 def moderator_issues(decision):
+    return verdict_issues(decision, comments=[decision.bull.comment, decision.bear.comment],
+                          extra_question=decision.extra_question)
+
+
+def verdict_issues(decision, *, comments=(), extra_question=None):
     issues = []
-    texts = [decision.reasoning, decision.bull.comment, decision.bear.comment, decision.extra_question or ""]
+    texts = [decision.reasoning, *comments, extra_question or ""]
     text = "\n".join(texts)
     if sentence_count(decision.reasoning) > 3:
         issues.append(error("reasoning_length", "판정 이유는 최대 3문장으로 쓰세요."))
-    if any(sentence_count(t) > 1 for t in texts[1:3]):
+    if any(sentence_count(t) > 1 for t in comments):
         issues.append(error("comment_length", "양측 평가는 각각 한 문장으로 쓰세요."))
     if re.search(r"\b(?:PX|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):
         issues.append(error("internal_details", "내부 근거 이름·검증 통계는 글에서 빼고 근거는 [E1] 번호로만 가리키세요."))

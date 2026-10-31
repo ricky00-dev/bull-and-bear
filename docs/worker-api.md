@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.5, 초안)
+# AI 워커 API 계약 (v0.6, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -82,6 +82,25 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 
 - `request_id`: Spring이 만드는 멱등 키. 같은 키로 다시 보내면 같은 `debate_id`를 돌려준다 (중복 토론 방지).
 - 같은 스냅샷의 토론이 이미 있으면 새로 돌리지 않고 재사용한다 (`reused: true`).
+- `mode` (v0.6, 선택): `"debate"`(기본) | `"single"`. 아래 "단일 모드" 참고.
+- `snapshot_id` (v0.6, 선택): 이 스냅샷으로 진행한다. 단일 모드에서는 **필수** (짝이 되는 토론과 같은 스냅샷).
+  없는 스냅샷이면 `404 NOT_FOUND`.
+
+#### 단일 모드 (`mode: "single"`, 실험 조건 B)
+
+실험 "토론 vs 단일"(docs/experiment.md)의 조건 B. 매수·매도 토론 없이 **중재자와 같은 모델 하나가**
+같은 스냅샷을 보고 바로 판정한다. 사용자에게는 보여 주지 않고 실험 집계에만 쓴다.
+
+```json
+{ "ticker": "005930", "request_id": "single-c0a8...", "mode": "single", "snapshot_id": "005930-20261111-2d76e3f5e8" }
+```
+
+- 모델: `BULLBEAR_MODERATOR_MODEL`과 같은 모델 (모델 차이를 섞지 않기 위해)
+- 판정 질문·기준은 토론 중재자와 같다 (7거래일 뒤 코스피 대비 ±2%p)
+- 응답(`202`)과 이벤트 스트림은 토론과 같은 형식. 이벤트는 `snapshot_created`(선택) → `moderator_started` →
+  `debate_completed` | `debate_failed`. `turn_*`·`statement_*`는 없다
+- `debate_completed.verdict`는 토론과 같은 필드에서 `scores`만 `null`. `stats`도 `null`. `usage`는 그대로 보낸다
+- 재사용: 같은 `snapshot_id` + 같은 `mode`면 재사용 (`reused: true`). 토론과 단일은 서로 재사용하지 않는다
 
 `202 Accepted`
 
@@ -225,6 +244,9 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 기존 저장 판정·가짜 워커 출력에는 번호가 없을 수 있으므로 기존 텍스트 표시도 유지할 수 있다.
 
 ## 변경 이력
+
+- v0.6 (2026-10-31): `POST /debates`에 선택 필드 `mode`(`debate`|`single`)·`snapshot_id` 추가.
+  단일 모드는 실험 조건 B (정식 운용 11/11부터 Spring 전향 운용이 토론마다 한 번 요청). 기존 요청은 그대로 동작.
 
 - v0.5 설명 보강 (2026-10-29): 사용자 요청에 따라 기존 decisive_evidence 배열 순서와 중재자 글의
   [E1] 번호 대응을 명시. JSON 필드 추가·삭제 없이 출력 표현을 정리하고 웹 칩 연결 방법을 설명함.

@@ -6,7 +6,7 @@ Spring API 서버가 호출하는 Python 서비스. API 계약은 [`../docs/work
 AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 법을 배우는 모의투자 교육 서비스.
 
 현재 단계: **CLI + HTTP/SSE 서버**. Spring·웹과 연결해 검색 → 토론 → 판정 봉인·공개 → 채점 예약을 실행한다.
-HTTP는 계약 v0.4의 엔드포인트·이벤트와 v0.5의 비동기 스냅샷 응답을 지원한다.
+HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응답을 지원한다.
 
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
@@ -97,6 +97,27 @@ RAG는 기본 비활성이다. 활성화 시 명시적 세대가 필요하며 �
 
 ## HTTP 통합 검증
 
+`POST /debates`는 `mode`를 생략하면 기존 토론을 실행한다. `mode: "single"`은 저장된
+`snapshot_id`가 필수이며, 현재 시장 데이터를 새로 조회하지 않는다.
+
+```json
+{"ticker":"005930","request_id":"single-example","mode":"single","snapshot_id":"저장된 스냅샷 ID"}
+```
+
+단일 분석가는 `BULLBEAR_MODERATOR_MODEL`과 같은 모델로 스냅샷을 직접 조회해 판정한다.
+토론 내역·양측 점수는 입력하지 않으며, 같은 7거래일·코스피 대비 ±2%p 기준과 표현·근거·의미 검증을 적용한다.
+SSE는 `snapshot_created → moderator_started → debate_completed` 또는 `debate_failed`다.
+완료 응답의 `verdict.scores`·`stats`는 `null`, 발언 목록은 비어 있고 모델별 `usage`는 유지된다.
+
+- 같은 스냅샷·같은 모드의 실행 중/완료 결과만 재사용한다. 실패 후 새 요청 ID는 다시 실행한다.
+- 같은 요청 ID에 모드·스냅샷 등 다른 본문을 보내면 409, 없는 스냅샷은 404, 종목 불일치는 400이다.
+- 토론 모드도 명시적 `snapshot_id`를 지원한다. 생략 시 기존 종목·기준일 재사용을 유지한다.
+- 기존 SQLite는 시작 시 `mode=debate`로 이관되며 과거 요청 멱등 키도 유지한다.
+- Spring의 단일 모드 운용 스위치는 별도다. 워커 구현만으로 운영 스위치를 활성화하지 않는다.
+
+[단일 모드 검증 기록](docs/single-http-validation.md): 자동 테스트는 통과했다. 실제 Sonnet 실험 2건은
+판정 검증에서 반려되어 실패 이벤트·사용량 기록까지 확인했으며, 실제 완료 판정과 Spring #23 연결은 미확인이다.
+
 기본 `uv run pytest`는 외부 데이터·유료 LLM 호출 없이 서버와 토론 엔진을 검증한다.
 실제 Spring/PostgreSQL까지 확인하려면 다음 테스트 전용 워커를 실행한다 (운영 진입점에는 테스트 모드가 없다).
 
@@ -117,7 +138,7 @@ uv run pytest tests/test_spring_integration.py -q
 
 ## 기능 아키텍처
 
-아래는 현재 코드의 **운영 HTTP 경로**다. 데이터 수집 → 고정 스냅샷 → 순차 토론·검증 →
+아래는 현재 코드의 **운영 HTTP 경로**다. 데이터 수집 → 고정 스냅샷 → 토론 또는 단일 판정·검증 →
 이벤트 저장·전달을 워커가 맡는다. 사용자 계정·판정 저장·중재자 판정 봉인·3/7거래일 채점은 Spring의 책임이다.
 그림은 구현 구조이며 실제 Claude 호출·운영 검증 완료를 뜻하지 않는다.
 
@@ -140,6 +161,7 @@ flowchart TB
         Service["Service<br/>중복 방지 · 재사용 · 동시 실행 제한"]
         Snapshot["Snapshot<br/>시점과 ID가 고정된 시장 Fact"]
         Engine["LiveRunner / Debate<br/>매수·매도 → 검증 → 중재자"]
+        Single["LiveRunner / SingleAnalyst<br/>중립 판정 → 검증<br/>중재자와 같은 모델"]
         RAG["선택적 RAG<br/>고정된 비공개 배경지식<br/>기본 비활성"]
         Store[("HTTP SQLite<br/>요청 · 상태 · 스냅샷 · 전달 이벤트")]
         Audit[("비공개 실행 기록<br/>JSONL · 감사 manifest · 사용량")]
@@ -149,9 +171,14 @@ flowchart TB
         Service -->|"시세 확인 및 스냅샷 생성"| Market
         Market --> Snapshot
         Service -->|"백그라운드 실행"| Engine
+        Service -->|"mode=single"| Single
+        Store -->|"저장 스냅샷 · 새 시세 조회 없음"| Single
+        Single -->|"판정 · 사용량 · scores/stats=null"| Service
+        Single --> Audit
         Snapshot -->|"공개 근거의 원본"| Engine
         Snapshot -.->|"검색 질의 · 기준 시각"| RAG
         RAG -.->|"해석용 배경 · 근거 ID로 사용 금지"| Engine
+        RAG -.->|"같은 검색·검증 정책"| Single
         Service <--> Store
         Engine -->|"검증 통과 발언 · 최종 결과 · 사용량"| Service
         Store -->|"저장된 이벤트 재생"| HTTP
@@ -163,6 +190,7 @@ flowchart TB
     HTTP -->|"SSE · 최종 판정 포함, Spring에서 봉인"| Spring
     Market <--> Sources["외부 데이터<br/>KRX: 시세·지수<br/>OpenDART: 재무·주식수·공시<br/>네이버: 뉴스"]
     Engine <--> Claude["Anthropic API<br/>Haiku / Sonnet만 허용<br/>자동 모델 대체 없음"]
+    Single <--> Claude
 ```
 
 - 브라우저는 워커에 직접 연결하지 않는다. 워커의 완료 응답에는 중재자 판정이 있으므로
@@ -176,7 +204,7 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    Request["POST /debates"] --> Reuse{"같은 요청 ID 또는<br/>종목·기준일 토론 재사용?"}
+    Request["POST /debates"] --> Reuse{"같은 요청 ID 또는<br/>스냅샷·모드 재사용?<br/>스냅샷 생략: 종목·기준일"}
     Reuse -->|"예"| Existing["기존 토론 반환<br/>저장 이벤트 재생 · 추가 LLM 호출 없음"]
     Reuse -->|"아니오"| Ready{"시세 준비 · 토론 가능 종목<br/>동시 실행 여유 확인"}
     Ready -->|"미충족"| Reject["접수 전 오류 응답<br/>시세 준비 중 503 · 대상 제외 422 · 용량 초과 429"]
@@ -184,7 +212,11 @@ flowchart TD
     Accepted --> Freeze["스냅샷 고정 · 저장<br/>snapshot_created 이벤트"]
     Freeze --> Context["RAG 설정·검색 정책 확인<br/>컨텍스트 또는 대체 진행 사유 감사 저장"]
     Context -->|"저장·무결성·시점 오류"| Failed["debate_failed<br/>사용량은 수집 가능한 범위 기록"]
-    Context -->|"계속"| Generate["매수 → 매도 순차 발언<br/>주장 → 반박 → 최종 변론<br/>이전 통과 발언 누적 전달"]
+    Context -->|"debate"| Generate["매수 → 매도 순차 발언<br/>주장 → 반박 → 최종 변론<br/>이전 통과 발언 누적 전달"]
+    Context -->|"single"| Single["중립 분석가 · 스냅샷 직접 조회<br/>기간·표현·근거 ID·의미 검증<br/>반려 시 최대 3회 생성"]
+    Single -->|"검증 실패 또는 호출 실패"| Failed
+    Single -->|"통과 · scores/stats=null"| SingleDone["debate_completed<br/>단일 판정 · 모델별 사용량"]
+    SingleDone --> Experiment["Spring 실험 결과 저장<br/>사용자 비공개"]
     Generate --> Rules["결정론적 검사<br/>Fact ID·값 · 표현 · 기간 · 상대 인용"]
     Rules -->|"통과"| Meaning["LLM 의미 검토<br/>별도 대화, 해당 역할과 같은 모델"]
     Rules -->|"반려"| Retry{"해당 발언 생성<br/>3회 미만?"}
@@ -205,7 +237,7 @@ flowchart TD
 ```
 
 위 그림의 접수 단계는 개념적으로 묶었다. 실제로는 요청 ID를 먼저 확인하고 시세를 조회한 뒤,
-DB 트랜잭션에서 요청 ID·종목/기준일 재사용과 실행 한도를 다시 확인한다. 같은 요청 ID에 다른 본문을
+명시적 스냅샷이면 시세 조회를 건너뛴다. DB 트랜잭션에서 요청 ID·스냅샷/모드 재사용과 실행 한도를 다시 확인한다. 같은 요청 ID에 다른 본문을
 보내면 409다. 시세 준비 중 503이 나면 토론·LLM 작업은 시작되지 않지만 시세 수집은 계속된다.
 추가 질문은 기본 최대 1회이며 요청의 `max_extra_rounds`로 제한한다. 발언 생성·파싱·도구 호출 중 오류도
 성공으로 처리하지 않고 실패 경로로 보낸다. 의미 검토 통과는 사실·추론·투자 성과의 정확성 보장이 아니다.
@@ -235,6 +267,7 @@ HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 
 | 기능 | 주요 모듈 | 역할 |
 |---|---|---|
 | HTTP 진입점 | `server/app.py` | 인증, 엔드포인트, SSE 재생·하트비트 |
+| HTTP 단일 판정 | `single.py` | 스냅샷 직접 조회, 중립 판정, 근거·표현·의미 검증 |
 | 실행 관리 | `server/service.py` | 중복/재사용, 백그라운드 실행, 이벤트 선별, `LiveRunner` |
 | 시장 데이터 | `server/market.py`, `data/` | 공급자·캐시 연결, 종목/시세/지수, 시세 준비 작업 풀 |
 | 고정 근거 | `snapshot.py`, `tools.py` | Fact·파생 지표 고정, 스냅샷 조회 도구 |
