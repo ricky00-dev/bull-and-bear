@@ -55,7 +55,14 @@ public class HttpWorkerClient implements WorkerClient {
 	@Override
 	public WorkerDebateStarted startDebate(String ticker, String requestId) {
 		return call(() -> http.post().uri("/debates")
-				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, 1))
+				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, 1, null, null))
+				.retrieve().bodyToMono(WorkerDebateStarted.class).block(TIMEOUT));
+	}
+
+	@Override
+	public WorkerDebateStarted startSingle(String ticker, String snapshotId, String requestId) {
+		return call(() -> http.post().uri("/debates")
+				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, null, "single", snapshotId))
 				.retrieve().bodyToMono(WorkerDebateStarted.class).block(TIMEOUT));
 	}
 

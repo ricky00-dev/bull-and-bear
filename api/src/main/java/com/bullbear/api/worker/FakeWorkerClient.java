@@ -100,6 +100,13 @@ public class FakeWorkerClient implements WorkerClient {
 		return new WorkerDebateStarted(id, snapshotId(ticker), "running", false);
 	}
 
+	@Override
+	public WorkerDebateStarted startSingle(String ticker, String snapshotId, String requestId) {
+		find(ticker);
+		return new WorkerDebateStarted("fakesingle-" + ticker + "-" + UUID.randomUUID().toString().substring(0, 8),
+				snapshotId, "running", false);
+	}
+
 	/**
 	 * 10/22 실제 종가를 기준으로 평일마다 결정적으로(같은 입력 → 같은 값) 움직이는 가짜 시세.
 	 * 10/22 이전은 거꾸로 되짚어 만든다 (차트용). 오늘(시계) 이후 날짜는 만들지 않는다.
@@ -169,7 +176,9 @@ public class FakeWorkerClient implements WorkerClient {
 	@Override
 	public Flux<WorkerEvent> events(String workerDebateId, long afterSeq) {
 		String ticker = workerDebateId.split("-")[1];
-		Flux<WorkerEvent> events = Flux.fromIterable(script(workerDebateId, find(ticker)))
+		List<WorkerEvent> script = workerDebateId.startsWith("fakesingle-") ? single(find(ticker))
+				: script(workerDebateId, find(ticker));
+		Flux<WorkerEvent> events = Flux.fromIterable(script)
 				.filter(e -> e.seq() > afterSeq);
 		return delay.isZero() ? events : events.delayElements(delay);
 	}
@@ -247,6 +256,24 @@ public class FakeWorkerClient implements WorkerClient {
 		for (int i = 0; i < raw.size(); i++) {
 			Map<String, Object> e = raw.get(i);
 			out.add(new WorkerEvent(i + 1, (String) e.get("type"), json.writeValueAsString(e.get("data"))));
+		}
+		return out;
+	}
+
+	/** 단일 모드: 토론 없이 바로 판정. 토론 판정(항상 보류)과 비교가 되도록 종목마다 다른 판정을 낸다 */
+	private List<WorkerEvent> single(WorkerStock s) {
+		String decision = List.of("BUY", "HOLD", "SELL").get(Math.floorMod(s.ticker().hashCode(), 3));
+		List<Map<String, Object>> raw = List.of(
+				event("moderator_started", Map.of()),
+				event("debate_completed", Map.of(
+						"verdict", Map.of("decision", decision, "confidence", 0.6,
+								"reasoning", "120일 이동평균 대비 위치를 가장 크게 봤어요 [E1].",
+								"decisive_evidence", List.of("PX.VS_MA120")),
+						"usage", Map.of("calls", List.of(Map.of("model", "claude-sonnet-5-5", "input_tokens", 9000,
+								"output_tokens", 900, "cache_read_input_tokens", 0, "cache_creation_input_tokens", 0))))));
+		List<WorkerEvent> out = new ArrayList<>();
+		for (int i = 0; i < raw.size(); i++) {
+			out.add(new WorkerEvent(i + 1, (String) raw.get(i).get("type"), json.writeValueAsString(raw.get(i).get("data"))));
 		}
 		return out;
 	}
