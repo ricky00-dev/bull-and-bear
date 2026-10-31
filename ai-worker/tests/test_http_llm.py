@@ -2,6 +2,8 @@ from types import SimpleNamespace as NS
 import pytest
 
 from bullbear.llm import Conversation, LLM, LLMError
+from bullbear.llm import anthropic_schema
+from bullbear.schemas import STATEMENT_SCHEMA
 
 
 class Stream:
@@ -20,6 +22,29 @@ class Stream:
     def get_final_message(self):
         return NS(model=self.model, stop_reason='end_turn', content=[NS(type='text', text='{}')],
                   usage=NS(input_tokens=10, output_tokens=5, cache_read_input_tokens=3, cache_creation_input_tokens=2))
+
+
+def test_provider_schema_adaptation_preserves_original_validation_and_property_names():
+    converted = anthropic_schema(STATEMENT_SCHEMA)
+    evidence = converted['properties']['evidence']
+    assert 'maxItems' not in evidence and evidence['minItems'] == 1
+    assert '3' in evidence['description']
+    assert STATEMENT_SCHEMA['properties']['evidence']['maxItems'] == 3
+    nested = {'type': 'object', 'properties': {'maximum': {'type': 'number', 'minimum': 0}},
+              '$defs': {'items': {'type': 'array', 'minItems': 2, 'maxItems': 4}}}
+    result = anthropic_schema(nested)
+    assert 'maximum' in result['properties'] and 'minimum' not in result['properties']['maximum']
+    assert result['$defs']['items']['minItems'] == 1
+
+
+def test_request_uses_supported_schema():
+    calls = []
+    def stream(**kwargs):
+        calls.append(kwargs)
+        return Stream('claude-sonnet-5-5')
+    llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
+    llm.structured(Conversation('system'), schema=STATEMENT_SCHEMA, effort='medium')
+    assert 'maxItems' not in calls[0]['output_config']['format']['schema']['properties']['evidence']
 
 
 def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():

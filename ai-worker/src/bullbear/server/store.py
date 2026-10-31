@@ -44,6 +44,10 @@ class Store:
             CREATE TABLE IF NOT EXISTS recoveries (
                 debate_id TEXT PRIMARY KEY REFERENCES debates(id), data TEXT NOT NULL);
         """)
+        # Existing databases and their request fingerprints remain valid.
+        if 'mode' not in {row['name'] for row in self.db.execute('PRAGMA table_info(debates)')}:
+            with self.db:
+                self.db.execute("ALTER TABLE debates ADD COLUMN mode TEXT NOT NULL DEFAULT 'debate'")
         for row in self.db.execute("SELECT id FROM debates WHERE status='running'").fetchall():
             recovery = self.recovery_record(directory.parent, row['id'])
             with self.transaction() as db:
@@ -92,20 +96,22 @@ class Store:
                 raise ApiError(409, 'INVALID_REQUEST', 'request_id를 다른 요청 본문에 재사용할 수 없습니다')
             return self.get(row['debate_id'])
 
-    def create(self, request_id, fingerprint, ticker, data_date, max_running):
+    def create(self, request_id, fingerprint, ticker, data_date, max_running, *, mode='debate', snapshot_id=None):
         with self.transaction() as db:
             prior = self.request(request_id, fingerprint)
             if prior:
                 return prior, True
-            row = db.execute("SELECT * FROM debates WHERE ticker=? AND data_date=? AND status IN ('running','completed') ORDER BY created_at DESC LIMIT 1",
-                             (ticker, data_date)).fetchone()
+            selector, values = ('snapshot_id=?', (snapshot_id,)) if snapshot_id else (
+                'ticker=? AND data_date=?', (ticker, data_date))
+            row = db.execute(f"SELECT * FROM debates WHERE {selector} AND mode=? AND status IN ('running','completed') ORDER BY created_at DESC LIMIT 1",
+                             (*values, mode)).fetchone()
             reused = row is not None
             if row is None:
                 if db.execute("SELECT count(*) FROM debates WHERE status='running'").fetchone()[0] >= max_running:
                     raise ApiError(429, 'BUSY', '동시 토론 한도에 도달했습니다')
                 debate_id = uuid4().hex
-                db.execute("INSERT INTO debates VALUES (?,?,?,NULL,'running',?)",
-                           (debate_id, ticker, data_date, datetime.now(KST).isoformat()))
+                db.execute("INSERT INTO debates (id,ticker,data_date,snapshot_id,status,created_at,mode) VALUES (?,?,?,?,'running',?,?)",
+                           (debate_id, ticker, data_date, snapshot_id, datetime.now(KST).isoformat(), mode))
             else:
                 debate_id = row['id']
             db.execute('INSERT INTO requests VALUES (?,?,?)', (request_id, fingerprint, debate_id))

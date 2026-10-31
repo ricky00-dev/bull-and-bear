@@ -53,6 +53,21 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: 구현 완료, 이 전용 worktree에 미커밋 변경으로 보존. 전체 Python399 passed/외부2 skipped(49.42초) 후 강제 종료·부분 실패 사용량 회귀 보강, 최종 영향 범위65 passed(19.69초). Java 단위7개·bootJar 및 실제 임시 PostgreSQL/Spring/HTTP fixture2 passed(5.40초), 서버 잔여 프로세스 없음. git diff 공백 검사 통과.
 - 다음: 총괄이 server app/service/store와 HTTP/audit 테스트를 함께 통합하고 공통 config/budget/LLM 변경 후 회귀·Spring fixture 재실행. 실제 유료 검증은 키·모델 접근·총비용 상한 확보 후 진행.
 - 막힘·결정 필요: 유료/외부 데이터 호출0, 공개 계약·기본 RAG 비활성·타 소유 파일 유지. Spring 성공 fixture E2E는 통과했지만 재시작 미확정 비용의 PostgreSQL 정산 E2E는 미실행. 기존 Spring 추정치($0.15)는 실제 지출 상한이 아니므로 공통 예산 예약/미확정분 대조는 별도 담당 후속. session-brief는 기존 CRLF 오류로 실패해 문서/Git 직접 확인. 원본·타 세션·.env·기존 데이터 수정 및 커밋/push/merge/배포/스케줄 활성화 없음.
+## 2026-10-31 · Codex · ai-worker, docs
+- 한 것: 사용자 요청으로 #23 계약 v0.6을 그대로 반영하고 HTTP single 구현. mode/snapshot_id 검증, 저장 스냅샷 실행, 모드별 재사용, SQLite 이관, 중재자와 같은 모델의 중립 판정, scores/stats=null·SSE·감사·RAG 경로 추가. README 아키텍처와 PNG 갱신.
+- 한 것: 전체 Python407 passed/외부 Spring2 skipped(40.13초). 병렬 중복 방지·구버전 호환·실패 재시도·스냅샷 분리·독립 의미 검토 확인. 실제 Claude 스키마 maxItems 거절을 발견해 전송용 변환과 회귀 테스트 추가.
+- 한 것: 허가받은 실제 Sonnet 호출로 localhost HTTP 실험. 스키마 거절3요청 이후 2실험에서 실제 응답12회(입력135,098/출력7,668토큰), 모두 최종 판정 검증 반려. 실패 SSE·usage·멱등성 확인; 원본 자료/키는 제외하고 ai-worker/docs/single-http-validation.md에 결과 기록.
+- 진행 중: feat/worker-operational-readiness 변경분을 커밋·푸시해 기존 PR #24에 반영. Spring/web 코드는 수정하지 않음.
+- 다음: 별도 평가 스냅샷에서 생성 성공률·반려 사유 점검, 실제 debate_completed 확인 및 #23 Spring 단일 결과 저장 연결 테스트 후 운영 스위치 활성화 검토.
+- 막힘·결정 필요: 실제 완료 판정0건이며 이를 운영 성공으로 해석하면 안 됨. Spring #23 실행·실제 토론 짝·최신 시세 재수집·청구 금액 확인은 미실행. 단일 모드 운영 스위치는 활성화하지 않음. 기존 WORKLOG 기록 보존, session-brief CRLF 실패는 기존 git/로그 직접 조회로 대체.
+
+## 2026-10-31 · Codex · docs
+- 한 것: PR #23(d431ce2, 단일 모드 계약 v0.6/Spring/AI 성적표)과 #24(9176afc, 워커 RAG/운영 준비)를 비교. git merge-tree 모의 병합에서 충돌 파일은 WORKLOG만 확인; 실제 병합/코드 변경 없음.
+- 한 것: 현재 StartDebate가 mode/snapshot_id를 무시하고 Store가 종목·날짜만으로 기존 토론을 재사용하는 동작을 임시 SQLite로 재현. #23 기본 single-enabled=false 확인.
+- 진행 중: 계약 검토만 수행. HTTP 단일 모드는 여전히 미구현이며 benchmark 단일 분석가와 별개.
+- 다음: 양측 계약 승인, mode/snapshot_id 검증 및 재사용 분리·동일 스냅샷 단일 실행·이벤트/응답 구현과 연결 검증 후 단일 스위치 활성화. 양 PR 병합 시 WORKLOG 양쪽 기록 보존.
+- 막힘·결정 필요: 현 상태에서 단일 스위치를 켜면 토론 판정이 단일 결과로 저장될 위험. 유료/외부 API 호출 없음, 전체 런타임 테스트 미실행. PR 승인·댓글·병합·푸시하지 않음.
+
 ## 2026-10-31 · Codex · docs
 - 한 것: 미커밋 진단 도구·아키텍처 문서를 0f9f295로 커밋하고 브랜치 푸시 완료. develop 대상 PR #24 생성: https://github.com/ricky00-dev/bull-and-bear/pull/24. 최신 develop 7e48f7c 일정 변경을 통합하고 WORKLOG 충돌은 양쪽 기록을 모두 보존해 해결.
 - 진행 중: PR 리뷰 대기. PR에는 기존 5d2a8e5의 RAG·Claude 모델 정책·preflight 통합도 포함.

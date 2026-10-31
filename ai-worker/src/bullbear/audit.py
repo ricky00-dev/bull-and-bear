@@ -131,7 +131,7 @@ def merge_usage(*payloads) -> dict:
 
 class RunAudit:
     def __init__(self, data_dir: Path, run_id: str, *, ticker: str, data_date: str,
-                 max_extra_rounds: int, models: dict, efforts: dict, secrets=()):
+                 max_extra_rounds: int, models: dict, efforts: dict, secrets=(), mode='debate'):
         if not re.fullmatch(r"[A-Za-z0-9_-]+", run_id):
             raise ValueError("Invalid audit run ID")
         self.directory = data_dir / "audits" / run_id
@@ -150,11 +150,17 @@ class RunAudit:
             "snapshot_id": None, "decision_at": None, "snapshot": None,
             "provenance": provenance(),
             "config": {"selected_models": models, "efforts": efforts,
-                       "max_extra_rounds": max_extra_rounds, "first_side": "bull"},
+                       "max_extra_rounds": max_extra_rounds, "first_side": "bull" if mode == 'debate' else None,
+                       "mode": mode},
             "runner": None, "stages": [], "events": [], "llm_calls": [],
             "usage": {"calls": []}, "role_usage": {}, "usage_complete": True,
             "usage_errors": [], "cleanup_errors": [],
         }
+        if mode == 'single':
+            from . import single
+            self.data['provenance']['prompt_source_hashes']['single'] = 'sha256:' + hashlib.sha256(
+                Path(single.__file__).read_bytes()).hexdigest()
+            self.data['provenance']['schema_hashes']['single'] = canonical_hash(single.SINGLE_VERDICT_SCHEMA)
         self._write()
 
     @staticmethod

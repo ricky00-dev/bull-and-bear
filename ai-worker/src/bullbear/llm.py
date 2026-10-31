@@ -8,12 +8,46 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
+
+
+def anthropic_schema(schema: dict) -> dict:
+    """Adapt API grammar constraints; callers still validate the original schema.
+
+    https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+    Bounds are retained as model guidance, not silently discarded.
+    """
+    result = deepcopy(schema)
+    constraints = ('minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum',
+                   'multipleOf', 'minLength', 'maxLength', 'maxItems', 'uniqueItems')
+
+    def visit(node):
+        if not isinstance(node, dict):
+            return
+        removed = {key: node.pop(key) for key in constraints if key in node}
+        if node.get('minItems', 0) > 1:
+            removed['minItems'] = node['minItems']
+            node['minItems'] = 1
+        if removed:
+            node['description'] = (node.get('description', '') + ' Constraints: ' +
+                                   json.dumps(removed, ensure_ascii=False)).strip()
+        for key in ('properties', '$defs', 'definitions', 'patternProperties'):
+            for child in node.get(key, {}).values():
+                visit(child)
+        for key in ('items', 'additionalProperties', 'not'):
+            visit(node.get(key))
+        for key in ('anyOf', 'allOf', 'oneOf', 'prefixItems'):
+            for child in node.get(key, []):
+                visit(child)
+
+    visit(result)
+    return result
 
 def validate_model(model: str) -> None:
     # Accept both family-first and older version-first Anthropic model IDs.
@@ -104,7 +138,7 @@ class LLM:
                     system=conv.system,
                     messages=conv.messages,
                     tools=tools or anthropic.omit,
-                    output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
+                    output_config={"effort": effort, "format": {"type": "json_schema", "schema": anthropic_schema(schema)}},
                 ) as stream:
                     for event in stream:
                         if event.type == "text":
