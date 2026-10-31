@@ -36,7 +36,7 @@ while ($workerport -eq $pgport) { $workerport = Free-Port }
 while ($apiport -in @($pgport, $workerport)) { $apiport = Free-Port }
 $processes = @{}
 $oldEnv = @{}
-foreach ($name in @('JAVA_HOME','PYTHONPATH','BULLBEAR_TEST_API_URL','BULLBEAR_TEST_CLOCK_FILE','BULLBEAR_TEST_RECOVERY_CONFIG')) {
+foreach ($name in @('JAVA_HOME','PYTHONPATH','BULLBEAR_TEST_API_URL','BULLBEAR_TEST_CLOCK_FILE','BULLBEAR_TEST_RECOVERY_CONFIG','BULLBEAR_TEST_JDBC_URL','BULLBEAR_TEST_DB_USER')) {
     $oldEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 $result = @{run_directory=$run; postgres_port=$pgport; worker_port=$workerport; api_port=$apiport;
@@ -66,6 +66,13 @@ try {
         '--bullbear.experiment.poll-interval=1s')
     $processes.spring = Start-Process $java -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'spring.out.log') -RedirectStandardError (Join-Path $run 'spring.err.log')
     Wait-Url "http://127.0.0.1:$apiport/actuator/health" $processes.spring
+    $env:BULLBEAR_TEST_JDBC_URL = "jdbc:postgresql://127.0.0.1:$pgport/postgres"
+    $env:BULLBEAR_TEST_DB_USER = 'bullbear'
+    Push-Location (Join-Path $repo 'api')
+    try {
+        & .\gradlew.bat test --tests '*SingleVerdictRecoveryTest' --no-daemon
+        if ($LASTEXITCODE -ne 0) { throw 'Single execution recovery database tests failed' }
+    } finally { Pop-Location }
     $result.process_ids = @{}
     foreach ($key in $processes.Keys) { $result.process_ids[$key] = $processes[$key].Id }
     $env:BULLBEAR_TEST_API_URL = "http://127.0.0.1:$apiport"

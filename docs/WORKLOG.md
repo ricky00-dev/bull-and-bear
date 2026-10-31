@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-11-01 · Codex · api, ai-worker, web, docs
+- 한 것: PR #23 비용/복구 수정 d8a5c27과 #24 snapshot 수정 2e389e3을 통합한 9867a14에서 최종 Python476 통과/외부5 생략, 별도 실제 Spring/PostgreSQL/HTTP5 통과, Java 관련9+DB복구7 통과, 웹 build/lint 성공. 초기 import 경로 오류와 fixture 오류 수정·재실행을 상세 보고서에 기록.
+- 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 완료, 나머지 최신 base 정리 및 원격 반영. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.
+- 다음: PR head 고정 병합 후 원격 상태와 제품 tree 동일성 확인. 상세 docs/evaluations/pr-23-24-25-merge-validation.md.
+- 막힘·결정 필요: 재현된 미해결 결함/사용자 판단 대기 없음. Docker Java 전체·실모델 성공률·독립 사람 평가·실청구/실시장 검증은 미완료. 운영 single/RAG 기본 비활성, 배포/추가 유료 호출 없음. 이전 V6 소실 비용 복구 불가.
+
+
+## 2026-11-01 · Codex · api, ai-worker, web, docs
 - 한 것: 사용자 요청으로 이전 PR #23(d431ce2)/#24(51cf34f) 검토 및 통합 PR #25 초안 생성. 양 PR을 로컬 통합해 WORKLOG 양쪽 기록과 executor 실패 처리·single 인자를 보존. #23 시도 비용 덮어쓰기/RUNNING 복구/SSE 전송 오류 결함, #24 같은 ID의 snapshot cutoff 불일치를 확인하여 병합 보류 후 수정 진행.
 - 진행 중: #23 전용 수정 세션은 시도 원장·재시작 복구·3일 성적표 토글 수정 중. 통합 워커 canonical snapshot 보완 후 전체476 passed/외부5 skipped. 웹 build/lint 통과. 새 Spring single 연결 검사 첫 실행4 passed/1 failed는 fixture의 single 경로 누락으로 확인, 테스트 대역 라우팅과 실클라이언트 생성 차단 추가 후 재검증 중.
 - 다음: 각 PR 수정 커밋 반영, 전체/연동 검사, 검증된 PR head 고정 후 develop 병합. 운영 single/RAG 기본 비활성 유지.
