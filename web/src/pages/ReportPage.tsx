@@ -41,17 +41,17 @@ export function ReportPage() {
         {r && h && (
           <>
             <Period r={r} />
+            <div className="grid grid-cols-2 gap-2">
+              {r.horizons.map((x) => (
+                <Toggle key={x.days} on={days === x.days} onClick={() => setDays(x.days)}>
+                  {x.days}거래일 뒤 {x.days === 7 ? '(주 지표)' : ''}
+                </Toggle>
+              ))}
+            </div>
             {h.debate.n === 0 ? (
               <Empty r={r} days={days} />
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-2">
-                  {r.horizons.map((x) => (
-                    <Toggle key={x.days} on={days === x.days} onClick={() => setDays(x.days)}>
-                      {x.days}거래일 뒤 {x.days === 7 ? '(주 지표)' : ''}
-                    </Toggle>
-                  ))}
-                </div>
                 <Scoreboard h={h} />
                 <Decisions h={h} />
                 {r.visitors.n > 0 && <Visitors v={r.visitors} />}

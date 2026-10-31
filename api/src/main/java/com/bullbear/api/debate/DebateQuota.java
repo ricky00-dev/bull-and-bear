@@ -61,7 +61,7 @@ public class DebateQuota {
 	public boolean scheduledBudgetOpen(BigDecimal dailyUsd) {
 		LocalDate today = LocalDate.now(clock);
 		// 단일 판정(실험 조건 B)도 전향 운용 비용으로 센다. 사용량을 모르면 토론 추정치로
-		BigDecimal singles = jdbc.sql("select coalesce(sum(coalesce(cost_usd, :e)), 0) from single_verdicts where run_day = :d")
+		BigDecimal singles = jdbc.sql("select coalesce(sum(coalesce(cost_usd, :e)), 0) from single_verdict_attempts where run_day = :d")
 				.param("e", budget.estimateUsd()).param("d", today).query(BigDecimal.class).single();
 		BigDecimal spent = debates.costOn(today, Debate.Origin.SCHEDULED, budget.estimateUsd()).add(singles);
 		return spent.add(budget.estimateUsd()).compareTo(dailyUsd) <= 0;
