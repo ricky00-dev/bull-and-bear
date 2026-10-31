@@ -15,6 +15,31 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-10-31 · Codex · ai-worker, docs
+- 한 것: 사용자 요청으로 미커밋 9개 파일(오프라인 진단 CLI/테스트, 평가 기록, README Mermaid/PNG 3개, 작업 로그)을 검토하고 커밋 준비. 앞선 RAG·Claude 제한 통합 커밋 5d2a8e5와 함께 feat/worker-operational-readiness를 develop 대상 PR로 게시할 범위 정리.
+- 진행 중: 커밋·푸시·PR 등록. 최신 origin/develop 7e48f7c 확인; 추가 변경은 일정 문서이며 워커 공개 계약/Spring·웹 코드는 이번 PR에서 변경하지 않음.
+- 다음: PR 리뷰 반영, 미라벨 검수와 독립 평가셋 준비. 실제 Claude 호출은 사용자 보류 유지.
+- 막힘·결정 필요: 최종 전체 워커 테스트392 passed/외부 Spring2 skipped(42.52초). 과거 실제 Spring fixture2개·Java7개/bootJar 검증은 이번 재실행하지 않음. Mermaid 실제 렌더링 완료, diff 공백 검사 통과. 키/.env/로컬 실험 원본 제외, 유료 호출0. session-brief 기존 CRLF 실패로 git/로그 직접 확인.
+
+## 2026-10-31 · Codex · ai-worker, docs
+- 한 것: README Mermaid 3개를 실제 mermaid-cli/Edge로 PNG 렌더링. ai-worker/docs/images에 전체 구성·토론 처리·RAG 이미지 저장하고 README에 모바일/비지원 뷰어용 링크 추가. 한글 표시와 이미지 경계 확인.
+- 진행 중: 없음. 기존 미커밋 변경 보존.
+- 다음: Mermaid 수정 시 PNG도 재생성. 실제 Claude 호출 보류 유지.
+- 막힘·결정 필요: Mermaid 실제 파싱·PNG 생성 성공. 문서/이미지 변경으로 런타임 테스트 미실행, 유료 API 호출 없음. 렌더러는 npm 임시 캐시에서 실행했고 프로젝트 의존성 변경 없음.
+
+## 2026-10-31 · Codex · ai-worker, docs
+- 한 것: ai-worker/README.md에 현재 코드 기준 Mermaid 아키텍처 3개(전체 구성·책임 경계, 토론 처리·검증/재시도/실패, RAG 검색·배경 주입)와 모듈/저장소 대응표 추가. Spring 판정 봉인, 공개 Fact와 비공개 배경 구분, HTTP 이벤트와 감사 저장 분리, 기본 비활성 RAG 및 실험 예산/운영 비용 정책 차이 명시. 오래된 자동 모델 대체·워커 봉인 설명 교체.
+- 진행 중: 없음. 기존 미커밋 진단 도구·평가 문서·작업 로그 변경 보존.
+- 다음: README 다이어그램을 기준으로 워커 후속 구현·검수 진행. 실제 Claude 호출은 사용자 요청대로 보류 유지.
+- 막힘·결정 필요: 문서만 수정. 코드 대조·코드 펜스/다이어그램 개수 확인·git diff --check 수행. Mermaid 실제 렌더링과 런타임 테스트는 미실행. session-brief는 기존 CRLF 오류로 실패해 git 상태/작업 로그 직접 확인. API 호출·키 조회 없음.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: 사용자 요청에 따라 실제 Claude 호출 보류, 키·유료 호출 없이 benchmark 기록을 읽는 diagnostics CLI 추가. 오류/경고 분리, 단일 분석가 검증 지적 중복 집계 방지, 통과·반려 모두 미라벨 검수 목록 생성, 원본 해시/후보 해시/리뷰 위치 기록, 기존 결과 덮어쓰기 차단.
+- 한 것: 기존 OpenAI comparison-2-v3 4조건에 적용해 후보14건(자동 통과2·반려12) 추출. 자동 추론 지적17건·기간 지적5건을 확인했으나 실제 오류/오탐으로 확정하지 않음. docs/evaluations/worker-offline-diagnostics.md에 절차·결과·한계 기록.
+- 진행 중: 사람 검수 라벨과 독립 평가셋은 미완료. 이 목록은 기존 개발 파일럿 재시도 자료이며 Claude 성능 증거 아님.
+- 다음: 원본 Fact/후보/검토 의견 대조 라벨 검수, 별도 스냅샷 평가셋 준비. Anthropic 키 설정·비용 상한 확정 뒤 사용자 보류 해제 시 실제 Claude HTTP 검증 재개.
+- 막힘·결정 필요: 진단/benchmark 관련26개 테스트 통과(7.39초). 이번 전체 스위트·Spring 재실행은 하지 않음(운영 코드 변경 없음). API 호출0, 원본 실험·키·다른 worktree 수정 없음. session-brief는 기존 CRLF 오류로 실패해 상태/계획 문서 직접 확인. RAG 기본 비활성·운영 활성화 보류 유지.
+
 ## 2026-10-30 · Codex · ai-worker, docs
 - 한 것: 최신 origin/develop 034d8da에서 feat/worker-operational-readiness 생성, RAG ad8cb26 및 별도 hardening의 검토된 실패 정책 통합. config 비밀값 보호/RAG 설정과 fixture 종료 정리 충돌 해결. 작업 순서·완료 기준·실측은 docs/evaluations/worker-operational-readiness.md에 기록.
 - 한 것: 사용자 지시에 따라 Claude Haiku·Sonnet만 허용, 기본 토론자 Haiku/중재자 Sonnet, Opus 및 자동 모델 대체 차단. 예상 외 응답 계열은 사용량 보존 후 중단. CLI/HTTP/Claude 실험 역할 선택 통일. 네트워크·키 출력 없는 preflight 명령 추가.
