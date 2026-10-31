@@ -3,6 +3,7 @@ package com.bullbear.api.config;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("bullbear")
 public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budget budget,
-		ForwardRun forwardRun) {
+		ForwardRun forwardRun, Experiment experiment) {
 
 	public record Cors(List<String> allowedOrigins) {
 	}
@@ -54,5 +55,15 @@ public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budg
 	 */
 	public record ForwardRun(boolean enabled, List<String> tickers, String cron, int maxConcurrent,
 			BigDecimal dailyUsd, Duration pollInterval) {
+	}
+
+	/**
+	 * 실험 "토론 vs 단일" (docs/experiment.md).
+	 *
+	 * @param start 정식 운용 시작일. 이 날 이후 전향 운용 토론만 실험에 센다 (그 전은 예비 운용, 퀴즈·시연용)
+	 * @param singleEnabled 정식 운용 토론마다 단일 판정(조건 B)을 요청할지. 워커가 단일 모드를 지원하면 켠다
+	 * @param maxAttempts 단일 판정이 실패하면 이만큼까지 다시 시도
+	 */
+	public record Experiment(LocalDate start, boolean singleEnabled, int maxAttempts) {
 	}
 }
