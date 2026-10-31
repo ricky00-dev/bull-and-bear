@@ -12,7 +12,7 @@ from ..data.base import DataUnavailable
 from ..data.naver_news import NaverNewsSource
 from ..data.krx_openapi import KrxOpenApiSource
 from ..data.universe import UNIVERSE
-from ..snapshot import KST, MARKET_CLOSE, PRICE_LOOKBACK_DAYS, build_snapshot
+from ..snapshot import KST, PRICE_LOOKBACK_DAYS, build_snapshot, confirmed_date
 from .errors import ApiError
 
 CHOSEONG = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'
@@ -20,11 +20,6 @@ CHOSEONG = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'
 
 def initial(text):
     return ''.join(CHOSEONG[(ord(c) - 0xAC00) // 588] if 0xAC00 <= ord(c) <= 0xD7A3 else c for c in text)
-
-
-def confirmed_date(now):
-    local = now.astimezone(KST)
-    return local.date() - timedelta(days=local.time() < MARKET_CLOSE)
 
 
 @dataclass
@@ -175,7 +170,7 @@ class Market:
 
     def snapshot(self, quote):
         snap = build_snapshot(FrozenPrices(self.source, quote.bars), quote.ticker, quote.name,
-                              news=self.news, now=self.now())
+                              news=self.news, now=self.now(), index_loader=self.index_loader)
         snap.warnings.extend(getattr(self.source, 'warnings', []))
         snap.save(self.settings.snapshot_dir)
         return snap

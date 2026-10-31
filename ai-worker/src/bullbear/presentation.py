@@ -80,7 +80,7 @@ def verdict_issues(decision, *, comments=(), extra_question=None):
         issues.append(error("reasoning_length", "판정 이유는 최대 3문장으로 쓰세요."))
     if any(sentence_count(t) > 1 for t in comments):
         issues.append(error("comment_length", "양측 평가는 각각 한 문장으로 쓰세요."))
-    if re.search(r"\b(?:PX|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):
+    if re.search(r"\b(?:PX|MKT|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):
         issues.append(error("internal_details", "내부 근거 이름·검증 통계는 글에서 빼고 근거는 [E1] 번호로만 가리키세요."))
     if re.search(r"(?:단기|장기|중장기|위험회피)\s*(?:투자자|트레이더)|손절|분할\s*매수", text):
         issues.append(error("investor_advice", "투자자별 권고·손절·분할매수 권유를 빼고 공통 질문에만 답하세요."))

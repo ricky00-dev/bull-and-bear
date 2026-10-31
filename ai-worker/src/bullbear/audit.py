@@ -298,16 +298,36 @@ class RunAudit:
             self._write()
             return call
 
-    def end_call(self, call, *, usage, elapsed, error=None):
+    def observe_request(self, call, request):
+        with self._lock:
+            records = call.setdefault('requests', [])
+            if request['status'] == 'running':
+                records.append({**request, 'started_at': self._now()})
+            else:
+                record = next(r for r in records if r['request_id'] == request['request_id'])
+                record.update(request, finished_at=self._now())
+                if request['status'] == 'unknown':
+                    self.data['usage_complete'] = False
+                elif request['status'] == 'received':
+                    usage = normalized_usage(request['usage'])
+                    self.data['usage'] = merge_usage(self.data['usage'], usage)
+                    roles = self.data['role_usage']
+                    roles[call['role']] = merge_usage(roles.get(call['role'], {'calls': []}), usage)
+            self._write()
+
+    def end_call(self, call, *, usage, elapsed, error=None, usage_complete=True):
         with self._lock:
             call.update(status="failure" if error is not None else "success", finished_at=self._now(),
                         elapsed_seconds=round(elapsed, 6), usage=usage,
                         actual_models=[item["model"] for item in usage["calls"]])
             if error is not None:
                 call["error_type"] = type(error).__name__
-            self.data["usage"] = merge_usage(self.data["usage"], usage)
-            roles = self.data["role_usage"]
-            roles[call["role"]] = merge_usage(roles.get(call["role"], {"calls": []}), usage)
+            self.data['usage_complete'] = self.data['usage_complete'] and usage_complete
+            if not call.get('requests'):
+                # Legacy/test clients without per-request observation.
+                self.data["usage"] = merge_usage(self.data["usage"], usage)
+                roles = self.data["role_usage"]
+                roles[call["role"]] = merge_usage(roles.get(call["role"], {"calls": []}), usage)
             self._write()
 
     def finish(self, status, *, usage=None, error=None, result=None):
@@ -350,13 +370,22 @@ class AuditedLLM:
         before = self._usage()
         call = self.audit.begin_call(role, self.client_role, self.llm, conv, schema, effort, tools)
         started = time.perf_counter()
+        observed = hasattr(self.llm, 'request_observer')
+        previous = getattr(self.llm, 'request_observer', None)
+        if observed:
+            self.llm.request_observer = lambda request: self.audit.observe_request(call, request)
         try:
             result = self.llm.structured(conv, schema=schema, effort=effort, tools=tools,
                                          tool_handler=tool_handler, on_event=on_event)
         except Exception as exc:
             self.audit.end_call(call, usage=usage_delta(before, self._usage()),
-                                elapsed=time.perf_counter() - started, error=exc)
+                                elapsed=time.perf_counter() - started, error=exc,
+                                usage_complete=getattr(self.llm, 'usage_complete', True))
             raise
+        finally:
+            if observed:
+                self.llm.request_observer = previous
         self.audit.end_call(call, usage=usage_delta(before, self._usage()),
-                            elapsed=time.perf_counter() - started)
+                            elapsed=time.perf_counter() - started,
+                            usage_complete=getattr(self.llm, 'usage_complete', True))
         return result

@@ -8,7 +8,7 @@ from contextlib import nullcontext
 from fastapi.encoders import jsonable_encoder
 
 from ..agents import Debater, Moderator
-from ..audit import AuditedLLM, RunAudit, normalized_usage, selected_models
+from ..audit import AuditedLLM, RunAudit, selected_models
 from ..data.base import DataUnavailable
 from ..debate import Debate, verification_stats
 from ..events import EventLog
@@ -28,6 +28,10 @@ class LiveRunner:
         self.clients = []
         self.audit = None
         self.background_context = None
+
+    @property
+    def usage_complete(self):
+        return all(getattr(client, 'usage_complete', True) for client in self.clients)
 
     def usage(self):
         totals = {}
@@ -116,7 +120,14 @@ class Service:
         row, reused = self.store.create(body.request_id, fingerprint, body.ticker,
                                         data_date, self.max_running, mode=body.mode, snapshot_id=body.snapshot_id)
         if not reused:
-            self.pool.submit(self.run, row['id'], quote, body.max_extra_rounds, mode=body.mode, snapshot=snapshot)
+            try:
+                self.pool.submit(self.run, row['id'], quote, body.max_extra_rounds, mode=body.mode, snapshot=snapshot)
+            except RuntimeError:
+                # The durable request already exists; finish it so retries keep
+                # their identity and the capacity slot cannot remain occupied.
+                self.store.emit(row['id'], 'debate_failed', {
+                    'error': {'code': 'INTERNAL_ERROR', 'message': '토론 작업을 시작하지 못했습니다. 새 요청으로 재시도하세요.'}})
+                row = self.store.get(row['id'])
         return self.response(row, reused)
 
     @staticmethod
@@ -129,6 +140,14 @@ class Service:
 
         def collect_usage():
             try:
+                if not getattr(runner, 'usage_complete', True):
+                    raise RuntimeError('incomplete provider usage')
+                if audit is not None and (not audit.data['usage_complete'] or any(
+                    call['status'] in ('running', 'failure')
+                    for call in audit.data['llm_calls'])):
+                    # One structured call may include tool follow-ups. Even a
+                    # nonempty failure delta cannot account for its last request.
+                    raise RuntimeError('incomplete provider usage')
                 return runner.usage()
             except Exception as exc:
                 log.warning('debate %s usage unavailable (%s)', debate_id, type(exc).__name__)
@@ -137,8 +156,9 @@ class Service:
                         audit.usage_error(exc)
                     except OSError:
                         log.warning('debate %s usage audit persistence failed', debate_id)
-                    return normalized_usage(audit.data['usage'])
-                return {'calls': []}
+                # Partial audit usage stays private. An empty/partial public
+                # payload would make Spring settle unknown charges as final.
+                return None
 
         try:
             audit = RunAudit(self.settings.data_dir, debate_id, ticker=snapshot.ticker if snapshot else quote.ticker,
@@ -152,8 +172,8 @@ class Service:
             with audit.stage('snapshot'):
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
                 self.store.save_snapshot(debate_id, snapshot)
-                # A content ID can already have an earlier observation cutoff.
-                # Use the stored object for both modes, audit and RAG inputs.
+                # A content-addressed ID may already exist with an earlier
+                # observation cutoff. Both modes must use the stored object.
                 snapshot = Snapshot.model_validate(self.store.snapshot(snapshot.snapshot_id))
                 audit.attach_snapshot(snapshot)
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
@@ -212,14 +232,17 @@ class Service:
                              runner.run(snapshot, debate_id, max_extra_rounds, emit))
             usage = collect_usage()
             audit.finish('success', usage=usage, result=completed)
-            self.store.emit(debate_id, 'debate_completed', {**completed, 'usage': usage})
+            self.store.emit(debate_id, 'debate_completed', {
+                **completed, **({'usage': usage} if usage is not None else {})})
         except Exception as exc:
             # Provider exception strings may contain API keys. Keep public errors generic.
             code = 'DATA_UNAVAILABLE' if isinstance(exc, DataUnavailable) or runner is None else 'LLM_ERROR'
             log.warning('debate %s failed (%s)', debate_id, type(exc).__name__)
             payload = {'error': {'code': code, 'message': '데이터 조회에 실패했습니다' if code == 'DATA_UNAVAILABLE' else 'AI 토론을 완료하지 못했습니다'}}
             if runner is not None:
-                payload['usage'] = collect_usage()
+                usage = collect_usage()
+                if usage is not None:
+                    payload['usage'] = usage
             if audit is not None:
                 try:
                     audit.finish('failure', usage=payload.get('usage'), error=exc)
@@ -246,4 +269,5 @@ class Service:
                 result['statements'].append(json.loads(event['data']))
             elif event['type'] in ('debate_completed', 'debate_failed'):
                 result.update(json.loads(event['data']))
+                result['status'] = 'completed' if event['type'] == 'debate_completed' else 'failed'
         return result

@@ -4,6 +4,8 @@ uv run python -m tests.http_fixture --port 18000 --data <temporary directory>
 No production switch enables these fixtures.
 """
 import argparse
+import os
+import time
 from dataclasses import replace
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -14,6 +16,9 @@ from bullbear.debate import Debate, verification_stats
 from bullbear.events import EventLog
 from bullbear.server.app import create_app
 from bullbear.server.market import Market
+from bullbear.server.service import LiveRunner
+from bullbear.llm import Conversation
+from types import SimpleNamespace
 from .fakes import NOW, FakeNews, FakeSource, ScriptedDebater, ScriptedModerator, statement
 
 
@@ -56,6 +61,31 @@ class TestRunner:
 
     def close(self):
         pass
+
+    def run_single(self, snapshot, debate_id, emit):
+        emit('moderator_started', {})
+        return {'debate_id': debate_id, 'verdict': {
+            'decision': 'HOLD', 'confidence': 0.55,
+            'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [E1].',
+            'decisive_evidence': ['PX.CLOSE'], 'scores': None}, 'stats': None}
+
+
+class UncertainUsageRunner(LiveRunner):
+    """Test-only persisted paid-call surrogate; no provider is instantiated."""
+    def run(self, snapshot, debate_id, max_extra_rounds, emit):
+        known = {'calls': [{'model': 'claude-haiku-5-5', 'input_tokens': 123, 'output_tokens': 7}]}
+        self.audit.data['usage'] = known
+        self.audit.begin_call('debater', 'debater', SimpleNamespace(model='claude-haiku-5-5'),
+                              Conversation('synthetic'), {}, 'medium', [])
+        emit('turn_started', {'side': 'bull', 'round': 'opening'})
+        if snapshot.ticker == '035720':
+            trigger = self.settings.data_dir / 'crash-trigger'
+            deadline = time.monotonic() + 40
+            while time.monotonic() < deadline:
+                if trigger.exists():
+                    os._exit(23)
+                time.sleep(.05)
+        raise RuntimeError('synthetic uncertain usage')
 
 
 def fixture_market(settings, now=lambda: NOW, *, source=None):
@@ -114,6 +144,7 @@ def main():
     p.add_argument('--port', type=int, default=18000)
     p.add_argument('--data', type=Path, required=True)
     p.add_argument('--rag', action='store_true')
+    p.add_argument('--uncertain-usage', action='store_true', help='test-only failure/crash tickers')
     p.add_argument('--clock-file', type=Path, help='test-only explicit simulated market clock')
     args = p.parse_args()
     settings = replace(load_settings(), data_dir=args.data, rag_enabled=False)
@@ -122,10 +153,29 @@ def main():
     def now():
         return datetime.fromisoformat(args.clock_file.read_text(encoding='utf-8').strip()) if args.clock_file else NOW
     market = fixture_market(settings, now=now, source=ScoringSource())
+    if args.uncertain_usage:
+        market.catalog.update({'035420': ('실패 fixture', 'KOSPI'), '035720': ('재시작 fixture', 'KOSPI')})
+    def runner():
+        # Choose by snapshot inside a wrapper so normal fixture tickers keep RAG coverage.
+        class RoutedRunner(UncertainUsageRunner):
+            def run_single(self, snapshot, debate_id, emit):
+                return TestRunner(settings).run_single(snapshot, debate_id, emit)
+
+            def run(self, snapshot, debate_id, max_extra_rounds, emit):
+                if snapshot.ticker in ('035420', '035720'):
+                    return super().run(snapshot, debate_id, max_extra_rounds, emit)
+                normal = TestRunner(settings, require_context=args.rag)
+                normal.background_context = self.background_context
+                return normal.run(snapshot, debate_id, max_extra_rounds, emit)
+            def usage(self):
+                return TestRunner(settings).usage()
+        return RoutedRunner(settings) if args.uncertain_usage else TestRunner(settings, require_context=args.rag)
     app = create_app(settings=settings, market=market,
-                     runner_factory=lambda: TestRunner(settings, require_context=args.rag), token='integration-test-token')
+                     runner_factory=runner, token='integration-test-token')
     try:
-        uvicorn.run(app, host='127.0.0.1', port=args.port)
+        # Every standalone integration route must stay offline, including new modes.
+        with patch('bullbear.server.service.LLM', side_effect=AssertionError('fixture cannot create a live LLM')):
+            uvicorn.run(app, host='127.0.0.1', port=args.port)
     finally:
         market.close()
 

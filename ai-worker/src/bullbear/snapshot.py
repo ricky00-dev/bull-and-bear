@@ -42,6 +42,13 @@ KST = timezone(timedelta(hours=9))
 MARKET_CLOSE = time(15, 40)  # 종가 확정 여유 포함
 
 
+def confirmed_date(now: datetime) -> date:
+    if now.utcoffset() is None:
+        raise ValueError("Observation time must include a timezone")
+    local = now.astimezone(KST)
+    return local.date() - timedelta(days=local.time() < MARKET_CLOSE)
+
+
 class Fact(BaseModel):
     id: str
     category: Category
@@ -61,7 +68,7 @@ class Snapshot(BaseModel):
     ticker: str
     name: str
     as_of: date  # 마지막 일봉 날짜
-    created_at: datetime
+    created_at: datetime  # 조회 시작 시 고정한 정보 cutoff; 개별 공급자의 실제 관측 시각은 아님
     provider: str
     facts: dict[str, Fact]
     warnings: list[str] = Field(default_factory=list)
@@ -91,24 +98,40 @@ def build_snapshot(
     *,
     news: NewsSource | None = None,
     now: datetime | None = None,
+    index_loader=None,
 ) -> Snapshot:
     now = now or datetime.now(KST)
-    today = now.astimezone(KST).date()
+    cutoff = confirmed_date(now)
     warnings: list[str] = []
     facts: dict[str, Fact] = {}
 
-    bars = source.get_daily_prices(ticker, today - timedelta(days=PRICE_LOOKBACK_DAYS), today)
+    start = cutoff - timedelta(days=PRICE_LOOKBACK_DAYS)
+    bars = source.get_daily_prices(ticker, start, cutoff)
+    bars = sorted({b.date: b for b in bars if start <= b.date <= cutoff}.values(), key=lambda b: b.date)
     if len(bars) < 2:
         raise DataUnavailable(f"시세가 부족합니다: {ticker}")
+    if any(not all(math.isfinite(v) and v > 0 for v in (b.open, b.high, b.low, b.close))
+           or b.low > min(b.open, b.close) or b.high < max(b.open, b.close)
+           or not math.isfinite(b.volume) or b.volume < 0 for b in bars):
+        raise DataUnavailable("스냅샷 일봉 형식 오류")
     as_of = bars[-1].date
-    now_kst = now.astimezone(KST)
-    if as_of == now_kst.date() and now_kst.time() < MARKET_CLOSE:
-        warnings.append("장중 스냅샷: 마지막 일봉이 확정되지 않은 값입니다")
     _add(facts, price_facts(bars, provider=source.name.split("+")[0]))
+    # Optional comparison evidence, bounded to 22 stock sessions (not 400 calendar days).
+    loader = index_loader or getattr(source, 'get_index_prices', None)
+    if loader is None:
+        warnings.append("코스피 비교 입력 없음: 지수 공급자 미설정")
+    else:
+        try:
+            comparison, missing = benchmark_facts(bars, loader, source.name.split("+")[0])
+            _add(facts, comparison)
+            if missing:
+                warnings.append("코스피 비교 입력 부족: " + ', '.join(missing))
+        except DataUnavailable:
+            warnings.append("코스피 비교 입력 없음: 지수 조회 실패")
 
     reports: list[FinancialReport] = []
     try:
-        reports = source.get_financial_reports(ticker, as_of)
+        reports = [r for r in source.get_financial_reports(ticker, as_of) if r.filed_on <= as_of]
         _add(facts, financial_facts(reports))
     except DataUnavailable as e:
         warnings.append(f"재무 데이터 없음: {e}")
@@ -119,13 +142,17 @@ def build_snapshot(
     except DataUnavailable as e:
         warnings.append(f"발행주식수 없음: {e}")
     if shares is not None:
-        _add(facts, valuation_facts(bars[-1], reports, shares.common_shares, shares.source_ref, as_of))
-    elif not warnings:
+        if shares.as_of > as_of or shares.common_shares <= 0:
+            warnings.append("발행주식수 기준일 또는 수량 오류로 밸류에이션을 계산하지 않았습니다")
+        else:
+            _add(facts, valuation_facts(bars[-1], reports, shares.common_shares, shares.source_ref, as_of,
+                                       shares_as_of=shares.as_of))
+    else:
         warnings.append("발행주식수가 없어 밸류에이션을 계산하지 않았습니다")
 
     try:
         disclosures = source.get_disclosures(ticker, as_of - timedelta(days=DISCLOSURE_LOOKBACK_DAYS), as_of)
-        for d in disclosures[:MAX_DISCLOSURES]:
+        for d in [d for d in disclosures if as_of - timedelta(days=DISCLOSURE_LOOKBACK_DAYS) <= d.filed_on <= as_of][:MAX_DISCLOSURES]:
             fid = f"DISC.{d.source_ref.split(':')[-1]}"
             facts[fid] = Fact(
                 id=fid, category="disclosure", label=d.title, value=None, unit="text",
@@ -140,6 +167,8 @@ def build_snapshot(
         try:
             # 스냅샷 생성 시각 이후 기사는 받지 않는다
             articles = news.search(ticker, name, now - timedelta(days=NEWS_LOOKBACK_DAYS), now)
+            articles = [a for a in articles if a.published_at.utcoffset() is not None
+                        and now - timedelta(days=NEWS_LOOKBACK_DAYS) <= a.published_at <= now]
             _add(facts, news_facts(articles[:MAX_NEWS]))
         except DataUnavailable as e:
             warnings.append(f"뉴스 없음: {e}")
@@ -162,6 +191,51 @@ def build_snapshot(
 def _add(facts: dict[str, Fact], new: list[Fact]) -> None:
     for f in new:
         facts[f.id] = f
+
+
+def benchmark_facts(bars: list[PriceBar], loader, provider: str) -> tuple[list[Fact], list[str]]:
+    """Trailing comparisons on identical dates; never forward-fill a missing index close.
+
+    These are historical evidence, not the future 3/7-session scoring outcome.
+    Percent units keep the existing Fact/API vocabulary unchanged.
+    """
+    last = bars[-1]
+    start = bars[max(0, len(bars) - 22)].date
+    try:
+        rows = loader('KOSPI', start, last.date)
+        index = {}
+        for day, value in rows:
+            if not start <= day <= last.date:
+                continue
+            value = float(value)
+            if not math.isfinite(value) or value <= 0 or (day in index and index[day] != value):
+                raise ValueError('Invalid benchmark close')
+            index[day] = value
+    except (ValueError, TypeError):
+        raise DataUnavailable('코스피 비교 입력 형식 오류') from None
+    facts, missing = [], []
+    for n in (3, 7, 21):
+        if len(bars) <= n:
+            missing.append(f'{n}거래일 주가 부족')
+            continue
+        base = bars[-n - 1]
+        if base.date not in index or last.date not in index:
+            missing.append(f'{n}거래일 양 끝 날짜 지수 없음')
+            continue
+        stock_return = (last.close / base.close - 1) * 100
+        index_return = (index[last.date] / index[base.date] - 1) * 100
+        note = (f'{base.date} → {last.date}, 종목 종가 {base.close:g} → {last.close:g}원, '
+                f'코스피 {index[base.date]:g} → {index[last.date]:g}포인트. '
+                '동일 날짜 종가 기준 과거 수익률이며 미래 채점 결과가 아님. 종목 기업행사 미보정.')
+        for fid, label, value, source, inputs in (
+            (f'PX.RET_{n}D', f'최근 {n}종목 거래일 수익률', stock_return, provider, []),
+            (f'MKT.KOSPI_RET_{n}D', f'동일 기간 코스피 수익률({n}종목 거래일)', index_return, provider, []),
+            (f'PX.EXCESS_KOSPI_{n}D', f'동일 기간 코스피 대비 초과수익률({n}종목 거래일, %p)',
+             stock_return - index_return, 'derived', [f'PX.RET_{n}D', f'MKT.KOSPI_RET_{n}D']),
+        ):
+            facts.append(Fact(id=fid, category='price', label=label, value=round(value, 2), unit='%',
+                              as_of=last.date, source=source, inputs=inputs, note=note))
+    return facts, missing
 
 
 def _round(x: float, unit: str) -> float:
@@ -277,10 +351,12 @@ def ttm(reports: list[FinancialReport], key: str) -> tuple[float, list[str]] | N
     )
 
 
-def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int, shares_ref: str, as_of: date) -> list[Fact]:
+def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int, shares_ref: str, as_of: date,
+                    *, shares_as_of: date | None = None) -> list[Fact]:
     out: list[Fact] = [
         Fact(id="VAL.SHARES", category="valuation", label="보통주 발행주식수", value=float(shares),
-             unit="shares", as_of=as_of, source=shares_ref),
+             unit="shares", as_of=shares_as_of or as_of, source=shares_ref,
+             note="공시된 보통주 수량. 공시 이후 변동 반영은 보장하지 않음"),
     ]
     mktcap = last.close * shares
     out.append(Fact(id="VAL.MKTCAP", category="valuation", label="시가총액(보통주)", value=float(round(mktcap)),

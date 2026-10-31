@@ -9,7 +9,7 @@ import json
 import math
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time as clock_time, timedelta, timezone
 from uuid import uuid4
 
 import httpx
@@ -47,12 +47,17 @@ class KrxOpenApiSource(PykrxDartSource):
                 try:
                     with gzip.open(path, "rt", encoding="utf-8") as f:
                         rows = json.load(f)
-                    self._validate_rows(rows, day)
-                    age = time.time() - path.stat().st_mtime
+                    self._validate_rows(rows, day, endpoint)
+                    modified = path.stat().st_mtime
+                    age = time.time() - modified
                     old = day < datetime.now(KST).date() - timedelta(days=7)
-                    if (old and rows) or age < 3600:
+                    # A response cached before the close must not later become a
+                    # permanent historical close. Empty publication results retry sooner.
+                    after_close = modified >= datetime.combine(day, clock_time(15, 40), KST).timestamp()
+                    ttl = 3600 if rows else 60
+                    if after_close and age >= 0 and ((old and rows) or age < ttl):
                         return rows
-                except (OSError, ValueError, TypeError):
+                except (OSError, EOFError, ValueError, KeyError, TypeError):
                     pass
             if not self._krx_key:
                 raise DataUnavailable("KRX_API_KEY 및 주식·지수 API 활용 승인이 필요합니다")
@@ -65,7 +70,7 @@ class KrxOpenApiSource(PykrxDartSource):
                     raise DataUnavailable("KRX 인증키 또는 해당 API 활용 승인을 확인하세요")
                 r.raise_for_status()
                 rows = r.json()["OutBlock_1"]
-                self._validate_rows(rows, day)
+                self._validate_rows(rows, day, endpoint)
             except (httpx.HTTPError, ValueError, KeyError, TypeError):
                 raise DataUnavailable("KRX 일별 데이터 응답을 읽을 수 없습니다") from None
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -75,10 +80,30 @@ class KrxOpenApiSource(PykrxDartSource):
             temporary.replace(path)
             return rows
 
-    @staticmethod
-    def _validate_rows(rows, day):
+    @classmethod
+    def _validate_rows(cls, rows, day, endpoint=None):
         if not isinstance(rows, list) or any(not isinstance(r, dict) or r.get("BAS_DD") != day.strftime("%Y%m%d") for r in rows):
             raise ValueError("Invalid dated response")
+        # Validate before storing and before accepting historical cache hits.
+        for row in rows:
+            if endpoint and endpoint.startswith('sto/'):
+                if not isinstance(row.get('ISU_CD'), str):
+                    raise ValueError('Missing ticker')
+                o, high, low, close, volume = [cls._number(row[k]) for k in
+                    ('TDD_OPNPRC', 'TDD_HGPRC', 'TDD_LWPRC', 'TDD_CLSPRC', 'ACC_TRDVOL')]
+                if volume < 0 or not volume.is_integer():
+                    raise ValueError('Invalid volume')
+                if o == 0 and volume == 0:
+                    continue  # Suspended stock; excluded by get_daily_prices.
+                if min(o, high, low, close) <= 0 or low > min(o, close) or high < max(o, close):
+                    raise ValueError('Invalid OHLC')
+            elif endpoint and endpoint.startswith('idx/'):
+                if not isinstance(row.get('IDX_NM'), str) or cls._number(row['CLSPRC_IDX']) <= 0:
+                    raise ValueError('Invalid index')
+        benchmark_names = {'idx/kospi_dd_trd': ('KOSPI', '코스피'),
+                           'idx/kosdaq_dd_trd': ('KOSDAQ', '코스닥')}
+        if rows and endpoint in benchmark_names and not any(r['IDX_NM'] in benchmark_names[endpoint] for r in rows):
+            raise ValueError('Benchmark missing')
 
     @staticmethod
     def _days(start, end):

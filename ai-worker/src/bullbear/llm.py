@@ -100,6 +100,9 @@ class LLM:
         self.max_output_tokens = max_output_tokens
         self.usage = Usage()
         self.usage_by_model: dict[str, Usage] = {}
+        self.usage_complete = True
+        self.requests_attempted = 0
+        self.request_observer = None
 
     def usage_payload(self) -> dict:
         return {"calls": [{"model": model, "input_tokens": u.input_tokens,
@@ -123,6 +126,11 @@ class LLM:
         json_retries = 0
 
         for _ in range(self.max_tool_turns):
+            self.requests_attempted += 1
+            request = {'request_id': self.requests_attempted, 'status': 'running'}
+            if self.request_observer:
+                # Persist the attempt before starting a potentially billable request.
+                self.request_observer(request)
             try:
                 with self.client.beta.messages.stream(
                     model=self.model,
@@ -136,16 +144,28 @@ class LLM:
                         if event.type == "text":
                             on_event("token", {"text": event.text})
                     msg = stream.get_final_message()
-                json_retries = 0
-            except ValueError:
-                # 도구 입력 JSON을 SDK가 아예 파싱하지 못한 경우. 같은 요청을 다시 보낸다.
-                json_retries += 1
-                if json_retries > 2:
-                    raise
-                continue
+                # Read counters before changing the cumulative totals.
+                observed = Usage()
+                observed.add(msg.usage)
+            except BaseException as exc:
+                self.usage_complete = False  # Sticky across retries and later calls.
+                if self.request_observer:
+                    self.request_observer({**request, 'status': 'unknown', 'error_type': type(exc).__name__})
+                if isinstance(exc, ValueError):
+                    json_retries += 1
+                    if json_retries <= 2:
+                        continue
+                raise
 
+            json_retries = 0
             self.usage.add(msg.usage)
             self.usage_by_model.setdefault(msg.model, Usage()).add(msg.usage)
+            if self.request_observer:
+                self.request_observer({**request, 'status': 'received', 'usage': {'calls': [{
+                    'model': msg.model, 'input_tokens': observed.input_tokens,
+                    'output_tokens': observed.output_tokens,
+                    'cache_read_input_tokens': observed.cache_read_input_tokens,
+                    'cache_creation_input_tokens': observed.cache_creation_input_tokens}]}})
             try:
                 validate_model(msg.model)
             except ValueError:

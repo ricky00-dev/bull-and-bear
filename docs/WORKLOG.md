@@ -15,6 +15,57 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex · api, ai-worker, web, docs
+- 한 것: PR #23 비용/복구 수정 d8a5c27과 #24 snapshot 수정 2e389e3을 통합한 9867a14에서 최종 Python476 통과/외부5 생략, 별도 실제 Spring/PostgreSQL/HTTP5 통과, Java 관련9+DB복구7 통과, 웹 build/lint 성공. 초기 import 경로 오류와 fixture 오류 수정·재실행을 상세 보고서에 기록.
+- 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 및 #24 병합 2ef53e2 완료. #24와 #25의 base 통합 충돌은 WORKLOG만 발생해 모든 기록을 보존. #25 최종 원격 반영 중. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.
+- 다음: PR head 고정 병합 후 원격 상태와 제품 tree 동일성 확인. 상세 docs/evaluations/pr-23-24-25-merge-validation.md.
+- 막힘·결정 필요: 재현된 미해결 결함/사용자 판단 대기 없음. Docker Java 전체·실모델 성공률·독립 사람 평가·실청구/실시장 검증은 미완료. 운영 single/RAG 기본 비활성, 배포/추가 유료 호출 없음. 이전 V6 소실 비용 복구 불가.
+
+
+## 2026-11-01 · Codex · api, ai-worker, web, docs
+- 한 것: 사용자 요청으로 이전 PR #23(d431ce2)/#24(51cf34f) 검토 및 통합 PR #25 초안 생성. 양 PR을 로컬 통합해 WORKLOG 양쪽 기록과 executor 실패 처리·single 인자를 보존. #23 시도 비용 덮어쓰기/RUNNING 복구/SSE 전송 오류 결함, #24 같은 ID의 snapshot cutoff 불일치를 확인하여 병합 보류 후 수정 진행.
+- 진행 중: #23 전용 수정 세션은 시도 원장·재시작 복구·3일 성적표 토글 수정 중. 통합 워커 canonical snapshot 보완 후 전체476 passed/외부5 skipped. 웹 build/lint 통과. 새 Spring single 연결 검사 첫 실행4 passed/1 failed는 fixture의 single 경로 누락으로 확인, 테스트 대역 라우팅과 실클라이언트 생성 차단 추가 후 재검증 중.
+- 다음: 각 PR 수정 커밋 반영, 전체/연동 검사, 검증된 PR head 고정 후 develop 병합. 운영 single/RAG 기본 비활성 유지.
+- 막힘·결정 필요: 첫 fixture single 오류는 TypeError이며 모델 응답/토큰 기록 없음; 이를 실제 Claude 성공/청구 검증으로 해석하지 않음. 실모델·지출 상한·사람 검수는 별도. Docker 미설치로 Java Testcontainers 전체 검사는 임시 PostgreSQL 대안과 구분하여 기록. 원본 작업 폴더 보존.
+
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 사용자 푸시 요청에 따라 통합 HEAD d7f315c와 독립 검토 수정 71af77b의 사용량 미확정 보존·MKT 표시 검사, 데이터/복구 변경 및 기존 평가 증거 검토. origin fetch 후 워커 전체 460 passed/외부 4 skipped(44.97초), 별도 Spring/PostgreSQL fixture 4 passed(15.12초) 재확인. Java 관련 테스트·bootJar는 Gradle UP-TO-DATE 성공. 공백 검사 통과, 추적 .env/원본 data 없음, 임시 프로세스 잔존 없음.
+- 진행 중: 검증 기록 커밋 후 fix/worker-integrated-validation 원격 푸시. 제품 소스 추가 변경 없음.
+- 다음: 원격 HEAD 일치 확인 후 실제 모델 접근·호출 예산·독립 사람 검수 준비. develop/main 병합·배포는 별도.
+- 막힘·결정 필요: 오프라인 구현/통합 검증 완료로 평가하며 실제 운영 완료는 아님. 실제 유료/시장 공급자 호출, SDK 내부 전송 재시도 청구 대조, 지출 상한, 기업행사 정책은 미검증. 실행 증거 ai-worker/data/spring-integration/run-eaf78afb99ad42e7bee3dd0700a68433(ignored). 원본 작업 폴더 변경 보존.
+
+## 2026-11-01 · Codex 독립 검토 수정 세션 · ai-worker, docs
+- 한 것: 독립 검토 원본을 읽기 전용 확인 후 P1 내부 재시도 성공 시 미확정 사용량 유실과 P2 MKT 내부 ID 표시 누락을 회귀로 재현(수정 전5 실패/정상 대조2 통과). llm→audit→LiveRunner/Service에 요청별 영속 관측·지속 미확정 상태를 연결하고 정상 완전 usage 공개 유지. presentation 기존 차단 prefix에 MKT 추가. 수정 코드71af77bd5c0ae57ea384325496199f3ad1e6cf97.
+- 진행 중: 두 재현 결함 수정 완료. 최초 영향46 통과 후 요청 기록 저장 실패/호출 전 영속화 회귀 보강, 전체460 통과/실패0/외부4 생략(45.80초). 실제 Spring/PostgreSQL4 통과/실패0/생략0(16.04초), 생성·재시작 프로세스/포트 정리 확인. 이전 통과 검사가 놓친 성공 재시도 분기와 새 MKT prefix 통합 경계를 docs/evaluations/worker-integrated-review-fixes.md에 기록.
+- 다음: 총괄이 수정 revision과 재현/대조군을 확인. 실제 모델 검증은 키·접근·총비용 상한 확보 후 진행하고 사람 평가셋·청구 대조는 별도 수행.
+- 막힘·결정 필요: 유료/실제 공급자 호출0, SDK stream 시도 관측이 SDK 내부 전송 재시도·실제 청구액 전체의 원장은 아님. 공통 예산 예약/단가/공개 계약 정책 및 기본 RAG 비활성 유지. 검토 세션·기존 데이터/.env 변경, push·배포·원격 병합 없음. 사용자 판단 대기로 중지한 작업 없음.
+
+## 2026-10-31 · Codex 통합 검증 세션 · ai-worker, docs
+- 한 것: HTTP 변경을 4b27d93으로 보존, fix/worker-integrated-validation에서 9176afc를 70021d1로 로컬 통합. worker-quality/worker-data-consistency 완료 파일 12개와 WORKLOG 항목을 원본 수정 없이 반영하고 test_server.py 양쪽 보존. 최종 코드 27f61611fe7dec317e61b9ecb2104917b5eab784.
+- 한 것: 실제 Spring/PostgreSQL에서 사용량 미확정 실패·워커 os._exit 후 재시작/SSE 재구독 검증 추가. 비용/토큰 NULL 및 $0.15 추정치, 실패 이벤트1개, 원본 감사·부분 사용량 보존 확인. psql 미설치로 새 E2E2개가 처음 실패했으나 JDBC 조회 보조 도구로 해결. 기존 4조건14후보 해시 연결 재검증, 전부 미검수·품질비율 null 유지.
+- 진행 중: 요청된 통합·검증 완료. 전체 Python451 통과/실패0/외부2 생략(45.91초), 마지막 fixture 변경 후 영향 범위115 통과/실패0/외부2 생략(19.35초). 실제 Spring4 통과/실패0/생략0(13.61초), Java 관련7개 및 bootJar는 코드 변화 없어 Gradle 성공 캐시 재사용. 생성 서버와 재시작 프로세스 종료·포트 해제 확인. 상세 출처·증거·한계는 docs/evaluations/worker-integrated-validation.md.
+- 다음: 총괄이 로컬 통합 브랜치/보고서를 검토. 실제 키·모델 접근·별도 총비용 상한/예약 준비 후 Claude HTTP 검증, 독립 사람 라벨 후 품질 평가. HTTP 단일 모드/v0.6은 양측 승인과 별도 구현 범위 결정 필요, 이번 통합 범위에 포함하지 않음.
+- 막힘·결정 필요: 재현된 미해결 회귀 없음. 실제 공급자/유료 호출0, $0.15 추정치는 결제 상한 아님. 사람 검수·실시장 관측/기업행사 정책·성숙한 성과는 미확인. 사용자 판단 대기로 중단한 작업 없음; 외부 선행 조건 없는 임의 재개 금지. 원본/타 세션/환경파일 보존, RAG 기본 비활성, 공개 계약/config/budget/Spring 제품 코드·원격 push/develop/main 병합/배포/스케줄 활성화 없음.
+
+## 2026-10-31 · Codex 데이터 정합성 세션 · ai-worker, docs
+- 한 것: 5d2a8e5에서 별도 worker-data-consistency worktree/브랜치 fix/worker-data-consistency 생성. CLI/HTTP 확정 종가 cutoff 통일, timezone 없는 시각 거부, 범위 밖 시세·미래 뉴스/공시 필터, 주식수 공시일 보존. KRX 캐시 읽기/저장 전 가격·지수 형식 검증, 장중 캐시 재조회, 빈 응답 TTL 60초. 동일 날짜의 과거 3·7·21종목 거래일 코스피/종목 수익률과 초과수익률 Fact 추가(누락 날짜 비보간).
+- 진행 중: 담당 구현·오프라인 검증 완료, 전용 폴더 미커밋 변경으로 통합 대기. 최초 결함 6개 재현 후 수정. 최종 전체 Python 402 passed·외부 Spring 2 skipped(45.88초), diff 공백 검사 통과. 기존 KRX 캐시 287개 읽기 전용 검사(비어 있지 않은 정상265/빈22/실패0). 상세: docs/evaluations/worker-data-consistency-session.md.
+- 다음: KRX 공급자 파일 → snapshot.py와 server/market.py 함께 → 신규 test_data_consistency.py 및 test_server.py fixture 보완 → 보고서/이 로그 항목 순으로 통합. 통합 후 전체 회귀 및 프롬프트/검토기의 신규 과거 비교 Fact 해석 확인.
+- 막힘·결정 필요: 실제 공급자/유료 모델 호출0, 성숙한 3·7거래일 성과·공급자별 observed_at·기업행사 보정·특별 거래시간/발표지연 미검증. 지수 cold 조회 지연 추가 가능. service/store의 시각·캐시 해시 감사 및 재사용 정책 보완은 범위 밖 제안으로 기록. 공통 schemas/config·공개 계약·프롬프트/검증기 변경 없음. RAG 기본 비활성, 배포/스케줄 활성화/push/merge 없음. 다른 작업 폴더·원본 데이터·환경 파일 보존.
+
+## 2026-10-31 · Codex 품질 평가 세션 · ai-worker, docs
+- 한 것: 5d2a8e5 기준 격리 worktree worker-quality / fix/worker-quality-evaluation에서 기존 미커밋 diagnostics를 읽고 후속 quality_evaluation 구현. queue 원본/후보/자동 결과 및 snapshot 연결 검증, 미검수·제안·사람 검수 분리, 사람 확인·분모 있는 집계와 원문 없는 결과 생성. 기존 4조건 14후보 읽기 전용 적용 모두 미검수·오류율 null 유지.
+- 한 것: 기간 검사 공백 오탐 수정과 17/7.7거래일 누락 차단, 합성 기간 회귀9개 및 의미 검수 제안6개 작성. 전체 Python 414 passed/외부2 skipped(43.37초), 공백 검사 통과. 유료 호출0, 기존 원본 데이터/.env 및 타 세션 수정 없음.
+- 진행 중: 사람 검수와 실제 Claude 품질 측정 미완료. 저장 후보14개는 이번 기간 수정으로 판정 변화 없음. 의미 검토 과잉반려는 확정 라벨 없이 규칙을 완화하지 않음. 구현 변경은 이 브랜치에 미커밋 상태로 보존.
+- 다음: worker-integration의 기존 diagnostics 먼저 통합 → 새 모듈/fixture/test 및 semantic 변경 반영 → 독립 사람 검수 → 후속 Claude HTTP 실험. 변경 파일/실험표/통합 순서는 docs/evaluations/worker-quality-session.md 참고.
+- 막힘·결정 필요: 사용자가 토론자 Haiku·중재자 Sonnet 선택 완료. 정확한 계정 모델 ID/키 접근·새 총비용 상한 확인 전 유료 호출 보류. HTTP audit 변환은 범위 밖 제안. RAG 기본 비활성, 계약/배포/스케줄/push/merge 변경 없음. session-brief CRLF 실패 후 로그 직접 확인.
+
+## 2026-10-31 · Codex HTTP 안정화 세션 · ai-worker, docs
+- 한 것: 5d2a8e5에서 전용 worker-http-stability worktree 생성. executor 제출 실패의 영구 running/용량 누수, SSE Last-Event-ID 정수 범위 오류, 상세 조회 종료 상태 경쟁을 재현·수정. 인증 실패·멱등성·실패 SSE·실제 프로세스 강제 종료 회귀 보강.
+- 한 것: 사용량 조회 실패/미완료·실패한 모델 호출의 부분 사용량을 확정 비용으로 보내지 않도록 usage 생략. 감사 부분 사용량/usage_complete=false 보존. 재시작은 원본 manifest를 수정하지 않고 SQLite recoveries에 부분 사용량·미완료 호출 ID·미확정 상태를 보존하며 실패 이벤트 1회 기록. 상세·통합 순서는 docs/evaluations/worker-http-stability-session.md.
+- 진행 중: 구현 완료, 이 전용 worktree에 미커밋 변경으로 보존. 전체 Python399 passed/외부2 skipped(49.42초) 후 강제 종료·부분 실패 사용량 회귀 보강, 최종 영향 범위65 passed(19.69초). Java 단위7개·bootJar 및 실제 임시 PostgreSQL/Spring/HTTP fixture2 passed(5.40초), 서버 잔여 프로세스 없음. git diff 공백 검사 통과.
+- 다음: 총괄이 server app/service/store와 HTTP/audit 테스트를 함께 통합하고 공통 config/budget/LLM 변경 후 회귀·Spring fixture 재실행. 실제 유료 검증은 키·모델 접근·총비용 상한 확보 후 진행.
+- 막힘·결정 필요: 유료/외부 데이터 호출0, 공개 계약·기본 RAG 비활성·타 소유 파일 유지. Spring 성공 fixture E2E는 통과했지만 재시작 미확정 비용의 PostgreSQL 정산 E2E는 미실행. 기존 Spring 추정치($0.15)는 실제 지출 상한이 아니므로 공통 예산 예약/미확정분 대조는 별도 담당 후속. session-brief는 기존 CRLF 오류로 실패해 문서/Git 직접 확인. 원본·타 세션·.env·기존 데이터 수정 및 커밋/push/merge/배포/스케줄 활성화 없음.
 ## 2026-11-01 · Codex PR #24 스냅샷 정합성 수정 · ai-worker, docs
 - 한 것: 51cf34f에서 전용 worker-canonical-snapshot worktree와 fix/worker-canonical-snapshot 브랜치 생성. Service의 snapshot 단계에서 저장 후 DB의 canonical 객체를 다시 읽고 audit/RAG/runner에 동일 객체 전달. ID 해시·정책·공개 계약 변경 없음.
 - 한 것: 감독 폴더의 회귀를 읽기 전용 참고해 기존 실패 스냅샷 저장 → 같은 ID/새 created_at으로 토론 재시도 → single 실행을 검증. 수정 전1 실패로 재현, 수정 후 두 runner와 두 audit의 전체 snapshot이 옛 canonical 객체와 같음을 확인. 관련 single/HTTP/audit/RAG 테스트64 passed(15.76초), diff 공백 검사 통과.
