@@ -299,7 +299,7 @@ def test_submit_failure_is_terminal_and_capacity_is_released(setup, monkeypatch)
     app = app_for(setup, max_running=1)
     with TestClient(app) as c:
         original = app.state.service.pool.submit
-        def rejected(*args):
+        def rejected(*args, **kwargs):
             raise RuntimeError('private executor detail')
         monkeypatch.setattr(app.state.service.pool, 'submit', rejected)
         response = start(c)

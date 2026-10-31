@@ -46,7 +46,7 @@ try {
     if (-not $SkipBuild) {
         Push-Location (Join-Path $repo 'api')
         try {
-            & .\gradlew.bat test --tests '*HttpWorkerClientTest' --tests '*ScoreRuleTest' bootJar --no-daemon
+            & .\gradlew.bat test --tests '*HttpWorkerClientTest' --tests '*ScoreRuleTest' --tests '*StartDebateRequestTest' bootJar --no-daemon
             if ($LASTEXITCODE -ne 0) { throw 'Gradle build/test failed' }
         } finally { Pop-Location }
     }
@@ -61,7 +61,9 @@ try {
     $arguments = @('-jar', ('"'+$jar.FullName+'"'), '--server.address=127.0.0.1', "--server.port=$apiport",
         "--spring.datasource.url=jdbc:postgresql://127.0.0.1:$pgport/postgres", '--spring.datasource.username=bullbear',
         '--bullbear.worker.mode=http', "--bullbear.worker.base-url=http://127.0.0.1:$workerport", '--bullbear.worker.token=integration-test-token',
-        '--bullbear.forward-run.enabled=false', '"--bullbear.scoring.cron=*/1 * * * * *"')
+        '--bullbear.forward-run.enabled=false', '"--bullbear.scoring.cron=*/1 * * * * *"',
+        '--bullbear.experiment.start=2026-10-01', '--bullbear.experiment.single-enabled=true',
+        '--bullbear.experiment.poll-interval=1s')
     $processes.spring = Start-Process $java -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'spring.out.log') -RedirectStandardError (Join-Path $run 'spring.err.log')
     Wait-Url "http://127.0.0.1:$apiport/actuator/health" $processes.spring
     $result.process_ids = @{}
@@ -77,7 +79,7 @@ try {
     } | ConvertTo-Json -Depth 4 | Set-Content $env:BULLBEAR_TEST_RECOVERY_CONFIG -Encoding utf8
     Push-Location (Join-Path $repo 'ai-worker')
     try {
-        & $Python -m pytest tests/test_spring_integration.py tests/test_spring_usage_recovery.py -q --junitxml (Join-Path $run 'integration.xml') 2>&1 | Tee-Object (Join-Path $run 'pytest.log')
+        & $Python -m pytest tests/test_spring_integration.py tests/test_spring_single.py tests/test_spring_usage_recovery.py -q --junitxml (Join-Path $run 'integration.xml') 2>&1 | Tee-Object (Join-Path $run 'pytest.log')
         $result.test_exit_code = $LASTEXITCODE
         if ($LASTEXITCODE -ne 0) { throw 'Spring integration tests failed' }
     } finally { Pop-Location }

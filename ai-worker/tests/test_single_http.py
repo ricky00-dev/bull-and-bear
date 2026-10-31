@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import threading
+from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 
@@ -44,6 +45,35 @@ def seed(app, settings, market, *, suffix=''):
     store.save_snapshot(row['id'], snapshot)
     store.emit(row['id'], 'debate_completed', {})
     return snapshot, row['id']
+
+
+def test_debate_retry_and_single_use_identical_stored_cutoff(setup, monkeypatch):
+    settings, market = setup
+    seen = []
+    class ObservedRunner(SingleRunner):
+        def run(self, snapshot, debate_id, max_extra_rounds, emit):
+            seen.append(snapshot.model_dump(mode='json'))
+            return super().run(snapshot, debate_id, max_extra_rounds, emit)
+        def run_single(self, snapshot, debate_id, emit):
+            seen.append(snapshot.model_dump(mode='json'))
+            return super().run_single(snapshot, debate_id, emit)
+    app = app_for(setup, runner_factory=lambda: ObservedRunner(settings))
+    with TestClient(app) as c:
+        old = market.snapshot(market.quote('005930'))
+        store = app.state.service.store
+        row, _ = store.create('failed-seed', 'failed-seed', old.ticker, str(old.as_of), 2)
+        store.save_snapshot(row['id'], old)
+        store.emit(row['id'], 'debate_failed', {'error': {'code': 'LLM_ERROR'}})
+        newer = old.model_copy(update={'created_at': old.created_at + timedelta(minutes=1)})
+        monkeypatch.setattr(market, 'snapshot', lambda quote: newer)
+        debate_id = start(c, key='retry-cutoff').json()['debate_id']
+        assert completed(c, debate_id)['status'] == 'completed'
+        single_id = start(c, key='single-cutoff', mode='single', snapshot_id=old.snapshot_id).json()['debate_id']
+        assert completed(c, single_id)['status'] == 'completed'
+        assert seen == [old.model_dump(mode='json'), old.model_dump(mode='json')]
+        for run_id in (debate_id, single_id):
+            audit = json.loads((settings.data_dir / 'audits' / run_id / 'manifest.json').read_text())
+            assert audit['snapshot'] == seen[0]
 
 
 def test_single_contract_validation_and_explicit_snapshot_never_fetches_market(setup, monkeypatch):

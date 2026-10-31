@@ -62,6 +62,13 @@ class TestRunner:
     def close(self):
         pass
 
+    def run_single(self, snapshot, debate_id, emit):
+        emit('moderator_started', {})
+        return {'debate_id': debate_id, 'verdict': {
+            'decision': 'HOLD', 'confidence': 0.55,
+            'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [E1].',
+            'decisive_evidence': ['PX.CLOSE'], 'scores': None}, 'stats': None}
+
 
 class UncertainUsageRunner(LiveRunner):
     """Test-only persisted paid-call surrogate; no provider is instantiated."""
@@ -151,6 +158,9 @@ def main():
     def runner():
         # Choose by snapshot inside a wrapper so normal fixture tickers keep RAG coverage.
         class RoutedRunner(UncertainUsageRunner):
+            def run_single(self, snapshot, debate_id, emit):
+                return TestRunner(settings).run_single(snapshot, debate_id, emit)
+
             def run(self, snapshot, debate_id, max_extra_rounds, emit):
                 if snapshot.ticker in ('035420', '035720'):
                     return super().run(snapshot, debate_id, max_extra_rounds, emit)
@@ -163,7 +173,9 @@ def main():
     app = create_app(settings=settings, market=market,
                      runner_factory=runner, token='integration-test-token')
     try:
-        uvicorn.run(app, host='127.0.0.1', port=args.port)
+        # Every standalone integration route must stay offline, including new modes.
+        with patch('bullbear.server.service.LLM', side_effect=AssertionError('fixture cannot create a live LLM')):
+            uvicorn.run(app, host='127.0.0.1', port=args.port)
     finally:
         market.close()
 

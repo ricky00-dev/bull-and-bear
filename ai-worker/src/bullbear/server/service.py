@@ -171,8 +171,11 @@ class Service:
                                       self.settings.naver_client_id, self.settings.naver_client_secret))
             with audit.stage('snapshot'):
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
-                audit.attach_snapshot(snapshot)
                 self.store.save_snapshot(debate_id, snapshot)
+                # A content-addressed ID may already exist with an earlier
+                # observation cutoff. Both modes must use the stored object.
+                snapshot = Snapshot.model_validate(self.store.snapshot(snapshot.snapshot_id))
+                audit.attach_snapshot(snapshot)
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
                             ticker=snapshot.ticker, name=snapshot.name, as_of=snapshot.as_of,
                             close=snapshot.facts['PX.CLOSE'].value, warnings=snapshot.warnings))

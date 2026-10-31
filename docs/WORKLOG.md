@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex · api, ai-worker, web, docs
+- 한 것: 사용자 요청으로 이전 PR #23(d431ce2)/#24(51cf34f) 검토 및 통합 PR #25 초안 생성. 양 PR을 로컬 통합해 WORKLOG 양쪽 기록과 executor 실패 처리·single 인자를 보존. #23 시도 비용 덮어쓰기/RUNNING 복구/SSE 전송 오류 결함, #24 같은 ID의 snapshot cutoff 불일치를 확인하여 병합 보류 후 수정 진행.
+- 진행 중: #23 전용 수정 세션은 시도 원장·재시작 복구·3일 성적표 토글 수정 중. 통합 워커 canonical snapshot 보완 후 전체476 passed/외부5 skipped. 웹 build/lint 통과. 새 Spring single 연결 검사 첫 실행4 passed/1 failed는 fixture의 single 경로 누락으로 확인, 테스트 대역 라우팅과 실클라이언트 생성 차단 추가 후 재검증 중.
+- 다음: 각 PR 수정 커밋 반영, 전체/연동 검사, 검증된 PR head 고정 후 develop 병합. 운영 single/RAG 기본 비활성 유지.
+- 막힘·결정 필요: 첫 fixture single 오류는 TypeError이며 모델 응답/토큰 기록 없음; 이를 실제 Claude 성공/청구 검증으로 해석하지 않음. 실모델·지출 상한·사람 검수는 별도. Docker 미설치로 Java Testcontainers 전체 검사는 임시 PostgreSQL 대안과 구분하여 기록. 원본 작업 폴더 보존.
+
 ## 2026-11-01 · Codex · ai-worker, docs
 - 한 것: 사용자 푸시 요청에 따라 통합 HEAD d7f315c와 독립 검토 수정 71af77b의 사용량 미확정 보존·MKT 표시 검사, 데이터/복구 변경 및 기존 평가 증거 검토. origin fetch 후 워커 전체 460 passed/외부 4 skipped(44.97초), 별도 Spring/PostgreSQL fixture 4 passed(15.12초) 재확인. Java 관련 테스트·bootJar는 Gradle UP-TO-DATE 성공. 공백 검사 통과, 추적 .env/원본 data 없음, 임시 프로세스 잔존 없음.
 - 진행 중: 검증 기록 커밋 후 fix/worker-integrated-validation 원격 푸시. 제품 소스 추가 변경 없음.
