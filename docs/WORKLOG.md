@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: cdc46cb에서 feat/rag-corpus-pilot 격리. SEC/Investor.gov/FINRA 공식 출처4개 재확인, 기존 한국어 설명6개의 실제 적재 절차를 docs/RAG-DATA.md에 정리. scripts/test-rag-corpus.py로 새 지속형 SQLite DB에6문서/6문단 적재·관측 세대 발행·검색/재생 수행. 기존 세션/원본 DB 보존.
+- 진행 중: 파일럿 적재와 검증 완료. 직접 개념6/6, 표현 변형4/6. 두 독립 실행에서 문서/revision/chunk/annotation 각각6 유지, 수집 이력만2. 미래 generation 차단·Snapshot 불변·replay 동일 확인. 관련 회귀100 통과/실패0/생략0(13.04초).
+- 다음: 독립 용어/자연 표현 평가와 한국 공식 자료 확대, 운영 승인 워크플로 및 같은 snapshot의 RAG 유무 모델 비교. docs/evaluations/rag-corpus-pilot.md와 공개 JSON에 세대/적재 결과 기록.
+- 막힘·결정 필요: 자연 표현 중 영업이익률/변동성2개 누락, 무관 short 질의에도 고정 배경3개 반환. 현재 검색은 Snapshot 개념 라벨 기반 FTS이며 자유 자연어 질의 API 아님. human_reviewed=false 실험용, 모델 호출/비용0, 운영 RAG 비활성 유지. 이전 Claude 실험 잔액 $1.141036 사용하지 않음. 기존 공개 계약/검색 정책 변경 없음.
+
+
+## 2026-11-01 · Codex · ai-worker, docs
 - 한 것: B2 잔여 평가 구간 오해를 T0/Tobs/T7·동일 분모·산술 예시로 보완. 비교 자료 부족은 같은 T0~T7에서 지적하고 관측일로 새 구간을 시작하지 않도록 명시. 실제 기간 변경 오류는 계속 반려.
 - 진행 중: 사용자 기존 $3 잔액 승인으로 14사례×전후×3회=84회 실제 Sonnet 비교 완료. B2 구간 오해1/3→0/3, 정상 오탐0/15→0/15, 오류 탐지15/15→15/15. 원본 A2/B2 반려 유지, A3/B3 통과 유지. 관련 오프라인42 통과, API 실패/미확정/생략0.
 - 다음: 결과·코드 로컬 보존, 추가 호출 종료. docs/evaluations/semantic-window-live-comparison.md 및 semantic-window-results.json에 증거·한계 기록. 독립 사람의 혼합 사례 판단과 별도 평가셋은 후속.
