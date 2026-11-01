@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 3cc4884에서 격리 fix/semantic-review-context 생성. 실제 single 파일럿 후보6개/지적10개를 저장 Fact와 직접 대조: 타당2/혼합4/오탐 판단4. 원문 해시와 Codex proposed 판단을 기록하고 사람 검수 라벨과 분리. 전체 문맥·반대 근거·가격 기준일 이후 누적 구간을 읽도록 SemanticReviewer 지침 보완.
+- 진행 중: 신규 회귀8 통과, 전체 Python484 통과/실패0/외부5 생략(61.61초). 오프라인 구현·검증 완료. 코드/문서만 변경하며 기존 반려 결과는 보존.
+- 다음: 승인된 유료 호출 예산이 있으면 고정 후보의 이전/수정 검토 프롬프트 비교와 독립 사람 라벨 대조. 혼합 사례를 자동 통과시키지 않음.
+- 막힘·결정 필요: 실제 Claude 오탐 감소는 미검증이며 mock 통과를 의미 정확성으로 주장하지 않음. 추가 모델 호출0, 계약/판정 기준/3문장 제한/재시도/기본 RAG 비활성 유지. 상세 docs/evaluations/single-pilot-review-context.md. 사용자 판단 대기로 중단한 정책 변경 없음.
+
+
 ## 2026-11-01 · Codex · api, ai-worker, web, docs
 - 한 것: PR #23 비용/복구 수정 d8a5c27과 #24 snapshot 수정 2e389e3을 통합한 9867a14에서 최종 Python476 통과/외부5 생략, 별도 실제 Spring/PostgreSQL/HTTP5 통과, Java 관련9+DB복구7 통과, 웹 build/lint 성공. 초기 import 경로 오류와 fixture 오류 수정·재실행을 상세 보고서에 기록.
 - 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 및 #24 병합 2ef53e2 완료. #24와 #25의 base 통합 충돌은 WORKLOG만 발생해 모든 기록을 보존. #25 최종 원격 반영 중. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.
