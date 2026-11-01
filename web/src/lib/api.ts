@@ -1,4 +1,5 @@
 import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Report, Reveal, StockDetail, StockItem } from './types'
+import type { DocumentResult, FactQuery, FactResult } from './rag'
 
 /** 웹은 개발 서버, Capacitor 앱은 실제 서버 주소. 쿠키를 쓰지 않으므로 출처가 달라도 된다. */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -83,6 +84,10 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
 }
 
 export const api = {
+  ragSearch: (id: string, question: string) => request<DocumentResult>(`/api/debates/${id}/rag/search`,
+    { method: 'POST', body: JSON.stringify({ question }) }),
+  ragFacts: (id: string, body: FactQuery) => request<FactResult>(`/api/debates/${id}/rag/facts`,
+    { method: 'POST', body: JSON.stringify(body) }),
   search: (q: string) => request<{ items: StockItem[] }>(`/api/stocks/search?q=${encodeURIComponent(q)}`),
   stock: (ticker: string) => request<StockDetail>(`/api/stocks/${ticker}`),
   createDebate: (ticker: string) =>

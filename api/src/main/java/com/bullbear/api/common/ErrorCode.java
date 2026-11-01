@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public enum ErrorCode {
 	INVALID_REQUEST(HttpStatus.BAD_REQUEST),
+	SNAPSHOT_NOT_READY(HttpStatus.CONFLICT),
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED),
 	/** 사용자 판정 전에는 중재자 판정을 볼 수 없다. */
 	SEALED(HttpStatus.FORBIDDEN),
