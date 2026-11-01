@@ -1,0 +1,169 @@
+{
+  "schema": "rag-live-e2e-v1",
+  "response_stubs": false,
+  "source_sha256": "30c662ec08e6a0393dc233cf1bc37f269b3a979f5c42c15b9f59ad364c62585e",
+  "checks": [
+    "real_snapshot_close_and_per_match_saved_values_and_render",
+    "wrong_date_is_evidence_absence_not_success_or_transport_error",
+    "repeat_context_identity",
+    "wrong_unit_rejected",
+    "mixed_fields_400",
+    "unauthenticated_401",
+    "post_snapshot_generation_rejected_503",
+    "verdict_sealed_403",
+    "post_publication_fixture_document_search_renders",
+    "no_documents_renders",
+    "mobile_no_overflow",
+    "no_browser_exceptions",
+    "external_browser_assets_blocked",
+    "no_debate_start",
+    "no_sealed_payload"
+  ],
+  "results": {
+    "close": {
+      "snapshot_id": "005930-20261028-c637dc2629",
+      "context_id": "KCTX.2aae3d509108cf9b23cd0864cf879e91a5eaafc836f3485a4ce334d45c963443",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-10-28",
+      "mode": "facts",
+      "answerability": "supported_fact",
+      "reasons": [],
+      "facts": [
+        {
+          "fact_id": "PX.CLOSE",
+          "ticker": "005930",
+          "value": 242000,
+          "unit": "KRW/share",
+          "as_of": "2026-10-28",
+          "source": "krx-openapi",
+          "inputs": [],
+          "verified_lineage": [
+            "PX.CLOSE"
+          ]
+        }
+      ]
+    },
+    "per": {
+      "snapshot_id": "005930-20261028-c637dc2629",
+      "context_id": "KCTX.316cd233090f77cd0d4cf8c40c18152b3fc228bb945ca360799d44f1a6ed48fa",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-10-28",
+      "mode": "facts",
+      "answerability": "supported_fact",
+      "reasons": [],
+      "facts": [
+        {
+          "fact_id": "VAL.PER_TTM",
+          "ticker": "005930",
+          "value": 9.39,
+          "unit": "x",
+          "as_of": "2026-10-28",
+          "source": "derived",
+          "inputs": [
+            "VAL.MKTCAP",
+            "VAL.NET_INCOME_TTM"
+          ],
+          "verified_lineage": [
+            "PX.CLOSE",
+            "VAL.SHARES",
+            "VAL.MKTCAP",
+            "FIN.2025FY.NET_INCOME",
+            "FIN.2026H1.NET_INCOME_YTD",
+            "VAL.NET_INCOME_TTM",
+            "VAL.PER_TTM"
+          ]
+        }
+      ]
+    },
+    "wrong_date": {
+      "snapshot_id": "005930-20261028-c637dc2629",
+      "context_id": "KCTX.0d345cfae053f892ad04820f9dff4fbf5294fe0bae9ce42dba3dc4a114b86c60",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-10-28",
+      "mode": "facts",
+      "answerability": "insufficient_evidence",
+      "reasons": [
+        "fact_date_mismatch"
+      ],
+      "facts": []
+    },
+    "wrong_unit": {
+      "snapshot_id": "005930-20261028-c637dc2629",
+      "context_id": "KCTX.1c9a853e416f8997eb32c4db9fc0e08a95f494e80090e35b4268175cb49c29a8",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-10-28",
+      "mode": "facts",
+      "answerability": "insufficient_evidence",
+      "reasons": [
+        "unit_mismatch"
+      ],
+      "facts": []
+    },
+    "old_snapshot_documents": {
+      "error": {
+        "code": "WORKER_UNAVAILABLE",
+        "message": "자료 조회를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요"
+      }
+    },
+    "documents": {
+      "snapshot_id": "E2E.documents-after-publication",
+      "context_id": "KCTX.23d9953e3dc177a1cfc8facc8ab27271bdff71bfac99d89f97956cb6dd1743f0",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-11-01",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "answer_scope": "retrieved_documents_not_verified_numeric_answer",
+      "documents": [
+        {
+          "chunk_id": "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+          "text": "PER은 주가를 주당순이익으로 나눈 비율이다. 이익이 양수이고 같은 산식·기간을 비교할 때 낮은 PER은 이익 대비 가격이 낮다는 뜻이며, 이익이 상대적으로 작다는 뜻이 아니다. 적정 비율은 업종에 따라 다를 수 있다.",
+          "horizons": [
+            "common"
+          ],
+          "applicability": "산식 설명",
+          "limitations": [
+            "7거래일 상승 예측 아님"
+          ]
+        }
+      ]
+    },
+    "no_documents": {
+      "snapshot_id": "E2E.documents-after-publication",
+      "context_id": "KCTX.726a29c97f098a09a5ea57ba1c607849cb0576598bde938a606d7bf5bbcd708f",
+      "ticker": "005930",
+      "snapshot_as_of": "2026-11-01",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [
+        "no_supported_candidates"
+      ],
+      "answer_scope": "retrieved_documents_not_verified_numeric_answer",
+      "documents": []
+    }
+  },
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ],
+  "document_fixture": {
+    "snapshot_id": "E2E.documents-after-publication",
+    "created_at": "2026-11-01T18:31:10.504997+00:00",
+    "scope": "separate_integration_fixture_not_original_market_snapshot"
+  },
+  "audit": {
+    "worker_socket_connect_attempts": 2,
+    "worker_external_connect_attempts": 0,
+    "worker_new_debates": 0,
+    "worker_snapshots": 3,
+    "spring_seeded_debates": 2,
+    "spring_input_tokens": 0,
+    "spring_output_tokens": 0,
+    "spring_cost_usd": 0.0,
+    "original_snapshot_unchanged": true,
+    "object_backend": "local",
+    "archive_backend": "sqlite",
+    "spring_database": "isolated_PostgreSQL",
+    "external_model_calls": 0,
+    "s3_connections": 0
+  }
+}

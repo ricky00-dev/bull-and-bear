@@ -15,6 +15,175 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-02 · Codex · ai-worker, api, web, deploy, docs
+- 한 것: 사용자 요청으로 feat/rag-week-one의 기존 변경을 계약·워커 저장/검색·Spring/웹 연동·평가/운영 문서의 4개 커밋으로 정리. 원래 체크아웃의 고유 작업 로그12개와 이전 RAG 우선순위를 통합·이력 보존하고 최신 RAG 문서를 사용. develop 기존47커밋은 재작성하지 않으며 새 브랜치 푸시와 develop 대상 초안 PR 준비.
+- 진행 중: 구현·자료 보존 완료, 계약 공동 검토와 운영 품질 승인은 미완료. 기본 비활성 유지.
+- 다음: 초안 PR에서 v0.8 계약 및 저장/검색 경계 공동 검토, 사람 검수 corpus·독립 평가셋 확보와 실제 배포 환경 검증 후 병합 판단.
+- 막힘·결정 필요: 이번 최종 Python577 passed/76 skipped(72.25초; PostgreSQL/pgvector·외부 Spring 환경 미설정), Java RAG8+HTTP2+채점5 총15통과, 웹build/lint 통과. Python 최초는 패키지 소스 경로 누락으로 수집 실패 후 PYTHONPATH=src 지정해 통과. Java 최초 Mockito inline attachment 실패 후 영문 java.io.tmpdir로 재실행 통과(제품 코드 변경 없음). PostgreSQL 포함647개·브라우저·복원은 이전 기록이며 이번 재실행 아님. 변경 JSON33개 파싱 및 비밀 패턴 점검; 탐지1개는 테스트용 private-secret 가짜 DSN. 실제 모델/시장/S3/배포 호출 없음. 원래 체크아웃 파일은 보존.
+
+
+## 2026-11-02 · Codex · api, web, ai-worker, docs
+- 한 것: 현재 프로젝트 분석. origin fetch 후 최신 develop 2cca67f, 현재 체크아웃 83247f2(47커밋 뒤), feat/rag-week-one 미커밋 확장을 구분. 핵심 판정 봉인·SSE·단일 비교·RAG 통합 및 별도 PostgreSQL/pgvector·문서/Fact 조회·snapshot-generation 고정·로컬 복구 검증 기록 확인. 열린 PR #26 확인.
+- 진행 중: 분석 완료. 기능 코드·브랜치·다른 worktree 변경 없이 기존 문서 변경 보존.
+- 다음: 최신 통합본 기준 작업 상태 정리, rag-week-one 변경의 계약 공동 검토·단계별 통합, 사람 검수 corpus/독립 평가셋 확보, 실제 배포 환경과 모델 반복 완료율·비용 검증. 최신 일정은 예비11/4·엔진고정11/10·정식11/11·코드프리즈11/16.
+- 막힘·결정 필요: 이번 직접 검증은 현재 체크아웃 Python 91 passed/외부 Spring 2 skipped 및 웹 build/lint 통과. 최신 통합본의 476개와 후속 worktree의 647개 통과·브라우저/복원 검증은 기존 기록이며 재실행하지 않음. 실제 모델/공급자/배포·전체 Spring 검증 없음. session-brief.sh CRLF 오류로 실패하여 git/문서/gh 직접 조회로 대체. 사람 검수 자료 부재·Docker/운영환경 미검증은 후속 작업의 readiness 감사 기록 기준.
+
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 사용자 요청으로 docs/RAG-LONG-TERM.md 작성. TradingAgents/FinMem/FinRobot/FinanceRAG 조사와 origin/develop 2cca67f의 RAG-DATA·파일럿·계약·최신 일정을 반영. 관리형 PostgreSQL+pgvector+객체 저장소, 기존 BM25 파생 색인 재사용, 시점/검수/공개 근거 경계, 증분 수집·작업 lease·평가·용량·비용·이관/롤백·단계별 PR 계획 수립. ROADMAP에는 링크만 추가.
+- 진행 중: 설계 제안 완료, 구현·클라우드 생성·비용 집행·운영 활성화 없음. 기존 미커밋 ROADMAP/WORKLOG 보존.
+- 다음: 최신 develop 기준 단계0의 예산·자료 이용 범위·사람 검수 담당·시점 정책 고정 후 검수 평가셋 및 저장 어댑터 PR부터 진행. 장기 이전은 11/10 엔진 고정·11/11 정식 운용과 분리.
+- 막힘·결정 필요: 현재 RAG가 knowledge/research 배경 전용이고 사람 승인 패키지·뉴스/공시 근거 검색은 후속 구현임을 명시. 월 클라우드 예산과 모델/인스턴스는 미확정. 단계0~5 19~30 집중 작업일은 추정이며 실제 운영 성능/비용을 검증하지 않음. 문서 점검만 수행, 기능 테스트 미실행. 계약 파일 변경·커밋·푸시 없음.
+
+## 2026-11-01 · Codex · docs
+- 한 것: 공식 논문·GitHub 원본 코드로 유사 프로젝트 조사. TradingAgents 현재 Markdown 판단 기억/SQLite 체크포인트, FinMem 종목별 FAISS와 최신성·중요도 기억, FinRobot V0 Chroma 문서 검색과 V2 BM25 모듈, FinanceRAG dense 검색·재순위화 확인. 다종목=클라우드 벡터 DB 필수라는 일반화는 근거 부족이며 관리형 PostgreSQL+pgvector는 우리 운영 요구에 따른 후보로 구분.
+- 진행 중: 없음. 외부 코드 실행·설치 및 프로젝트 기능 변경 없음.
+- 다음: 문서 근거 검색·공통 지식·과거 판단 기억을 분리 설계하고 종목/시점/문서 버전 필터와 한국어 평가셋을 유지한 검색 방식 비교.
+- 막힘·결정 필요: 공개 연구/예제 구현 조사이며 해당 서비스의 실제 클라우드 운영 규모·성능 및 한국 7거래일 예측 효과는 확인하지 않음. 출처: https://github.com/TauricResearch/TradingAgents/blob/main/tradingagents/memory/log.py , https://github.com/pipiku915/FinMem-LLM-StockTrading/blob/main/puppy/memorydb.py , https://github.com/AI4Finance-Foundation/FinRobot/blob/master/finrobot_autogen/finrobot/functional/ragquery.py , https://github.com/AI4Finance-Foundation/FinRobot/blob/master/finrobot_desktop/finrobot/engine/primitives/rag.py , https://github.com/linq-rag/FinanceRAG , https://arxiv.org/abs/2411.16732 . 테스트 미실행.
+
+## 2026-11-01 · Codex · docs
+- 한 것: 현재 SQLite FTS5/BM25와 임베딩 벡터 검색의 차이를 공식 SQLite/Qdrant/pgvector 문서와 기존 코드 분석에 근거해 비교. 현 단계는 BM25 유지와 검수 지식집·독립 평가셋 우선, 의미 검색 누락이 확인되면 하이브리드 실험을 권고.
+- 진행 중: 없음. 기술 선택 설명이며 구현·설정 변경 없음.
+- 다음: 동일 지식집/스냅샷으로 검색 적합성·불필요 문단·토론 완료율을 측정한 뒤 벡터 추가 여부 결정.
+- 막힘·결정 필요: 벡터 방식 비교 실험은 미실행이며 프로젝트 적합성은 현재 6문단 실험 지식집·개념 라벨 질의·실모델 실패 기록에 근거한 판단. 테스트 재실행 없음.
+
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 현재 작업 트리(83247f2)와 로컬 origin/develop(3cc4884), worker-integration(51cf34f)의 RAG 구현·통합·평가 상태 분석. origin/develop에 PR #24/#25 병합 및 RAG 포함 확인. SQLite FTS5/BM25 검색, 불변 저장·시점 필터·HTTP 배경 주입·장애 정책 구현과 기본 비활성, 검수 전 6문단 corpus 및 실모델 최종 1/4 완료 기록을 구분.
+- 진행 중: 없음. 기능 코드·기존 ROADMAP/WORKLOG 변경 보존, 분석 기록만 추가.
+- 다음: 사람이 검수한 지식집·독립 평가셋, 실제 오류/검증기 오탐 분리, 반복 실모델 완료율·비용·지연 확인 후 제한적 활성화 판단. 공급자 자동 적재·검색 적합성 보완.
+- 막힘·결정 필요: 통합 worktree에서 RAG 검색/HTTP/지식집/평가 집중 테스트 71 passed(21.01초). 해당 RAG 코드·대상 테스트는 origin/develop과 동일함을 확인. 전체 테스트·실제 공급자/유료 모델·배포 확인 및 원격 fetch 미실행. session-brief.sh는 기존 CRLF 오류로 실패해 git/문서 직접 확인으로 대체.
+
+## 2026-10-31 · Codex · docs
+- 한 것: 사용자 요청으로 현재 감독 채팅에 30분 주기 heartbeat 자동화(24) 활성화. 2026-11-01 22:57 KST까지 목표별 3개 세션 결과 검토·후속 지시·격리 통합·회귀 및 Spring fixture 통합 테스트를 이어가도록 설정.
+- 진행 중: 각 세션 개발과 자동 감독. 종료 시각 또는 목표 완료 시 자동화 일시정지 지시 포함.
+- 다음: 완료 세션 diff/검증 결과 확인 후 별도 통합 worktree에 반영하고 전체 검사 수행, 결과 기록.
+- 막힘·결정 필요: 신규 유료 호출·배포·원격 push·develop/main 병합은 승인 범위에서 제외. 자동화는 실행 환경 가용성과 사용량 한도에 영향을 받으며 24시간 무중단 실행 보장은 아님.
+
+## 2026-10-31 · Codex · ai-worker, docs
+- 한 것: 사용자 요청으로 목표별 작업 세션 3개 생성: FastAPI·Spring 연동 안정화(01a19239-6aa3-7ad0-87db-28e559c9d570), 워커 토론 품질·검증기 평가(01a19239-7003-75b0-8f5c-6d41bc205076), 워커 데이터 시점·채점 정합성(01a19239-75e3-7623-9e29-19a00c41ab4a). 기준 커밋 5d2a8e5, 각 세션 전용 격리 작업 및 파일 소유 범위를 지시.
+- 진행 중: 세션별 구현·회귀/fixture 검증과 독립 평가 기록. 기존 worker-integration 미커밋 진단 도구·문서 보존 및 중복 확인 지시.
+- 다음: 세션별 결과·변경 파일·미검증 사항을 확인한 뒤 의존 변경 조정과 통합 검증. 세션 생성 자체를 구현 완료로 보지 않음.
+- 막힘·결정 필요: 이번 요청에는 신규 유료 호출 예산이 없어 실제 Claude 호출·배포·스케줄 활성화는 제외. 지속 실행 자동화는 생성하지 않음. 원본 ROADMAP/WORKLOG 변경 보존, 기능 코드 변경 없음.
+
+## 2026-10-31 · Codex · docs
+- 한 것: 워커/FastAPI 완성도와 잔여 기간 평가. 현재 작업 트리와 feat/worker-operational-readiness의 통합 코드·운영 준비 기록을 구분해 확인. 현재 트리 Python 91 passed/외부 Spring 2 skipped 재확인. FastAPI 핵심 구현과 fixture 통합 완료, 실제 Claude HTTP 품질·비용·지연 및 전향 운용 미완료로 판단.
+- 진행 중: 없음. 기능 코드·브랜치 변경 없이 기존 문서 변경 보존.
+- 다음: 운영 준비 브랜치 통합 확정, 키·모델 접근 및 호출 예산 준비, 실제 HTTP 반복 검증과 검토기 오탐 개선 후 제한적 전향 운용. 1인 하루 집중 4~6시간 기준 전시용 5~8작업일, 운영 안정화 포함 8~12작업일의 조건부 추정.
+- 막힘·결정 필요: 최신 브랜치의 385개 전체/후속 12개 회귀 및 Spring fixture 2개 통과는 기존 기록이며 이번에 재실행하지 않음. fetch·외부 공급자·유료 모델·배포 검증 미실행. 키 누락은 10/30 기록 기준. session-brief CRLF 오류로 git/로그 직접 확인, gh 열린 PR 조회 빈 결과. 실제 완료율에 따라 일정 증가 가능, RAG 품질 검증·7거래일 성과 축적은 별도.
+
+## 2026-10-30 · Codex · docs
+- 한 것: 현재 작업 트리·ROADMAP·웹/워커 코드와 feat/rag-hardening 및 저장된 원격 paired-baseline 브랜치를 대조해 미구현, 미통합, 운영 검증 미완료 항목을 구분. FastAPI와 RAG 검색/비교 실행기의 구현 완료 및 실제 RAG 파일럿 1/4 완료·운영 보류 기록 확인.
+- 진행 중: 없음. 기능 코드 변경 없이 기존 문서 변경 보존.
+- 다음: 데이터 안정화와 RAG 브랜치 통합, 검증기 오탐/실제 추론 오류 분리 평가, 실제 운영 HTTP 경로 검증·전향 운용, 전시 화면 구현.
+- 막힘·결정 필요: 이번에는 테스트·외부 API·배포 확인 및 fetch 미실행. session-brief.sh는 CRLF 오류로 실패해 git/로그를 직접 확인; gh 열린 PR 조회는 빈 결과. 운영 상태는 문서 기록 기준이며 최신 원격 변경은 미확인.
+
+## 2026-10-30 · Codex · docs
+- 한 것: 사용자 요청으로 워커 FastAPI 구현 계획을 ROADMAP·worker-api·워커 README·서버 구조와 대조해 설명. HTTP/SSE 구현 완료 기록과 로드맵 미체크 상태, 운영 검증 및 RAG 후속 우선순위를 구분.
+- 진행 중: 없음. 기존 ROADMAP 및 WORKLOG 변경 보존, 구현 코드 변경 없음.
+- 다음: 안정화 변경 통합 확인 후 실제 HTTP 모델 경로·Spring 연결·전향 운용 검증, RAG 평가셋과 BM25 기준 측정 진행.
+- 막힘·결정 필요: 이번 작업은 문서/코드 구조 확인이며 테스트·외부 API·배포 상태는 검증하지 않음. session-brief.sh는 CRLF 오류로 실패해 git 상태와 로그를 직접 확인; 열린 PR은 미확인.
+
+## 2026-10-30 · Codex · docs
+- 한 것: 사용자 요청으로 docs/ROADMAP.md에 RAG 구현 우선순위 6단계와 완료 기준·평가 조건 추가. 통합 → 검수 지식집/평가셋 → BM25 기준 측정 → 한국어 검색 개선 → 실제 토큰/토론 품질/비용 검증 → 제한적 운영 순서. 기존 M2 전향 운용과 코드 프리즈 우선 원칙 유지.
+- 진행 중: docs/rag-implementation-priorities 브랜치의 문서 변경만 수행. 기존 WORKLOG 검토 기록 보존. 구현·설정 변경 및 커밋·푸시 없음.
+- 다음: jangwonii가 RAG 브랜치와 develop 안정화 통합 범위를 확인하고 실제 스냅샷 기반 검수 평가셋 준비.
+- 막힘·결정 필요: 유료 비교 전 모델·반복 수·비용 상한·운영 허용 기준 확정 필요. 시간 초과 시 RAG 없이 진행하는 정책은 구현 예정안이며 아직 적용하지 않음. 문서 변경이므로 테스트 미실행, git diff --check로 확인.
+
+## 2026-10-30 · Codex · ai-worker, docs
+- 한 것: 사용자 요청으로 FastAPI/워커 분석·검토만 수행. 로컬 develop 83247f2와 저장된 origin/develop 447cdf4의 후속 안정화 차이를 읽기 전용으로 비교. 로컬 DART 013 영구 캐시를 외부 호출 없는 모의 응답으로 재현. 초기 시세 동기 조회 지연, 정보 시점/채점 기준 차이, 재시작 시 사용량 미보존, 코스피 비교 입력 부재 검토. 구현 코드 변경 없음.
+- 진행 중: 없음. 로컬은 origin/develop 추적 참조보다 3커밋 뒤이며 fetch/pull/브랜치 변경은 하지 않음.
+- 다음: 기존 안정화 변경 반영 여부 확인 후 판단 시각·기준 가격 정책 및 재시작 시 비용 집계 보완 검토.
+- 막힘·결정 필요: 기존 .venv Python으로 91개 통과, 외부 Spring 통합 2개 환경 미설정으로 건너뜀. 실제 공급자/유료 LLM·Docker 통합 및 후속 커밋 테스트 미실행. session-brief.sh는 CRLF/WSL 오류로 실패하여 git·로그를 직접 확인. 변경 파일은 본 작업 로그뿐.
+
+## 2026-11-02 · Codex · scripts, docs
+- 한 것: Ubuntu 서명 패키지 인덱스에서 pg_dump/pg_restore16.15를 작업 데이터에 압축 해제(시스템 설치 없음). 전용 PostgreSQL16.4+pgvector DB로 rollover 자료를 이관 후 전체 custom dump/빈 DB 복원. 21테이블·3identity시퀀스·36trigger·64제약·36인덱스·141컬럼/extension 비교 통과. 원본 로컬 파일/receipt 대응 복원, 앱2회 시작 문서/Fact8개 기존 응답 일치, 제한 SELECT/INSERT 계정2개 조회·감사 저장 성공 및 UPDATE/DELETE/TRUNCATE/CREATE 거부. 임시 역할 제거. scripts/rag-postgres-recovery.py와 docs/evaluations/rag-recovery-postgres.md/json, docs/RAG-READINESS-AUDIT.md 추가.
+- 진행 중: 기존 feat/rag-week-one 미커밋 변경 유지. 로컬에서 독립적으로 수행할 수 있는 백업/복원·권한 검증까지 완료했지만 전체 운영 준비는 미완료. 사람 검수 corpus/독립 평가셋 부재는 연속 목표 턴에서 동일하게 남아 있으며 사용자가 없다고 확인했다.
+- 다음: 사람 검수 자료·담당자와 품질 기준, Docker 실행 가능한 검증 환경·운영 규모/허용 지연 입력이 확보되면 감사표의 미완료 항목을 재개. 외부 LLM/임베딩·S3·실서비스 배포는 계속 제외.
+- 막힘·결정 필요: 목표 완료 감사에서 품질/컨테이너·운영환경 검증은 입증 불가. Windows/WSL에 Docker/Podman 없음, WSL 비특권 user namespace도 Invalid argument. 동일 외부 조건이 3개 연속 목표 턴에 남고 로컬 독립 작업을 마쳐 목표 blocked 전환. 최초 apt stale16.10경로404는 로컬 인덱스 갱신으로 해결. 첫 복원 비교의 information_schema 시퀀스0개 누락을 pg_class/비어있음거부로 수정하고 v2 재실행, 제한계정까지 추가한 최종v3 통과. 최종 dump0.915초/restore0.794초는 작은 fixture 관측값이며 RTO 아님. 합성벡터2개/외부모델0, 감사10건 증가·기존context 동일. DB rag_restore_v3_source/restored 및 data/rag-postgres-recovery-v3 보존, 전용 PostgreSQL/앱 종료. 운영 TLS/IAM/역할·ACL복원·클라우드·대규모부하 미검증. diff 검사 통과.
+
+## 2026-11-02 · Codex · scripts, docs
+- 한 것: 실제 보존 rollover fixture로 SQLite backup API/새 경로 복원·파일19개 SHA-256·DB3개 논리/무결성 검사를 실행하는 rag-recovery-drill.py 추가. 손상 백업은 목적지 생성 전 거부, 원본 receipt 유지, 복원 앱2회 시작 후 두 종목 문서/Fact8개 응답 전체가 기존 브라우저 결과와 동일. rag-load-probe.py로 동시1/4/8·문서/Fact 총192개 실제 앱 요청 모두200/동일 응답. 보고서 docs/evaluations/rag-recovery-load-local.md 및 JSON2개 기록.
+- 진행 중: feat/rag-week-one 기존 변경과 함께 미커밋. 목표 활성 유지. 사용자 답변으로 사람 검수 corpus/독립 평가셋이 현재 없음을 확인. 위 자료는 기존 실제005930+모의000660 및 종목 격리 fixture이며 품질 승인이 아니다.
+- 다음: PostgreSQL 전체 백업 복원 검증 도구 확보와 로컬 복원, Docker/실배포 환경 검증 가능 여부 확인. 실제 corpus 확보·사람 검수 없이는 검색 품질 승인 불가. 운영 배포/S3/외부 모델 호출은 제외 유지.
+- 막힘·결정 필요: 최초 복원 실행은 Windows asyncio 내부 socketpair까지 차단해 실패, loopback만 허용하고 새 경로에서 재실행 통과. 복원 데이터 ai-worker/data/rag-recovery-drill-v2 보존. 외부 접속0·모델0, 실행 앱 모두 종료. 로컬 TestClient/SQLite 제한 부하로 Spring/네트워크/운영 규모·RTO를 주장하지 않음. Docker/Podman은 Windows와 WSL Ubuntu에서 발견되지 않음. 현재 PostgreSQL 번들에 pg_dump/pg_restore 없음. 전체 회귀는 제품 코드 변경 없이 이전647통과 결과 유지, 이번 실행 스크립트는 실제 자료로 직접 검증. diff 검사 통과.
+
+## 2026-11-02 · Codex · ai-worker, web, deploy, docs
+- 한 것: 운영 준비 목표 등록 후 기존 feat/rag-week-one 변경 보존. 최초 HTTP snapshot과 generation/게시 receipt(as_of·committed_at·파일SHA-256)/snapshot 해시를 SQLite 한 트랜잭션으로 고정. 설정 교체·재시작 뒤 과거 연결 라우팅, receipt 손상/누락·미연결503, Fact 독립 유지. legacy observed context 기반 bind-snapshot(dry-run/명시apply/멱등), check-bindings 점검, 유지보수 시 토론 상태 보존 구현. 기존 snapshot/context 불변. Dockerfile rag-postgres 의존성·opt-in compose.rag.yml·웹 설명·운영 이관/백업/교체/복구 절차 추가. Spring은 기존 저장 snapshot 전달 계약 그대로 사용.
+- 진행 중: 기존 변경과 함께 미커밋. 운영 준비 전체 완료/배포 선언은 보류. 사람 검수 다종목 실제 corpus·독립 평가셋 위치를 사용자에게 질의함. 실제 수집 저장본005930과 기존 fake+fake-news000660, 종목 격리 fixture를 사용했으며399는 실주가 아님. S3/외부 모델 호출/실서비스 배포 없음.
+- 다음: 사람 검수 corpus가 있으면 독립 품질 평가. Docker 환경에서 이미지/compose 기동, 운영 계정/TLS·전체 백업 복원·부하 검사, 담당자 공동 검토 후 배포 여부 결정. 자세한 절차 docs/RAG-PUBLICATION-RUNBOOK.md, 결과 docs/evaluations/rag-rollover-live.md/json. 운영 준비 목표는 해당 검증 간극이 남아 활성 유지.
+- 막힘·결정 필요: 실제 PostgreSQL/pgvector 포함 전체647 passed/외부 Spring5 skipped(130.14초), 이후 실제 PostgreSQL archive+context 연결 검사 추가해 binding6 passed(8.53초). Spring RAG8+HTTP client2 통과, bootJar·웹build/lint·offline wheel(binding 모듈 포함)·diff 검사 통과. 실제 브라우저→Spring→워커 G2설정/재시작 후 G1 과거조회 등16개 통과. 원본 snapshot 바이트·기존context8개 보존, 새 토론0·외부 접속시도0·Spring토큰/비용0. 최초 전체 실행은 PostgreSQL 포트 오설정으로 중단/수정, 다음 전체의 테스트 모형 인자2건 실패를 수정 후 위 최종 전체 통과. Docker 미설치로 이미지 실행/전체 Spring DB 회귀·클라우드 복원·부하 미검증. 검증 서비스 종료, 복사 데이터 ai-worker/data/rag-rollover-e2e와 전용 DB 보존. 원본 체크아웃/키/.env 변경 없음.
+
+## 2026-11-02 · Codex · ai-worker, web, docs
+- 한 것: 색인 게시→파일/receipt·시점 준비 점검→명시적 generation 설정→새 snapshot 저장→적합성 재검사 순서 문서화. 읽기 전용 rag check-generation CLI(여러 --snapshot, JSON/exit code)와 미래 게시·원본 보존·해시 손상·색인 교체 회귀 추가. 실제 웹/Spring/워커/전용 PostgreSQL에 두 종목 저장본 연결, 종목별 전용 fixture 문서2개 게시 후 새 테스트 snapshot2개 저장. 원본 종가 재조회·문서/Fact 종목 격리·동시 요청/반복 context·타 종목/스냅샷 덮어쓰기400·과거 snapshot의 새 색인503 등 브라우저15개 통과. scripts/rag-multistock-prepare.py, web/tests/rag-multistock-live.mjs, docs/RAG-PUBLICATION-RUNBOOK.md 및 JSON 보고서 보존.
+- 진행 중: 기존 변경과 함께 feat/rag-week-one 미커밋. 삼성전자005930은 실제 수집 저장본, SK하이닉스000660은 기존 fake+fake-news 모의 저장본(399는 실제 시세 아님). 문서는 종목 격리용 테스트 자료이며 다종목 실데이터 품질 검증 아님. 스냅샷별 generation 자동 라우팅 미구현, HTTP는 현재 설정 generation 사용. 기존 snapshot/context/구 generation 보존과 CLI 명시적 조회가 필요.
+- 다음: 스냅샷별 generation 고정/조회 라우팅 설계, 사람 검수 다종목 실데이터 corpus 확보 후 품질 검증. 운영 배포/공동 승인·S3는 후순위.
+- 막힘·결정 필요: 워커 회귀87 passed(23.44초), 색인 교체 검사 추가 후 readiness3 passed(6.04초), wheel·웹lint·diff 검사 통과. 별도 DB rag_multistock_e2e와 data/rag-multistock-e2e-v2 보존, 서비스 종료. 외부 모델0/S3연결0/워커 외부 접속시도0·새 토론0/Spring토큰0. 스냅샷 생성 직전에 런타임 사전 검사를 강제하는 변경은 기존 실패/timeout 감사 정책을 바꿔 채택하지 않고 운영 CLI 점검과 기존 HTTP 시간 검증을 유지했다. 전체 Spring 테스트/부하 검증 미실행. session-brief 기존 CRLF 실패로 직접 확인.
+
+## 2026-11-02 · Codex · ai-worker, web, docs
+- 한 것: 실제 FastAPI 워커·Spring worker 프로필·React/Vite·전용 PostgreSQL을 연결해 저장 snapshot 조회 검증. 기존 삼성전자2026-10-28 원본의 종가242000 KRW/share·PER9.39를 실제 브라우저에서 확인. 새 조회 코드의 종가 단위 KRW 오류를 발견해 KRW/share로 수정(웹·계약·fixture·회귀 포함). 문서 검색은 게시 이후 별도 저장 검증 fixture에서 PER 문단/빈 검색 확인. 원본 날짜/데이터 불변, 과거 snapshot의 게시 이후 색인은503 거부 유지. 날짜/단위 근거부족·혼합필드400·무인증401·봉인403·동일context·모바일 UI 총15개 확인. 보고서 docs/evaluations/rag-live-e2e.md/json, 재실행용 worker guard·브라우저 검사 스크립트 추가.
+- 진행 중: 기존 변경과 함께 feat/rag-week-one 미커밋. 단일 종목·작은 corpus 연결 검증이며 운영 검색 품질/부하 검증은 아님. 원본 시장 snapshot에서는 시간 정책상 문서 검색 성공을 주장하지 않는다. 운영 배포·공동 승인 미실행.
+- 다음: 담당자 검토, 운영 색인의 게시/스냅샷 생성 순서 정리, 다종목·독립 검수 corpus 평가. S3는 후순위 유지.
+- 막힘·결정 필요: 실제 브라우저 연결15개·워커 회귀74 passed(12.70초), Spring bootJar·웹 build/lint 통과. 전용 PostgreSQL Flyway7개 적용. 외부 모델0/S3연결0, 워커 외부 소켓시도0·새 토론0·Spring 토큰/비용0. 최초 브라우저는 기존 Google Fonts asset을 로드했고 최종 검사는 외부 asset 차단. 전향/단일/채점 스케줄 비활성. 전용 DB/복사한 데이터/manifest 보존, 검증 서비스 종료. 전체 Spring 테스트 스위트 재실행은 아님. session-brief 기존 CRLF 실패로 직접 확인.
+
+## 2026-11-02 · Codex · api, web, docs
+- 한 것: 사용자 요청으로 Spring·웹 문서/수치 명시적 조회 연동. 토론 화면 자료 찾아보기 패널에서 문서 질문 또는6개 수치 지표/선택 날짜/고정 단위를 제출. 인증된 /api/debates/{id}/rag/search·facts가 저장 토론의 snapshot/ticker를 결정해 /rag/search·facts 호출. 추가/혼합 필드400, 스냅샷 미준비409, 근거 부족/문서 없음200, 워커 장애503 구분. 응답 DTO로 판정/미정의 필드와 반대 유형 결과 제외. 웹에 날짜·출처·문서 한계·오류 표시, 조건 변경 시 결과 초기화. fake 모드는 가짜 수치 대신503 안내. worker-api v0.8 연동 초안과 실행 안내 기록.
+- 진행 중: 기존 변경과 함께 feat/rag-week-one 미커밋. 공동 계약 승인과 운영 배포 미실행. 실제 Python 워커+Spring+웹 전체 연결은 아직 검증하지 않았다. RAG 조회만으로 모델/시장 수집/새 토론을 시작하지 않는다. 기존 토론 모델 실행 기능은 변경하지 않았다.
+- 다음: 담당자 공동 검토, 저장 snapshot/게시된 generation을 가진 HTTP 워커와 Spring·웹 연결 확인, Docker 환경의 전체 회귀 검사. S3 후순위 유지.
+- 막힘·결정 필요: Spring MockMvc→로컬 HTTP stub8개 + 기존 클라이언트4개 총12개 통과, 웹 build/lint 통과. Playwright 모바일390px smoke 통과(모드별 요청, 이전 결과 제거, 근거 부족/문서 없음/503/미준비, 가로 넘침). 테스트 통신은 로컬 stub/브라우저 interception만 사용, 외부 모델0/S3연결0. Docker 명령 미설치로 전체 Spring DB 통합 테스트 미실행. 초기 Mockito inline agent가 Windows 경로에서 실패하여 이 테스트의 비final mock에 subclass maker 지정 후 통과. npm ci는 기존 lock 사용(변경 없음), 기존 의존성 감사11건 보고(별도 수정 안 함). session-brief는 기존 CRLF 오류로 실패하여 상태/로그 직접 확인.
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: 자연어 의도/종목/날짜/단위 추정 정규식을 검색 필수 관문에서 제거. 명시적 DocumentRequest/FactRequest로 Retriever·CLI·HTTP 연결을 분리. POST /rag/search는 질문으로 문서를 검색하고 documents_found로 반환하며 수치 답변 검증으로 표시하지 않는다. POST /rag/facts는 ticker/metric/as_of/unit으로 저장 snapshot의 수치를 조회하고 날짜·단위·결측·출처·미래 근거·입력 계보 검증을 유지한다. 혼합 필드 거부, 기존 /rag/query는 인증 후410과 이전 안내. CLI mode 필수, facts는 generation 생략 가능. context 감사/재생과 기존 토론 경로 유지. worker-api v0.8 구현 초안 및 계획 문서 갱신.
+- 진행 중: 이전 변경과 함께 feat/rag-week-one 미커밋. API 공동 검토·Spring/웹 연동·배포는 미실행. 자연어에서 수치 요청을 자동 추출하지 않으며 호출자가 조회 유형과 수치 필드를 명시한다. Fact 검증은 snapshot 내부 일관성 검사이며 공급자 대사/산식 재계산은 아니다.
+- 다음: 공동 계약 검토와 호출 측의 명시적 검색/수치 조회 연결, 사람 검수 corpus와 새 독립 평가셋 확보. S3 연결은 계속 후순위.
+- 막힘·결정 필요: 실제 PostgreSQL/pgvector 포함 전체638 passed/외부 Spring5 skipped(150.99초), 집중73 passed(15.74초). lock/diff 및 wheel 빌드·모듈 포함 확인. 외부 모델 호출0, S3 연결0, 키/.env 변경 없음. 기존72개 재사용 문서 회귀에서 이전48개 검색 recall83.3→90%, 완전누락3→1. 문서 검색으로 의미가 바뀌었으므로 수치 답변 정확성이나 답 없음 개선의 증거는 아니다. 보고서 docs/evaluations/rag-document-search-regression-v2.json. session-brief는 기존 CRLF 오류로 실패하여 상태 직접 확인.
+
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: 사용자 요청대로 외부 모델 호출 없이 fact-binding-v1 의도/Fact 연결을 실제 Retriever(request=EvidenceRequest)·CLI --request·인증된 POST /rag/query에 연결. snapshot ticker/질문 대상 충돌·날짜/확정 cutoff·단위·결측/비유한 값·출처·입력 계보의 누락/순환/미래/단위 검사. 종가/PER/PBR/ROE/TTM 영업이익률/시총 값과 Fact ID·출처 반환, 수치 근거 부족 시 개념 문단 대체 금지. 개념 질문만 질문 자체로 BM25 검색. 새 HTTP는 저장 snapshot만 사용하고 수집/LLM/임베딩/runner/shadow 호출 없음. context/감사·재생 및 오류/근거부족 분리. worker-api v0.7 추가 구현 초안과 보고서 기록.
+- 진행 중: 이전 작업과 함께 feat/rag-week-one 미커밋. API 추가는 공동 검토 대기이며 Spring/웹 연동·배포 미실행. 기존 v0.6 토론/SSE와 기본 운영 설정 유지. 규칙 기반의 제한된 한국어/6개 수치 지표 지원이며 모호한 대상·기간 변환·미래/장중 수치·혼합 질의는 근거 부족. snapshot 내부 계보 검증이며 공급자 대사나 산식 재계산은 아님.
+- 다음: 공동 API 검토와 Spring 연동, 사람 검수·새 독립 holdout 및 확장 corpus, 없는 금융 개념 오선택/표현 누락 개선. 기존72개를 이번 오류 분석에 재사용했으므로 독립 holdout 성과로 해석하지 않는다. S3 후순위 유지.
+- 막힘·결정 필요: 실제 PostgreSQL/pgvector 포함 전체638 passed/외부 Spring5 skipped(153.05초), 마지막 숫자 요구 표현 보완 후 evidence37 passed(8.77초). 초기 전체 실행은 작업 디렉터리를 바로잡기 위해 중단하고 ai-worker에서 재실행. lock/diff·wheel 모듈 포함 확인. 모델 호출0/API 비용0, S3 연결0. 기존 SQLite72개 회귀에서 이전 검증용48개 음성오류9→4/18·precision66.7→75%·recall90→83.3%·완전누락1→3; 없는 종목 수치6개는 전부 거절, 무관1/없는 개념3개 오선택 잔존. 수치가 실제 있는 경우는 별도 HTTP/검색 fixture로 검증. 전용 PostgreSQL 종료, 기존 pilot DB/cache 보존. session-brief 기존 CRLF 실패로 상태 직접 확인. 키/.env 변경 없음.
+
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: focused-evidence-v1 선택 정책 구현. 고정 배경어 없는 질의, BM25 본문/제목 겹침·전체 최고 점수 비율, dense/hybrid 모델별 거리·최선 대비 band, 전체 문단 상한, 후보별 제외 사유·정상 abstain과 실패 구분. CLI·주 HTTP·shadow에 opt-in 정책 파일/시작 시 고정/모델 버전 검증/감사 연결. 기존 24개 development+새 48개 holdout으로 평가셋72개 확장, development만의 44개 grid 보정 후 정책 고정·실제 small/large 재평가. 전체 문단 기준 음성·정밀도/재현율·양성 누락 지표 추가. 이전 BM25 음성0/6은 한 경로만 검사한 오류였으며 전체 문단6/6으로 정정, 회귀 테스트/기존 보고서 정정 추가.
+- 진행 중: 기존 변경과 함께 feat/rag-week-one 미커밋. holdout에서 개선 BM25 precision66.7%/recall90%/음성9/18·불필요16개(기존140), large dense68.9%/90%/8/18·불필요14개(기존156). small은 음성10/18. 실제 수치 요구와 개념 설명 혼동이 남아 운영 기본 전환 보류. 문서는 기존6개/에이전트 gold이며 사람 검수나 다종목 운영 품질 증거는 아님. S3·운영 활성화 없음.
+- 다음: 사실 수치/개념 의도 구분과 Fact 가용성·시점·단위 검증, 사람 검수·다종목 corpus 확장, 새 holdout 평가. 이번 holdout 결과로 임계값을 재튜닝하지 않음. shadow 정책은 실험 후 생성된 모델별 JSON 사용, 주 경로 기본은 기존 BM25.
+- 막힘·결정 필요: 실제 PostgreSQL/pgvector 포함 전체601 passed/외부 Spring5 skipped(156.64초). 최종 집계 지표 보완 후 selection/vector 집중29 passed(38.35초). lock/diff 검사·wheel 새 모듈 포함 확인. 전용 PostgreSQL 종료, pilot DB/cache는 재현용 보존. 신규 API 모델별120회/4,577토큰, 설정 단가 기준 합계 $0.00068655, 총 예산 $0.05 이내. 기존 unknown 예약 $0.00000524 1건 유지/새 unknown0. 이전 캐시 재사용, 결과·정책·해시/누적 원장을 docs/evaluations/selection-quality-v2에 보존. session-brief 기존 CRLF 오류로 상태 직접 확인. 키/.env·공개 계약·배포 변경 없음.
+
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: 실제 OpenAI small(1536)/large(3072) 임베딩 품질 pilot CLI, 고정 6문서·24질문/해시·snapshot·원장 보고서 추가. 실제 모델별 30회·1,830토큰 호출, 단가 기반 비용 합계 $0.0002745. dense Recall 1.0 대 BM25 0.8333이나 답 없음 오류 6/6으로 BM25 기본 유지. HTTP debate/single에 opt-in 비동기 shadow 연결, 단일 슬롯/별도 reader 제한, 관측 시점 검증, cache-only 기본/명시적 유료 query 예산, 비공개 비교 기록과 PostgreSQL context 감사 구현. 공개 응답·SSE·원래 context/fingerprint 유지. 평가·운영 안내 갱신.
+- 진행 중: feat/rag-week-one의 이전 변경과 함께 미커밋 유지. 실모델 평가는 agent-authored/agent-reviewed 소규모 교육 문단이며 사람 검수/다종목 운영 품질 검증은 아님. 운영 shadow 활성화·유료 HTTP query 호출·S3 연결은 하지 않음.
+- 다음: 사람 검수 다종목 평가 자료와 별도 holdout 구축, 답 없음/불필요 문단 차단 검증 후 small 중심 비용·품질 재비교. 준비된 generation/embedding version으로 제한적 HTTP shadow 운영 관측. 실제 공급자 자동 수집·S3는 후속.
+- 막힘·결정 필요: 신규 shadow/pilot 집중 10 passed. 최초 전체 실행의 single 테스트가 필수 snapshot_id를 빠뜨려 1 failed/590 passed/외부 Spring 5 skipped였고 기존 계약대로 테스트를 수정해 집중 재검증. 수정 후 실제 PostgreSQL/pgvector 포함 최종 전체 592 passed/외부 Spring 5 skipped(139.96초). 전용 PostgreSQL 종료, pilot DB/cache는 재현용으로 보존. lock 검사·wheel 빌드/새 모듈 포함·diff 검사 통과. 최초 inherited API key 실패 예약 $0.00000524는 unknown 1건으로 보존, 별도 검증한 프로젝트 키로 새 revision 수동 재개; 키/.env 수정·출력 없음. 실제 API 청구서 대조·대규모 지연·클라우드/S3·완전 신규 의존성 설치는 미검증. session-brief 기존 CRLF 실패로 상태 직접 확인. 공개 계약 변경 없음.
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: 4일차 pgvector cosine exact·dense/hybrid RRF 검색, 모델/차원/전처리/prefix 버전과 역할별 float32 임베딩 cache, 가격 변경 시 cache 재사용, PostgreSQL 예산 예약/usage 원장·미확정 호출 자동 재호출 차단, 완전한 vector generation ready/시점 검사 구현. 검색은 query cache-only, CLI build/prepare-query/ledger/compare 및 rag retrieve 전략 선택 추가. 기존 필터/문맥 cap·기본 BM25 유지. Alembic0004는 확장 비의존, pgvector 명시 install 분리. 비교 지표·실패/negative/금지 문단 검사, 합성 pgvector 결과 보고서와 실행 문서 추가.
+- 진행 중: 1~4일차 변경을 feat/rag-week-one worktree에 미커밋 유지. 실제 임베딩 API 호출0, 실모델 한국어 품질·가격 확정 미완료. S3 연결은 계속 후순위. HTTP는 BM25이며 dense/hybrid는 CLI·비교 경로; 운영 벡터 전환은 하지 않음.
+- 다음: 실제 모델/단가/예산과 사람 정답셋을 고정한 소규모 품질·negative 평가, HTTP shadow 연결 및 운영 수용 기준 검사. 실제 공급자 자동 수집·S3·클라우드/IAM·복원·대규모 p95는 후속. 미확정 임베딩 예약은 공급자 기록 대사 전 유지; 자동 해제·월 예산 UI는 없음.
+- 막힘·결정 필요: 전체581 passed/외부 Spring5 skipped(129.14초), 최종 negative-case CLI 종료 코드 보완 후 집중18 passed(30.58초), lock/wheel 새 모듈·migration 포함/diff 검사 통과. 실제 PostgreSQL16.4+pgvector0.8.7(공식 소스 f37c13f68b57d2c3472b2214fbcff699d6d34876) 빌드/확장/연산 확인. SDK 누락 헤더는 작업용 경로에 보완, 빌드 데이터 ignored. 합성3case에서 금지 문단0·실행 실패0이나 dense/hybrid는 negative1건 과잉 검색: 실모델 우월성 근거로 해석하지 않음. API adapter는 fake client, 실제 API/S3·완전 신규 설치 미검증. 전용 DB 종료. session-brief 기존 CRLF 오류 유지, 키/.env·공개 계약·운영 활성화 변경 없음.
+
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: 사용자 요청에 따라 S3 연결을 미루고 3일차 캡처 기반 증분 적재 큐 구현. SQLite/PostgreSQL ingest_jobs·불변 ingest_attempts/Alembic 0003, 멱등 등록, 종목별 구간 순서, lease/token fencing·heartbeat·만료 회수, 제한 backoff 재시도, 적재/완료/watermark 단일 트랜잭션, plan/enqueue/run/status CLI 추가. 기존 sync 정규화를 부작용 없이 분리하고 SQLite→PostgreSQL 이관에 큐/시도 기록 보존 및 running 거부 추가. 30종목 두 구간+3종목 정정 fixture, 동시 claim·재시작·실패 격리 검증. 실행 문서/장기 계획 현황 갱신.
+- 진행 중: 1~3일차 구현을 feat/rag-week-one worktree에 미커밋으로 유지. 이번 큐는 저장된 공급자 캡처 대상이며 실시간 공급자 수집/HTTP 429 재시도·자동 스케줄은 아직 없음. S3 실제 연결/운영 활성화 미실행, 로컬 객체 저장으로 검증.
+- 다음: pgvector exact 검색·임베딩 버전/비용·BM25/dense/RRF 평가. 실제 수집 producer·기업 연결 정규화·스케줄러·S3·대규모 지연/복원은 별도 후속. run은 현재 due 작업만 처리하므로 재시도는 backoff 후 다음 run에서 재개; 자동 상주 worker는 미구현.
+- 막힘·결정 필요: 실제 격리 PostgreSQL16.4 포함 전체564 passed/외부 Spring5 skipped(97.56초), 최종 상태 출력 보완 후 CLI1 passed. queue 신규31개 검사, lock/wheel 모듈·migration 포함/diff 검사 통과. 외부 공급자/실제 S3/TLS/IAM/유료 모델·완전 신규 의존성 설치 미검증. 같은 문서를 종목별 다른 태그로 정규화하면 기존 hash 규칙상 상충 revision이 될 수 있어 공통 원문/종목 연결 정규화가 필요함을 문서화. 전용 PostgreSQL 종료. 기존 session-brief CRLF 오류로 상태/로그 직접 확인. 공개 계약·키/.env 변경 및 배포·자동 스케줄 활성화 없음.
+
+
+## 2026-11-02 · Codex · ai-worker, docs
+- 한 것: feat/rag-week-one에서 2일차 원문·관측·버전·청크·검수 PostgreSQL 어댑터/Alembic 0002, 로컬/S3 불변 객체 저장과 검증 캐시, SQLite 읽기 전용 dry-run/원자적 이관/copy-objects, generation 해시 등록·push/fetch·원 게시 시각 보존을 구현. HTTP·RAG CLI·corpus CLI에 backend 설정 연결. 기존 검수 거절/시점/정정·철회 규칙과 공개 계약 유지. RAG-WEEK-ONE 설치·설정·이관·캐시 준비 절차 및 장기 계획 현황 갱신.
+- 진행 중: 1~2일차 코드 구현 완료, 실제 운영 데이터/클라우드 cutover와 활성화는 미실행. HTTP 요청/SSE 상태는 여전히 로컬; 벡터 검색은 아직 없음. 이번 변경과 이전 1일차 변경은 같은 worktree에서 미커밋 상태로 유지.
+- 다음: 3일차 증분 적재 작업 lease·재시도·다종목 fixture 검증. 클라우드 전환 시 writer 정지→원문/컨텍스트 이관→기존 generation push→각 워커 fetch→설정 전환. 이후 pgvector exact/평가/예산과 실제 클라우드·복원·지연 검사.
+- 막힘·결정 필요: 전체 Python 532 passed/외부 Spring 5 skipped(81.09초); 최종 원문 누락 무결성 처리 보완 후 관련76 passed(38.39초), wheel/lock/diff 검사 통과, 전용 PostgreSQL 종료. 실제 PostgreSQL16.4에서 원문 도메인 14개 규칙 재사용·동시성·이관 rollback·검수 거절·검색 payload/context ID 일치·새 워커 generation 복원 확인. S3는 Stubber 검증이며 실제 S3/TLS/IAM·대규모 지연은 미검증. 초기 검사에서 Alembic version schema 경로 및 SQLite 전용 잠금 SQL 문제를 찾아 수정 후 통과. 이관은 전체를 메모리에 적재하고 목적지 empty/동일 상태만 허용; 운영 아카이브 병합/자동 GC는 미지원. 완전 신규 의존성 설치 미검증(기존 로컬 deps 참조 venv). session-brief 기존 CRLF 오류는 유지, 키/.env/data·공개 계약 변경 없음.
+
+
+## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 1주 구현 요청에 따라 origin/develop 2cca67f fetch 확인 후 feat/rag-week-one 격리 worktree 생성. RAG-LONG-TERM을 30종목·7일 시험 운영 범위로 수정하고 RAG-WEEK-ONE 실행 안내 추가. 1일차로 ContextRepository SQLite/PostgreSQL, Alembic 전용 스키마, 읽기 전용 SQLite 컨텍스트/감사 이관·dry-run·replay CLI, HTTP/CLI 선택 연결·preflight·비밀 DSN 보호·감사 fingerprint를 구현. 기존 기본 SQLite와 공개 계약 유지.
+- 진행 중: 1일차 구현·검증 완료, 전체 1주 작업은 진행 중. 현재 원문/검수/FTS generation·HTTP 상태는 로컬이며 pgvector/객체 저장소·클라우드 배포는 아직 미구현/미실행. 원본 폴더의 사용자 문서 변경 보존, 갱신 계획·진행 문서도 원본에 복사.
+- 다음: 같은 worktree에서 2일차 원문·검수 저장 어댑터와 객체 저장소 이관 구현. 이후 증분 적재·벡터 검색·shadow·운영 검증 순서. 실제 클라우드 계정/예산·임베딩 모델 및 사람 검수 기준 준비 필요.
+- 막힘·결정 필요: 실제 격리 PostgreSQL16.4 포함 집중71 passed; 최종 전체506 passed/외부 Spring5 skipped(61.61초). 첫 전체 실행은 하위 프로세스 PYTHONPATH 누락1건 후 환경 수정·전체 재검증. uv lock·wheel/migration 포함·diff 검사 통과. 기존 로컬 의존성 참조 venv로 검증; 완전 신규 설치·실제 클라우드/TLS·시장 공급자/유료 모델·외부 Spring 검증 미실행. 테스트 PostgreSQL 종료, 키/.env/data 커밋 없음. 코드 커밋·push·병합·운영 스위치 변경 없음. session-brief는 기존 CRLF 오류로 git/로그 직접 확인.
+
 ## 2026-11-01 · Codex · ai-worker, docs
 - 한 것: 사용자 현재 작업 push·병합 요청에 따라 origin fetch 후 비교. develop3cc4884 대비 작업38517df는4커밋 ahead/0 behind, 미커밋0, semantic-review-context 전체 포함 확인. 현재 브랜치 Python484 통과/실패0/외부5 생략(56.83초), diff 공백 및 키/.env/data 제외 검사 통과.
 - 진행 중: 검토기 문맥/기간 보완·실제 Claude 비교 기록·RAG 적재 실행기를 하나의 develop PR로 push/병합. 최종 검증 기록 외 제품 변경 없음.
