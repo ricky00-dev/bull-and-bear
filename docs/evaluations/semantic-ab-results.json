@@ -1,0 +1,742 @@
+{
+  "protocol_sha256": "3966f07dbf8f06786218bc3164824a2eab2e9e418a4704c2ff33548aa35e09e4",
+  "summary_sha256": "f6b4bc4ea81b459ec1ea7f2befb9ca1abf7a197b7841cfbaca812d16ffb658b3",
+  "runner_sha256": "931822f3e42ff632f01415be2ff966f3f604a26589d0642d18b1dde6ad0d1286",
+  "baseline_revision": "3cc4884",
+  "modified_revision": "a0a3c89",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "max_tokens": 4096,
+  "requests": 72,
+  "usd_limit": 3,
+  "usage_priced_usd": 0.84673,
+  "input_tokens": 320940,
+  "output_tokens": 20485,
+  "human_reviewed": false,
+  "cases": [
+    {
+      "id": "A2",
+      "group": "original",
+      "payload_sha256": "1be970f9dee6a0ef7f0ba441a69a6cfd85d1e3f624c0e09bce55daed66a3769b",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.014226
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01231
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01292
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.014296
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.014196
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01295
+        }
+      ]
+    },
+    {
+      "id": "A3",
+      "group": "original",
+      "payload_sha256": "ded896fd25b937557f5b3845b96636bc96e9df96d0d2b2642fa9b265fea4a937",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010764
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "horizon_mismatch",
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01787
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01607
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010764
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010764
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01366
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "group": "original",
+      "payload_sha256": "ec90ccae41492c21ba5db8fd37249bc9dddaf034883825bb02632ce7e4dc213c",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.01375
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013054
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013444
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.01356
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01322
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.012944
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "group": "original",
+      "payload_sha256": "b3b177a40b3b1fee3f7ccd7b9f92af81fd822dbf17353de1bbfa2089c9a869eb",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010684
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch",
+            "contradiction",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01473
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch",
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01529
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010684
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.010684
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch",
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01534
+        }
+      ]
+    },
+    {
+      "id": "N1",
+      "group": "normal",
+      "payload_sha256": "f43a0fb22ccb62446808a7ccf2e3a0fb0c4a2d1f71ef1a259253f3db32a5f43d",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.010516
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.00943
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.00943
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.010326
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "horizon_mismatch"
+          ],
+          "cost_usd": 0.010546
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.00943
+        }
+      ]
+    },
+    {
+      "id": "N2",
+      "group": "normal",
+      "payload_sha256": "9e01e1f8b13703de5d62bfb173b36f7fd0db2f481cb01324c23ad7b0136b520d",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009848
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "contradiction"
+          ],
+          "cost_usd": 0.013454
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.010664
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009848
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009848
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.011274
+        }
+      ]
+    },
+    {
+      "id": "N3",
+      "group": "normal",
+      "payload_sha256": "570141d0ceb7233472118aef5bc875af0cd15d4a9bcda2a6417eec4f498b001d",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.007838
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009502
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009502
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.007838
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.007838
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009502
+        }
+      ]
+    },
+    {
+      "id": "N4",
+      "group": "normal",
+      "payload_sha256": "05a0f03dec3b3a1f343f2b18da1331c292a5630996a8a727db0a86683a22a827",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009878
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.008214
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.008214
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009878
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.009878
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": false,
+          "codes": [],
+          "cost_usd": 0.008214
+        }
+      ]
+    },
+    {
+      "id": "E1",
+      "group": "error",
+      "payload_sha256": "e447d4ac5c037a55122b18bd626684ba6411692e1d9ec973cb4f33dea765cc7a",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01204
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "concept_error"
+          ],
+          "cost_usd": 0.012054
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "concept_error"
+          ],
+          "cost_usd": 0.011814
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01247
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01223
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "concept_error"
+          ],
+          "cost_usd": 0.011964
+        }
+      ]
+    },
+    {
+      "id": "E2",
+      "group": "error",
+      "payload_sha256": "76a7d71fe4e0cf513758dddf178bfdf3b3c0a9171251e15db0444d74dddf8746",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013344
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.0123
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01216
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013924
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013544
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01172
+        }
+      ]
+    },
+    {
+      "id": "E3",
+      "group": "error",
+      "payload_sha256": "fa70f81b03a026ca0c72d82ab209fd73c3ba77e3c99ed8fae6bd43169f5a7428",
+      "results": [
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.011578
+        },
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013052
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.012992
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.011428
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.011538
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "concept_error",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013112
+        }
+      ]
+    },
+    {
+      "id": "E4",
+      "group": "error",
+      "payload_sha256": "24817f678e4ae6788b89544ea1bd3cd488d0f84112f1ecd50bdf734bee80f829",
+      "results": [
+        {
+          "arm": "after",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013154
+        },
+        {
+          "arm": "before",
+          "repeat": 1,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01155
+        },
+        {
+          "arm": "before",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01145
+        },
+        {
+          "arm": "after",
+          "repeat": 2,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013584
+        },
+        {
+          "arm": "after",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.013114
+        },
+        {
+          "arm": "before",
+          "repeat": 3,
+          "rejected": true,
+          "codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ],
+          "cost_usd": 0.01153
+        }
+      ]
+    }
+  ]
+}
