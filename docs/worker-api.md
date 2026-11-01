@@ -243,7 +243,107 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 중복 없이 글에서 사용한 번호와 일치한다. 내부 ID·검증 통계는 글에 넣지 않는다.
 기존 저장 판정·가짜 워커 출력에는 번호가 없을 수 있으므로 기존 텍스트 표시도 유지할 수 있다.
 
+## 7. 문서 검색과 구조화 수치 조회 (v0.8 구현 초안, 공동 검토 대기)
+
+자연어 의도 판별을 제거하고 호출자가 경로를 명시적으로 선택한다. 기존 v0.6 토론/단일 분석/SSE는
+유지한다. Spring/브라우저 연동은 아래 경로로 구현했으며 공동 승인·배포는 아직 하지 않았다. 두 경로 모두 기존
+`X-Worker-Token` 인증과 `BULLBEAR_RAG_ENABLED=true`가 필요하다. 저장된 snapshot만 사용하며
+시장 수집·LLM·임베딩·runner·shadow를 시작하지 않는다.
+
+문서 검색은 워커가 저장 snapshot에 고정한 generation으로 라우팅한다. 전역 generation 설정 변경은 기존 연결을
+바꾸지 않는다. 연결 없는 과거 snapshot이나 누락/변경된 게시 receipt는 RETRIEVAL_UNAVAILABLE503이다.
+Spring은 토론의 snapshot_id만 전달하고 브라우저가 generation을 지정하지 않는다. 이 내부 연결은 공개 응답 필드를
+추가하지 않는다. Fact 조회는 generation과 무관하다. 이관·교체 절차는 [운영 안내](RAG-PUBLICATION-RUNBOOK.md)를 따른다.
+
+### POST /rag/search — 일반 문서 검색
+
+```json
+{"snapshot_id":"저장된-id","ticker":"005930","question":"PER 뜻과 현재 값의 차이가 궁금해"}
+```
+
+필수 snapshot_id(1~256자), ticker(6자리), question(공백만 제외, 1~1000자).
+선택 mode는 `documents`만 허용하며 생략 시 해당 경로가 지정한다. as_of/unit/metric 등 추가 필드는400이다.
+질문의 의도·종목 이름·날짜를 정규식으로 추정하지 않는다. **검색 대상은 명시한 ticker/snapshot**이다.
+질문에 다른 종목명이 있어도 대상을 자동 변경하지 않는다. 일반 텍스트를 검색하며 기존 종목·시점·검수
+필터와 관련성/문단 제한은 유지한다.
+
+200 응답의 공통 필드: snapshot_id, ticker, snapshot_as_of, context_id, mode, answerability, reasons.
+문서 경로에는 `documents` 배열과 `answer_scope="retrieved_documents_not_verified_numeric_answer"`를 추가한다.
+문서는 chunk_id/text/horizons/applicability/limitations를 담는다. answerability는 documents_found 또는
+no_documents다. snapshot ticker 불일치 등 메타데이터 검증 실패는 insufficient_evidence와 빈 배열이다.
+`facts` 필드는 없으며, 문단이 검색되었다고 질문의 수치 답변이 검증된 것은 아니다.
+
+### POST /rag/facts — 구조화 수치 조회
+
+```json
+{"snapshot_id":"저장된-id","ticker":"005930","metric":"per_ttm","as_of":"2026-11-02","unit":"x"}
+```
+
+필수 snapshot_id, ticker, metric. 선택 as_of(날짜), unit(`KRW`, `KRW/share`, `%`, `x`, `shares`, `count`),
+mode(`facts`만 허용). question/period 등 추가 필드는400이다. 자연어를 받거나 해석하지 않는다.
+
+| metric | Fact ID | 단위 |
+|---|---|---|
+| close | PX.CLOSE | KRW/share |
+| per_ttm | VAL.PER_TTM | x |
+| pbr | VAL.PBR | x |
+| roe_ttm | VAL.ROE_TTM | % |
+| operating_margin_ttm | VAL.OP_MARGIN_TTM | % |
+| market_cap | VAL.MKTCAP | KRW |
+
+날짜 생략 시 snapshot.as_of, 단위 생략 시 지표의 정해진 단위를 사용한다. 이름에 TTM을 명시하고
+분기 수치를 TTM으로 대체하지 않는다. 미지원 지표/기간을 추정하지 않고 요청 오류400을 반환한다.
+정상 요청이라도 종목·날짜·단위 불일치, 미확정/미래 날짜, None/NaN, 출처/ID 오류,
+누락·순환·미래·단위 오류 입력 근거가 있으면 insufficient_evidence와 이유를 반환한다.
+
+공통 응답에 `facts` 배열을 추가한다. 성공은 supported_fact이며 배열 항목은 fact_id/ticker/value/unit/as_of/
+source/inputs/verified_lineage다. 근거 부족은 빈 배열이다. documents 배열은 없다.
+숫자는 snapshot 원값이며 새 계산·단위 변환·시장 조회를 하지 않는다. verified_lineage는 입력 존재·형식·시점
+검사 목록이며 공급자 원본 대사나 수식 재계산은 아니다. 수치 조회에는 검색 generation이 필요 없다.
+
+### 오류와 이전 초안 이전
+
+인증 실패401, 형식·잘못된 경로의 필드400, snapshot 없음404, RAG_DISABLED503,
+RETRIEVAL_UNAVAILABLE503(문서 검색 실패/timeout), 저장 실패500. 근거 부족/검색결과 없음은200이다.
+각 요청의 명시 mode/제약/검색결과 또는 Fact 검증 결과는 context/감사에 보존하며 동일 조회를 재생할 수 있다.
+중재자 판정·토론 이벤트·모델 사용량은 반환하지 않는다.
+
+이전 v0.7 혼합 `POST /rag/query`는 인증 후 **410 RAG_QUERY_RETIRED**를 반환한다. 자동 분류나
+리다이렉트하지 않는다. 문서 찾기는 /rag/search로 옮기고, 수치 조회는 화면/호출자가 metric/as_of/unit을
+명시해 /rag/facts로 보내야 한다. 기존 질문을 서버가 자동으로 지표로 바꾸지 않는다.
+
+### Spring·웹 연동 (v0.8)
+
+토론 화면의 **자료 찾아보기**에서 문서 검색/수치 조회를 직접 고른다. 선택이나 입력 변경만으로 조회하지
+않으며 제출할 때 한 경로만 호출한다. 대상은 해당 토론 종목과 저장 자료다. 웹에는 워커 토큰을 전달하지 않는다.
+
+| Spring 경로 (Bearer 인증) | 웹 요청 JSON | 워커 경로 |
+|---|---|---|
+| POST /api/debates/{id}/rag/search | `{"question":"PER 뜻"}` | /rag/search |
+| POST /api/debates/{id}/rag/facts | `{"metric":"per_ttm","asOf":"2026-10-30","unit":"x"}` | /rag/facts |
+
+Spring이 토론 레코드에서 snapshot_id/ticker를 결정한다. 클라이언트가 이를 덮어쓰거나 두 요청 필드를 섞으면400.
+asOf/unit은 선택이며 생략 시 워커 기본값을 따른다. 날짜는 워커에 as_of로 변환한다. 웹은 지표별 고정 단위를
+함께 전송하고 자동 단위 변환은 하지 않는다. 응답은 위 워커 snake_case 형식의 명시적 DTO만 전달한다.
+문서 응답에는 facts를, 수치 응답에는 documents를 포함하지 않으며 중재자 판정 등 미정의 필드는 전달하지 않는다.
+
+스냅샷 미준비409 SNAPSHOT_NOT_READY, 인증401, 요청 형식400 INVALID_REQUEST, 없는 토론/스냅샷404,
+워커 비활성·통신/검색/저장 실패503 WORKER_UNAVAILABLE. 정상 근거 부족은200으로 구분한다.
+fake 모드에서는 결과를 만들어내지 않고503을 반환한다. 조회는 토론 생성·시장 수집·모델 호출로 우회하지 않는다.
+웹은 날짜·출처·문서 한계와 근거 부족을 표시하며, 조회 방식/조건 변경 시 이전 결과를 지운다.
+
 ## 변경 이력
+
+- v0.8 내부 라우팅 보강 (2026-11-02): 공개 요청/응답 형식 유지. 최초 저장 snapshot별 generation/게시 receipt 고정,
+  과거 조회 자동 라우팅, 명시적 legacy context 이관과 무연결503 처리. 미래 색인/reconstructed-v1 우회 없음.
+
+- v0.8 단위 정정 (2026-11-02): 실제 저장 snapshot 연동에서 종가 단위 기대값 오류 확인. close의 단위를 원본 생성기와 같은 KRW/share로 정정하고 종가에 의존하는 PER/시총 계보도 정상 검증. KRW로 자동 변환하거나 입력 검증을 완화하지 않음.
+
+- v0.8 연동 초안 (2026-11-02): 사용자 요청으로 Spring의 토론별 문서/수치 조회 API와 웹의 명시적 선택 패널 구현. 워커 형식 변경 없음. 저장 스냅샷 연결·인증·응답 허용 필드 제한 및 오류/근거 부족 구분. 공동 승인·운영 배포 미완료.
+
+- v0.8 구현 초안 (2026-11-02): 사용자 요청으로 정규식 의도 필수 관문 제거, `/rag/search`와 `/rag/facts` 분리. TTM 지표 명시·Fact 검증 유지. v0.7 `/rag/query`는410으로 폐기 안내, 기존 v0.6 유지. 공동 검토·운영 연동 미완료.
+
+- v0.7 구현 초안 (2026-11-02): 사용자 요청으로 모델 없는 `POST /rag/query` 추가. 저장 snapshot의 질문 의도·종목/시점/단위별 Fact 연결과 근거 부족 처리. 기존 v0.6 호환, 공동 검토·Spring 연동·운영 배포는 미완료.
 
 - v0.6 (2026-10-31): `POST /debates`에 선택 필드 `mode`(`debate`|`single`)·`snapshot_id` 추가.
   단일 모드는 실험 조건 B (정식 운용 11/11부터 Spring 전향 운용이 토론마다 한 번 요청). 기존 요청은 그대로 동작.
