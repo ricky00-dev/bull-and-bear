@@ -50,7 +50,7 @@ def install_retriever(monkeypatch, retrieve):
     class Retriever:
         def __init__(self, store):
             self.store = store
-        def retrieve(self, snapshot, *, generation_id):
+        def retrieve(self, snapshot, *, generation_id, generation_binding=None):
             return retrieve(snapshot, generation_id)
     monkeypatch.setitem(sys.modules, 'bullbear.rag.retrieval', NS(Retriever=Retriever))
 
@@ -283,7 +283,7 @@ def test_real_retriever_persistence_and_execution_decision(setup, monkeypatch, f
     from bullbear.rag import retrieval
     from bullbear.rag.store import ArchiveCorruptError, RagStore
     settings, market = setup
-    def search(*args):
+    def search(*args, **kwargs):
         if failure == 'integrity':
             raise ArchiveCorruptError('private corrupt source path')
         raise TimeoutError('private blocked search path')

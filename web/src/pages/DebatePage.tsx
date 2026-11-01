@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { EvidenceSheet } from '../components/EvidenceSheet'
+import { RagPanel } from '../components/RagPanel'
 import { StatementBubble } from '../components/StatementBubble'
 import { BottomBar, Icon, PrimaryButton, Screen, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
@@ -46,6 +47,7 @@ export function DebatePage() {
       </div>
 
       <main className="flex flex-1 flex-col gap-3.5 px-4 pb-4 pt-1">
+        {d && <RagPanel key={id} debateId={id} stockName={d.stockName} asOf={asOf} />}
         {stream.extraQuestion && (
           <div className="rounded-2xl border border-mod-line bg-mod-soft px-4 py-3 text-sm text-mod-ink">
             <span className="font-bold">중재자의 추가 질문 · </span>

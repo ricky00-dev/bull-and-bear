@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+	@ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+	ResponseEntity<ErrorResponse> unreadable() {
+		return ResponseEntity.badRequest().body(ErrorResponse.of(ErrorCode.INVALID_REQUEST, "요청 형식과 조회 조건을 확인해 주세요"));
+	}
+
 	public record ErrorBody(String code, String message) {
 	}
 

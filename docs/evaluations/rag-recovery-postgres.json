@@ -1,0 +1,2233 @@
+{
+  "schema": "rag-postgres-recovery-v1",
+  "scope": "dedicated_local_postgres_and_local_objects_fixture",
+  "databases": [
+    "rag_restore_v3_source",
+    "rag_restore_v3_restored"
+  ],
+  "client_version": "pg_dump (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "dump_sha256": "cf1eae0ea8bd75308adbe07a0284685c06f85a17f4dbbe911cb14c9a6af0709c",
+  "dump_seconds": 0.9147999999113381,
+  "restore_seconds": 0.7936147000873461,
+  "original_database_signature": {
+    "tables": {
+      "public.rag_alembic_version": {
+        "count": 1,
+        "sha256": "649451813d366e31b24b48d577fc9e7947f95e501082957635540159b0bab8f4"
+      },
+      "rag.chunk_annotations": {
+        "count": 2,
+        "sha256": "ff89c22192472493bd47924deaae43c9409b8c0681c66721838dbcb630a0b70e"
+      },
+      "rag.chunk_horizons": {
+        "count": 2,
+        "sha256": "0daec3fbd7d07759535c2d18d6c0086026117f44b399678d8e82b80aa9c04b21"
+      },
+      "rag.chunks": {
+        "count": 2,
+        "sha256": "0236b80d679b5f8bb9cfa83edc682106ad9b61ba3080c03dacddbc212a2b24ba"
+      },
+      "rag.collection_items": {
+        "count": 2,
+        "sha256": "b68f5ff4bb48f830798ca4fbeaa21b13ec6b4bc47f18dc47a72755770c76f48a"
+      },
+      "rag.collection_runs": {
+        "count": 2,
+        "sha256": "8dd54e5532eab57d7ee76510f8021ca05a8940505fa03ee7487ae1c6776ad717"
+      },
+      "rag.contexts": {
+        "count": 16,
+        "sha256": "96a9a00d27acb6d860306213bcb6dbef7c53c9f9269b52ee49fd851aeec758ab"
+      },
+      "rag.document_events": {
+        "count": 2,
+        "sha256": "80f3c77279c133e4188e0fa273483ba275befdf649ab9d350ede658f30322660"
+      },
+      "rag.document_revisions": {
+        "count": 2,
+        "sha256": "50f52d636e5c9af5190f7b775dbbecf10237a0d8c3786e49587c69b118c5e69d"
+      },
+      "rag.documents": {
+        "count": 2,
+        "sha256": "03e0bb9ed84462bab3b5b0f9e42e38065bedb255ae0a1800dcef7464836937d1"
+      },
+      "rag.embedding_calls": {
+        "count": 2,
+        "sha256": "54b94a636c86960c36b1a3265e2c65ee497d9076125a1fbdc43397cf1a57d63b"
+      },
+      "rag.embedding_receipts": {
+        "count": 2,
+        "sha256": "e0a3ac9e1e9fe1ce5f8bbf43fa2c339f716686f7d81714bf874a1baef497d1e9"
+      },
+      "rag.embedding_vectors": {
+        "count": 2,
+        "sha256": "acaedacce6a5c70014bf71624760fea1897db9b029f03ee2df97651c8eb2cbd0"
+      },
+      "rag.embedding_versions": {
+        "count": 1,
+        "sha256": "17fdd01238db7831304dc1540211cb9f73808773286cbe89e47b0181c5ac9c4e"
+      },
+      "rag.embeddings": {
+        "count": 2,
+        "sha256": "5506392ab36f6677fb412130c6376f99f90df8a450f4b0fddfd162feedbe6918"
+      },
+      "rag.generations": {
+        "count": 2,
+        "sha256": "bb0eab8b65e2219a003218deeab51b34ebb9a9ece80df512b100d91d682f610d"
+      },
+      "rag.ingest_attempts": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "rag.ingest_jobs": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "rag.searches": {
+        "count": 60,
+        "sha256": "21432a89627e4107b636988d2d4c949ab9f4dc9007f1ca351f540b08b61593f8"
+      },
+      "rag.source_watermarks": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "rag.vector_generations": {
+        "count": 1,
+        "sha256": "35625d605b316ea7a1aab4f2a5b0f0c006bed597446ff32b4fb09405ed046617"
+      }
+    },
+    "sequences": {
+      "rag.chunk_annotations_annotation_seq_seq": [
+        2,
+        true
+      ],
+      "rag.document_events_event_seq_seq": [
+        2,
+        true
+      ],
+      "rag.searches_seq_seq": [
+        60,
+        true
+      ]
+    },
+    "triggers": [
+      [
+        "chunk_annotations",
+        "immutable_chunk_annotations",
+        "CREATE TRIGGER immutable_chunk_annotations BEFORE DELETE OR UPDATE ON rag.chunk_annotations FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "chunk_annotations",
+        "immutable_chunk_annotations_truncate",
+        "CREATE TRIGGER immutable_chunk_annotations_truncate BEFORE TRUNCATE ON rag.chunk_annotations FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "chunk_horizons",
+        "immutable_chunk_horizons",
+        "CREATE TRIGGER immutable_chunk_horizons BEFORE DELETE OR UPDATE ON rag.chunk_horizons FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "chunk_horizons",
+        "immutable_chunk_horizons_truncate",
+        "CREATE TRIGGER immutable_chunk_horizons_truncate BEFORE TRUNCATE ON rag.chunk_horizons FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "chunks",
+        "immutable_chunks",
+        "CREATE TRIGGER immutable_chunks BEFORE DELETE OR UPDATE ON rag.chunks FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "chunks",
+        "immutable_chunks_truncate",
+        "CREATE TRIGGER immutable_chunks_truncate BEFORE TRUNCATE ON rag.chunks FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "collection_items",
+        "immutable_collection_items",
+        "CREATE TRIGGER immutable_collection_items BEFORE DELETE OR UPDATE ON rag.collection_items FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "collection_items",
+        "immutable_collection_items_truncate",
+        "CREATE TRIGGER immutable_collection_items_truncate BEFORE TRUNCATE ON rag.collection_items FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "collection_runs",
+        "immutable_collection_runs",
+        "CREATE TRIGGER immutable_collection_runs BEFORE DELETE OR UPDATE ON rag.collection_runs FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "collection_runs",
+        "immutable_collection_runs_truncate",
+        "CREATE TRIGGER immutable_collection_runs_truncate BEFORE TRUNCATE ON rag.collection_runs FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "contexts",
+        "immutable_contexts",
+        "CREATE TRIGGER immutable_contexts BEFORE DELETE OR UPDATE ON rag.contexts FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "contexts",
+        "immutable_contexts_truncate",
+        "CREATE TRIGGER immutable_contexts_truncate BEFORE TRUNCATE ON rag.contexts FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "document_events",
+        "immutable_document_events",
+        "CREATE TRIGGER immutable_document_events BEFORE DELETE OR UPDATE ON rag.document_events FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "document_events",
+        "immutable_document_events_truncate",
+        "CREATE TRIGGER immutable_document_events_truncate BEFORE TRUNCATE ON rag.document_events FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "document_revisions",
+        "immutable_document_revisions",
+        "CREATE TRIGGER immutable_document_revisions BEFORE DELETE OR UPDATE ON rag.document_revisions FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "document_revisions",
+        "immutable_document_revisions_truncate",
+        "CREATE TRIGGER immutable_document_revisions_truncate BEFORE TRUNCATE ON rag.document_revisions FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "documents",
+        "immutable_documents",
+        "CREATE TRIGGER immutable_documents BEFORE DELETE OR UPDATE ON rag.documents FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "documents",
+        "immutable_documents_truncate",
+        "CREATE TRIGGER immutable_documents_truncate BEFORE TRUNCATE ON rag.documents FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_calls",
+        "immutable_embedding_calls",
+        "CREATE TRIGGER immutable_embedding_calls BEFORE DELETE OR UPDATE ON rag.embedding_calls FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_calls",
+        "immutable_embedding_calls_truncate",
+        "CREATE TRIGGER immutable_embedding_calls_truncate BEFORE TRUNCATE ON rag.embedding_calls FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_receipts",
+        "immutable_embedding_receipts",
+        "CREATE TRIGGER immutable_embedding_receipts BEFORE DELETE OR UPDATE ON rag.embedding_receipts FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_receipts",
+        "immutable_embedding_receipts_truncate",
+        "CREATE TRIGGER immutable_embedding_receipts_truncate BEFORE TRUNCATE ON rag.embedding_receipts FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_vectors",
+        "immutable_embedding_vectors",
+        "CREATE TRIGGER immutable_embedding_vectors BEFORE DELETE OR UPDATE ON rag.embedding_vectors FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_vectors",
+        "immutable_embedding_vectors_truncate",
+        "CREATE TRIGGER immutable_embedding_vectors_truncate BEFORE TRUNCATE ON rag.embedding_vectors FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_versions",
+        "immutable_embedding_versions",
+        "CREATE TRIGGER immutable_embedding_versions BEFORE DELETE OR UPDATE ON rag.embedding_versions FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embedding_versions",
+        "immutable_embedding_versions_truncate",
+        "CREATE TRIGGER immutable_embedding_versions_truncate BEFORE TRUNCATE ON rag.embedding_versions FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embeddings",
+        "immutable_embeddings",
+        "CREATE TRIGGER immutable_embeddings BEFORE DELETE OR UPDATE ON rag.embeddings FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "embeddings",
+        "immutable_embeddings_truncate",
+        "CREATE TRIGGER immutable_embeddings_truncate BEFORE TRUNCATE ON rag.embeddings FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "generations",
+        "immutable_generations",
+        "CREATE TRIGGER immutable_generations BEFORE DELETE OR UPDATE ON rag.generations FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "generations",
+        "immutable_generations_truncate",
+        "CREATE TRIGGER immutable_generations_truncate BEFORE TRUNCATE ON rag.generations FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "ingest_attempts",
+        "immutable_ingest_attempts",
+        "CREATE TRIGGER immutable_ingest_attempts BEFORE DELETE OR UPDATE ON rag.ingest_attempts FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "ingest_attempts",
+        "immutable_ingest_attempts_truncate",
+        "CREATE TRIGGER immutable_ingest_attempts_truncate BEFORE TRUNCATE ON rag.ingest_attempts FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "searches",
+        "immutable_searches",
+        "CREATE TRIGGER immutable_searches BEFORE DELETE OR UPDATE ON rag.searches FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "searches",
+        "immutable_searches_truncate",
+        "CREATE TRIGGER immutable_searches_truncate BEFORE TRUNCATE ON rag.searches FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "vector_generations",
+        "immutable_vector_generations",
+        "CREATE TRIGGER immutable_vector_generations BEFORE DELETE OR UPDATE ON rag.vector_generations FOR EACH ROW EXECUTE FUNCTION rag.reject_context_mutation()"
+      ],
+      [
+        "vector_generations",
+        "immutable_vector_generations_truncate",
+        "CREATE TRIGGER immutable_vector_generations_truncate BEFORE TRUNCATE ON rag.vector_generations FOR EACH STATEMENT EXECUTE FUNCTION rag.reject_context_mutation()"
+      ]
+    ],
+    "extensions": [
+      [
+        "plpgsql",
+        "1.0"
+      ],
+      [
+        "vector",
+        "0.8.7"
+      ]
+    ],
+    "constraints": [
+      [
+        "chunk_annotations",
+        "chunk_annotations_annotation_id_key",
+        "UNIQUE (annotation_id)"
+      ],
+      [
+        "chunk_annotations",
+        "chunk_annotations_chunk_id_fkey",
+        "FOREIGN KEY (chunk_id) REFERENCES rag.chunks(chunk_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "chunk_annotations",
+        "chunk_annotations_pkey",
+        "PRIMARY KEY (annotation_seq)"
+      ],
+      [
+        "chunk_horizons",
+        "chunk_horizons_annotation_id_fkey",
+        "FOREIGN KEY (annotation_id) REFERENCES rag.chunk_annotations(annotation_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "chunk_horizons",
+        "chunk_horizons_horizon_tag_check",
+        "CHECK ((horizon_tag = ANY (ARRAY['common'::text, 'short'::text, 'medium'::text, 'long'::text])))"
+      ],
+      [
+        "chunk_horizons",
+        "chunk_horizons_pkey",
+        "PRIMARY KEY (annotation_id, horizon_tag)"
+      ],
+      [
+        "chunks",
+        "chunks_pkey",
+        "PRIMARY KEY (chunk_id)"
+      ],
+      [
+        "chunks",
+        "chunks_revision_id_chunker_version_ordinal_key",
+        "UNIQUE (revision_id, chunker_version, ordinal)"
+      ],
+      [
+        "chunks",
+        "chunks_revision_id_fkey",
+        "FOREIGN KEY (revision_id) REFERENCES rag.document_revisions(revision_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "collection_items",
+        "collection_items_collection_id_fkey",
+        "FOREIGN KEY (collection_id) REFERENCES rag.collection_runs(collection_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "collection_items",
+        "collection_items_pkey",
+        "PRIMARY KEY (collection_id, ordinal)"
+      ],
+      [
+        "collection_items",
+        "collection_items_revision_id_fkey",
+        "FOREIGN KEY (revision_id) REFERENCES rag.document_revisions(revision_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_coverage_check",
+        "CHECK ((coverage = ANY (ARRAY['complete'::text, 'partial'::text, 'unknown'::text])))"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_observation_mode_check",
+        "CHECK ((observation_mode = ANY (ARRAY['current'::text, 'archive'::text])))"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_pages_check",
+        "CHECK ((pages >= 0))"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_pkey",
+        "PRIMARY KEY (collection_id)"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_status_check",
+        "CHECK ((status = ANY (ARRAY['completed'::text, 'empty'::text, 'partial'::text, 'failed'::text])))"
+      ],
+      [
+        "contexts",
+        "contexts_id_check",
+        "CHECK ((id ~ '^KCTX\\.[0-9a-f]{64}$'::text))"
+      ],
+      [
+        "contexts",
+        "contexts_pkey",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "document_events",
+        "document_events_collection_id_fkey",
+        "FOREIGN KEY (collection_id) REFERENCES rag.collection_runs(collection_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "document_events",
+        "document_events_collection_id_item_ordinal_fkey",
+        "FOREIGN KEY (collection_id, item_ordinal) REFERENCES rag.collection_items(collection_id, ordinal) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "document_events",
+        "document_events_document_id_fkey",
+        "FOREIGN KEY (document_id) REFERENCES rag.documents(document_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "document_events",
+        "document_events_event_id_key",
+        "UNIQUE (event_id)"
+      ],
+      [
+        "document_events",
+        "document_events_kind_check",
+        "CHECK ((kind = ANY (ARRAY['revision_activated'::text, 'withdrawn'::text, 'deleted'::text])))"
+      ],
+      [
+        "document_events",
+        "document_events_pkey",
+        "PRIMARY KEY (event_seq)"
+      ],
+      [
+        "document_events",
+        "document_events_revision_id_fkey",
+        "FOREIGN KEY (revision_id) REFERENCES rag.document_revisions(revision_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "document_revisions",
+        "document_revisions_document_id_content_hash_key",
+        "UNIQUE (document_id, content_hash)"
+      ],
+      [
+        "document_revisions",
+        "document_revisions_document_id_fkey",
+        "FOREIGN KEY (document_id) REFERENCES rag.documents(document_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "document_revisions",
+        "document_revisions_pkey",
+        "PRIMARY KEY (revision_id)"
+      ],
+      [
+        "documents",
+        "documents_pkey",
+        "PRIMARY KEY (document_id)"
+      ],
+      [
+        "documents",
+        "documents_source_source_item_id_key",
+        "UNIQUE (source, source_item_id)"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_nano_usd_per_token_check",
+        "CHECK ((nano_usd_per_token >= 0))"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_pkey",
+        "PRIMARY KEY (call_id)"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_reserved_nano_check",
+        "CHECK ((reserved_nano >= 0))"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_role_check",
+        "CHECK ((role = ANY (ARRAY['document'::text, 'query'::text])))"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_token_bound_check",
+        "CHECK ((token_bound > 0))"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_version_id_fkey",
+        "FOREIGN KEY (version_id) REFERENCES rag.embedding_versions(version_id)"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_call_id_fkey",
+        "FOREIGN KEY (call_id) REFERENCES rag.embedding_calls(call_id)"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_cost_nano_check",
+        "CHECK ((cost_nano >= 0))"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_input_tokens_check",
+        "CHECK ((input_tokens >= 0))"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_pkey",
+        "PRIMARY KEY (call_id)"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_status_check",
+        "CHECK ((status = ANY (ARRAY['completed'::text, 'invalid_response'::text])))"
+      ],
+      [
+        "embedding_vectors",
+        "embedding_vectors_check",
+        "CHECK ((vector_dims(embedding) = dimensions))"
+      ],
+      [
+        "embedding_vectors",
+        "embedding_vectors_embedding_id_fkey",
+        "FOREIGN KEY (embedding_id) REFERENCES rag.embeddings(embedding_id)"
+      ],
+      [
+        "embedding_vectors",
+        "embedding_vectors_pkey",
+        "PRIMARY KEY (embedding_id)"
+      ],
+      [
+        "embedding_versions",
+        "embedding_versions_pkey",
+        "PRIMARY KEY (version_id)"
+      ],
+      [
+        "embeddings",
+        "embeddings_embedding_id_fkey",
+        "FOREIGN KEY (embedding_id) REFERENCES rag.embedding_calls(call_id)"
+      ],
+      [
+        "embeddings",
+        "embeddings_pkey",
+        "PRIMARY KEY (embedding_id)"
+      ],
+      [
+        "embeddings",
+        "embeddings_version_id_fkey",
+        "FOREIGN KEY (version_id) REFERENCES rag.embedding_versions(version_id)"
+      ],
+      [
+        "generations",
+        "generations_pkey",
+        "PRIMARY KEY (generation_id)"
+      ],
+      [
+        "ingest_attempts",
+        "ingest_attempts_job_id_fkey",
+        "FOREIGN KEY (job_id) REFERENCES rag.ingest_jobs(job_id)"
+      ],
+      [
+        "ingest_attempts",
+        "ingest_attempts_pkey",
+        "PRIMARY KEY (event_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_collection_id_key",
+        "UNIQUE (collection_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_pkey",
+        "PRIMARY KEY (job_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_state_check",
+        "CHECK ((state = ANY (ARRAY['pending'::text, 'running'::text, 'retry'::text, 'succeeded'::text, 'partial'::text, 'failed'::text])))"
+      ],
+      [
+        "searches",
+        "searches_context_id_fkey",
+        "FOREIGN KEY (context_id) REFERENCES rag.contexts(id)"
+      ],
+      [
+        "searches",
+        "searches_id_check",
+        "CHECK ((id ~ '^SEARCH\\.[0-9a-f]{32}$'::text))"
+      ],
+      [
+        "searches",
+        "searches_pkey",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "searches",
+        "searches_seq_key",
+        "UNIQUE (seq)"
+      ],
+      [
+        "source_watermarks",
+        "source_watermarks_collection_id_fkey",
+        "FOREIGN KEY (collection_id) REFERENCES rag.collection_runs(collection_id) DEFERRABLE INITIALLY DEFERRED"
+      ],
+      [
+        "source_watermarks",
+        "source_watermarks_pkey",
+        "PRIMARY KEY (source, query_key)"
+      ],
+      [
+        "vector_generations",
+        "vector_generations_generation_id_version_id_key",
+        "UNIQUE (generation_id, version_id)"
+      ],
+      [
+        "vector_generations",
+        "vector_generations_pkey",
+        "PRIMARY KEY (vector_generation_id)"
+      ],
+      [
+        "vector_generations",
+        "vector_generations_version_id_fkey",
+        "FOREIGN KEY (version_id) REFERENCES rag.embedding_versions(version_id)"
+      ]
+    ],
+    "indexes": [
+      [
+        "chunk_annotations",
+        "chunk_annotations_annotation_id_key",
+        "CREATE UNIQUE INDEX chunk_annotations_annotation_id_key ON rag.chunk_annotations USING btree (annotation_id)"
+      ],
+      [
+        "chunk_annotations",
+        "chunk_annotations_at",
+        "CREATE INDEX chunk_annotations_at ON rag.chunk_annotations USING btree (chunk_id, reviewed_at, annotation_seq)"
+      ],
+      [
+        "chunk_annotations",
+        "chunk_annotations_pkey",
+        "CREATE UNIQUE INDEX chunk_annotations_pkey ON rag.chunk_annotations USING btree (annotation_seq)"
+      ],
+      [
+        "chunk_horizons",
+        "chunk_horizons_pkey",
+        "CREATE UNIQUE INDEX chunk_horizons_pkey ON rag.chunk_horizons USING btree (annotation_id, horizon_tag)"
+      ],
+      [
+        "chunks",
+        "chunks_pkey",
+        "CREATE UNIQUE INDEX chunks_pkey ON rag.chunks USING btree (chunk_id)"
+      ],
+      [
+        "chunks",
+        "chunks_revision_id_chunker_version_ordinal_key",
+        "CREATE UNIQUE INDEX chunks_revision_id_chunker_version_ordinal_key ON rag.chunks USING btree (revision_id, chunker_version, ordinal)"
+      ],
+      [
+        "collection_items",
+        "collection_items_pkey",
+        "CREATE UNIQUE INDEX collection_items_pkey ON rag.collection_items USING btree (collection_id, ordinal)"
+      ],
+      [
+        "collection_items",
+        "collection_items_revision_at",
+        "CREATE INDEX collection_items_revision_at ON rag.collection_items USING btree (revision_id, observed_at)"
+      ],
+      [
+        "collection_runs",
+        "collection_runs_pkey",
+        "CREATE UNIQUE INDEX collection_runs_pkey ON rag.collection_runs USING btree (collection_id)"
+      ],
+      [
+        "contexts",
+        "contexts_pkey",
+        "CREATE UNIQUE INDEX contexts_pkey ON rag.contexts USING btree (id)"
+      ],
+      [
+        "document_events",
+        "document_events_at",
+        "CREATE INDEX document_events_at ON rag.document_events USING btree (document_id, observed_at, event_seq)"
+      ],
+      [
+        "document_events",
+        "document_events_event_id_key",
+        "CREATE UNIQUE INDEX document_events_event_id_key ON rag.document_events USING btree (event_id)"
+      ],
+      [
+        "document_events",
+        "document_events_pkey",
+        "CREATE UNIQUE INDEX document_events_pkey ON rag.document_events USING btree (event_seq)"
+      ],
+      [
+        "document_revisions",
+        "document_revisions_document_id_content_hash_key",
+        "CREATE UNIQUE INDEX document_revisions_document_id_content_hash_key ON rag.document_revisions USING btree (document_id, content_hash)"
+      ],
+      [
+        "document_revisions",
+        "document_revisions_pkey",
+        "CREATE UNIQUE INDEX document_revisions_pkey ON rag.document_revisions USING btree (revision_id)"
+      ],
+      [
+        "documents",
+        "documents_pkey",
+        "CREATE UNIQUE INDEX documents_pkey ON rag.documents USING btree (document_id)"
+      ],
+      [
+        "documents",
+        "documents_source_source_item_id_key",
+        "CREATE UNIQUE INDEX documents_source_source_item_id_key ON rag.documents USING btree (source, source_item_id)"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_date",
+        "CREATE INDEX embedding_calls_date ON rag.embedding_calls USING btree (created_at)"
+      ],
+      [
+        "embedding_calls",
+        "embedding_calls_pkey",
+        "CREATE UNIQUE INDEX embedding_calls_pkey ON rag.embedding_calls USING btree (call_id)"
+      ],
+      [
+        "embedding_receipts",
+        "embedding_receipts_pkey",
+        "CREATE UNIQUE INDEX embedding_receipts_pkey ON rag.embedding_receipts USING btree (call_id)"
+      ],
+      [
+        "embedding_vectors",
+        "embedding_vectors_pkey",
+        "CREATE UNIQUE INDEX embedding_vectors_pkey ON rag.embedding_vectors USING btree (embedding_id)"
+      ],
+      [
+        "embedding_versions",
+        "embedding_versions_pkey",
+        "CREATE UNIQUE INDEX embedding_versions_pkey ON rag.embedding_versions USING btree (version_id)"
+      ],
+      [
+        "embeddings",
+        "embeddings_pkey",
+        "CREATE UNIQUE INDEX embeddings_pkey ON rag.embeddings USING btree (embedding_id)"
+      ],
+      [
+        "generations",
+        "generations_pkey",
+        "CREATE UNIQUE INDEX generations_pkey ON rag.generations USING btree (generation_id)"
+      ],
+      [
+        "ingest_attempts",
+        "ingest_attempts_job",
+        "CREATE INDEX ingest_attempts_job ON rag.ingest_attempts USING btree (job_id, attempt, occurred_at)"
+      ],
+      [
+        "ingest_attempts",
+        "ingest_attempts_pkey",
+        "CREATE UNIQUE INDEX ingest_attempts_pkey ON rag.ingest_attempts USING btree (event_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_collection_id_key",
+        "CREATE UNIQUE INDEX ingest_jobs_collection_id_key ON rag.ingest_jobs USING btree (collection_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_due",
+        "CREATE INDEX ingest_jobs_due ON rag.ingest_jobs USING btree (state, available_at, lease_until)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_pkey",
+        "CREATE UNIQUE INDEX ingest_jobs_pkey ON rag.ingest_jobs USING btree (job_id)"
+      ],
+      [
+        "ingest_jobs",
+        "ingest_jobs_scope",
+        "CREATE INDEX ingest_jobs_scope ON rag.ingest_jobs USING btree (source, query_key, state, window_start, window_end)"
+      ],
+      [
+        "searches",
+        "rag_searches_context_seq",
+        "CREATE INDEX rag_searches_context_seq ON rag.searches USING btree (context_id, seq)"
+      ],
+      [
+        "searches",
+        "searches_pkey",
+        "CREATE UNIQUE INDEX searches_pkey ON rag.searches USING btree (id)"
+      ],
+      [
+        "searches",
+        "searches_seq_key",
+        "CREATE UNIQUE INDEX searches_seq_key ON rag.searches USING btree (seq)"
+      ],
+      [
+        "source_watermarks",
+        "source_watermarks_pkey",
+        "CREATE UNIQUE INDEX source_watermarks_pkey ON rag.source_watermarks USING btree (source, query_key)"
+      ],
+      [
+        "vector_generations",
+        "vector_generations_generation_id_version_id_key",
+        "CREATE UNIQUE INDEX vector_generations_generation_id_version_id_key ON rag.vector_generations USING btree (generation_id, version_id)"
+      ],
+      [
+        "vector_generations",
+        "vector_generations_pkey",
+        "CREATE UNIQUE INDEX vector_generations_pkey ON rag.vector_generations USING btree (vector_generation_id)"
+      ]
+    ],
+    "columns": [
+      [
+        "chunk_annotations",
+        1,
+        "annotation_seq",
+        "bigint",
+        true,
+        "d",
+        null
+      ],
+      [
+        "chunk_annotations",
+        2,
+        "annotation_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        3,
+        "chunk_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        4,
+        "review_status",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        5,
+        "created_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        6,
+        "reviewed_at",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        7,
+        "tagging_policy_version",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_annotations",
+        8,
+        "data_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_horizons",
+        1,
+        "annotation_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunk_horizons",
+        2,
+        "horizon_tag",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        1,
+        "chunk_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        2,
+        "revision_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        3,
+        "ordinal",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        4,
+        "text",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        5,
+        "text_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        6,
+        "source_locator",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "chunks",
+        7,
+        "chunker_version",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        1,
+        "collection_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        2,
+        "ordinal",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        3,
+        "revision_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        4,
+        "observed_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        5,
+        "input_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_items",
+        6,
+        "quarantine_reason",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        1,
+        "collection_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        2,
+        "source",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        3,
+        "query_key",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        4,
+        "window_start",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        5,
+        "window_end",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        6,
+        "started_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        7,
+        "finished_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        8,
+        "observation_mode",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        9,
+        "status",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        10,
+        "coverage",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        11,
+        "pages",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        12,
+        "safe_error",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        13,
+        "fingerprint",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        14,
+        "input_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        15,
+        "result_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "collection_runs",
+        16,
+        "stored_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "contexts",
+        1,
+        "id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "contexts",
+        2,
+        "payload",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "contexts",
+        3,
+        "stored_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ],
+      [
+        "document_events",
+        1,
+        "event_seq",
+        "bigint",
+        true,
+        "d",
+        null
+      ],
+      [
+        "document_events",
+        2,
+        "event_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        3,
+        "document_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        4,
+        "revision_id",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        5,
+        "collection_id",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        6,
+        "item_ordinal",
+        "integer",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        7,
+        "kind",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        8,
+        "observed_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_events",
+        9,
+        "source_ref",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        1,
+        "revision_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        2,
+        "document_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        3,
+        "content_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        4,
+        "object_path",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        5,
+        "content_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        6,
+        "title",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        7,
+        "text",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        8,
+        "published_at",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        9,
+        "published_on",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        10,
+        "source_updated_at",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        11,
+        "first_observed_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        12,
+        "timestamp_precision",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        13,
+        "content_level",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        14,
+        "unit",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "document_revisions",
+        15,
+        "quarantine_reason",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "documents",
+        1,
+        "document_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "documents",
+        2,
+        "source",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "documents",
+        3,
+        "source_item_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "documents",
+        4,
+        "kind",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "documents",
+        5,
+        "canonical_url",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        1,
+        "call_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        2,
+        "version_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        3,
+        "input_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        4,
+        "role",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        5,
+        "reserved_nano",
+        "bigint",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        6,
+        "token_bound",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        7,
+        "price_revision",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        8,
+        "nano_usd_per_token",
+        "bigint",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_calls",
+        9,
+        "created_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ],
+      [
+        "embedding_receipts",
+        1,
+        "call_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_receipts",
+        2,
+        "input_tokens",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_receipts",
+        3,
+        "cost_nano",
+        "bigint",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_receipts",
+        4,
+        "status",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_receipts",
+        5,
+        "stored_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ],
+      [
+        "embedding_vectors",
+        1,
+        "embedding_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_vectors",
+        2,
+        "embedding",
+        "vector",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_vectors",
+        3,
+        "dimensions",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_versions",
+        1,
+        "version_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embedding_versions",
+        2,
+        "spec_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embeddings",
+        1,
+        "embedding_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embeddings",
+        2,
+        "version_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embeddings",
+        3,
+        "vector_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embeddings",
+        4,
+        "vector_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "embeddings",
+        5,
+        "stored_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ],
+      [
+        "generations",
+        1,
+        "generation_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "generations",
+        2,
+        "index_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "generations",
+        3,
+        "receipt_hash",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "generations",
+        4,
+        "committed_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        1,
+        "event_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        2,
+        "job_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        3,
+        "lease_token",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        4,
+        "attempt",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        5,
+        "event",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        6,
+        "occurred_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_attempts",
+        7,
+        "safe_error",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        1,
+        "job_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        2,
+        "collection_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        3,
+        "source",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        4,
+        "query_key",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        5,
+        "ticker",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        6,
+        "window_start",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        7,
+        "window_end",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        8,
+        "fingerprint",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        9,
+        "payload",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        10,
+        "state",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        11,
+        "attempts",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        12,
+        "max_attempts",
+        "integer",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        13,
+        "available_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        14,
+        "lease_until",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        15,
+        "lease_token",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        16,
+        "created_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        17,
+        "updated_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "ingest_jobs",
+        18,
+        "safe_error",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "searches",
+        1,
+        "seq",
+        "bigint",
+        true,
+        "a",
+        null
+      ],
+      [
+        "searches",
+        2,
+        "id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "searches",
+        3,
+        "context_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "searches",
+        4,
+        "payload",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "searches",
+        5,
+        "stored_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ],
+      [
+        "source_watermarks",
+        1,
+        "source",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        2,
+        "query_key",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        3,
+        "covered_from",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        4,
+        "completed_through",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        5,
+        "cursor",
+        "text",
+        false,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        6,
+        "updated_at",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "source_watermarks",
+        7,
+        "collection_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "vector_generations",
+        1,
+        "vector_generation_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "vector_generations",
+        2,
+        "generation_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "vector_generations",
+        3,
+        "version_id",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "vector_generations",
+        4,
+        "manifest_json",
+        "text",
+        true,
+        "",
+        null
+      ],
+      [
+        "vector_generations",
+        5,
+        "ready_at",
+        "timestamp with time zone",
+        true,
+        "",
+        "clock_timestamp()"
+      ]
+    ]
+  },
+  "restored_signature_equal_before_http": true,
+  "file_inventory": {
+    "files": {
+      "http/worker.sqlite3": "ce3d64531279bbe85c36dd9c211a6911cd6322aa5f6bc14e319eac1248006bde",
+      "http/worker.sqlite3-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "http/worker.sqlite3-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifest.json": "8db245666746819ce678c519489a0addbdb70980384db3fad5badd42330e9f14",
+      "rag/contexts.sqlite3": "d524a0b7ee5d0a85c9970e271277290a0c3b4e8140a776e8ac3757b73716bd49",
+      "rag/generations/G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c/index.ready.json": "359f9978cca1e215458c981ce19dc54fd7bc775fdd7a5c16a073015b762a492e",
+      "rag/generations/G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c/index.sqlite3": "fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5",
+      "rag/generations/G.e1606d945f2ab0ed866e2733acd9626b10475befa35dc33e2c99a694a6aec29b/index.ready.json": "2cfa172d0bfac8f010bf66126a4d07afa9b60e394812493ff772fd8faf24ea82",
+      "rag/generations/G.e1606d945f2ab0ed866e2733acd9626b10475befa35dc33e2c99a694a6aec29b/index.sqlite3": "490b045551649d1bc735eccc1b2bdace6669e03f332e91345fabd430cf819372",
+      "rag/objects/232dbc4700035f9a5bb2a163ca453d81cb0b734efb06bd892ca96233a10c0a3b": "232dbc4700035f9a5bb2a163ca453d81cb0b734efb06bd892ca96233a10c0a3b",
+      "rag/objects/2cfa172d0bfac8f010bf66126a4d07afa9b60e394812493ff772fd8faf24ea82": "2cfa172d0bfac8f010bf66126a4d07afa9b60e394812493ff772fd8faf24ea82",
+      "rag/objects/359f9978cca1e215458c981ce19dc54fd7bc775fdd7a5c16a073015b762a492e": "359f9978cca1e215458c981ce19dc54fd7bc775fdd7a5c16a073015b762a492e",
+      "rag/objects/490b045551649d1bc735eccc1b2bdace6669e03f332e91345fabd430cf819372": "490b045551649d1bc735eccc1b2bdace6669e03f332e91345fabd430cf819372",
+      "rag/objects/63ae126fc8a5f609642afdcb7faaa40e5316b09d98b69522bce009bd2fbe577d": "63ae126fc8a5f609642afdcb7faaa40e5316b09d98b69522bce009bd2fbe577d",
+      "rag/objects/fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5": "fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5",
+      "rag/rag.sqlite3": "1c59927ea19c7a5e0d612787b425c76d280e11ebe1a65414f1a5a4dc3131da3e",
+      "rag/rag.sqlite3-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "rag/rag.sqlite3-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "snapshots/000660-20261016-1f309a0d53.json": "166704c00291831a49fd34db2e2a5c231ccb51331afdf5418708da8d6d16deba",
+      "snapshots/005930-20261028-c637dc2629.json": "a045fca729d3f22771fef8df85406ed7144f391d80fb875df050ad9f0a1fd478",
+      "snapshots/MULTI.000660.b2dcbd3aa43416b3.json": "28284db58806a0323bbd6dd4cbfeb0b3df23df735141ba6ec00b29b2160809e8",
+      "snapshots/MULTI.005930.0c22205920c45d56.json": "cb49f8c834ac3db52d143b1824ca3618c15eaf5ecd90dd0582f5e9f1605c5663",
+      "worker-network-audit.jsonl": "01cb22262cf59e36e71fc48841a6b14db01220c97eb10a2f560bd227e8d752e6"
+    },
+    "database_logical_hashes": {
+      "http/worker.sqlite3": "563d3d8f577ef02615e87099b541c6db37c4b7dd9b47a93ddcaaac508a57cb70",
+      "rag/contexts.sqlite3": "cc9912fef0f63c6dc4e284617e5d1ece99a1b0f78c36f38bac6820db2d54e502",
+      "rag/rag.sqlite3": "8182c65bcc1a601fc510ed42b7adc5d8a1c31de135be2f660c11c4bb5829bd70"
+    }
+  },
+  "imported_archive": {
+    "source_hash": "2d9f209880ea4581168df7fb49e4df67e83de84b25f80c66e5a011818b2d1d31",
+    "tables": {
+      "documents": 2,
+      "collection_runs": 2,
+      "document_revisions": 2,
+      "collection_items": 2,
+      "document_events": 2,
+      "source_watermarks": 0,
+      "chunks": 2,
+      "chunk_annotations": 2,
+      "chunk_horizons": 2,
+      "ingest_jobs": 0,
+      "ingest_attempts": 0
+    },
+    "objects": 2,
+    "dry_run": false
+  },
+  "imported_contexts": {
+    "source_hash": "90cc5709506c4b9144093a80f811a4b1c31afabff07baf67ca722f83d37a0ca8",
+    "contexts": 16,
+    "searches": 60,
+    "dry_run": false
+  },
+  "vector_generation": "VG.12eb157f3b228d698a69ef02c970de3daa3e2912cdf84bc6e71407672190d1b6",
+  "synthetic_embedding_calls": 2,
+  "external_model_calls": 0,
+  "http_responses": [
+    {
+      "restart": 0,
+      "route": "search",
+      "ticker": "005930",
+      "context_id": "KCTX.09e3631b2e2515bdb2d2a15c0caff7a792a0ef6254ae432567cfa86f58697872"
+    },
+    {
+      "restart": 0,
+      "route": "facts",
+      "ticker": "005930",
+      "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+    },
+    {
+      "restart": 0,
+      "route": "search",
+      "ticker": "000660",
+      "context_id": "KCTX.5f439ef1973cd03ab09a97d8b167759d9f24587af3e4133f64f2701f468f932f"
+    },
+    {
+      "restart": 0,
+      "route": "facts",
+      "ticker": "000660",
+      "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+    },
+    {
+      "restart": 1,
+      "route": "search",
+      "ticker": "005930",
+      "context_id": "KCTX.09e3631b2e2515bdb2d2a15c0caff7a792a0ef6254ae432567cfa86f58697872"
+    },
+    {
+      "restart": 1,
+      "route": "facts",
+      "ticker": "005930",
+      "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+    },
+    {
+      "restart": 1,
+      "route": "search",
+      "ticker": "000660",
+      "context_id": "KCTX.5f439ef1973cd03ab09a97d8b167759d9f24587af3e4133f64f2701f468f932f"
+    },
+    {
+      "restart": 1,
+      "route": "facts",
+      "ticker": "000660",
+      "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+    }
+  ],
+  "immutable_trigger_rejected_update": true,
+  "new_search_audits": 10,
+  "restricted_runtime_role": {
+    "search_and_facts_equal": true,
+    "denied": [
+      "UPDATE",
+      "DELETE",
+      "TRUNCATE",
+      "CREATE"
+    ],
+    "schema_usage": true,
+    "table_permissions": [
+      "SELECT",
+      "INSERT"
+    ],
+    "sequence_permissions": [
+      "USAGE",
+      "SELECT"
+    ]
+  },
+  "temporary_role_removed": true,
+  "limitations": [
+    "local trust auth; not cloud TLS/IAM",
+    "two fixture documents and mixed real/mock snapshots",
+    "synthetic vectors verify storage only",
+    "not live cross-database backup",
+    "roles/ACLs not included"
+  ],
+  "python_socket_connections": [
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    },
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    },
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    }
+  ]
+}

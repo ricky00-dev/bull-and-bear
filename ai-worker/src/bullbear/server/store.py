@@ -17,7 +17,7 @@ from .errors import ApiError
 
 
 class Store:
-    def __init__(self, directory: Path):
+    def __init__(self, directory: Path, *, maintenance=False, read_only=False):
         directory.mkdir(parents=True, exist_ok=True)
         # A separate SQLite database is used only as a cross-process ownership lock.
         self.owner = sqlite3.connect(directory / "owner.sqlite3", timeout=0, check_same_thread=False)
@@ -29,6 +29,9 @@ class Store:
         self.lock = threading.RLock()
         self.db = sqlite3.connect(directory / "worker.sqlite3", check_same_thread=False)
         self.db.row_factory = sqlite3.Row
+        if read_only:
+            self.db.execute('PRAGMA query_only=ON')
+            return
         self.db.executescript("""
             PRAGMA journal_mode=WAL;
             PRAGMA foreign_keys=ON;
@@ -41,6 +44,12 @@ class Store:
                 debate_id TEXT NOT NULL REFERENCES debates(id), seq INTEGER NOT NULL,
                 type TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(debate_id, seq));
             CREATE TABLE IF NOT EXISTS snapshots (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS snapshot_generations (
+                snapshot_id TEXT PRIMARY KEY REFERENCES snapshots(id), data TEXT NOT NULL);
+            CREATE TRIGGER IF NOT EXISTS immutable_snapshot_generations_update
+                BEFORE UPDATE ON snapshot_generations BEGIN SELECT RAISE(ABORT,'immutable binding'); END;
+            CREATE TRIGGER IF NOT EXISTS immutable_snapshot_generations_delete
+                BEFORE DELETE ON snapshot_generations BEGIN SELECT RAISE(ABORT,'immutable binding'); END;
             CREATE TABLE IF NOT EXISTS recoveries (
                 debate_id TEXT PRIMARY KEY REFERENCES debates(id), data TEXT NOT NULL);
         """)
@@ -48,7 +57,7 @@ class Store:
         if 'mode' not in {row['name'] for row in self.db.execute('PRAGMA table_info(debates)')}:
             with self.db:
                 self.db.execute("ALTER TABLE debates ADD COLUMN mode TEXT NOT NULL DEFAULT 'debate'")
-        for row in self.db.execute("SELECT id FROM debates WHERE status='running'").fetchall():
+        for row in ([] if maintenance else self.db.execute("SELECT id FROM debates WHERE status='running'").fetchall()):
             recovery = self.recovery_record(directory.parent, row['id'])
             with self.transaction() as db:
                 db.execute('INSERT INTO recoveries VALUES (?,?)',
@@ -131,9 +140,39 @@ class Store:
                 raise ApiError(404, 'NOT_FOUND', '스냅샷을 찾을 수 없습니다')
             return json.loads(row[0])
 
-    def save_snapshot(self, debate_id, snapshot):
+    def generation_binding(self, snapshot_id):
+        with self.lock:
+            if not self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='snapshot_generations'").fetchone():
+                return None
+            row = self.db.execute('SELECT data FROM snapshot_generations WHERE snapshot_id=?', (snapshot_id,)).fetchone()
+            return json.loads(row[0]) if row else None
+
+    def bind_generation(self, snapshot_id, binding):
+        from ..rag.schemas import digest, canonical_json
+        from ..snapshot import Snapshot
         with self.transaction() as db:
-            db.execute('INSERT OR IGNORE INTO snapshots VALUES (?,?)', (snapshot.snapshot_id, snapshot.model_dump_json()))
+            snapshot = Snapshot.model_validate(self.snapshot(snapshot_id))
+            if (binding.get('snapshot_id') != snapshot_id or
+                    binding.get('snapshot_hash') != digest(snapshot.model_dump(mode='json'))):
+                raise ValueError('binding snapshot mismatch')
+            old = self.generation_binding(snapshot_id)
+            if old is not None:
+                if old != binding:
+                    raise ValueError('immutable binding conflict')
+                return old
+            db.execute('INSERT INTO snapshot_generations VALUES (?,?)', (snapshot_id, canonical_json(binding)))
+        return binding
+
+    def save_snapshot(self, debate_id, snapshot, *, binding_factory=None):
+        with self.transaction() as db:
+            inserted = db.execute('INSERT OR IGNORE INTO snapshots VALUES (?,?)',
+                                  (snapshot.snapshot_id, snapshot.model_dump_json())).rowcount
+            if inserted and binding_factory is not None:
+                # Same transaction as first snapshot insert; reuse never repins.
+                from ..rag.schemas import canonical_json
+                binding = binding_factory(snapshot)
+                db.execute('INSERT INTO snapshot_generations VALUES (?,?)',
+                           (snapshot.snapshot_id, canonical_json(binding)))
             db.execute('UPDATE debates SET snapshot_id=? WHERE id=?', (snapshot.snapshot_id, debate_id))
 
     def emit(self, debate_id, event, data):

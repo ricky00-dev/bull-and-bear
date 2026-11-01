@@ -1,0 +1,13 @@
+# Opt-in RAG configuration; combine with compose.yml. S3 and paid shadow stay off.
+# Provision/migrate a separate RAG database and prewarm generations before enabling.
+services:
+  worker:
+    environment:
+      BULLBEAR_RAG_ENABLED: ${RAG_ENABLED:-false}
+      BULLBEAR_RAG_GENERATION_ID: ${RAG_GENERATION_ID:-}
+      BULLBEAR_RAG_ARCHIVE_BACKEND: ${RAG_ARCHIVE_BACKEND:-sqlite}
+      BULLBEAR_RAG_CONTEXT_BACKEND: ${RAG_CONTEXT_BACKEND:-sqlite}
+      BULLBEAR_RAG_POSTGRES_DSN: ${RAG_POSTGRES_DSN:-}
+      BULLBEAR_RAG_OBJECT_BACKEND: local
+      BULLBEAR_RAG_SHADOW_ENABLED: "false"
+      BULLBEAR_RAG_SHADOW_PREPARE_QUERY: "false"
