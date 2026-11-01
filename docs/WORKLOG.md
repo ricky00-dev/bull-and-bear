@@ -15,6 +15,15 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-01 · ricky00-dev (Claude Code) · api, web
+- 한 것: 학습 부가 기능 3개 (feat/learning-extras).
+  1. 내 근거 채점: 판정 때 고른 근거를 그 근거를 인용한 쪽(매수 측·매도 측) 방향으로 채점. 초과수익 +2%p 초과면 매수 측 근거, −2%p 미만이면 매도 측 근거가 맞음, 그 사이는 FLAT. `GET /api/me/judgments/{id}`에 `pickResults`·`pickHorizon`, `/api/me/stats`의 `evidenceHabit`에 `right`·`graded` 추가. 채점 화면에 근거별 결과와 "판정은 빗나갔지만 근거는 맞았어요" 같은 한 줄 정리, 내 판정 탭 습관 리포트에 분류별 맞은 방향 횟수. DB 변경 없음 (debate_events의 statement_accepted에서 계산).
+  2. 퀴즈 랭킹: `GET /api/quiz/ranking?scope=today|all` (맞힌 수 → 덜 풀고 맞힌 사람 → 먼저 도달 순, 공동 순위, 상위 20 + 내 순위), `PUT /api/me/nickname` (한글·영문·숫자 2~10자, 최소 욕설·사칭 차단). 웹 `/quiz/ranking` (오늘/전체, 30초마다 갱신, 닉네임 정하기). 퀴즈 홈·한 판 결과·마이 탭에서 진입.
+  3. 오늘의 용어: 홈에 한국 시간 날짜로 고른 용어 카드 (프론트만).
+- 진행 중: 없음.
+- 다음: 전시 때 랭킹 화면을 대기 화면(큰 화면)으로 띄울지 결정. 욕설 목록은 최소한이라 운영 중 보강.
+- 막힘·결정 필요: 없음. API 전체 테스트 41개 통과, 웹 tsc·lint 통과, 브라우저(390px)로 세 화면 확인. 근거 채점은 같은 근거를 양쪽이 다 인용하면 이긴 쪽 기준으로 RIGHT 처리 (화면에 안내 문구 있음).
+
 ## 2026-11-01 · Codex · api, ai-worker, web, docs
 - 한 것: PR #23 비용/복구 수정 d8a5c27과 #24 snapshot 수정 2e389e3을 통합한 9867a14에서 최종 Python476 통과/외부5 생략, 별도 실제 Spring/PostgreSQL/HTTP5 통과, Java 관련9+DB복구7 통과, 웹 build/lint 성공. 초기 import 경로 오류와 fixture 오류 수정·재실행을 상세 보고서에 기록.
 - 진행 중: 사용자 요청에 따른 #23→#24→#25 develop 병합. #23 병합 9e4926a 및 #24 병합 2ef53e2 완료. #24와 #25의 base 통합 충돌은 WORKLOG만 발생해 모든 기록을 보존. #25 최종 원격 반영 중. 제품 코드는 검증 revision 유지, 검사 실행기에서 DB복구7개 실행을 의무화.

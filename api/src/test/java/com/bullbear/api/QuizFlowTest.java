@@ -3,6 +3,7 @@ package com.bullbear.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,6 +104,28 @@ class QuizFlowTest {
 				.andExpect(jsonPath("$.rounds").value(0))
 				.andExpect(jsonPath("$.answered").value(1))
 				.andExpect(jsonPath("$.userHits").value(userHit ? 1 : 0));
+
+		// 랭킹: 닉네임을 정하면 그 이름으로 오른다. 오늘(한국 시간) 푼 문제만 센다
+		mvc.perform(put("/api/me/nickname").header("Authorization", "Bearer " + player)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"nickname\":\"  불개미 \"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nickname").value("불개미"));
+		mvc.perform(put("/api/me/nickname").header("Authorization", "Bearer " + player)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"nickname\":\"관리자123\"}"))
+				.andExpect(status().isBadRequest());
+		mvc.perform(get("/api/quiz/ranking").header("Authorization", "Bearer " + player))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.scope").value("TODAY"))
+				.andExpect(jsonPath("$.mine.name").value("불개미"))
+				.andExpect(jsonPath("$.mine.answered").value(1))
+				.andExpect(jsonPath("$.mine.hits").value(userHit ? 1 : 0))
+				.andExpect(jsonPath("$.mine.me").value(true));
+		// 다음 날 "오늘" 랭킹에는 없고, 전체 랭킹에는 남는다
+		clock.set(LocalDateTime.of(2026, 11, 4, 9, 0));
+		mvc.perform(get("/api/quiz/ranking").header("Authorization", "Bearer " + player))
+				.andExpect(jsonPath("$.mine").doesNotExist());
+		mvc.perform(get("/api/quiz/ranking?scope=all").header("Authorization", "Bearer " + player))
+				.andExpect(jsonPath("$.mine.name").value("불개미"));
 	}
 
 	private String guest() throws Exception {

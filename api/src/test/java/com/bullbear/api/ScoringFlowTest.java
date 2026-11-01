@@ -93,6 +93,18 @@ class ScoringFlowTest {
 				.andExpect(jsonPath("$.userHits").value(userHit ? 1 : 0))
 				.andExpect(jsonPath("$.beatAi").value(userHit && !modHit ? 1 : 0))
 				.andExpect(jsonPath("$.evidenceHabit.length()").value(2));
+
+		// 6. 내 근거 채점: 1년 수익률은 양쪽이 다 인용, 20일 변동성은 매도 측만 인용
+		BigDecimal excess = new BigDecimal(JsonPath.read(body, "$.items[0].scores[1].excessReturn").toString());
+		String judgmentId = JsonPath.read(body, "$.items[0].judgmentId");
+		String volResult = excess.compareTo(new BigDecimal("-2.0")) < 0 ? "RIGHT"
+				: excess.compareTo(new BigDecimal("2.0")) > 0 ? "WRONG" : "FLAT";
+		mvc.perform(get("/api/me/judgments/" + judgmentId).header("Authorization", "Bearer " + token))
+				.andExpect(jsonPath("$.pickHorizon").value(7))
+				.andExpect(jsonPath("$.pickResults[0].sourceId").value("PX.RET_1Y"))
+				.andExpect(jsonPath("$.pickResults[0].sides.length()").value(2))
+				.andExpect(jsonPath("$.pickResults[1].sides[0]").value("bear"))
+				.andExpect(jsonPath("$.pickResults[1].result").value(volResult));
 	}
 
 	@Test
