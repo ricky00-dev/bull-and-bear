@@ -237,7 +237,7 @@ def test_cli_publish_retrieve_replay(tmp_path, snapshot, capsys):
 
 def test_persistence_failure_never_returns_unsaved_success(tmp_path, snapshot, monkeypatch):
     from bullbear.rag import retrieval as module
-    def fail(*args):
+    def fail(*args, **kwargs):
         raise OSError("fixture storage failure")
     with RagStore(tmp_path / "rag") as store:
         seed(store)

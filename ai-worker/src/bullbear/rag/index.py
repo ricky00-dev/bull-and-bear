@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from .schemas import canonical_json, digest, stamp
 from .store import ArchiveCorruptError, RagStore
+from .objects import ObjectStorageError
 
 NORMALIZER_VERSION = "unicode61-nfc-alias-v2"
 INDEX_VERSION = "observed-background-fts5-v2"
@@ -55,11 +56,11 @@ def current_member(db, store: RagStore, chunk_id: str, cutoff: str) -> tuple[dic
         content = json.loads(item["content_json"])
         if item["object_path"] != f"objects/{item['content_hash']}" or digest(content) != item["content_hash"]:
             raise ValueError("invalid object")
-        if store.directory.joinpath(item["object_path"]).read_bytes() != canonical_json(content).encode("utf-8"):
+        if store.object_store.get(item["content_hash"]) != canonical_json(content).encode("utf-8"):
             raise ValueError("invalid object")
         if digest(item["text"]) != item["text_hash"] or item["text"] not in content["title"] + "\n" + content["text"]:
             raise ValueError("invalid chunk")
-    except (OSError, ValueError, TypeError):
+    except (OSError, ValueError, TypeError, ObjectStorageError):
         raise ArchiveCorruptError("knowledge source integrity check failed") from None
     earliest = db.execute("SELECT MIN(i.observed_at) FROM collection_items i JOIN collection_runs r USING(collection_id) "
                           "WHERE i.revision_id=? AND r.observation_mode='current' AND i.quarantine_reason IS NULL",
@@ -165,7 +166,8 @@ class GenerationIndex:
             manifest = json.loads(db.execute("SELECT payload FROM manifest").fetchone()[0])
             if "G." + digest(manifest) != generation_id or manifest["index_version"] != INDEX_VERSION:
                 raise ArchiveCorruptError("generation manifest hash/version mismatch")
-            return db, {**manifest, "committed_at": receipt["committed_at"]}
+            return db, {**manifest, "committed_at": receipt["committed_at"],
+                        "publication_sha256": receipt["sha256"]}
         except BaseException:
             db.close()
             raise

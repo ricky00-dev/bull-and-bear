@@ -191,7 +191,9 @@ def main(argv=None):
     parser.add_argument("--allow-agent-reviewed", action="store_true")
     args = parser.parse_args(argv)
     corpus = Corpus.model_validate_json(args.corpus.read_text(encoding="utf-8"))
-    with RagStore(args.data_dir / "rag") as store:
+    from ..config import load_settings
+    from .archive_repository import configured_archive
+    with configured_archive(load_settings(), args.data_dir / "rag") as store:
         result = import_corpus(store, corpus, allow_agent_reviewed=args.allow_agent_reviewed)
     print(json.dumps(result, ensure_ascii=False))
 

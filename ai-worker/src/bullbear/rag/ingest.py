@@ -45,6 +45,11 @@ def sync_payload(store: RagStore, payload: dict):
     pages and coverage; the existing NAVER search method cannot attest complete
     archive coverage because its fixed page cap hides truncation.
     """
+    return store.import_collection(normalize_capture(payload))
+
+
+def normalize_capture(payload: dict) -> CollectionBatch:
+    """Validate a captured provider response without writing to the archive."""
     data = dict(payload)
     kind = data.pop("kind")
     if kind not in {"news", "disclosure"}:
@@ -73,4 +78,4 @@ def sync_payload(store: RagStore, payload: dict):
         data.update(status="partial" if accepted else "failed", coverage="partial" if accepted else "unknown",
                     safe_error="invalid_provider_item" if isinstance(raw_items, list) else "missing_items",
                     completed_through=None, cursor=None)
-    return store.import_collection(CollectionBatch.model_validate(data))
+    return CollectionBatch.model_validate(data)

@@ -2,15 +2,15 @@
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from uuid import uuid4
 
 from .schemas import AnnotationInput, ChunkInput, CollectionBatch, CollectionResult, DocumentInput, canonical_json, digest, stamp, utc
+
+from .objects import ArchiveCorruptError, LocalObjectStore, ObjectStorageError
 
 SCHEMA_VERSION = 1
 KST = timezone(timedelta(hours=9))
@@ -69,10 +69,6 @@ CREATE INDEX IF NOT EXISTS chunk_annotations_at ON chunk_annotations(chunk_id,re
 """
 
 
-class ArchiveCorruptError(RuntimeError):
-    """A saved object or relational archive entry no longer matches its hash."""
-
-
 def quarantine_reason(item: DocumentInput) -> str | None:
     if not item.publication_verified:
         return "publication_unverified"
@@ -88,11 +84,12 @@ def quarantine_reason(item: DocumentInput) -> str | None:
 
 
 class RagStore:
-    def __init__(self, directory: Path | str):
+    def __init__(self, directory: Path | str, *, object_store=None):
         self.directory = Path(directory).resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
         self.objects = self.directory / "objects"
         self.objects.mkdir(exist_ok=True)
+        self.object_store = object_store if object_store is not None else LocalObjectStore(self.objects)
         self.path = self.directory / "rag.sqlite3"
         self.lock = threading.RLock()
         self.db = sqlite3.connect(self.path, timeout=5, isolation_level=None, check_same_thread=False)
@@ -164,21 +161,7 @@ class RagStore:
 
     def _object(self, item: DocumentInput) -> str:
         payload = canonical_json(item.content()).encode("utf-8")
-        target = self.objects / item.content_hash
-        if target.exists():
-            if target.read_bytes() != payload:
-                raise ArchiveCorruptError("saved document object failed integrity check")
-            return f"objects/{item.content_hash}"
-        temp = self.objects / f".{uuid4().hex}.tmp"
-        try:
-            with temp.open("xb") as handle:
-                handle.write(payload)
-                handle.flush()
-                os.fsync(handle.fileno())
-            # Objects are immutable and named by the hash of these exact bytes.
-            os.replace(temp, target)
-        finally:
-            temp.unlink(missing_ok=True)
+        self.object_store.put(item.content_hash, payload)
         return f"objects/{item.content_hash}"
 
     def import_collection(self, batch: CollectionBatch) -> CollectionResult:
@@ -188,58 +171,62 @@ class RagStore:
         # unreferenced content-addressed object, never a committed dangling reference.
         objects = {item.content_hash: self._object(item) for item in batch.items}
         with self.transaction() as db:
-            old = db.execute("SELECT fingerprint,result_json FROM collection_runs WHERE collection_id=?", (batch.collection_id,)).fetchone()
-            if old:
-                if old["fingerprint"] != fingerprint:
-                    raise ValueError("collection_id was reused with different input")
-                return CollectionResult.model_validate_json(old["result_json"]).model_copy(update={"reused": True})
-            # Validate ambiguous observations before publishing any database records.
-            observed = {}
-            for item in batch.items:
-                key = item.document_id, stamp(item.observed_at)
-                if key in observed and observed[key] != item.revision_id:
+            return self._import_collection(db, batch, objects, fingerprint)
+
+    def _import_collection(self, db, batch, objects, fingerprint):
+        """Internal transaction participant; caller validates input and uploads objects."""
+        old = db.execute("SELECT fingerprint,result_json FROM collection_runs WHERE collection_id=?", (batch.collection_id,)).fetchone()
+        if old:
+            if old["fingerprint"] != fingerprint:
+                raise ValueError("collection_id was reused with different input")
+            return CollectionResult.model_validate_json(old["result_json"]).model_copy(update={"reused": True})
+        # Validate ambiguous observations before publishing any database records.
+        observed = {}
+        for item in batch.items:
+            key = item.document_id, stamp(item.observed_at)
+            if key in observed and observed[key] != item.revision_id:
+                raise ValueError("different revisions at the same observation timestamp are ambiguous")
+            observed[key] = item.revision_id
+        # Child records and the final immutable collection row commit together.
+        db.execute("PRAGMA defer_foreign_keys=ON")
+        revisions = events = quarantined = 0
+        for ordinal, item in sorted(enumerate(batch.items), key=lambda pair: pair[1].observed_at):
+            db.execute("INSERT OR IGNORE INTO documents VALUES (?,?,?,?,?)", (item.document_id, item.source, item.source_item_id, item.kind, item.url))
+            identity = db.execute("SELECT kind FROM documents WHERE document_id=?", (item.document_id,)).fetchone()
+            if identity["kind"] != item.kind:
+                raise ValueError("document source identity cannot change kind")
+            reason = quarantine_reason(item)
+            quarantined += reason is not None
+            object_path = objects[item.content_hash]
+            inserted = db.execute("INSERT OR IGNORE INTO document_revisions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+                item.revision_id, item.document_id, item.content_hash, object_path, canonical_json(item.content()),
+                item.title, item.text, stamp(item.published_at) if item.published_at else None,
+                item.published_on.isoformat() if item.published_on else None,
+                stamp(item.source_updated_at) if item.source_updated_at else None, stamp(item.observed_at),
+                item.timestamp_precision, item.content_level, item.unit, reason)).rowcount
+            revisions += inserted
+            db.execute("INSERT INTO collection_items VALUES (?,?,?,?,?,?)", (batch.collection_id, ordinal, item.revision_id,
+                       stamp(item.observed_at), canonical_json(item.model_dump(mode="json")), reason))
+            if batch.observation_mode == "current":
+                last = db.execute("SELECT e.kind,e.revision_id,e.observed_at,i.quarantine_reason FROM document_events e LEFT JOIN collection_items i ON i.collection_id=e.collection_id AND i.ordinal=e.item_ordinal WHERE e.document_id=? AND e.observed_at<=? ORDER BY e.observed_at DESC,e.event_seq DESC LIMIT 1", (item.document_id, stamp(item.observed_at))).fetchone()
+                if last and last["observed_at"] == stamp(item.observed_at) and last["kind"] == "revision_activated" and last["revision_id"] != item.revision_id:
                     raise ValueError("different revisions at the same observation timestamp are ambiguous")
-                observed[key] = item.revision_id
-            # Child records and the final immutable collection row commit together.
-            db.execute("PRAGMA defer_foreign_keys=ON")
-            revisions = events = quarantined = 0
-            for ordinal, item in sorted(enumerate(batch.items), key=lambda pair: pair[1].observed_at):
-                db.execute("INSERT OR IGNORE INTO documents VALUES (?,?,?,?,?)", (item.document_id, item.source, item.source_item_id, item.kind, item.url))
-                identity = db.execute("SELECT kind FROM documents WHERE document_id=?", (item.document_id,)).fetchone()
-                if identity["kind"] != item.kind:
-                    raise ValueError("document source identity cannot change kind")
-                reason = quarantine_reason(item)
-                quarantined += reason is not None
-                object_path = objects[item.content_hash]
-                inserted = db.execute("INSERT OR IGNORE INTO document_revisions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
-                    item.revision_id, item.document_id, item.content_hash, object_path, canonical_json(item.content()),
-                    item.title, item.text, stamp(item.published_at) if item.published_at else None,
-                    item.published_on.isoformat() if item.published_on else None,
-                    stamp(item.source_updated_at) if item.source_updated_at else None, stamp(item.observed_at),
-                    item.timestamp_precision, item.content_level, item.unit, reason)).rowcount
-                revisions += inserted
-                db.execute("INSERT INTO collection_items VALUES (?,?,?,?,?,?)", (batch.collection_id, ordinal, item.revision_id,
-                           stamp(item.observed_at), canonical_json(item.model_dump(mode="json")), reason))
-                if batch.observation_mode == "current":
-                    last = db.execute("SELECT e.kind,e.revision_id,e.observed_at,i.quarantine_reason FROM document_events e LEFT JOIN collection_items i ON i.collection_id=e.collection_id AND i.ordinal=e.item_ordinal WHERE e.document_id=? AND e.observed_at<=? ORDER BY e.observed_at DESC,e.event_seq DESC LIMIT 1", (item.document_id, stamp(item.observed_at))).fetchone()
-                    if last and last["observed_at"] == stamp(item.observed_at) and last["kind"] == "revision_activated" and last["revision_id"] != item.revision_id:
-                        raise ValueError("different revisions at the same observation timestamp are ambiguous")
-                    if not last or last["kind"] != "revision_activated" or last["revision_id"] != item.revision_id or last["quarantine_reason"] != reason:
-                        db.execute("INSERT INTO document_events(event_id,document_id,revision_id,collection_id,item_ordinal,kind,observed_at,source_ref) VALUES (?,?,?,?,?,?,?,?)",
-                                   ("E." + digest([batch.collection_id, ordinal, "revision_activated"]), item.document_id,
-                                    item.revision_id, batch.collection_id, ordinal, "revision_activated", stamp(item.observed_at), item.source_ref))
-                        events += 1
-            advanced, reason = self._watermark(db, batch)
-            result = CollectionResult(collection_id=batch.collection_id, status=batch.status, imported_items=len(batch.items),
-                                      new_revisions=revisions, new_events=events, quarantined_items=quarantined,
-                                      rejected_items=batch.rejected_items,
-                                      watermark_advanced=advanced, watermark_reason=reason)
-            db.execute("INSERT INTO collection_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
-                batch.collection_id, batch.source, batch.query_key, stamp(batch.window_start), stamp(batch.window_end),
-                stamp(batch.started_at), stamp(batch.finished_at), batch.observation_mode, batch.status, batch.coverage,
-                batch.pages, batch.safe_error, fingerprint, canonical_json(batch.model_dump(mode="json")),
-                result.model_dump_json(), stamp(datetime.now(timezone.utc))))
-            return result
+                if not last or last["kind"] != "revision_activated" or last["revision_id"] != item.revision_id or last["quarantine_reason"] != reason:
+                    db.execute("INSERT INTO document_events(event_id,document_id,revision_id,collection_id,item_ordinal,kind,observed_at,source_ref) VALUES (?,?,?,?,?,?,?,?)",
+                               ("E." + digest([batch.collection_id, ordinal, "revision_activated"]), item.document_id,
+                                item.revision_id, batch.collection_id, ordinal, "revision_activated", stamp(item.observed_at), item.source_ref))
+                    events += 1
+        advanced, reason = self._watermark(db, batch)
+        result = CollectionResult(collection_id=batch.collection_id, status=batch.status, imported_items=len(batch.items),
+                                  new_revisions=revisions, new_events=events, quarantined_items=quarantined,
+                                  rejected_items=batch.rejected_items,
+                                  watermark_advanced=advanced, watermark_reason=reason)
+        db.execute("INSERT INTO collection_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            batch.collection_id, batch.source, batch.query_key, stamp(batch.window_start), stamp(batch.window_end),
+            stamp(batch.started_at), stamp(batch.finished_at), batch.observation_mode, batch.status, batch.coverage,
+            batch.pages, batch.safe_error, fingerprint, canonical_json(batch.model_dump(mode="json")),
+            result.model_dump_json(), stamp(datetime.now(timezone.utc))))
+        return result
 
     @staticmethod
     def _watermark(db, batch):
@@ -276,9 +263,9 @@ class RagStore:
                 content = json.loads(value["content_json"])
                 if value["object_path"] != f"objects/{value['content_hash']}":
                     raise ValueError("object path mismatch")
-                if digest(content) != value["content_hash"] or self.directory.joinpath(value["object_path"]).read_bytes() != canonical_json(content).encode("utf-8"):
+                if digest(content) != value["content_hash"] or self.object_store.get(value["content_hash"]) != canonical_json(content).encode("utf-8"):
                     raise ValueError("hash mismatch")
-            except (OSError, ValueError, TypeError):
+            except (OSError, ValueError, TypeError, ObjectStorageError):
                 raise ArchiveCorruptError("saved document object failed integrity check") from None
             value["content"] = content
             # Captures can be imported out of order. Preserve the original immutable

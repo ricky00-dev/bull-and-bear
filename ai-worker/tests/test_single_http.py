@@ -42,7 +42,7 @@ def seed(app, settings, market, *, suffix=''):
     store = app.state.service.store
     row, _ = store.create('seed' + suffix, 'seed' + suffix, snapshot.ticker, str(snapshot.as_of), 2,
                           snapshot_id=snapshot.snapshot_id)
-    store.save_snapshot(row['id'], snapshot)
+    store.save_snapshot(row['id'], snapshot, binding_factory=app.state.service.capture_generation)
     store.emit(row['id'], 'debate_completed', {})
     return snapshot, row['id']
 

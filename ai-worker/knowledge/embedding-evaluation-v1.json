@@ -1,0 +1,235 @@
+{
+  "schema_version": "embedding-quality-pilot-v1",
+  "human_reviewed": false,
+  "judgments": "agent_authored_exhaustive_for_six_note_corpus",
+  "cases": [
+    {
+      "id": "per-definition-0",
+      "category": "direct",
+      "label": "PER 주가수익비율",
+      "path": "common",
+      "relevant": [
+        "per-definition"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "per-definition-1",
+      "category": "paraphrase",
+      "label": "이익에 비해 주식 가격이 얼마나 비싼가",
+      "path": "common",
+      "relevant": [
+        "per-definition"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "per-definition-2",
+      "category": "paraphrase",
+      "label": "벌어들이는 돈 대비 주가가 낮다는 뜻",
+      "path": "common",
+      "relevant": [
+        "per-definition"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "operating-margin-0",
+      "category": "direct",
+      "label": "영업이익률",
+      "path": "common",
+      "relevant": [
+        "operating-margin"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "operating-margin-1",
+      "category": "paraphrase",
+      "label": "매출에서 본업 이익이 차지하는 몫",
+      "path": "common",
+      "relevant": [
+        "operating-margin"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "operating-margin-2",
+      "category": "paraphrase",
+      "label": "다른 분기 매출과 영업이익을 나눠도 될까",
+      "path": "common",
+      "relevant": [
+        "operating-margin"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "volatility-direction-0",
+      "category": "direct",
+      "label": "변동성",
+      "path": "common",
+      "relevant": [
+        "volatility-direction"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "volatility-direction-1",
+      "category": "paraphrase",
+      "label": "주가가 많이 흔들리면 앞으로 오른다는 뜻인가",
+      "path": "common",
+      "relevant": [
+        "volatility-direction"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "volatility-direction-2",
+      "category": "paraphrase",
+      "label": "가격 움직임의 폭과 상승 방향을 구별",
+      "path": "common",
+      "relevant": [
+        "volatility-direction"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "earnings-expectations-0",
+      "category": "direct",
+      "label": "실적 발표 기대 차이",
+      "path": "short",
+      "relevant": [
+        "earnings-expectations"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "earnings-expectations-1",
+      "category": "paraphrase",
+      "label": "좋은 성적을 발표했는데 왜 주가가 떨어질까",
+      "path": "short",
+      "relevant": [
+        "earnings-expectations"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "earnings-expectations-2",
+      "category": "paraphrase",
+      "label": "예상보다 이익이 많아도 향후 전망이 나쁜 경우",
+      "path": "short",
+      "relevant": [
+        "earnings-expectations"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "release-vs-filing-0",
+      "category": "direct",
+      "label": "공시 시각 실적 발표",
+      "path": "short",
+      "relevant": [
+        "release-vs-filing"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "release-vs-filing-1",
+      "category": "paraphrase",
+      "label": "새 보고서가 올라와도 이미 알려진 내용일 수 있나",
+      "path": "short",
+      "relevant": [
+        "release-vs-filing"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "release-vs-filing-2",
+      "category": "paraphrase",
+      "label": "처음 시장에 알려진 때와 서류 접수 시간을 구별",
+      "path": "short",
+      "relevant": [
+        "release-vs-filing"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "momentum-limit-0",
+      "category": "direct",
+      "label": "모멘텀 과거 수익률",
+      "path": "short",
+      "relevant": [
+        "momentum-limit"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "momentum-limit-1",
+      "category": "paraphrase",
+      "label": "최근 계속 올랐으면 다음 주에도 오를까",
+      "path": "short",
+      "relevant": [
+        "momentum-limit"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "momentum-limit-2",
+      "category": "paraphrase",
+      "label": "지난 상승세만으로 일주일 뒤 시장을 이긴다고 볼 수 있나",
+      "path": "short",
+      "relevant": [
+        "momentum-limit"
+      ],
+      "expect_empty": false
+    },
+    {
+      "id": "negative-0",
+      "category": "negative",
+      "label": "광합성에서 엽록체가 하는 일",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    },
+    {
+      "id": "negative-1",
+      "category": "negative",
+      "label": "서울에서 부산까지 기차 시간표",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    },
+    {
+      "id": "negative-2",
+      "category": "negative",
+      "label": "파이썬 리스트를 정렬하는 문법",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    },
+    {
+      "id": "negative-3",
+      "category": "negative",
+      "label": "오늘 삼성전자 정확한 종가",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    },
+    {
+      "id": "negative-4",
+      "category": "negative",
+      "label": "내일 주가가 몇 원이 되는지 확답",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    },
+    {
+      "id": "negative-5",
+      "category": "negative",
+      "label": "채권 듀레이션 계산 공식",
+      "path": "common",
+      "relevant": [],
+      "expect_empty": true
+    }
+  ]
+}

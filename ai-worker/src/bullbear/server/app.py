@@ -20,6 +20,15 @@ from ..data.base import DataUnavailable
 from .errors import ApiError
 from .market import Market
 from .service import Service
+from ..rag.evidence import DocumentRequest, FactRequest
+
+
+class RagSearch(DocumentRequest):
+    snapshot_id: str = Field(min_length=1, max_length=256)
+
+
+class RagFacts(FactRequest):
+    snapshot_id: str = Field(min_length=1, max_length=256)
 
 
 class StartDebate(BaseModel):
@@ -92,6 +101,18 @@ def create_app(*, settings=None, market=None, runner_factory=None, token=None, m
     @app.exception_handler(Exception)
     async def unexpected_error(request, exc):
         return await api_error(request, ApiError(500, 'INTERNAL_ERROR', '워커 내부 오류가 발생했습니다'))
+
+    @app.post('/rag/query', dependencies=[Depends(auth)])
+    async def retired_rag_query():
+        raise ApiError(410, 'RAG_QUERY_RETIRED', '/rag/search 또는 /rag/facts를 명시적으로 선택하세요')
+
+    @app.post('/rag/search', dependencies=[Depends(auth)])
+    async def rag_search(body: RagSearch, svc=Depends(service)):
+        return await asyncio.to_thread(svc.rag_lookup, body)
+
+    @app.post('/rag/facts', dependencies=[Depends(auth)])
+    async def rag_facts(body: RagFacts, svc=Depends(service)):
+        return await asyncio.to_thread(svc.rag_lookup, body)
 
     @app.get('/health')
     def health():
