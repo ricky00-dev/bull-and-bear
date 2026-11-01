@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-11-01 · Codex · ai-worker, docs
+- 한 것: 사용자 현재 작업 push·병합 요청에 따라 origin fetch 후 비교. develop3cc4884 대비 작업38517df는4커밋 ahead/0 behind, 미커밋0, semantic-review-context 전체 포함 확인. 현재 브랜치 Python484 통과/실패0/외부5 생략(56.83초), diff 공백 및 키/.env/data 제외 검사 통과.
+- 진행 중: 검토기 문맥/기간 보완·실제 Claude 비교 기록·RAG 적재 실행기를 하나의 develop PR로 push/병합. 최종 검증 기록 외 제품 변경 없음.
+- 다음: PR head 고정 병합과 원격 tree 일치 확인. 팀원 학습 기능 PR #26은 이번 범위에 포함하지 않음.
+- 막힘·결정 필요: 외부 Spring5개는 이번 재실행에서 생략; Spring/web/HTTP 계약 변경 없음. 실제 Claude156회 누적 $1.858964와 검색 직접6/6·변형4/6의 기존 증거 유지, 유료 재실험 없음. 로컬 RAG DB/원문 응답은 ignored로 보존되며 원격에 올라가지 않음. 운영 RAG·배포 미활성, 검색 범위/독립 사람 검수 한계는 보고서에 명시.
+
+
+## 2026-11-01 · Codex · ai-worker, docs
 - 한 것: cdc46cb에서 feat/rag-corpus-pilot 격리. SEC/Investor.gov/FINRA 공식 출처4개 재확인, 기존 한국어 설명6개의 실제 적재 절차를 docs/RAG-DATA.md에 정리. scripts/test-rag-corpus.py로 새 지속형 SQLite DB에6문서/6문단 적재·관측 세대 발행·검색/재생 수행. 기존 세션/원본 DB 보존.
 - 진행 중: 파일럿 적재와 검증 완료. 직접 개념6/6, 표현 변형4/6. 두 독립 실행에서 문서/revision/chunk/annotation 각각6 유지, 수집 이력만2. 미래 generation 차단·Snapshot 불변·replay 동일 확인. 관련 회귀100 통과/실패0/생략0(13.04초).
 - 다음: 독립 용어/자연 표현 평가와 한국 공식 자료 확대, 운영 승인 워크플로 및 같은 snapshot의 RAG 유무 모델 비교. docs/evaluations/rag-corpus-pilot.md와 공개 JSON에 세대/적재 결과 기록.
