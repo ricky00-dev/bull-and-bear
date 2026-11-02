@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-02 · ricky00-dev (Claude Code) · ci
+- 한 것: GitHub Actions CI 추가 (`.github/workflows/ci.yml`). develop·main으로 가는 PR과 develop 푸시마다 바뀐 폴더만 검사: api `./gradlew test`(Testcontainers), web `lint`·`build`, ai-worker `uv run pytest`. develop 푸시 때는 운영 이미지 3개 빌드도 확인. 배포 점검: 최신 develop(RAG 머지 후)으로 운영 이미지 3개 로컬 빌드 성공, 워커는 메모리 512MB 제한에서 서버 import 정상.
+- 진행 중: 없음.
+- 다음: 첫 수동 배포 성공 뒤 CD(develop/main 머지 → EC2 자동 반영) 추가. EC2 주소·SSH 키를 GitHub Secrets에 등록해야 함 (ricky00-dev).
+- 막힘·결정 필요: develop 브랜치 보호 규칙에서 CI 통과를 머지 필수 조건으로 걸지는 레포 설정에서 결정 (ricky00-dev).
+
 ## 2026-11-01 · ricky00-dev (Claude Code) · api, web
 - 한 것: 학습 부가 기능 3개 (feat/learning-extras).
   1. 내 근거 채점: 판정 때 고른 근거를 그 근거를 인용한 쪽(매수 측·매도 측) 방향으로 채점. 초과수익 +2%p 초과면 매수 측 근거, −2%p 미만이면 매도 측 근거가 맞음, 그 사이는 FLAT. `GET /api/me/judgments/{id}`에 `pickResults`·`pickHorizon`, `/api/me/stats`의 `evidenceHabit`에 `right`·`graded` 추가. 채점 화면에 근거별 결과와 "판정은 빗나갔지만 근거는 맞았어요" 같은 한 줄 정리, 내 판정 탭 습관 리포트에 분류별 맞은 방향 횟수. DB 변경 없음 (debate_events의 statement_accepted에서 계산).
