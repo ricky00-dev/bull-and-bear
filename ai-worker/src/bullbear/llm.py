@@ -63,6 +63,11 @@ class LLMError(RuntimeError):
     pass
 
 
+class LLMRequestBlocked(LLMError):
+    """A local guard rejected the request before transport began."""
+    pass
+
+
 @dataclass
 class Usage:
     input_tokens: int = 0
@@ -89,12 +94,17 @@ class Conversation:
 
 class LLM:
     def __init__(self, model: str, client: anthropic.Anthropic | None = None, max_tool_turns: int = 8,
-                 *, allow_fallbacks: bool = False, max_output_tokens: int = 16000):
+                 *, allow_fallbacks: bool = False, max_output_tokens: int = 16000,
+                 budget=None, budget_scope: str = 'worker'):
         validate_model(model)
         if allow_fallbacks:
             raise ValueError("Automatic model fallbacks are disabled")
         self.model = model
-        self.client = client or anthropic.Anthropic()
+        self.client = client or (anthropic.Anthropic(max_retries=0, timeout=180.0) if budget is not None
+                                 else anthropic.Anthropic())
+        if budget is not None and getattr(self.client, 'max_retries', 0) != 0:
+            raise ValueError('Budgeted clients must disable hidden SDK retries')
+        self.budget, self.budget_scope = budget, budget_scope
         self.max_tool_turns = max_tool_turns
         self.allow_fallbacks = allow_fallbacks
         self.max_output_tokens = max_output_tokens
@@ -126,20 +136,25 @@ class LLM:
         json_retries = 0
 
         for _ in range(self.max_tool_turns):
+            parameters = dict(model=self.model, max_tokens=self.max_output_tokens, system=conv.system,
+                messages=conv.messages, tools=tools or anthropic.omit,
+                output_config={"effort": effort, "format": {"type": "json_schema", "schema": anthropic_schema(schema)}})
+            reservation = None
+            if self.budget is not None:
+                parameters.update(service_tier='standard_only', inference_geo='global')
+                reservation = self.budget.reserve(parameters, scope=self.budget_scope)
             self.requests_attempted += 1
             request = {'request_id': self.requests_attempted, 'status': 'running'}
             if self.request_observer:
                 # Persist the attempt before starting a potentially billable request.
-                self.request_observer(request)
+                try:
+                    self.request_observer(request)
+                except BaseException:
+                    if reservation is not None:
+                        self.budget.cancel_before_dispatch(reservation)
+                    raise
             try:
-                with self.client.beta.messages.stream(
-                    model=self.model,
-                    max_tokens=self.max_output_tokens,
-                    system=conv.system,
-                    messages=conv.messages,
-                    tools=tools or anthropic.omit,
-                    output_config={"effort": effort, "format": {"type": "json_schema", "schema": anthropic_schema(schema)}},
-                ) as stream:
+                with self.client.beta.messages.stream(**parameters) as stream:
                     for event in stream:
                         if event.type == "text":
                             on_event("token", {"text": event.text})
@@ -147,7 +162,17 @@ class LLM:
                 # Read counters before changing the cumulative totals.
                 observed = Usage()
                 observed.add(msg.usage)
+                if reservation is not None:
+                    self.budget.settle(reservation, msg)
+            except LLMRequestBlocked:
+                if reservation is not None:
+                    self.budget.cancel_before_dispatch(reservation)
+                if self.request_observer:
+                    self.request_observer({**request, 'status': 'not_dispatched'})
+                raise
             except BaseException as exc:
+                if reservation is not None:
+                    self.budget.unknown(reservation, type(exc).__name__)
                 self.usage_complete = False  # Sticky across retries and later calls.
                 if self.request_observer:
                     self.request_observer({**request, 'status': 'unknown', 'error_type': type(exc).__name__})

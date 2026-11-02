@@ -68,7 +68,8 @@ def test_same_frozen_background_once_in_debater_moderator_and_both_reviews(snap)
         assert "Fact에 없는 RSI·MACD·EPS·수급" in conv.system
     for index in (1, 3):
         payload = json.loads(llm.calls[index][0].messages[0]["content"])
-        assert set(payload["facts"]) == {"PX.CLOSE"}
+        assert set(payload["facts"]) == set(snap.facts)
+        assert payload["reference_map"] == {"E1": "PX.CLOSE"}
         assert "RAG_UNIQUE_DEFINITION" not in canonical_json(payload)
     assert snap.model_dump(mode="json") == before
 

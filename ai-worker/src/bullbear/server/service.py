@@ -23,11 +23,19 @@ log = logging.getLogger(__name__)
 
 
 class LiveRunner:
-    def __init__(self, settings):
+    def __init__(self, settings, *, budget=None):
         self.settings = settings
         self.clients = []
         self.audit = None
         self.background_context = None
+        self.budget = budget
+        self.budget_scopes = set()
+
+    def new_client(self, model, scope):
+        if self.budget is not None:
+            self.budget_scopes.add(scope)
+            return LLM(model, budget=self.budget, budget_scope=scope)
+        return LLM(model)
 
     @property
     def usage_complete(self):
@@ -42,7 +50,12 @@ class LiveRunner:
                 for key, value in call.items():
                     if key != 'model':
                         totals[model][key] = totals[model].get(key, 0) + value
-        return {'calls': list(totals.values())}
+        usage = {'calls': list(totals.values())}
+        if self.budget is not None:
+            cost = self.budget.cost_for_scopes(self.budget_scopes)
+            if cost is not None:
+                usage['cost_usd'] = cost
+        return usage
 
     def run(self, snapshot, debate_id, max_extra_rounds, emit):
         settings = self.settings
@@ -50,7 +63,7 @@ class LiveRunner:
 
         def client(role):
             with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
-                llm = LLM(models[role])
+                llm = self.new_client(models[role], f'{debate_id}:{role}')
                 self.clients.append(llm)
                 return AuditedLLM(llm, self.audit, role) if self.audit else llm
 
@@ -75,7 +88,7 @@ class LiveRunner:
     def run_single(self, snapshot, debate_id, emit):
         models = self.audit.data['config']['selected_models'] if self.audit else selected_models(self.settings)
         with self.audit.stage('moderator_client_initialization') if self.audit else nullcontext():
-            llm = LLM(models['moderator'])
+            llm = self.new_client(models['moderator'], f'{debate_id}:single')
             self.clients.append(llm)
             wrapped = AuditedLLM(llm, self.audit, 'moderator') if self.audit else llm
         emit('moderator_started', {})
@@ -88,9 +101,25 @@ class LiveRunner:
 class Service:
     def __init__(self, settings, market, *, runner_factory=None, max_running=2):
         self.settings, self.market = settings, market
-        self.runner_factory = runner_factory or (lambda: LiveRunner(settings))
         self.max_running = max_running
         self.store = Store(settings.data_dir / 'http')
+        self.budget = None
+        try:
+            budget_path = settings.data_dir / 'http' / 'provider-budget.sqlite3'
+            if settings.worker_budget_usd is not None or settings.worker_budget_id is not None:
+                from ..anthropic_budget import WorkerSpendLedger
+                self.budget = WorkerSpendLedger(budget_path,
+                                               settings.worker_budget_id, settings.worker_budget_usd)
+                # Store now holds the directory's exclusive process lock, so no
+                # previous owner can still be dispatching these reservations.
+                self.budget.recover_interrupted()
+            elif budget_path.exists():
+                from ..anthropic_budget import BudgetDenied
+                raise BudgetDenied('Existing worker budget requires its original configuration')
+        except BaseException:
+            self.store.close()
+            raise
+        self.runner_factory = runner_factory or (lambda: LiveRunner(settings, budget=self.budget))
         self.pool = ThreadPoolExecutor(max_workers=max_running, thread_name_prefix='debate')
         self.selection_policy = None
         if settings.rag_enabled and settings.rag_selection_policy:
@@ -202,7 +231,7 @@ class Service:
                 if not getattr(runner, 'usage_complete', True):
                     raise RuntimeError('incomplete provider usage')
                 if audit is not None and (not audit.data['usage_complete'] or any(
-                    call['status'] in ('running', 'failure')
+                    (call['status'] == 'running' or (call['status'] == 'failure' and not call.get('dispatch_blocked')))
                     for call in audit.data['llm_calls'])):
                     # One structured call may include tool follow-ups. Even a
                     # nonempty failure delta cannot account for its last request.

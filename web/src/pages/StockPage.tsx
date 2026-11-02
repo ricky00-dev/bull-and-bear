@@ -59,13 +59,13 @@ export function StockPage() {
             )}
 
             <Card className="flex flex-col gap-3">
-              <h2 className="text-sm font-extrabold">AI가 근거로 쓸 데이터</h2>
+              <h2 className="text-sm font-extrabold">AI가 확인할 데이터</h2>
               <DataRow ok label="시세 지표" detail="수익률·이동평균·변동성·거래량" />
-              <DataRow label="재무제표" detail="DART · 워커 연동 후" />
-              <DataRow label="공시" detail="최근 90일 · 워커 연동 후" />
-              <DataRow label="뉴스" detail="최근 7일 · 워커 연동 후" />
+              <DataRow label="재무제표" detail="정기보고서 · 토론 시작 시 조회" />
+              <DataRow label="공시" detail="최근 90일 · 토론 시작 시 조회" />
+              <DataRow label="뉴스" detail="최근 7일 · 토론 시작 시 조회" />
               <p className="border-t border-line-soft pt-2 text-xs leading-relaxed text-sub">
-                토론을 시작하는 순간 이 데이터를 고정해요. 두 AI는 고정된 데이터만 근거로 쓰고, 모든 수치는 원본과 대조해 검증해요.
+                토론 시작 시 확보한 데이터를 고정해요. 두 AI는 같은 자료를 근거로 쓰고, 인용한 수치를 고정된 자료와 대조해요. 수집하지 못한 자료는 근거로 쓰지 않아요.
               </p>
             </Card>
 
@@ -107,7 +107,7 @@ function quotaBlock(q: StockDetail['quota'] | undefined): string | null {
 }
 
 function quotaHint(q: StockDetail['quota'] | undefined): string {
-  return q ? `1~2분 걸려요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '1~2분 걸려요'
+  return q ? `자료 조회·검증에 수 분 걸릴 수 있어요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '자료 조회·검증에 수 분 걸릴 수 있어요'
 }
 
 function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; detail: string }) {
@@ -115,7 +115,7 @@ function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; d
     <div className="flex items-center gap-2.5 text-sm">
       <span
         className={`flex size-5.5 items-center justify-center rounded-full ${ok ? 'bg-ok-soft text-ok' : 'bg-line-soft text-sub'}`}
-        aria-label={ok ? '준비됨' : '대기'}
+        aria-label={ok ? '준비됨' : '토론 시작 시 확인'}
       >
         {ok ? <Icon d={ICONS.check} size={12} stroke={3} /> : <span className="text-xs">–</span>}
       </span>
