@@ -6,6 +6,7 @@ import { JudgePage } from './pages/JudgePage'
 import { GlossaryPage } from './pages/GlossaryPage'
 import { MyJudgmentsPage } from './pages/MyJudgmentsPage'
 import { MyPage } from './pages/MyPage'
+import { PolicyPage } from './pages/PolicyPage'
 import { QuizHomePage } from './pages/QuizHomePage'
 import { QuizPlayPage } from './pages/QuizPlayPage'
 import { RankingPage } from './pages/RankingPage'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/my" element={<MyPage />} />
         <Route path="/glossary" element={<GlossaryPage />} />
         <Route path="/report" element={<ReportPage />} />
+        <Route path="/policy/:kind" element={<PolicyPage />} />
         <Route path="*" element={<HomePage />} />
       </Routes>
     </>

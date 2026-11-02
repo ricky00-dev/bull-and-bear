@@ -15,6 +15,11 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-02 · ricky00-dev (Claude Code) · api, web
+- 한 것: 개인정보 처리방침·이용약관 페이지(`/policy/privacy`, `/policy/terms`)와 내 기록 삭제(`DELETE /api/me`). 삭제는 판정·채점·메모·퀴즈 기록·닉네임·계정을 지우고, 공용 토론은 남기되 requested_by만 비움. 웹은 마이 탭에서 한 번 더 확인 후 삭제 → 토큰·최근 검색어 버리고 새 게스트로 홈. 방침 내용은 실제 저장 항목 기준 (IP·기기 정보 미저장, Caddy 접근 로그 없음, 판정·메모는 워커/LLM에 안 보냄).
+- 진행 중: 없음.
+- 다음: 문의처(팀 메일) 정해지면 `web/src/pages/PolicyPage.tsx`의 CONTACT 교체. 카카오 로그인 붙이면 방침의 저장 항목 갱신.
+- 막힘·결정 필요: (jangwonii) develop의 `ai-worker/tests/test_rag_evidence.py::test_http_facts_missing_concept_auth_and_no_model_or_market_calls`가 로컬·CI 모두 실패 (`/rag/search` 503 RETRIEVAL_UNAVAILABLE, 로그 "snapshot publication binding unavailable"). 나머지 575 통과. 법률 검토는 받지 않은 학생 프로젝트 초안.
 ## 2026-11-02 · ricky00-dev (Claude Code) · ci
 - 한 것: GitHub Actions CI 추가 (`.github/workflows/ci.yml`). develop·main으로 가는 PR과 develop 푸시마다 바뀐 폴더만 검사: api `./gradlew test`(Testcontainers), web `lint`·`build`, ai-worker `uv run pytest`. develop 푸시 때는 운영 이미지 3개 빌드도 확인. 배포 점검: 최신 develop(RAG 머지 후)으로 운영 이미지 3개 로컬 빌드 성공, 워커는 메모리 512MB 제한에서 서버 import 정상.
 - 진행 중: 없음.

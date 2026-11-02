@@ -82,7 +82,18 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
     return request<T>(path, init, true)
   }
   if (!res.ok) throw await toError(res)
+  if (res.status === 204) return undefined as T
   return (await res.json()) as T
+}
+
+/** 내 기록을 지운 뒤: 토큰과 최근 검색어를 버려 다음 요청에서 새 게스트로 시작한다 */
+export function resetSession() {
+  writeToken(null)
+  try {
+    localStorage.removeItem('bb.recent')
+  } catch {
+    // 저장소를 못 쓰면 지울 것도 없다
+  }
 }
 
 export const api = {
@@ -109,6 +120,7 @@ export const api = {
     request<QuizAnswer>(`/api/quiz/rounds/${id}/questions/${idx}/answer`, { method: 'POST', body: JSON.stringify({ decision }) }),
   quizRanking: (all: boolean) => request<Ranking>(`/api/quiz/ranking?scope=${all ? 'all' : 'today'}`),
   me: () => request<Me>('/api/me'),
+  deleteMe: () => request<void>('/api/me', { method: 'DELETE' }),
   setNickname: (nickname: string) => request<Me>('/api/me/nickname', { method: 'PUT', body: JSON.stringify({ nickname }) }),
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),
   myJudgment: (id: string) => request<JudgmentDetail>(`/api/me/judgments/${id}`),
