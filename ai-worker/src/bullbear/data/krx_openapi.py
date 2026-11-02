@@ -84,6 +84,8 @@ class KrxOpenApiSource(PykrxDartSource):
     def _validate_rows(cls, rows, day, endpoint=None):
         if not isinstance(rows, list) or any(not isinstance(r, dict) or r.get("BAS_DD") != day.strftime("%Y%m%d") for r in rows):
             raise ValueError("Invalid dated response")
+        benchmark_names = {'idx/kospi_dd_trd': ('KOSPI', '코스피'),
+                           'idx/kosdaq_dd_trd': ('KOSDAQ', '코스닥')}
         # Validate before storing and before accepting historical cache hits.
         for row in rows:
             if endpoint and endpoint.startswith('sto/'):
@@ -98,10 +100,13 @@ class KrxOpenApiSource(PykrxDartSource):
                 if min(o, high, low, close) <= 0 or low > min(o, close) or high < max(o, close):
                     raise ValueError('Invalid OHLC')
             elif endpoint and endpoint.startswith('idx/'):
-                if not isinstance(row.get('IDX_NM'), str) or cls._number(row['CLSPRC_IDX']) <= 0:
+                if not isinstance(row.get('IDX_NM'), str):
                     raise ValueError('Invalid index')
-        benchmark_names = {'idx/kospi_dd_trd': ('KOSPI', '코스피'),
-                           'idx/kosdaq_dd_trd': ('KOSDAQ', '코스닥')}
+                # Whole-market responses include unavailable ancillary indices.
+                # Only the requested benchmark's close is consumed downstream.
+                if endpoint not in benchmark_names or row['IDX_NM'] in benchmark_names[endpoint]:
+                    if cls._number(row['CLSPRC_IDX']) <= 0:
+                        raise ValueError('Invalid index')
         if rows and endpoint in benchmark_names and not any(r['IDX_NM'] in benchmark_names[endpoint] for r in rows):
             raise ValueError('Benchmark missing')
 

@@ -1,0 +1,261 @@
+{
+  "provenance": {
+    "code": {
+      "revision": "bb28c57ea79f16837f5854adca8ef76d5dce08d5",
+      "dirty": true
+    },
+    "policy_version": "7d-concise-v7",
+    "judgment_policy_hash": "sha256:b2f5b84f6da508c3afb7f005759b60b1c9126daa59df0da72a4fdeec0bd82a98",
+    "prompt_source_hashes": {
+      "prompts": "sha256:5ff8f6de86f3b01dadd2b3eb51b491d1d72389b323dc8ba9beb4b65bfd7dc775",
+      "semantic": "sha256:56e246d56d6f926e9a73d9b56b257a2f29ad50adad08b4507dafe5513b34461a"
+    },
+    "schema_hashes": {
+      "statement": "sha256:814ded64b24f832e3ce0efe1c39c80b1a8f5c8bb9bfeb613cea320f6e74ba3e6",
+      "moderator": "sha256:585310ea0a47b37e054b4c524a93a20b5253c1d732aafd2700c296f2dbd484e4",
+      "semantic_review": "sha256:62c0e3290e81f215c8fa3f341a40908e1df7b096c3baa0a0900190349fee3671"
+    },
+    "rag_source_hashes": {
+      "context.py": "sha256:1be18ea07af82adfd78444d3345f07cffdb16206052b956b43f61099fe25ec7c",
+      "retrieval.py": "sha256:ee39cbe2340ca21685c39446a3c44ab8616672b51c75c9e5dce6a1e552438ab7",
+      "embeddings.py": "sha256:c8f57ec41ac82c14995b32ff78b318c3e260c45f3837f27d15851628dca4da3f",
+      "vectors.py": "sha256:7abce3ee5a4e4e58159d24803756714f90e9795ea5d5f70fb3dae6339df409c5",
+      "index.py": "sha256:4959bdf60e8055206f08b9f0830ac7103428cdc579eb18f460857cc9591feb91",
+      "replay.py": "sha256:67d632b24a4f4ca1da19ff522792059009a0320d989f1841331fd1e65cd94834",
+      "context_repository.py": "sha256:a095d132ee37b5559615f5ad8b41a0aa7d359f41ad1c6ff2c70bc7732710bcbf",
+      "archive_repository.py": "sha256:8eed8ece4a0210c78e02c4e5ab43360b4ebaf123314e5fbd9eae237d3a6ea282",
+      "objects.py": "sha256:536409a576bd5cef06f555290b22adfa0c6271874f1999b55d661896d8308912",
+      "store.py": "sha256:cff7281e8d2bc4a1a16927b6333f5af7da6f98ee360368c69cfb8e8923cc11c6",
+      "schemas.py": "sha256:67bc9c58ffd4b344f03e6c22d564ed618389d0685f1a4a19d4daa65b7fdb92f6"
+    }
+  },
+  "max_extra_rounds": 0,
+  "rag": false,
+  "server_stopped": true,
+  "known_cost_usd": 0.2445519,
+  "authorization_known_cost_usd": 0.6594773,
+  "unknown_requests": 0,
+  "source_directory": "ai-worker/data/http-live-20261102-122447-3ddbd2",
+  "prior_cost_usd": 0.4149254,
+  "authorization_limit_usd": 3,
+  "remaining_usd": 2.3405227,
+  "runs": [
+    {
+      "mode": "debate",
+      "status": "failed",
+      "elapsed_seconds": 295.609,
+      "snapshot_sha256": "2490fe89ae6dafd83a8b6aa75a26153f01c01dbf25be6d3969782f001656d844",
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "debate_id": "d73f292fe04b40b9bcdd258351d7d208",
+      "snapshot_id": "005930-20261030-1f42b0a53b",
+      "requests": 21,
+      "cost_usd": 0.0780479,
+      "usage": {
+        "input_tokens": 509999,
+        "output_tokens": 54096,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      },
+      "usage_matches_http": true,
+      "accepted_statements": 3,
+      "rejected_candidates": [
+        {
+          "type": "statement_attempt",
+          "round": "opening",
+          "side": "bull",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘종목의 최근 초과수익 흐름이 유지된다는 가정에 기대며’: 이 가정은 BUY 판정을 지지하지 않습니다. 같은 발언이 인용한 최근 7거래일 코스피 대비 초과수익은 +0.76%p로, +2%p 기준에 못 미칩니다. 그 흐름이 유지된다고 가정하면 예측은 보류 구간(−2%p~+2%p)에 가깝습니다. +2%p 초과를 주장하려면 배당 공시 외에 근거를 제시하고, 최근 초과수익 유지 가정이 매수 판정과 어떻게 양립하는지 설명하거나 가정을 고쳐야 합니다."
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘주주환원에 대한 시장 기대가 주가에 반영되는 재료가 될 수 있다는 조건부 가설이며’: 공시일 2026-10-29는 기준 종가일 2026-10-30 이전입니다. 이 발언은 공시가 평가 구간 안에서 어떤 계기로 작동하는지 연결하지 않았습니다. 배당 지급일이나 구간 내 확인 가능한 이벤트도 제시하지 않았고, 공시 본문도 확인되지 않았습니다. 따라서 이 재료만으로 7거래일 뒤 코스피 대비 +2%p 초과를 가장 가능성 높은 결과로 보기에는 근거가 부족합니다. 공시 시점이 기준 종가 이전이라는 점, 반영 여부가 불확실하다는 점, 구간 내 확인 방법을 함께 밝히고 불확실성을 확률 수준에 반영하는 방향으로 수정해야 합니다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "opening",
+          "side": "bear",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '0.76%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "horizon_mismatch",
+              "ref": null,
+              "message": "‘최근 7거래일 상대수익은 +0.76%p로 플러스이고 −2%p 아래로 내려가려면 추가 악재가 필요하므로’: +0.76%p는 기준 종가(T0) 이전 7거래일 구간의 코스피 대비 초과수익이므로, T0 이후 7거래일 종가까지의 코스피 대비 초과수익을 제한하는 근거가 되지 않습니다. 평가 구간의 −2%p 하회 가능성을 과거 구간의 플러스 값으로 줄여 설명하지 말고, 과거 7거래일 수치는 배경으로만 언급하며 T0부터 T7까지 종목과 코스피가 어떻게 달리 움직일 수 있는지 경로와 불확실성을 설명하도록 수정해야 합니다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bull",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '-2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘기사에 따르면 이 제약이 풀리거나 추가 환원이 발표되면 기대 격차가 좁혀질 수 있다는 조건부 상승 경로가 있습니다’: E2 기사 제목과 요약은 보통주 소각을 요구하는 시장 의견과 규제가 걸림돌이라는 내용까지만 다룹니다. 규제가 풀리면 기대 격차가 좁혀진다거나 추가 환원이 발표될 것이라는 연결은 기사 내용이 아니므로 '기사에 따르면'으로 귀속하면 안 됩니다. 이 경로는 bull의 추론으로 표시하고, 기사는 규제가 제약 요인이라는 사실의 근거로만 인용하도록 고치세요. 7거래일 뒤 코스피 대비 초과수익 판정 기준은 그대로 유지하세요."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "contradiction",
+              "ref": null,
+              "message": "‘현재 근거로는 보류 구간이 더 가능성 높다고 봅니다’: claim은 매도 예측이 보류보다 가능성이 있다고 쓰고, argument는 같은 7거래일·코스피 대비 판단에서 보류 구간이 더 가능성 높다고 씁니다. 두 확률 판단이 양립하지 않습니다. 하나로 통일하고, 매도 구간이 가능하지만 보류가 더 가능성이 높다면 claim을 그에 맞게 고쳐 쓰세요. 기준은 계속 T0 종가부터 T7 종가까지의 삼성전자 수익률에서 코스피 수익률을 뺀 값입니다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 2,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘현재 관측으로는 7거래일 기준 보류 구간이 더 가능성 높다고 봅니다’: 보류 판단의 근거가 '과거 관측은 매도 기준에 이르지 않았다'는 부정 논리와 매도 경로의 미확정성뿐이며, 같은 기간 종목과 코스피의 상대수익 Fact를 인용하지 않았습니다. 왜 종목이 7거래일 동안 코스피와 ±2%p 안에서 움직일지 설명하고, 예를 들어 PX.EXCESS_KOSPI_21D(−0.84%p) 같은 관측을 인용한 뒤 그 관계가 유지된다는 가정과 주주환원 기대 격차가 이를 깨뜨릴 위험을 명시하는 방식으로 수정해야 합니다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 3,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "no_new_evidence",
+              "ref": null,
+              "message": "이전 전체 토론에서 쓰지 않은 source_id를 1개 이상 인용하세요. 뉴스·공시를 우선 확인하세요."
+            }
+          ]
+        }
+      ],
+      "verdict": null,
+      "audit_status": "failure",
+      "audit_usage_complete": true,
+      "last_event_replay": {
+        "status": 200,
+        "body": "id: 31\nevent: debate_failed\ndata: {\"error\": {\"code\": \"LLM_ERROR\", \"message\": \"AI 토론을 완료하지 못했습니다\"}, \"usage\": {\"calls\": [{\"model\": \"claude-haiku-5-5\", \"input_tokens\": 509999, \"output_tokens\": 54096, \"cache_read_input_tokens\": 0, \"cache_creation_input_tokens\": 0}]}}\n\n"
+      }
+    },
+    {
+      "mode": "single",
+      "status": "completed",
+      "elapsed_seconds": 16.128,
+      "snapshot_sha256": "2490fe89ae6dafd83a8b6aa75a26153f01c01dbf25be6d3969782f001656d844",
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "debate_id": "4c77e392aeda41529e595da1b27a392a",
+      "snapshot_id": "005930-20261030-1f42b0a53b",
+      "requests": 4,
+      "cost_usd": 0.166504,
+      "usage": {
+        "input_tokens": 76062,
+        "output_tokens": 1438,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      },
+      "usage_matches_http": true,
+      "accepted_statements": 0,
+      "rejected_candidates": [
+        {
+          "type": "single_attempt",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "verdict_refs",
+              "ref": null,
+              "message": "서로 다른 decisive_evidence 1~3개와 글의 [E1]~[En]을 순서대로 일치시키세요."
+            }
+          ]
+        }
+      ],
+      "verdict": {
+        "decision": "HOLD",
+        "confidence": 0.5,
+        "reasoning": "최근 7거래일 삼성전자는 +0.67%, 코스피는 -0.09%로 코스피 대비 초과수익이 +0.76%p였고 [E1], 21거래일에도 -0.84%p로 두 기간 모두 ±2%p 안이어서, 이 관계가 이어진다고 가정하면 이후 7거래일도 코스피와 비슷하게 움직일 것으로 본다. 다만 증권가에서 주주환원 정책이 시장 기대치에 못 미친다는 지적이 나온 점은 [E3] 종목 고유의 하방 위험이어서, 코스피 대비 -2%p 아래로 벗어날 수 있다. 이 가정은 미래 동행을 보장하지 않으며, 21거래일 초과수익 -0.84%p [E2]도 과거 관측일 뿐이라 확신은 낮게 둔다.",
+        "decisive_evidence": [
+          "PX.EXCESS_KOSPI_7D",
+          "PX.EXCESS_KOSPI_21D",
+          "NEWS.d54c39ea"
+        ],
+        "scores": null
+      },
+      "audit_status": "success",
+      "audit_usage_complete": true,
+      "last_event_replay": {
+        "status": 200,
+        "body": "id: 3\nevent: debate_completed\ndata: {\"debate_id\": \"4c77e392aeda41529e595da1b27a392a\", \"verdict\": {\"decision\": \"HOLD\", \"confidence\": 0.5, \"reasoning\": \"최근 7거래일 삼성전자는 +0.67%, 코스피는 -0.09%로 코스피 대비 초과수익이 +0.76%p였고 [E1], 21거래일에도 -0.84%p로 두 기간 모두 ±2%p 안이어서, 이 관계가 이어진다고 가정하면 이후 7거래일도 코스피와 비슷하게 움직일 것으로 본다. 다만 증권가에서 주주환원 정책이 시장 기대치에 못 미친다는 지적이 나온 점은 [E3] 종목 고유의 하방 위험이어서, 코스피 대비 -2%p 아래로 벗어날 수 있다. 이 가정은 미래 동행을 보장하지 않으며, 21거래일 초과수익 -0.84%p [E2]도 과거 관측일 뿐이라 확신은 낮게 둔다.\", \"decisive_evidence\": [\"PX.EXCESS_KOSPI_7D\", \"PX.EXCESS_KOSPI_21D\", \"NEWS.d54c39ea\"], \"scores\": null}, \"stats\": null, \"usage\": {\"calls\": [{\"model\": \"claude-sonnet-5-5\", \"input_tokens\": 76062, \"output_tokens\": 1438, \"cache_read_input_tokens\": 0, \"cache_creation_input_tokens\": 0}]}}\n\n"
+      }
+    }
+  ],
+  "snapshot_fact_count": 119,
+  "changed_fact_ids_from_v5": [
+    "NEWS.02fcbce3",
+    "NEWS.1b1fd542",
+    "NEWS.397c47f8",
+    "NEWS.4e10c3be",
+    "NEWS.abe0aeab",
+    "NEWS.e9605f05"
+  ]
+}

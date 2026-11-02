@@ -8,6 +8,9 @@ AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 
 현재 단계: **CLI + HTTP/SSE 서버**. Spring·웹과 연결해 검색 → 토론 → 판정 봉인·공개 → 채점 예약을 실행한다.
 HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응답을 지원한다.
 
+구현 완료와 실제 운용 준비는 구분한다. [최신 현황·실측·남은 순서](../docs/evaluations/worker-goal-readiness-20261102.md)에서
+실모델 검증, fixture 통합, 배포 상태를 확인한다.
+
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
 ## 시작하기
@@ -275,13 +278,15 @@ HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 
 | 검증 | `verifier.py`, `presentation.py`, `semantic.py` | 수치/ID·표현·인용 규칙, LLM 의미 검토 |
 | RAG | `rag/ingest.py`, `store.py`, `index.py`, `retrieval.py`, `context.py`, `replay.py` | 수집·검수 이력, 검색, 배경 저장·재생 (`rag/` 하위 파일) |
 | 전달 상태 | `server/store.py` | `data/http/worker.sqlite3`: 요청·토론 상태·스냅샷·SSE 이벤트 |
+| HTTP 비용 장부 | `anthropic_budget.py` | 선택적 `data/http/provider-budget.sqlite3`: 요청별 최대 비용 예약·정산·미확정 보존 |
 | 비공개 기록 | `events.py`, `audit.py` | `data/debates/*.jsonl`, `data/audits/<run_id>/manifest.json`: 시도·검증·사용량·실행 출처 |
 | 별도 실행·평가 도구 | `cli.py`, `experiment.py`, `benchmark.py`, `budget.py` | CLI, 선공 비교, 단일/토론·RAG 비교, benchmark 예산 원장 |
 | 비용 없는 점검 | `preflight.py`, `diagnostics.py` | 설정 검사, 저장된 benchmark 결과의 오프라인 진단·검수 목록 |
 
 표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다. RAG 저장은 `data/rag/` 아래 별도 원문·색인·컨텍스트로 관리한다.
 실험/진단 도구는 운영 HTTP 요청에서 자동 실행되지 않는다. `budget.py`의 benchmark 예산 원장을
-운영 HTTP의 강제 비용 상한으로 해석하면 안 된다. 운영 비용 제한은 현재 Spring 정책과 구분해야 한다.
+운영 HTTP 비용 제한과 혼동하지 않는다. HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
+[운영 안내](../docs/WORKER-OPERATIONS.md)에서 적용 범위를 구분한다.
 CLI는 토론 엔진을 직접 호출하며 HTTP 요청 관리·SSE 경로를 거치지 않는다.
 
 ## 데이터 소스 메모
@@ -330,7 +335,7 @@ OPENAI_API_KEY=
 
 ## 판단 기간과 개념·논리 검토
 
-- `7d-concise-v4`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
+- `7d-concise-v8`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
   7거래일 뒤 코스피와 비슷하게 움직여 상대수익이 −2%p~+2%p 안일 것이라는 예측이다.
 - 주장 한 줄·한 문장, 본문 최대 3문장, 서로 다른 근거 최대 3개. 반박·마무리는
   양측의 이전 전체 토론에 없던 source_id를 최소 1개 인용하며 7거래일 안의 계기가 될
@@ -357,5 +362,7 @@ OPENAI_API_KEY=
   evidence.ref는 E1 형식만 허용하며 본문의 [E1]과 구분한다.
 
 ## 테스트
+
+운영 인증·동시 실행·재시작·선택적 영속 비용 장부는 [워커 운영 안내](../docs/WORKER-OPERATIONS.md)를 참고한다.
 
 - 파이프라인 동작을 바꾸면 `tests/fakes.py`의 가짜 소스·에이전트로 테스트를 추가한다.

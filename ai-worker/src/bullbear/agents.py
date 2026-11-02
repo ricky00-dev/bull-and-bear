@@ -90,7 +90,12 @@ class Debater:
             attempts.append(Attempt(statement, result))
             if result.passed:
                 break
-            conv.messages.append({"role": "user", "content": prompts.verifier_feedback(result.feedback())})
+            feedback = prompts.verifier_feedback(result.feedback())
+            if round_kind in ("rebuttal", "closing"):
+                fresh = sorted(({e.source_id for e in statement.evidence} - used) & snap.facts.keys())
+                feedback += "\n이번 후보에서 이전 토론에 없었던 source_id(내용·해석의 정확성 보장은 아님): " + ", ".join(fresh)
+                feedback += "\n새 근거 중 문제가 지적된 것은 수정하거나 다른 미사용 근거로 교체하고, 최종 근거는 최대 3개로 유지하라."
+            conv.messages.append({"role": "user", "content": feedback})
         return attempts
 
 
@@ -113,11 +118,12 @@ class Moderator:
                 "content": prompts.moderator_turn(
                     name=snap.name, ticker=snap.ticker, as_of=snap.as_of.isoformat(),
                     transcript=transcript, stats=stats, extra_allowed=extra_allowed,
-                ),
+                ) + f"\n정보 수집 시각: {snap.created_at.isoformat()}\n자료 경고: {snap.warnings}",
             }],
         )
         for _ in range(3):
-            raw = self.llm.structured(conv, schema=MODERATOR_SCHEMA, effort=self.effort)
+            raw = self.llm.structured(conv, schema=MODERATOR_SCHEMA, effort=self.effort,
+                                      tools=TOOL_DEFINITIONS, tool_handler=SnapshotTools(snap))
             decision = ModeratorDecision.model_validate(raw)
             issues = horizon_issues(decision.reasoning)
             issues += moderator_issues(decision)

@@ -23,7 +23,7 @@ TOOL_CATEGORIES: dict[str, Category] = {
 TOOL_DEFINITIONS = [
     {
         "name": "get_price_metrics",
-        "description": "종가, 기간 수익률, 52주 최고·최저, 이동평균, 변동성, 거래량 지표를 조회한다.",
+        "description": "종가, 기간 수익률, 코스피 수익률과 종목 초과수익률(3·7·21거래일, 자료가 있는 경우), 52주 최고·최저, 이동평균, 변동성, 거래량 지표를 조회한다. 모두 과거 관측값이며 미래 예측값이 아니다.",
         "input_schema": _NO_INPUT,
     },
     {

@@ -43,7 +43,7 @@ bullbear:
     # Haiku 5.5는 프롬프트가 10만 토큰 이하일 때 단가 (토론 한 번의 호출은 그보다 훨씬 작다)
     prices:
       "[claude-opus-5-5]": { input: 4.00, output: 20.00, cache-read: 0.20, cache-write: 5.00 }
-      "[claude-sonnet-5-5]": { input: 2.00, output: 10.00, cache-read: 0.20, cache-write: 2.50 }
+      "[claude-sonnet-5-5]": { input: 2.00, output: 10.00, cache-read: 0.10, cache-write: 2.50 }
       "[claude-haiku-5-5]": { input: 0.10, output: 0.50, cache-read: 0.01, cache-write: 0.125 }
   forward-run:
     # 실제 워커를 붙일 때 켠다 (BULLBEAR_FORWARD_RUN_ENABLED=true)
