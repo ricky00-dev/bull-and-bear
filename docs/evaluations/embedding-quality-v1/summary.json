@@ -1,0 +1,126 @@
+{
+  "corpus_hash": "c6d2dabdab21c4cbb50f5b4cf1a36022396a0b860716bafe6a16cfab22fa294e",
+  "dataset_hash": "76a23091a20a292881d8dd45394f9796c6bdd953f9a67f55f14dbe15c69052c5",
+  "observed_at": "2026-11-01T17:34:02.327769+00:00",
+  "generation_id": "G.03231fe5698ef84c28e781b4eab62d6977519f751984c25113daf7689656d0ec",
+  "human_reviewed": false,
+  "evidence_type": "real_embedding_models_agent_authored_small_corpus_probe",
+  "budget_nano": 50000000,
+  "planned_upper_bound_nano": 689250,
+  "documents": 6,
+  "cases": 24,
+  "models": [
+    {
+      "spec": {
+        "provider": "openai",
+        "model": "text-embedding-3-small",
+        "revision": "pilot-20261102-project-key-v1",
+        "dimensions": 1536,
+        "preprocessing": "identity-v1",
+        "document_prefix": "",
+        "query_prefix": "",
+        "price_revision": "official-model-page-20261102",
+        "nano_usd_per_token": 20
+      },
+      "status": "completed",
+      "summary": {
+        "bm25": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 0,
+          "p95_cached_seconds": 0.046878700028173625,
+          "recall": 0.8333333333333334,
+          "mrr": 0.7777777777777778,
+          "ndcg": 0.7923255281746064
+        },
+        "dense": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 6,
+          "p95_cached_seconds": 0.12728870008140802,
+          "recall": 1.0,
+          "mrr": 0.8611111111111112,
+          "ndcg": 0.8974804871031827
+        },
+        "hybrid": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 6,
+          "p95_cached_seconds": 0.23469379998277873,
+          "recall": 0.9444444444444444,
+          "mrr": 0.8611111111111112,
+          "ndcg": 0.8829327367063541
+        }
+      }
+    },
+    {
+      "spec": {
+        "provider": "openai",
+        "model": "text-embedding-3-large",
+        "revision": "pilot-20261102-project-key-v1",
+        "dimensions": 3072,
+        "preprocessing": "identity-v1",
+        "document_prefix": "",
+        "query_prefix": "",
+        "price_revision": "official-model-page-20261102",
+        "nano_usd_per_token": 130
+      },
+      "status": "completed",
+      "summary": {
+        "bm25": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 0,
+          "p95_cached_seconds": 0.04436970001552254,
+          "recall": 0.8333333333333334,
+          "mrr": 0.7777777777777778,
+          "ndcg": 0.7923255281746064
+        },
+        "dense": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 6,
+          "p95_cached_seconds": 0.13988299993798137,
+          "recall": 1.0,
+          "mrr": 0.9166666666666666,
+          "ndcg": 0.9384882922619097
+        },
+        "hybrid": {
+          "failures": 0,
+          "forbidden_hits": 0,
+          "unexpected_answers": 6,
+          "p95_cached_seconds": 0.13712710002437234,
+          "recall": 1.0,
+          "mrr": 0.9166666666666666,
+          "ndcg": 0.9384882922619097
+        }
+      }
+    }
+  ],
+  "ledger": [
+    {
+      "version_id": "EMV.35185972522e5f7b1f55a7296b0f5e5a4c538f7518c8db9f5affd978010c115a",
+      "calls": 30,
+      "reserved_nano": 91900,
+      "measured_cost_nano": 36600,
+      "unknown_calls": 0,
+      "input_tokens": 1830
+    },
+    {
+      "version_id": "EMV.fb10ae8612009a90fdbd75e28b678eb641340bfb87a71cfc17632617216060f6",
+      "calls": 30,
+      "reserved_nano": 597350,
+      "measured_cost_nano": 237900,
+      "unknown_calls": 0,
+      "input_tokens": 1830
+    },
+    {
+      "version_id": "EMV.fce3a6421dc8c8e7577c80a2ac939ba5a996c790be9ba5eb161e8fca4d8ccd43",
+      "calls": 1,
+      "reserved_nano": 5240,
+      "measured_cost_nano": 0,
+      "unknown_calls": 1,
+      "input_tokens": 0
+    }
+  ]
+}

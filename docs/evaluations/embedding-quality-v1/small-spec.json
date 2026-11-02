@@ -1,0 +1,8 @@
+{
+  "provider": "openai",
+  "model": "text-embedding-3-small",
+  "revision": "pilot-20261102-project-key-v1",
+  "dimensions": 1536,
+  "price_revision": "official-model-page-20261102",
+  "nano_usd_per_token": 20
+}

@@ -338,7 +338,7 @@ def source_identity() -> dict:
             return None
     modules = ("benchmark.py", "agents.py", "debate.py", "prompts.py", "schemas.py", "semantic.py",
                "verifier.py", "presentation.py", "llm.py", "openai_llm.py", "tools.py", "snapshot.py", "events.py",
-               "rag/context.py", "rag/retrieval.py", "rag/index.py", "rag/replay.py", "rag/store.py", "rag/schemas.py",
+               "rag/context.py", "rag/retrieval.py", "rag/embeddings.py", "rag/vectors.py", "rag/index.py", "rag/replay.py", "rag/context_repository.py", "rag/archive_repository.py", "rag/objects.py", "rag/store.py", "rag/schemas.py",
                "rag/corpus.py", "rag/evaluation.py", "budget.py")
     sources = {name: (hashlib.sha256(Path(__file__).parent.joinpath(name).read_bytes()).hexdigest()
                       if Path(__file__).parent.joinpath(name).is_file() else None) for name in modules}

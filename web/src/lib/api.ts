@@ -1,4 +1,5 @@
 import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Ranking, Report, Reveal, StockDetail, StockItem } from './types'
+import type { DocumentResult, FactQuery, FactResult } from './rag'
 
 type Me = { userId: string; guest: boolean; nickname: string | null }
 
@@ -85,6 +86,10 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
 }
 
 export const api = {
+  ragSearch: (id: string, question: string) => request<DocumentResult>(`/api/debates/${id}/rag/search`,
+    { method: 'POST', body: JSON.stringify({ question }) }),
+  ragFacts: (id: string, body: FactQuery) => request<FactResult>(`/api/debates/${id}/rag/facts`,
+    { method: 'POST', body: JSON.stringify(body) }),
   search: (q: string) => request<{ items: StockItem[] }>(`/api/stocks/search?q=${encodeURIComponent(q)}`),
   stock: (ticker: string) => request<StockDetail>(`/api/stocks/${ticker}`),
   createDebate: (ticker: string) =>

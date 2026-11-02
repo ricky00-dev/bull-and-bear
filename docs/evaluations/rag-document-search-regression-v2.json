@@ -1,0 +1,1396 @@
+{
+  "schema": "document-search-regression-v2",
+  "mode": "documents_only_not_answerability_classification",
+  "external_model_calls": 0,
+  "evaluation_scope": "reused_cases_not_new_blind_validation",
+  "human_reviewed": false,
+  "summary": {
+    "development": {
+      "cases": 24,
+      "unexpected": 0,
+      "recall": 0.6111111111111112,
+      "micro_precision": 0.7333333333333333,
+      "false_abstentions": 6,
+      "unnecessary": 4,
+      "failures": 0
+    },
+    "holdout": {
+      "cases": 48,
+      "unexpected": 9,
+      "recall": 0.9,
+      "micro_precision": 0.6666666666666666,
+      "false_abstentions": 1,
+      "unnecessary": 16,
+      "failures": 0
+    }
+  },
+  "results": [
+    {
+      "id": "per-definition-0",
+      "split": "development",
+      "category": "direct",
+      "question": "PER 주가수익비율",
+      "context_id": "KCTX.8a4dc21a6ed66ad44caabd1a14192c446dafb46edae64891e3962c81d66c0dd0",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "per-definition-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "이익에 비해 주식 가격이 얼마나 비싼가",
+      "context_id": "KCTX.9119481e88156b039ef5adda63aea3062fce218fac30eb548ca8b1b3fce6adc0",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "per-definition-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "벌어들이는 돈 대비 주가가 낮다는 뜻",
+      "context_id": "KCTX.3c755e0a25431dbfe65eaef4d93cdc3605b8039442f5db23165b107eba1c494b",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "operating-margin-0",
+      "split": "development",
+      "category": "direct",
+      "question": "영업이익률",
+      "context_id": "KCTX.3604d1ed274aa1c7aa373971d4d6dc830423ce3d5c1889f962bca53529fc158b",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "operating-margin-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "매출에서 본업 이익이 차지하는 몫",
+      "context_id": "KCTX.a1b7af7debb556d1ab731e2083f6b286508bc2c8c2cb0cd58fe66f4934794df6",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "operating-margin-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "다른 분기 매출과 영업이익을 나눠도 될까",
+      "context_id": "KCTX.4eb9fe6d30570370718de11fc7ca931dc907dadfbdaa7db56f33a463d06bde96",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "volatility-direction-0",
+      "split": "development",
+      "category": "direct",
+      "question": "변동성",
+      "context_id": "KCTX.d9b784378502fdbcd423ec4a3233fe49fa7cc666aedc975db284b7642cd44b96",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "volatility-direction-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "주가가 많이 흔들리면 앞으로 오른다는 뜻인가",
+      "context_id": "KCTX.df7cee870cdc9c6e12a611853e994aa057f43d403a473a41a506d743103c3dd1",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "volatility-direction-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "가격 움직임의 폭과 상승 방향을 구별",
+      "context_id": "KCTX.f7e6989aec7cf0d54c9fd240db19b602284228b4bea5c48171fd1932c4fbc776",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "earnings-expectations-0",
+      "split": "development",
+      "category": "direct",
+      "question": "실적 발표 기대 차이",
+      "context_id": "KCTX.886e9f641fbc7c5789fad9c195a5dd87eb1cce3517ad3ab0d607719f21f52b1b",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "earnings-expectations-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "좋은 성적을 발표했는데 왜 주가가 떨어질까",
+      "context_id": "KCTX.55955f889a541362d41f9cf3a7ab62ce97f4926e869512350dc23d39ff52de7f",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "earnings-expectations-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "예상보다 이익이 많아도 향후 전망이 나쁜 경우",
+      "context_id": "KCTX.9bc537f773ffef094884242cdbfd28717f0ab5e25fe42b1f72a56558d4fd7cef",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "release-vs-filing-0",
+      "split": "development",
+      "category": "direct",
+      "question": "공시 시각 실적 발표",
+      "context_id": "KCTX.b84fbd701fc60e0aef2d3986d019cce3cfe20052401887bb060895526bfb5162",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "release-vs-filing-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "새 보고서가 올라와도 이미 알려진 내용일 수 있나",
+      "context_id": "KCTX.cc3d908b1e1002d8e4cc43eb81758f28c5d01b86e788fc478803a725ccbf2edb",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "release-vs-filing-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "처음 시장에 알려진 때와 서류 접수 시간을 구별",
+      "context_id": "KCTX.0adea13e524a43af62f4c82e194a76ddfce4aff930dc7e4b300bf95d03c8ebff",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "momentum-limit-0",
+      "split": "development",
+      "category": "direct",
+      "question": "모멘텀 과거 수익률",
+      "context_id": "KCTX.8ae5a62d169b063ceca72079d092989133593766b6f028bcf7fde2ad771737ba",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "momentum-limit-1",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "최근 계속 올랐으면 다음 주에도 오를까",
+      "context_id": "KCTX.56eea617781ec6368566068d85dd0751901739046a37860e202fe262b6994dd1",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "momentum-limit-2",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "지난 상승세만으로 일주일 뒤 시장을 이긴다고 볼 수 있나",
+      "context_id": "KCTX.2fcb8efa60a475f239a519d00b7221e0b9c0efe4fce4222ae60ed7e1c1e5a7ef",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-0",
+      "split": "development",
+      "category": "negative",
+      "question": "광합성에서 엽록체가 하는 일",
+      "context_id": "KCTX.477cb117f6d0131adc5303e4ab068c36e22fca5d6d99707095c41b98e1ba5869",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-1",
+      "split": "development",
+      "category": "negative",
+      "question": "서울에서 부산까지 기차 시간표",
+      "context_id": "KCTX.8725d583ec57d07f0fdc422fac4822226a4f06487a565bae334d940d89ebd50b",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-2",
+      "split": "development",
+      "category": "negative",
+      "question": "파이썬 리스트를 정렬하는 문법",
+      "context_id": "KCTX.7b5c94358d40d47274f037de5849d8ea9b832e2d36ca213f5958069ccb87d032",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-3",
+      "split": "development",
+      "category": "negative",
+      "question": "오늘 삼성전자 정확한 종가",
+      "context_id": "KCTX.909ef94563310780a663c8257e66bb48754034d8e83b808a1f912d271544a2fb",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-4",
+      "split": "development",
+      "category": "negative",
+      "question": "내일 주가가 몇 원이 되는지 확답",
+      "context_id": "KCTX.01c636dbf691498d8e235eb2e17259d68f5dbdf994a1f40e7f7d33aa407d4291",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "negative-5",
+      "split": "development",
+      "category": "negative",
+      "question": "채권 듀레이션 계산 공식",
+      "context_id": "KCTX.fb5d840c39c6b949b8df62b378105b5bdf2d8687e748f0f2c6b17df932a328a1",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-per-definition-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "주가를 한 주당 벌어들인 순이익으로 나누는 지표를 설명해 주세요",
+      "context_id": "KCTX.a1402f6c55483976a2dfcd7dc3d3690253cf244bddcb35a69c9476caba455655",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-per-definition-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "같은 업종에서 이익이 양수인 회사들의 PER을 비교할 때 낮은 배수의 의미",
+      "context_id": "KCTX.fdc067d80df67d36ead30a51b0655a63145f9f88f4aeacd91c0ecafb3c8f064b",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-per-definition-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "주가수익비율이 낮으면 기업의 이익이 작다는 해석이 맞는가",
+      "context_id": "KCTX.f31d40771269e934e3acf3e45fb050f65c7274545a6e18cb30c2faa060ca0f00",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-per-definition-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "PER 비교에서 이익의 부호와 업종을 확인하는 이유",
+      "context_id": "KCTX.eb23d26e87c579e7298b04aae49d0ce05bdd4a24b7fd4ba6cab0598cbd9aec1c",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-operating-margin-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "영업이익을 매출액으로 나누어 얻는 수익성 비율",
+      "context_id": "KCTX.e2c6c5f021f774fe343cced5766869984b20a1a3ca284af2784d213b4fd0f45b",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-operating-margin-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "서로 다른 분기의 매출과 영업이익을 섞어 계산하면 안 되는 이유",
+      "context_id": "KCTX.26acf99e35e2055a883294718dead7587eb7230bf112445310b1caf8b4fe1e31",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-operating-margin-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "영업이익과 순이익을 동일한 이익 지표로 보아도 되는가",
+      "context_id": "KCTX.f04278ede1886f21fc98c87a66c9bd2bbad00fe14f6773193c90a6dfa92f54d6",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-operating-margin-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "손익계산서 수치의 보고 기간을 맞추어 비교해야 하는 까닭",
+      "context_id": "KCTX.9b3581f1e96d081bd5f172c7bb727031bafb9a11b79ffe2dcdcb9adf848c7f0f",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-volatility-direction-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "가격 변화의 폭이 큰 종목은 상승 확률도 반드시 높은가",
+      "context_id": "KCTX.f4271f6347e319f3750b16dc93151b8a138c5e20ffb63266755cd93cf58fb5c1",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-volatility-direction-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "주가의 출렁임 정도와 오르내리는 방향을 구별해야 하는 이유",
+      "context_id": "KCTX.1daaa71fb5793db8f7cea163cacdad33bf6a7f24c23a201786836dc3602e1670",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-volatility-direction-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "회사 밖의 시장 사건도 주식 가격을 흔들 수 있는가",
+      "context_id": "KCTX.b0fc7e08f7aaa63c82e74c94576d3c159825c6a50de3471bd798a586ae3739b0",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-volatility-direction-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "변동성이 크다는 사실만으로 매수 방향을 정할 수 있는가",
+      "context_id": "KCTX.3a9995359e811396fc0683c5376898f2639ee475c2b369aa11bbddcccb3fbe98",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-earnings-expectations-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "예상보다 좋은 실적을 발표했는데도 주가가 내리는 이유",
+      "context_id": "KCTX.90f6e2c1a0e6e4cd82dfaa70222b12b4b4aefb04c7f1223788e9b323076101f7",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 0.0,
+      "unnecessary": 2
+    },
+    {
+      "id": "holdout-earnings-expectations-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "실적 발표에서 시장 예상과 실제 결과의 차이를 살피는 까닭",
+      "context_id": "KCTX.73ef1de8c04cc8b4a6c46c06ef0fa0ee7fe05abd45064a3b89953358ce0a2498",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-earnings-expectations-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "이익이 늘었다는 사실만으로 발표 직후 상승을 확정할 수 있는가",
+      "context_id": "KCTX.97626f1dc63eeca78a5ac5342120c0ecac67a10b218bc17ccc6cf468d35a85d5",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-earnings-expectations-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "실적은 좋지만 향후 전망이 어두울 때 가격 반응의 해석",
+      "context_id": "KCTX.8046e51220fa28f1b39e8b9fdd2764dc471588b20c4252ed83d96c937a9d3438",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-release-vs-filing-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "기업의 실적 보도자료와 정기 보고서 제출 시점이 다른 경우",
+      "context_id": "KCTX.eedcf64a32b0a322bd076f6feba28ecd6dc54f943edb5a3e89d44b2ad09116ce",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-release-vs-filing-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "공시 접수일이 곧 시장이 해당 정보를 처음 안 날인가",
+      "context_id": "KCTX.4db4f104d7d99e867eae21536ff743261eec74787adefd26db4db27272c26ffe",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-release-vs-filing-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "보고서 등록 전에 이미 알려진 실적을 새로운 호재로 보아도 되는가",
+      "context_id": "KCTX.0eee0bf03ee15b144653939c2999922ba6c217a0e7d65161b46b829855bb2cc3",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-release-vs-filing-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "실적 발표와 공시의 순서를 확인해야 하는 이유",
+      "context_id": "KCTX.3c04ae971b0ee1dc8c3b711145fd735f86054a711584637f688dad4d92682578",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-momentum-limit-0",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "어제까지 주가가 올랐으니 다음 주에도 오른다고 단정해도 되는가",
+      "context_id": "KCTX.5fbb5e8118a3317d0c63501c011480d8543ac98d9120a5a3cb37e5855cbfd273",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-momentum-limit-1",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "모멘텀 신호가 외부 사건으로 뒤집힐 수 있는 이유",
+      "context_id": "KCTX.22b5878fb657d895c6df9f20b093b39e8794512a61fcb68373c3904fe4a65f4e",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-momentum-limit-2",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "추세 지표가 상승 신호를 냈을 때에도 잘못된 신호일 수 있는가",
+      "context_id": "KCTX.d84d1edd8e93002d1affa49290e04fd0a136ec49f55a2aeedf2baee3afb8eec3",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-momentum-limit-3",
+      "split": "holdout",
+      "category": "paraphrase",
+      "question": "과거 수익률이 양수이면 앞으로 코스피를 이긴다고 보장되는가",
+      "context_id": "KCTX.f9f539f1b9fc5944000942bbe3d631edcbdbf6fe6dc1a0c737f4e6dbf44cbf6d",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-0",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "PER의 산식과 영업이익률의 산식을 각각 설명해 주세요",
+      "context_id": "KCTX.f67f34508f2cfb0cef625ed280f108b93e98bd0df66d3084083f47729e7eb872",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 0.5,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-1",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "PER이 낮다는 의미와 변동성이 높다는 의미의 차이",
+      "context_id": "KCTX.e6d5d3ed8668732faeb7b4e4a494c9989c1dcfc601c40d67b2de1923de47912e",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-2",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "영업이익률을 계산하는 법과 실적 발표에서 시장 기대를 살피는 법",
+      "context_id": "KCTX.da870bb85db153187c9722d43a9210b2cff2a5eec4d487f0116a1355dfd978ed",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 0.5,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-3",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "실적 발표 뒤의 기대 차이와 공시 이전 공개 여부를 함께 확인하는 이유",
+      "context_id": "KCTX.b4c92b9215a25f2e74e3fab6b4dc5e6b0b94cad0685627ff8c740c09b92511c0",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-4",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "큰 변동성과 과거 상승 추세만으로 미래 상승을 보장할 수 없는 이유",
+      "context_id": "KCTX.b04e969f8800636dbd1c22a7d9123a8e1404a6448aefe7699234af8969459a43",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-multi-5",
+      "split": "holdout",
+      "category": "multi_concept",
+      "question": "보고서 접수와 정보 공개 시점의 구분, 그리고 모멘텀 신호의 한계",
+      "context_id": "KCTX.ab8e523ac2e65b3e05b76fff9efd9de4800b275de172ae5f0ece6c0f3d4b50d9",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "unexpected": false,
+      "recall": 1.0,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-0",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "김치찌개를 만드는 순서를 알려 주세요",
+      "context_id": "KCTX.35eaeee9a9804516ac2bfa841b91a94d48b95596b60fc0e2aa9c119c5d98697d",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-1",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "서울에서 부산까지 가는 고속버스 첫차 시간",
+      "context_id": "KCTX.8d5f18bb055563a1c01eb718eacafc492eec3e2766985afa4f1028019cb9c9da",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-2",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "파이썬 딕셔너리 병합 코드를 작성해 주세요",
+      "context_id": "KCTX.95c5a4aed0dbb7f50b41ee4c6f86a30869b121819c5d9f87c598dbd82b11fb6b",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-3",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "식물 세포에서 엽록체의 역할",
+      "context_id": "KCTX.bf6efe52f45a26856eb0f49863f098ff4997690f85175f58449f470f90b48f70",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-4",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "내일 제주도 강수 확률",
+      "context_id": "KCTX.8e8276e112f3386550059b74d44292698c43bc154ec09cd25d25e4bf5f510ab1",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-5",
+      "split": "holdout",
+      "category": "off_topic",
+      "question": "컴퓨터의 메모리와 SSD 용량 차이",
+      "context_id": "KCTX.60c123bc46e3e4344e3a000dc4526fe26f5fe7ace3d1e6c61be306aa5b0d7154",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-6",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "PBR 주가순자산비율 산식",
+      "context_id": "KCTX.0ca48d4a3a68b784cbb2e76de25f00ff582bfce89356f40ab952b85bec9b4db9",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-7",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "ROE 자기자본이익률 계산 방법",
+      "context_id": "KCTX.4717eb24382b9336a0cae14c02b2fd69f2625fb06db745e865ec4f2bb0e16174",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-8",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "채권 듀레이션의 정의",
+      "context_id": "KCTX.b9c09f56295424cb5651dcddc336fd03b39220cda9c5f0cef696b969ce724659",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-9",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "현금흐름할인법의 기업가치 계산 절차",
+      "context_id": "KCTX.86f0086d6d3f931143ec9f34138655b5d7b356329a52a1ac1c25fbe9f3f8880c",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-10",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "배당수익률과 배당성향의 차이",
+      "context_id": "KCTX.530880bb6db3e8202a91cd3b8fcefbea38a84629d814fdd0488740206b731807",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-11",
+      "split": "holdout",
+      "category": "missing_concept",
+      "question": "환율 선물환 계약의 가격 산정식",
+      "context_id": "KCTX.b8c0fb95a7ea515a03447a34fafb8b8356bb280ceeb7c61dcade2ce92cf9b08a",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 2
+    },
+    {
+      "id": "holdout-negative-12",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "삼성전자의 오늘 종가를 원 단위로 알려 주세요",
+      "context_id": "KCTX.51f046b66b459d723c71b7815f180d9d74a2234bef4fca556c405c06279bb6e9",
+      "mode": "documents",
+      "answerability": "no_documents",
+      "reasons": [],
+      "status": "empty",
+      "selected": [],
+      "relevant": [],
+      "unexpected": false,
+      "recall": null,
+      "unnecessary": 0
+    },
+    {
+      "id": "holdout-negative-13",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "SK하이닉스의 현재 PER 실제 수치는 몇 배인가",
+      "context_id": "KCTX.6aabb6636418649af4d4c27182522489700757add806af493d28fa35e29e6305",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-14",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "현대차의 이번 분기 영업이익률은 몇 퍼센트인가",
+      "context_id": "KCTX.13130245668ffe01f308a819b5e5b320c4fcada76540b40e6cb2d727963eebfd",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-15",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "NAVER가 내일 실적을 발표하는 정확한 시각",
+      "context_id": "KCTX.a9fc7f9112c4ffd458fa3a05c30b1976f39533904cef1aa363a6132b1bd54a65",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-16",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "이번 주 코스피 수익률을 숫자로 알려 주세요",
+      "context_id": "KCTX.b5c5cd32f55241cc0f930e1d9221471b22ee3362f2eb5fbc06f6ba4c3cfd273e",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    },
+    {
+      "id": "holdout-negative-17",
+      "split": "holdout",
+      "category": "missing_market_fact",
+      "question": "LG화학의 다음 7거래일 수익률을 정확히 예측해 주세요",
+      "context_id": "KCTX.98e06f24b8f9130194117e947ff59db2ed71226ea809028175e4a5baf8371ab2",
+      "mode": "documents",
+      "answerability": "documents_found",
+      "reasons": [],
+      "status": "completed",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "relevant": [],
+      "unexpected": true,
+      "recall": null,
+      "unnecessary": 1
+    }
+  ]
+}
