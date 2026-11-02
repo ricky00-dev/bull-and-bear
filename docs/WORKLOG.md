@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-02 · ricky00-dev (Claude Code) · api, web
+- 한 것: 개인정보 처리방침·이용약관 페이지(`/policy/privacy`, `/policy/terms`)와 내 기록 삭제(`DELETE /api/me`). 삭제는 판정·채점·메모·퀴즈 기록·닉네임·계정을 지우고, 공용 토론은 남기되 requested_by만 비움. 웹은 마이 탭에서 한 번 더 확인 후 삭제 → 토큰·최근 검색어 버리고 새 게스트로 홈. 방침 내용은 실제 저장 항목 기준 (IP·기기 정보 미저장, Caddy 접근 로그 없음, 판정·메모는 워커/LLM에 안 보냄).
+- 진행 중: 없음.
+- 다음: 문의처(팀 메일) 정해지면 `web/src/pages/PolicyPage.tsx`의 CONTACT 교체. 카카오 로그인 붙이면 방침의 저장 항목 갱신.
+- 막힘·결정 필요: (jangwonii) develop의 `ai-worker/tests/test_rag_evidence.py::test_http_facts_missing_concept_auth_and_no_model_or_market_calls`가 로컬·CI 모두 실패 (`/rag/search` 503 RETRIEVAL_UNAVAILABLE, 로그 "snapshot publication binding unavailable"). 나머지 575 통과. 법률 검토는 받지 않은 학생 프로젝트 초안.
+
 ## 2026-11-01 · ricky00-dev (Claude Code) · api, web
 - 한 것: 학습 부가 기능 3개 (feat/learning-extras).
   1. 내 근거 채점: 판정 때 고른 근거를 그 근거를 인용한 쪽(매수 측·매도 측) 방향으로 채점. 초과수익 +2%p 초과면 매수 측 근거, −2%p 미만이면 매도 측 근거가 맞음, 그 사이는 FLAT. `GET /api/me/judgments/{id}`에 `pickResults`·`pickHorizon`, `/api/me/stats`의 `evidenceHabit`에 `right`·`graded` 추가. 채점 화면에 근거별 결과와 "판정은 빗나갔지만 근거는 맞았어요" 같은 한 줄 정리, 내 판정 탭 습관 리포트에 분류별 맞은 방향 횟수. DB 변경 없음 (debate_events의 statement_accepted에서 계산).
