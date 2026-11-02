@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,9 +28,11 @@ public class QuizController {
 	}
 
 	private final QuizService quiz;
+	private final QuizRanking ranking;
 
-	QuizController(QuizService quiz) {
+	QuizController(QuizService quiz, QuizRanking ranking) {
 		this.quiz = quiz;
+		this.ranking = ranking;
 	}
 
 	@PostMapping("/rounds")
@@ -52,5 +55,11 @@ public class QuizController {
 	@GetMapping("/stats")
 	public QuizService.Stats stats(@CurrentUser User user) {
 		return quiz.stats(user);
+	}
+
+	/** @param scope today(한국 시간 오늘 푼 문제만) | all */
+	@GetMapping("/ranking")
+	public QuizRanking.Ranking ranking(@CurrentUser User user, @RequestParam(defaultValue = "today") String scope) {
+		return ranking.ranking(user, "all".equals(scope) ? QuizRanking.Scope.ALL : QuizRanking.Scope.TODAY);
 	}
 }

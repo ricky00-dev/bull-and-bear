@@ -87,6 +87,7 @@ export function MyPage() {
         </Card>
 
         <ul className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
+          <MenuItem to="/quiz/ranking" title="퀴즈 랭킹" sub="닉네임을 정하고 다른 사람과 겨뤄 보기" />
           <MenuItem to="/report" title="AI 성적표" sub="토론 AI와 혼자 판단한 AI, 누가 더 맞혔을까" />
           <MenuItem to="/glossary" title="용어 사전" sub={`PER, 이동평균선 같은 투자 용어 ${TERMS.length}개`} />
           <MenuItem onClick={() => setIntro(true)} title="서비스 소개 다시 보기" sub="불앤베어는 어떻게 하나요" />

@@ -124,7 +124,7 @@ export function JudgePage() {
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-col gap-0.5">
             <h3 className="text-sm font-extrabold">가장 설득력 있던 근거 (최대 {MAX_PICKS}개)</h3>
-            <p className="text-xs text-sub">내 판정 습관 리포트에 쓰여요</p>
+            <p className="text-xs text-sub">채점 때 이 근거가 맞는 방향이었는지도 알려 드려요</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {evidence.map(([sourceId, text]) => {

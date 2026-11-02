@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,11 +54,20 @@ public class MeService {
 			List<ScoreView> scores) {
 	}
 
+	/**
+	 * @param pickResults 내가 고른 근거마다 인용한 쪽과 채점 결과 (가장 최근 채점 기준)
+	 * @param pickHorizon pickResults를 채점한 거래일 수. 채점 전이면 null
+	 */
 	public record JudgmentDetail(JudgmentView judgment, List<String> evidencePicks, String memo,
-			List<String> decisiveEvidence, BigDecimal holdBand) {
+			List<String> decisiveEvidence, BigDecimal holdBand, List<EvidenceGrader.Pick> pickResults,
+			Integer pickHorizon) {
 	}
 
-	public record HabitSlice(String category, String label, long count) {
+	/**
+	 * @param right  7거래일 채점에서 이 분류 근거가 맞은 방향이었던 횟수
+	 * @param graded 맞았거나 틀린 횟수 (코스피와 비슷해 판가름 안 난 경우·채점 전은 뺀다)
+	 */
+	public record HabitSlice(String category, String label, long count, long right, long graded) {
 	}
 
 	/**
@@ -101,7 +111,13 @@ public class MeService {
 					return ids;
 				})
 				.orElse(List.of());
-		return new JudgmentDetail(view, j.getEvidencePicks(), j.getMemo(), decisive, holdBand);
+		var latest = view.scores().stream()
+				.filter(x -> x.status() == JudgmentScore.Status.SCORED)
+				.max(Comparator.comparingInt(ScoreView::horizonDays));
+		List<EvidenceGrader.Pick> picks = EvidenceGrader.grade(j.getEvidencePicks(), sides(j.getDebateId()),
+				latest.map(ScoreView::excessReturn).orElse(null), holdBand);
+		return new JudgmentDetail(view, j.getEvidencePicks(), j.getMemo(), decisive, holdBand, picks,
+				latest.map(ScoreView::horizonDays).orElse(null));
 	}
 
 	public Stats stats(User user) {
@@ -117,9 +133,28 @@ public class MeService {
 		Map<EvidenceCategory, Long> habit = mine.stream()
 				.flatMap(j -> j.getEvidencePicks().stream())
 				.collect(Collectors.groupingBy(EvidenceCategory::of, () -> new LinkedHashMap<>(), Collectors.counting()));
+
+		// 분류별 근거 적중: 7거래일 채점이 끝난 판정의 근거만 센다
+		Map<UUID, BigDecimal> excessByJudgment = finals.stream()
+				.collect(Collectors.toMap(JudgmentScore::getJudgmentId, JudgmentScore::getExcessReturn));
+		Map<EvidenceCategory, long[]> grades = new LinkedHashMap<>();
+		for (Judgment j : mine) {
+			BigDecimal excess = excessByJudgment.get(j.getId());
+			if (excess == null || j.getEvidencePicks().isEmpty()) {
+				continue;
+			}
+			for (var p : EvidenceGrader.grade(j.getEvidencePicks(), sides(j.getDebateId()), excess, holdBand)) {
+				long[] g = grades.computeIfAbsent(EvidenceCategory.of(p.sourceId()), k -> new long[2]);
+				if (p.result() == EvidenceGrader.Result.RIGHT) g[0]++;
+				if (p.result() == EvidenceGrader.Result.RIGHT || p.result() == EvidenceGrader.Result.WRONG) g[1]++;
+			}
+		}
 		List<HabitSlice> slices = habit.entrySet().stream()
 				.sorted(Map.Entry.<EvidenceCategory, Long>comparingByValue().reversed())
-				.map(e -> new HabitSlice(e.getKey().name().toLowerCase(), e.getKey().label, e.getValue()))
+				.map(e -> {
+					long[] g = grades.getOrDefault(e.getKey(), new long[2]);
+					return new HabitSlice(e.getKey().name().toLowerCase(), e.getKey().label, e.getValue(), g[0], g[1]);
+				})
 				.toList();
 		return new Stats(mine.size(), finals.size(), userHits, modHits, beatAi, rate(userHits, finals.size()),
 				rate(modHits, finals.size()), slices);
@@ -144,6 +179,10 @@ public class MeService {
 			return new JudgmentView(j.getId(), d.getId(), d.getTicker(), d.getStockName(), d.getTradeDate(),
 					d.getBasePrice(), j.getDecision(), j.getConfidence(), verdictById.get(d.getId()), j.getCreatedAt(), sv);
 		}).toList();
+	}
+
+	private Map<String, Set<String>> sides(UUID debateId) {
+		return EvidenceGrader.sidesBySource(debates.acceptedStatements(debateId), json);
 	}
 
 	private static BigDecimal rate(long hits, long total) {

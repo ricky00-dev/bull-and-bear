@@ -87,6 +87,9 @@ function StatsCard({ s }: { s: MyStats }) {
       {total > 0 && (
         <div className="flex flex-col gap-2 border-t border-line-soft pt-3">
           <p className="text-[13px] font-extrabold">내가 자주 고르는 근거</p>
+          {s.evidenceHabit.some((h) => h.graded > 0) && (
+            <p className="-mt-1 text-[11px] text-sub">맞은 방향: 그 근거를 인용한 쪽으로 주가가 움직인 횟수 (7거래일 기준)</p>
+          )}
           {s.evidenceHabit.map((h) => (
             <div key={h.category} className="grid grid-cols-[64px_1fr_32px] items-center gap-2 text-xs">
               <span className="text-sub">{h.label}</span>
@@ -94,6 +97,11 @@ function StatsCard({ s }: { s: MyStats }) {
                 <span className="block h-2 rounded-full bg-ink" style={{ width: `${(h.count / total) * 100}%` }} />
               </span>
               <span className="text-right font-bold">{Math.round((h.count / total) * 100)}%</span>
+              {h.graded > 0 && (
+                <span className="col-start-2 col-end-4 -mt-1 text-[11px] text-sub">
+                  맞은 방향 {h.right}/{h.graded}
+                </span>
+              )}
             </div>
           ))}
         </div>

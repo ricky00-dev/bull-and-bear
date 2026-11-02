@@ -113,6 +113,19 @@ export interface JudgmentDetail {
   memo: string | null
   decisiveEvidence: string[]
   holdBand: number
+  /** 내가 고른 근거마다 인용한 쪽과 채점 결과 (가장 최근 채점 기준) */
+  pickResults: PickResult[]
+  /** pickResults를 채점한 거래일 수, 채점 전이면 null */
+  pickHorizon: number | null
+}
+
+/** RIGHT: 근거를 인용한 쪽으로 움직임, WRONG: 반대로, FLAT: 코스피와 비슷해 판가름 안 남, UNKNOWN: 토론에서 인용 안 됨 */
+export type PickOutcome = 'RIGHT' | 'WRONG' | 'FLAT' | 'PENDING' | 'UNKNOWN'
+
+export interface PickResult {
+  sourceId: string
+  sides: ('bull' | 'bear')[]
+  result: PickOutcome
 }
 
 /** AI 성적표 (docs/experiment.md). Rate는 맞힌 수 / 채점된 수 */
@@ -164,7 +177,23 @@ export interface MyStats {
   beatAi: number
   userHitRate: number | null
   moderatorHitRate: number | null
-  evidenceHabit: { category: string; label: string; count: number }[]
+  /** right: 7거래일 채점에서 맞은 방향이던 횟수, graded: 맞거나 틀린 횟수 */
+  evidenceHabit: { category: string; label: string; count: number; right: number; graded: number }[]
+}
+
+export interface RankEntry {
+  rank: number
+  name: string
+  hits: number
+  answered: number
+  me: boolean
+}
+
+export interface Ranking {
+  scope: 'TODAY' | 'ALL'
+  players: number
+  top: RankEntry[]
+  mine: RankEntry | null
 }
 
 export const DECISION_LABEL: Record<Decision, string> = { BUY: '매수', HOLD: '보류', SELL: '매도' }

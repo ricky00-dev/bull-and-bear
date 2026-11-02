@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { TabBar } from '../components/TabBar'
 import { Card, PrimaryButton, Screen } from '../components/ui'
 import { api, ApiError } from '../lib/api'
@@ -47,6 +47,13 @@ export function QuizHomePage() {
             </div>
           ))}
         </Card>
+        <Link to="/quiz/ranking" className="flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3.5">
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[15px] font-extrabold">오늘의 랭킹</span>
+            <span className="text-xs text-sub">오늘 온 사람들 중 몇 등일까요</span>
+          </span>
+          <span className="text-[13px] font-bold text-down">보기</span>
+        </Link>
         <p className="text-[11px] leading-relaxed text-sub">
           문제는 결과와 상관없이 무작위로 골라요. AI가 맞힌 문제도, 틀린 문제도 섞여 있어요. 퀴즈 기록은 내 판정 통계에 들어가지 않아요. 교육용 모의 퀴즈이며 AI 판정은 투자 권유가 아니에요.
         </p>

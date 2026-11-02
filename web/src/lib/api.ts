@@ -1,5 +1,7 @@
-import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Report, Reveal, StockDetail, StockItem } from './types'
+import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Ranking, Report, Reveal, StockDetail, StockItem } from './types'
 import type { DocumentResult, FactQuery, FactResult } from './rag'
+
+type Me = { userId: string; guest: boolean; nickname: string | null }
 
 /** 웹은 개발 서버, Capacitor 앱은 실제 서버 주소. 쿠키를 쓰지 않으므로 출처가 달라도 된다. */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -105,7 +107,9 @@ export const api = {
   report: (all: boolean) => request<Report>(`/api/report?scope=${all ? 'all' : 'official'}`),
   quizAnswer: (id: string, idx: number, decision: Decision) =>
     request<QuizAnswer>(`/api/quiz/rounds/${id}/questions/${idx}/answer`, { method: 'POST', body: JSON.stringify({ decision }) }),
-  me: () => request<{ userId: string; guest: boolean; nickname: string | null }>('/api/me'),
+  quizRanking: (all: boolean) => request<Ranking>(`/api/quiz/ranking?scope=${all ? 'all' : 'today'}`),
+  me: () => request<Me>('/api/me'),
+  setNickname: (nickname: string) => request<Me>('/api/me/nickname', { method: 'PUT', body: JSON.stringify({ nickname }) }),
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),
   myJudgment: (id: string) => request<JudgmentDetail>(`/api/me/judgments/${id}`),
   myStats: () => request<MyStats>('/api/me/stats'),
