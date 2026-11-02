@@ -12,6 +12,12 @@
 		respond 404
 	}
 
+	# 외부 감시(UptimeRobot)용: DB·워커·전향 운용 상태, 문제 있으면 503
+	handle /healthz {
+		rewrite * /ops/health
+		reverse_proxy api:8080
+	}
+
 	# SPA: 없는 경로는 index.html로. 빌드 산출물(해시 파일명)은 오래 캐시
 	handle {
 		root * /srv

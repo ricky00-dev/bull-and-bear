@@ -15,6 +15,25 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-02 · ricky00-dev (Claude Code) · api, deploy, docs
+- 한 것: 운영 감시·백업 (chore/ops-monitoring-backup).
+  - Spring `GET /ops/health` (인증 없음). Caddy가 `/healthz`로 공개하고, 문제 있으면 503.
+    - 확인 항목: DB, 실제 워커 `/health`
+    - 전향 운용: 평일 19:30 이후 고정 종목이 오늘 모두 COMPLETED인지
+    - actuator와 분리해서 컨테이너 헬스체크에 영향을 주지 않음
+  - compose 워커 헬스체크(30초)
+  - `deploy/restore.sh`: 확인 후 API 정지 → 복구 → 재기동
+  - `deploy/status.sh`: 운영 상태 한눈에
+  - `backup.sh`: `--clean --if-exists`, 임시 파일, ENV_FILE
+  - DEPLOY.md: 감시·알림(UptimeRobot), 백업·복구, 업데이트 후 image prune
+- 확인: OpsHealthTest(대기·정상·누락 503·주말). 로컬에서 운영 구성(별도 프로젝트)으로 확인한 것:
+  - `/healthz` 200, `/actuator` 404
+  - 백업 → users 3→8 → 복구 → 3, API 재기동 후 게스트 생성 201
+  - status.sh 출력
+  - 워커 healthy
+- 다음: 배포 후 UptimeRobot 모니터 등록 (ricky00-dev). 정식 운용 전 S3 백업 복사.
+- 막힘·결정 필요: 휴장일에 forwardRun 알림이 잘못 갈 수 있음 (11월 휴장일 없음). 백업이 아직 같은 서버에만 있음.
+
 ## 2026-11-02 · ricky00-dev (Claude Code) · ci
 - 한 것: GitHub Actions CI 추가 (`.github/workflows/ci.yml`). develop·main으로 가는 PR과 develop 푸시마다 바뀐 폴더만 검사: api `./gradlew test`(Testcontainers), web `lint`·`build`, ai-worker `uv run pytest`. develop 푸시 때는 운영 이미지 3개 빌드도 확인. 배포 점검: 최신 develop(RAG 머지 후)으로 운영 이미지 3개 로컬 빌드 성공, 워커는 메모리 512MB 제한에서 서버 import 정상.
 - 진행 중: 없음.

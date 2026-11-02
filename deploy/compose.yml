@@ -62,6 +62,11 @@ services:
       WORKER_TOKEN: ${WORKER_TOKEN}
     volumes:
       - worker_data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      start_period: 30s
+      retries: 3
     mem_limit: 512m
 
   web:
