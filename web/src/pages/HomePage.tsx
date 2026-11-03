@@ -63,7 +63,7 @@ export function HomePage() {
     <Screen>
       <header className="pt-safe px-5">
         <div className="flex items-center justify-between pb-2 pt-5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 md:invisible">
             <span className="flex size-7 items-center justify-center rounded-lg bg-ink text-[13px] font-extrabold text-white">B</span>
             <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
           </div>

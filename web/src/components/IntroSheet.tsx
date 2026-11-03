@@ -33,13 +33,13 @@ export function IntroSheet({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-end">
+    <div className="fixed inset-0 z-40 flex flex-col justify-end md:justify-center md:p-6">
       <div className="absolute inset-0 bg-ink/45" />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="intro-title"
-        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-4 rounded-t-[22px] bg-white px-5.5 pt-6"
+        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-4 rounded-t-[22px] bg-white px-5.5 pt-6 md:rounded-[22px]"
       >
         <h2 id="intro-title" className="text-xl font-extrabold tracking-tight">
           불앤베어는 이렇게 해요
