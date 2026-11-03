@@ -1,9 +1,9 @@
 import { type ReactNode, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
-/** 모바일 우선: 폰 폭 기준, 넓은 화면에서는 가운데 480px */
+/** 모바일 우선: 폰 폭 기준. 태블릿(md)·PC(lg)에서는 본문 폭을 넓힌다 */
 export function Screen({ children }: { children: ReactNode }) {
-  return <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col bg-ground">{children}</div>
+  return <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col bg-ground md:max-w-[720px] lg:max-w-[880px]">{children}</div>
 }
 
 export function TopBar({ title, sub, back }: { title: string; sub?: string; back?: string }) {
@@ -102,7 +102,7 @@ export function ErrorNotice({ message, onRetry }: { message: string; onRetry?: (
   )
 }
 
-/** 아래에서 올라오는 시트. 배경을 누르거나 Esc로 닫는다. */
+/** 아래에서 올라오는 시트(넓은 화면에서는 가운데 대화상자). 배경을 누르거나 Esc로 닫는다. */
 export function BottomSheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -111,13 +111,13 @@ export function BottomSheet({ label, onClose, children }: { label: string; onClo
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col justify-end">
+    <div className="fixed inset-0 z-30 flex flex-col justify-end md:justify-center md:p-6">
       <button type="button" aria-label="닫기" onClick={onClose} className="absolute inset-0 bg-ink/45" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-3.5 rounded-t-[22px] bg-white px-5.5 pt-2.5"
+        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-3.5 rounded-t-[22px] md:rounded-[22px] bg-white px-5.5 pt-2.5"
       >
         <div className="h-1 w-10 self-center rounded-full bg-line" />
         {children}

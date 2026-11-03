@@ -30,7 +30,7 @@ export function TodayFeed() {
         <h2 className="text-[17px] font-extrabold">오늘의 토론</h2>
         <span className="text-xs text-sub">{monthDay(data.dataDate)} 종가 기준 · 바로 볼 수 있어요</span>
       </div>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2 md:grid md:grid-cols-2">
         {(expanded ? data.items : data.items.slice(0, FOLDED)).map((item) => (
           <li key={item.debateId}>
             <FeedCard item={item} />

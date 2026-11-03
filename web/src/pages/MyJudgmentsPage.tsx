@@ -43,7 +43,7 @@ export function MyJudgmentsPage() {
         )}
 
         {items.length > 0 && (
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 md:grid md:grid-cols-2">
             {items.map((j) => (
               <li key={j.judgmentId}>
                 <Link to={`/me/judgments/${j.judgmentId}`} className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-4">
