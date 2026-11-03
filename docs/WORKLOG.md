@@ -15,6 +15,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-03 · Codex · ai-worker, docs
+- 한 것: RAG HTTP 테스트의 고정 스냅샷 시각보다 실제 색인 게시 시각이 늦어 검색503이 발생하는 fixture 오류 수정. 게시 시계를 고정하고 cutoff 이전·동일 검색200, 이후503과 재시도 거부 및 Fact 조회 성공을 검증. 운영의 미래 자료 차단 정책은 유지.
+- 진행 중: 사용자 요청에 따라 origin/develop 기반 fix/rag-publication-clock에 RAG 테스트와 이 기록만 분리. 원래 브랜치의 문서 정리·develop 병합·API 환경 문서는 제외.
+- 다음: 이 브랜치의 원격 반영 후 develop 통합 리뷰. PR 생성·병합은 이번 범위에 포함하지 않음.
+- 막힘·결정 필요: 원래 통합 작업 트리에서 관련46 passed/1 skipped, 워커 전체653 passed/78 skipped(77.92초). 분리 브랜치에서 관련46 passed/1 skipped(10.56초) 재확인 및 git diff --check 통과. 외부 모델/시장 호출·제품 코드·계약 변경 없음.
+
+
 ## 2026-11-02 · ricky00-dev (Claude Code) · api, web
 - 한 것: 개인정보 처리방침·이용약관 페이지(`/policy/privacy`, `/policy/terms`)와 내 기록 삭제(`DELETE /api/me`). 삭제는 판정·채점·메모·퀴즈 기록·닉네임·계정을 지우고, 공용 토론은 남기되 requested_by만 비움. 웹은 마이 탭에서 한 번 더 확인 후 삭제 → 토큰·최근 검색어 버리고 새 게스트로 홈. 방침 내용은 실제 저장 항목 기준 (IP·기기 정보 미저장, Caddy 접근 로그 없음, 판정·메모는 워커/LLM에 안 보냄).
 - 진행 중: 없음.
