@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ---
 
 ## 2026-11-03 · Codex · ai-worker, docs
+- 한 것: 사용자 병합 요청에 따라 RAG 테스트 수정 PR #32(fix/rag-publication-clock → develop) 생성. 변경은 테스트 시계·시점 경계 검증과 작업 기록이며 운영 코드·API 환경 문서는 제외.
+- 진행 중: GitHub의 충돌/CI 상태 확인 후 squash 병합 진행. 실제 병합 상태와 최종 SHA는 PR #32 및 origin/develop을 기준으로 확인.
+- 다음: 병합 후 develop CI 결과 확인. API 환경 개선은 원래 작업 공간의 미커밋 변경으로 유지.
+- 막힘·결정 필요: 분리 브랜치 관련46 passed/1 skipped. 사용자 직접 병합 요청이며 별도 팀원 리뷰로 기록하지 않음. 제품 코드 변경·배포·외부 모델 호출 없음.
+
+
+## 2026-11-03 · Codex · ai-worker, docs
 - 한 것: RAG HTTP 테스트의 고정 스냅샷 시각보다 실제 색인 게시 시각이 늦어 검색503이 발생하는 fixture 오류 수정. 게시 시계를 고정하고 cutoff 이전·동일 검색200, 이후503과 재시도 거부 및 Fact 조회 성공을 검증. 운영의 미래 자료 차단 정책은 유지.
 - 진행 중: 사용자 요청에 따라 origin/develop 기반 fix/rag-publication-clock에 RAG 테스트와 이 기록만 분리. 원래 브랜치의 문서 정리·develop 병합·API 환경 문서는 제외.
 - 다음: 이 브랜치의 원격 반영 후 develop 통합 리뷰. PR 생성·병합은 이번 범위에 포함하지 않음.
