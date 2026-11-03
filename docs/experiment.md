@@ -69,7 +69,7 @@
   내부 표현 노출 없이 번호 대응을 통과했다. 중재자 의미 검토는 2회 수행했다.
   총 631.555초로, 짧은 출력이 호출 시간 감소를 보장하지는 않는다.
 - 결과: ai-worker/data/audits/concise-smoke-20261029.json 및 .txt. 새 전체 토론이나 선공 비교 실험은 아니다.
-- Python 89개 통과. 지표 공식 API 재검증은 [별도 기록](metric-audit-20261029.md) 참조.
+- Python 89개 통과. 지표 공식 API 재검증은 [별도 기록](evaluations/metric-audit-20261029.md) 참조.
 
 ### 판단 기준 통일·의미 검증 재실험 (2026-10-29, 정책 7d-semantic-v2)
 

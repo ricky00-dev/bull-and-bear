@@ -2,7 +2,8 @@
 
 2026-11-01. 현재 구현인 `rag/corpus.py`, `RagStore`, `GenerationIndex`, `Retriever`를 사용한다.
 출처 없는 PDF 대량 투입이나 새 벡터 DB 도입에 앞서 출처·검수·시점이 연결된 작은 corpus로 검증한다.
-현재 검색은 SQLite FTS5/BM25이며 임베딩 API를 호출하지 않는다.
+이 문서의 corpus 입력 절차는 SQLite FTS5/BM25를 사용하며 임베딩 API를 호출하지 않는다.
+선택적 PostgreSQL·pgvector·S3 설정과 평가 명령은 [RAG 실행 안내](RAG-OPERATIONS.md), 게시·교체·복구는 [운영 절차](RAG-PUBLICATION-RUNBOOK.md)를 따른다.
 
 ## 넣는 자료와 넣지 않는 자료
 
@@ -85,12 +86,12 @@ generation ID는 보고서에서 선택한다. `.env`의 RAG 스위치를 자동
 6. 기초 설명은 변경 시 검수, 정기 출처 재확인은 월1회를 제안한다. 자동 예약은 아직 없다.
    최신 뉴스/공시 갱신은 이 배경 corpus와 분리해 공급자의 실제 공개/관측 시각을 따른다.
 
-## 이번 결과 및 다음 단계
+## 입력 검증 근거
 
 상세: [실제 적재 검증](evaluations/rag-corpus-pilot.md).
 직접 개념6/6, 표현 변형4/6이며 단기 배경은 무관 입력에도 반환될 수 있다.
 따라서 임의 자연어 검색 품질이나 실제 Claude 답변 개선을 입증한 결과가 아니다.
 
-다음은 금융 용어 동의어/개념 태그를 독립 사례로 보강하고, 한국 공식 교육자료를 소규모로
-추가해 시장 적용 범위를 넓히는 것이다. fixed-task 배경과 개념 적합성 점수는 따로 평가한다.
+이 보고서는 해당 corpus 버전의 입력 검증 기록이다. 현재 확장 조건은 [설계 방향](RAG-LONG-TERM.md),
+후속 검색 평가와 운영 판단은 [평가 색인](evaluations/README.md)과 [준비 감사](RAG-READINESS-AUDIT.md)를 따른다.
 RAG 유무의 실제 모델 비교는 같은 스냅샷·고정 세대·별도 명시된 호출 범위/예산으로 수행한다.

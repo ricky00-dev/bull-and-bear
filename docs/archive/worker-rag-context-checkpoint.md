@@ -1,5 +1,7 @@
 # 공통·단기 RAG 이관 체크포인트 (WIP)
 
+> 보관 기록: 작성 당시 계획·구현·검증 상태를 보존합니다. 현재 실행 절차는 [문서 안내](../README.md)를 따릅니다.
+
 2026-10-30 KST. 브랜치 `feat/worker-rag-context`, 작업 공간 `.worktrees/worker-rag-context`.
 사용자의 현재 작업 푸시·다른 컴퓨터 이관 요청에 따라 구현을 중단하고 보존한다.
 **P1 완료나 운영 활성화 승인 기록이 아니다. `BULLBEAR_RAG_ENABLED=false`를 유지한다.**
@@ -98,7 +100,7 @@ P1 품질·운영 완료율/비용/지연 활성화 기준과 11/16 프리즈 �
 git switch feat/worker-rag-context
 git status --short
 git log -5 --oneline
-Get-Content docs/evaluations/worker-rag-context-checkpoint.md
+Get-Content docs/archive/worker-rag-context-checkpoint.md
 cd ai-worker
 uv sync --group dev
 $env:PYTHONPATH = (Join-Path (Get-Location) 'src')

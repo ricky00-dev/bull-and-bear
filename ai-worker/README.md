@@ -13,6 +13,8 @@ HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응�
 
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
+현재 운영 절차는 [워커 운영](../docs/WORKER-OPERATIONS.md), RAG 설치·이관·평가는 [RAG 실행 안내](../docs/RAG-OPERATIONS.md)를 따른다.
+
 ## 시작하기
 
 ```bash
@@ -118,7 +120,7 @@ SSE는 `snapshot_created → moderator_started → debate_completed` 또는 `deb
 - 기존 SQLite는 시작 시 `mode=debate`로 이관되며 과거 요청 멱등 키도 유지한다.
 - Spring의 단일 모드 운용 스위치는 별도다. 워커 구현만으로 운영 스위치를 활성화하지 않는다.
 
-[단일 모드 검증 기록](docs/single-http-validation.md): 자동 테스트는 통과했다. 실제 Sonnet 실험 2건은
+[단일 모드 검증 기록](../docs/evaluations/single-http-validation.md): 자동 테스트는 통과했다. 실제 Sonnet 실험 2건은
 판정 검증에서 반려되어 실패 이벤트·사용량 기록까지 확인했으며, 실제 완료 판정과 Spring #23 연결은 미확인이다.
 
 기본 `uv run pytest`는 외부 데이터·유료 LLM 호출 없이 서버와 토론 엔진을 검증한다.
