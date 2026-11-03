@@ -40,8 +40,9 @@ def statement_issues(statement, round_kind, used):
     issues = []
     if "\n" in statement.claim or sentence_count(statement.claim) > 1:
         issues.append(error("claim_length", "주장은 한 줄·한 문장 이내로 쓰세요."))
-    if sentence_count(statement.argument) > 3:
-        issues.append(error("argument_length", "본문은 최대 3문장으로 쓰세요."))
+    count = sentence_count(statement.argument)
+    if count > 3:
+        issues.append(error("argument_length", f"본문이 {count}문장입니다. 불확실성 설명까지 포함해 최대 3문장으로 다시 쓰세요."))
     ids = [e.source_id for e in statement.evidence]
     if len(ids) > 3 or len(ids) != len(set(ids)):
         issues.append(error("evidence_limit", "서로 다른 근거를 최대 3개만 쓰세요."))
@@ -53,13 +54,19 @@ def statement_issues(statement, round_kind, used):
     return issues
 
 
+def argument_quote_spans(argument):
+    """Literal spans only; quotation does not imply agreement with its content."""
+    return [{"quote": match[1], "start": match.start(1), "end": match.end(1)}
+            for match in re.finditer(r'''(?:^\s*|상대(?:의|는)\s*)[“"'「]([^”"'」]+)[”"'」]''', argument)]
+
+
 def rebuttal_target_issues(statement, side, round_kind, transcript):
     """Check an attributed quotation against the other speaker, not model memory."""
     other = "매도" if side.value == "bull" else "매수"
     opponent_texts = [entry.partition("\n")[2].split("\n근거:\n", 1)[0]
                       for entry in transcript
                       if re.match(rf"^\[[^\]]+\] {other} 측\n", entry)]
-    quotes = re.findall(r'''(?:^\s*|상대(?:의|는)\s*)[“"'「]([^”"'」]+)[”"'」]''', statement.argument)
+    quotes = [span["quote"] for span in argument_quote_spans(statement.argument)]
     if round_kind == "rebuttal" and not quotes:
         return [error("rebuttal_target", "반박 본문은 상대의 “원문 일부”로 시작하고, 상대 주장·본문의 6자 이상 문구를 그대로 인용하세요. 내 발언이나 검증 피드백은 상대 주장이 아닙니다.")]
     if any(len(q.strip()) < 6 or not any(q in text for text in opponent_texts) for q in quotes):
@@ -76,8 +83,9 @@ def verdict_issues(decision, *, comments=(), extra_question=None):
     issues = []
     texts = [decision.reasoning, *comments, extra_question or ""]
     text = "\n".join(texts)
-    if sentence_count(decision.reasoning) > 3:
-        issues.append(error("reasoning_length", "판정 이유는 최대 3문장으로 쓰세요."))
+    count = sentence_count(decision.reasoning)
+    if count > 3:
+        issues.append(error("reasoning_length", f"판정 이유가 {count}문장입니다. 불확실성 설명까지 포함해 최대 3문장으로 다시 쓰세요."))
     if any(sentence_count(t) > 1 for t in comments):
         issues.append(error("comment_length", "양측 평가는 각각 한 문장으로 쓰세요."))
     if re.search(r"\b(?:PX|MKT|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):

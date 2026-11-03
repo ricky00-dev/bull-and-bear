@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from .audit import selected_models
 from .config import load_settings
 from .llm import validate_model
+from .budget import amount_nano
+from .anthropic_budget import POLICY
+import re
 
 
 def inspect_settings(settings) -> dict:
@@ -37,6 +40,21 @@ def inspect_settings(settings) -> dict:
             errors.append(f'missing_{key}')
     if os.getenv('WORKER_TOKEN') == 'dev-worker-token':
         errors.append('development_worker_token')
+    worker_budget = settings.worker_budget_usd is not None or settings.worker_budget_id is not None
+    budget_limit = None
+    if worker_budget:
+        try:
+            budget_limit = amount_nano(settings.worker_budget_usd) / 1_000_000_000
+            if not re.fullmatch(r'[A-Za-z0-9._-]{1,100}', settings.worker_budget_id or ''):
+                raise ValueError('invalid id')
+        except (ValueError, TypeError):
+            errors.append('invalid_worker_budget_configuration')
+        if any(model not in POLICY['rates_nano'] for model in models.values()):
+            errors.append('worker_budget_model_not_priced')
+    else:
+        warnings.append('worker_provider_budget_not_configured')
+        if (settings.data_dir / 'http' / 'provider-budget.sqlite3').exists():
+            errors.append('worker_budget_configuration_missing_for_existing_ledger')
     for key in ('OPENDART_API_KEY', 'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET'):
         if not credentials[key]:
             warnings.append(f'missing_optional_{key}')
@@ -71,6 +89,8 @@ def inspect_settings(settings) -> dict:
         'credentials_present': credentials, 'rag_enabled': settings.rag_enabled,
         'configuration_ready': not errors, 'errors': errors, 'warnings': warnings,
         'network_calls': 0, 'model_access_verified': False,
+        'worker_budget_configured': worker_budget, 'worker_budget_limit_usd': budget_limit,
+        'worker_budget_state_verified': False,
         'data_sources_verified': False, 'operational_readiness_verified': False,
     }
 

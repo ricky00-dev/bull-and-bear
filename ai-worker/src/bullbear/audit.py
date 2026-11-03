@@ -19,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import prompts, schemas, semantic
+from .llm import LLMRequestBlocked
 from .snapshot import KST
 
 SECRET_ENV_NAMES = (
@@ -88,6 +89,10 @@ def provenance() -> dict:
         name: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
         for name in ("context.py", "retrieval.py", "embeddings.py", "vectors.py", "index.py", "replay.py", "context_repository.py", "archive_repository.py", "objects.py", "store.py", "schemas.py")
         if (path := Path(__file__).with_name("rag") / name).is_file()
+    }
+    result['worker_source_hashes'] = {
+        name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py')
     }
     return result
 
@@ -322,6 +327,8 @@ class RunAudit:
                         actual_models=[item["model"] for item in usage["calls"]])
             if error is not None:
                 call["error_type"] = type(error).__name__
+                if isinstance(error, LLMRequestBlocked):
+                    call['dispatch_blocked'] = True
             self.data['usage_complete'] = self.data['usage_complete'] and usage_complete
             if not call.get('requests'):
                 # Legacy/test clients without per-request observation.
