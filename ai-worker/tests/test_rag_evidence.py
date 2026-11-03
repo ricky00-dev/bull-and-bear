@@ -176,12 +176,21 @@ def test_actual_concept_search_uses_question_not_snapshot_labels(tmp_path):
         assert '종가' not in result['query_terms']
 
 
-def test_http_facts_missing_concept_auth_and_no_model_or_market_calls(tmp_path, monkeypatch):
+@pytest.mark.parametrize('publication_offset', [-1, 0, 1], ids=['before', 'at-cutoff', 'after'])
+def test_http_facts_missing_concept_auth_and_no_model_or_market_calls(tmp_path, monkeypatch, publication_offset):
+    # Keep the real publication receipt deterministic relative to this historical
+    # snapshot. Backdating as_of alone must not make a later publication eligible.
+    from bullbear.rag import index as index_module
+    class PublicationClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return (AT + timedelta(seconds=publication_offset)).astimezone(tz)
+    monkeypatch.setattr(index_module, 'datetime', PublicationClock)
     settings = replace(load_settings(), data_dir=tmp_path, rag_enabled=True,
                        rag_archive_backend='sqlite', rag_context_backend='sqlite', rag_object_backend='local')
     with RagStore(tmp_path / 'rag') as store:
         seed(store, text='PER 주가수익비율 산식')
-        generation = GenerationIndex(store).publish(AT)
+        generation = GenerationIndex(store).publish(AT - timedelta(seconds=1))
     settings = replace(settings, rag_generation_id=generation)
     market = fixture_market(settings)
     monkeypatch.setattr(market, 'snapshot', lambda *a: pytest.fail('market collection forbidden'))
@@ -205,6 +214,14 @@ def test_http_facts_missing_concept_auth_and_no_model_or_market_calls(tmp_path, 
             assert missing['answerability'] == 'insufficient_evidence' and missing['facts'] == []
             search = dict(snapshot_id=snap.snapshot_id, ticker=snap.ticker, question='PER 현재 값과 정의')
             concept = client.post('/rag/search', json=search, headers=AUTH)
+            binding = svc.store.generation_binding(snap.snapshot_id)
+            if publication_offset > 0:
+                assert binding['state'] == 'unavailable'
+                assert concept.status_code == 503, concept.text
+                assert concept.json()['error']['code'] == 'RETRIEVAL_UNAVAILABLE'
+                assert client.post('/rag/search', json=search, headers=AUTH).status_code == 503
+                return
+            assert binding['state'] == 'bound'
             assert concept.status_code == 200, concept.text
             assert concept.json()['documents'] and 'facts' not in concept.json()
             assert concept.json()['answer_scope'] == 'retrieved_documents_not_verified_numeric_answer'
