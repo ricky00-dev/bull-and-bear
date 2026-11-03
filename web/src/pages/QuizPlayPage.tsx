@@ -243,6 +243,9 @@ function Summary({ round }: { round: QuizRound }) {
         <p className="text-[13px] leading-relaxed text-sub">
           단기 주가는 전문가도 맞히기 어려워요. 결과보다 어떤 근거가 실제로 맞았는지 돌아보는 게 진짜 연습이에요.
         </p>
+        <Link to="/quiz/ranking" className="text-center text-sm font-bold text-down underline-offset-2 hover:underline">
+          오늘의 랭킹에서 내 순위 보기
+        </Link>
         <Link to="/" className="text-center text-sm font-bold text-down underline-offset-2 hover:underline">
           오늘 토론을 실제로 판정해 보기
         </Link>

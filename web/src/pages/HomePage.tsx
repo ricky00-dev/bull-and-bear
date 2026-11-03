@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { IntroSheet } from '../components/IntroSheet'
 import { TabBar } from '../components/TabBar'
 import { TodayFeed } from '../components/TodayFeed'
+import { TodayTerm } from '../components/TodayTerm'
 import { Icon, Screen } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
@@ -120,6 +121,7 @@ export function HomePage() {
               </Link>
             )}
             <TodayFeed />
+            <TodayTerm />
             {recent.length > 0 && (
               <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
             )}

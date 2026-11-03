@@ -17,6 +17,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-03 · Codex · docs, api, web, ai-worker
+- 한 것: 문서 정리 검토 후 9dbc6f2(docs: RAG 운영 안내와 평가 기록 정리)로 커밋. origin/develop 004879c의 학습 부가 기능·CI·계정 삭제 변경을 현재 chore/worker-http-live-validation에 병합. WORKLOG 한 곳의 충돌은 양측 기록을 보존해 해결했으며 과거 항목은 archive와 대조(이동 경로 수정 제외 내용 보존).
+- 진행 중: 로컬 통합 완료. 원격 푸시·PR 병합은 하지 않음.
+- 다음: test_rag_evidence.py의 test_http_facts_missing_concept_auth_and_no_model_or_market_calls 실패를 조사하고 Java17 및 DB 통합 환경에서 API 검증 후 원격 반영 검토.
+- 막힘·결정 필요: 문서 상대 링크152개·git diff 공백 검사·웹 build/lint 통과. 워커 전체650 passed/78 skipped/1 failed(83.84초); 실패는 origin/develop WORKLOG에 기존 보고된 검색503 RETRIEVAL_UNAVAILABLE 및 snapshot publication binding unavailable과 동일. 해당 테스트 파일은 origin/develop과 동일하며 이번 병합은 워커 코드를 변경하지 않음. uv가 PATH에 없어 기존 .venv Python으로 검사. API는 gradlew.bat의 한글 경로 문제를 직접 Java 호출로 우회했으나 Java17 toolchain 부재로 실행 불가(Java8 기본/Java23 설치 확인). Docker/실모델/배포 검증 없음.
+
+
 ## 2026-11-03 · Codex · docs
 - 한 것: git fetch origin 후 원격·로컬 커밋 상태 비교. 현재 chore/worker-http-live-validation은 원격 동일 브랜치와 964031a로 일치(0/0). 로컬 develop은 origin/develop(004879c)보다 8커밋 뒤이며, 현재 브랜치는 origin/develop 대비 고유 1커밋/미반영 8커밋.
 - 진행 중: 기존 문서 정리 미커밋 변경 유지(추적 파일 16개, 미추적 파일 11개). 이번 비교 기록만 추가.
@@ -97,6 +104,25 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 다음: 실제 공급자/모델 전체 경로 반복 검증과 배포 준비 → 예비 운용11/4 → 검증기/채점·실험 정책 고정11/10 → 정식 운용11/11. RAG 검수 corpus·독립 평가셋은 병행하되 미충족 시 비활성 유지. 전시 모드/공유/로그인은 핵심 경로 안정화 이후.
 - 막힘·결정 필요: 직전 PR 검토의 PostgreSQL 포함648 passed/외부 Spring5 skipped·Java15·웹build/lint 결과를 근거로 사용, 이번 재실행 없음. 기본 설정은 fake/전향 및 단일 비활성이나 실제 배포 환경의 실행 상태는 확인하지 않음. 운영 Docker/TLS·실모델 반복 품질/비용·사람 검수 자료·기업행사 미보정 정책 확인 필요. session-brief 기존 CRLF 오류로 git/문서 직접 조회. 본 항목만 미커밋으로 추가.
 
+## 2026-11-02 · ricky00-dev (Claude Code) · api, web
+- 한 것: 개인정보 처리방침·이용약관 페이지(`/policy/privacy`, `/policy/terms`)와 내 기록 삭제(`DELETE /api/me`). 삭제는 판정·채점·메모·퀴즈 기록·닉네임·계정을 지우고, 공용 토론은 남기되 requested_by만 비움. 웹은 마이 탭에서 한 번 더 확인 후 삭제 → 토큰·최근 검색어 버리고 새 게스트로 홈. 방침 내용은 실제 저장 항목 기준 (IP·기기 정보 미저장, Caddy 접근 로그 없음, 판정·메모는 워커/LLM에 안 보냄).
+- 진행 중: 없음.
+- 다음: 문의처(팀 메일) 정해지면 `web/src/pages/PolicyPage.tsx`의 CONTACT 교체. 카카오 로그인 붙이면 방침의 저장 항목 갱신.
+- 막힘·결정 필요: (jangwonii) develop의 `ai-worker/tests/test_rag_evidence.py::test_http_facts_missing_concept_auth_and_no_model_or_market_calls`가 로컬·CI 모두 실패 (`/rag/search` 503 RETRIEVAL_UNAVAILABLE, 로그 "snapshot publication binding unavailable"). 나머지 575 통과. 법률 검토는 받지 않은 학생 프로젝트 초안.
+## 2026-11-02 · ricky00-dev (Claude Code) · ci
+- 한 것: GitHub Actions CI 추가 (`.github/workflows/ci.yml`). develop·main으로 가는 PR과 develop 푸시마다 바뀐 폴더만 검사: api `./gradlew test`(Testcontainers), web `lint`·`build`, ai-worker `uv run pytest`. develop 푸시 때는 운영 이미지 3개 빌드도 확인. 배포 점검: 최신 develop(RAG 머지 후)으로 운영 이미지 3개 로컬 빌드 성공, 워커는 메모리 512MB 제한에서 서버 import 정상.
+- 진행 중: 없음.
+- 다음: 첫 수동 배포 성공 뒤 CD(develop/main 머지 → EC2 자동 반영) 추가. EC2 주소·SSH 키를 GitHub Secrets에 등록해야 함 (ricky00-dev).
+- 막힘·결정 필요: develop 브랜치 보호 규칙에서 CI 통과를 머지 필수 조건으로 걸지는 레포 설정에서 결정 (ricky00-dev).
+
+## 2026-11-01 · ricky00-dev (Claude Code) · api, web
+- 한 것: 학습 부가 기능 3개 (feat/learning-extras).
+  1. 내 근거 채점: 판정 때 고른 근거를 그 근거를 인용한 쪽(매수 측·매도 측) 방향으로 채점. 초과수익 +2%p 초과면 매수 측 근거, −2%p 미만이면 매도 측 근거가 맞음, 그 사이는 FLAT. `GET /api/me/judgments/{id}`에 `pickResults`·`pickHorizon`, `/api/me/stats`의 `evidenceHabit`에 `right`·`graded` 추가. 채점 화면에 근거별 결과와 "판정은 빗나갔지만 근거는 맞았어요" 같은 한 줄 정리, 내 판정 탭 습관 리포트에 분류별 맞은 방향 횟수. DB 변경 없음 (debate_events의 statement_accepted에서 계산).
+  2. 퀴즈 랭킹: `GET /api/quiz/ranking?scope=today|all` (맞힌 수 → 덜 풀고 맞힌 사람 → 먼저 도달 순, 공동 순위, 상위 20 + 내 순위), `PUT /api/me/nickname` (한글·영문·숫자 2~10자, 최소 욕설·사칭 차단). 웹 `/quiz/ranking` (오늘/전체, 30초마다 갱신, 닉네임 정하기). 퀴즈 홈·한 판 결과·마이 탭에서 진입.
+  3. 오늘의 용어: 홈에 한국 시간 날짜로 고른 용어 카드 (프론트만).
+- 진행 중: 없음.
+- 다음: 전시 때 랭킹 화면을 대기 화면(큰 화면)으로 띄울지 결정. 욕설 목록은 최소한이라 운영 중 보강.
+- 막힘·결정 필요: 없음. API 전체 테스트 41개 통과, 웹 tsc·lint 통과, 브라우저(390px)로 세 화면 확인. 근거 채점은 같은 근거를 양쪽이 다 인용하면 이긴 쪽 기준으로 RIGHT 처리 (화면에 안내 문구 있음).
 ## 2026-11-02 · Codex · ai-worker, api, web, docs
 - 한 것: 사용자 요청으로 PR #28(e1f7a87) 검토. 저장/이관·불변 감사·검색 시점/스냅샷 연결·예산/작업 lease·인증/응답 DTO·판정 봉인·웹 조회 경계를 확인했으며 검토 범위에서 병합 차단 결함을 찾지 못함. 원래 로컬 변경4개는 chore/local-backup-before-pr28-20261102의 9ffe962에 보존, 고유 작업 로그12개가 PR에 포함됨을 대조. 사용자 조건부 병합 지시에 따라 squash 병합과 원래 폴더 develop 동기화 진행.
 - 진행 중: 코드 검토/검증 완료. RAG 기본 비활성 및 운영 준비 미완료 상태 유지; 이 검토를 사람 검수 corpus 품질 승인·배포 승인으로 해석하지 않음.

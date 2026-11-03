@@ -7,7 +7,7 @@ import { api } from '../lib/api'
 import { dueLabel, monthDay, pct, pctPoint, won } from '../lib/format'
 import { describe } from '../lib/glossary'
 import { headlineScore } from '../lib/score'
-import type { ScoreView } from '../lib/types'
+import type { PickOutcome, PickResult, ScoreView } from '../lib/types'
 import { DECISION_LABEL } from '../lib/types'
 
 /** 채점 결과. 숫자보다 "왜 맞았나·틀렸나"를 돌아보게 하는 화면. */
@@ -37,7 +37,7 @@ export function ScorePage() {
     )
   }
 
-  const { judgment: j, evidencePicks, memo, decisiveEvidence, holdBand } = q.data
+  const { judgment: j, memo, decisiveEvidence, holdBand, pickResults, pickHorizon } = q.data
   const latest = headlineScore(j)
   const final = j.scores.find((s) => s.horizonDays === 7)
   const nextPending = j.scores.find((s) => s.status === 'PENDING')
@@ -81,7 +81,7 @@ export function ScorePage() {
 
         <Card className="flex flex-col gap-3">
           <h3 className="text-sm font-extrabold">복기</h3>
-          <EvidenceRow title="내가 설득력 있다고 고른 근거" ids={evidencePicks} empty="고른 근거가 없어요" />
+          <PickResults picks={pickResults} horizon={pickHorizon} userHit={latest?.userHit ?? null} />
           <EvidenceRow title="중재자가 결정적이라 본 근거" ids={decisiveEvidence} empty="-" />
           {memo && (
             <p className="rounded-xl bg-ground px-3.5 py-3 text-sm leading-relaxed">
@@ -137,6 +137,71 @@ function EvidenceRow({ title, ids, empty }: { title: string; ids: string[]; empt
           </span>
         ))}
       </div>
+    </div>
+  )
+}
+
+const SIDE_LABEL = { bull: '매수 측', bear: '매도 측' } as const
+
+const OUTCOME: Record<PickOutcome, { text: string; cls: string }> = {
+  RIGHT: { text: '맞은 근거', cls: 'bg-ok text-white' },
+  WRONG: { text: '빗나간 근거', cls: 'bg-line text-sub' },
+  FLAT: { text: '판가름 안 남', cls: 'bg-ground text-sub' },
+  PENDING: { text: '채점 전', cls: 'bg-ground text-sub' },
+  UNKNOWN: { text: '-', cls: 'bg-ground text-sub' },
+}
+
+/**
+ * 내 근거 채점. 근거는 그걸 인용한 쪽(매수 측·매도 측)의 방향을 따른다.
+ * 판정이 틀려도 근거 보는 눈은 맞았을 수 있고, 그 반대도 있다는 걸 보여주는 게 목적.
+ */
+function PickResults({ picks, horizon, userHit }: { picks: PickResult[]; horizon: number | null; userHit: boolean | null }) {
+  const graded = picks.filter((p) => p.result === 'RIGHT' || p.result === 'WRONG')
+  const right = graded.filter((p) => p.result === 'RIGHT').length
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between">
+        <p className="text-xs text-sub">내가 설득력 있다고 고른 근거</p>
+        {graded.length > 0 && (
+          <span className="text-xs font-bold">
+            {graded.length}개 중 {right}개 맞음{horizon === 3 && <span className="font-medium text-sub"> · 3거래일 중간</span>}
+          </span>
+        )}
+      </div>
+      {picks.length === 0 && <span className="text-[13px] text-sub">고른 근거가 없어요</span>}
+      <ul className="flex flex-col gap-1.5">
+        {picks.map((p) => (
+          <li key={p.sourceId} className="flex items-center justify-between gap-2 rounded-xl bg-ground px-3 py-2.5">
+            <span className="flex min-w-0 flex-col">
+              <span className="text-[13px] font-bold">{describe(p.sourceId).label}</span>
+              <span className="text-[11px] text-sub">
+                {p.sides.length === 0 ? '토론에서 인용되지 않음' : `${p.sides.map((x) => SIDE_LABEL[x]).join('·')}이 인용`}
+              </span>
+            </span>
+            {p.result !== 'UNKNOWN' && (
+              <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-bold ${OUTCOME[p.result].cls}`}>
+                {OUTCOME[p.result].text}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {userHit === false && right > 0 && (
+        <p className="rounded-xl bg-mod-soft px-3 py-2.5 text-[13px] leading-relaxed text-mod">
+          판정은 빗나갔지만 맞는 방향의 근거를 골랐어요. 그 근거를 더 무겁게 봤다면 결과가 달랐을 거예요.
+        </p>
+      )}
+      {userHit === true && graded.length > 0 && right === 0 && (
+        <p className="rounded-xl bg-ground px-3 py-2.5 text-[13px] leading-relaxed">
+          판정은 맞았지만 고른 근거는 반대쪽이었어요. 이번엔 운이 따랐을 수도 있어요.
+        </p>
+      )}
+      {picks.some((p) => p.result === 'FLAT') && (
+        <p className="text-[11px] leading-relaxed text-sub">코스피와 비슷하게 움직여서 어느 쪽 근거도 결정적이지 않았어요.</p>
+      )}
+      {picks.some((p) => p.sides.length === 2 && (p.result === 'RIGHT' || p.result === 'WRONG')) && (
+        <p className="text-[11px] leading-relaxed text-sub">양쪽이 다 인용한 근거는 같은 숫자를 다르게 해석한 거예요. 이긴 쪽 해석 기준으로 채점했어요.</p>
+      )}
     </div>
   )
 }
