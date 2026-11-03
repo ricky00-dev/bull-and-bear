@@ -66,6 +66,11 @@ preflight에 `worker_provider_budget_not_configured` 경고가 나온다.
 기존 실측 스크립트의 $3 승인/누적 기록은 `--prior-run` 체인으로 계속 관리하며, 이를 새 $3 승인으로
 초기화하지 않는다. 이 문서의 예시 설정은 추가 비용 사용 승인이 아니다.
 
+`scripts/worker-http-live-pilot.py`는 별도 실측 장부를 사용하므로 운영용 비용 환경변수 둘 중 하나라도
+설정돼 있으면 서버·자료 폴더 생성 전에 거부한다. 실측은 운영 설정을 지우지 말고 별도의 셸/작업
+환경에서 실행하며, 그 환경의 `.env`에도 운영용 비용 설정을 넣지 않는다. 기존 승인 누적은
+반드시 최신 `--prior-run`으로 이어야 한다.
+
 단가/컨텍스트 출처(2026-11-02 확인):
 [Anthropic 가격](https://platform.claude.com/docs/en/about-claude/pricing),
 [모델 사양](https://platform.claude.com/docs/en/models/overview).

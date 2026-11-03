@@ -199,6 +199,9 @@ def run(args):
     prior_spend(args.prior_run)
     load_dotenv(Path('.env'), override=True)
     settings = load_settings()
+    if settings.worker_budget_usd is not None or settings.worker_budget_id is not None:
+        raise ValueError('pilot uses its own --prior-run budget chain; '
+                         'run in a separate environment without worker budget settings')
     models = (settings.debater_model, settings.moderator_model)
     if models != ('claude-haiku-5-5', 'claude-sonnet-5-5'):
         raise ValueError('pilot requires configured default Haiku/Sonnet models')

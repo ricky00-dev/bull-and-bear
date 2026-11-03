@@ -57,6 +57,21 @@ def test_call_without_paid_flag_does_not_load_environment_or_create_server(pilot
         pilot.run(SimpleNamespace(allow_paid=False))
 
 
+@pytest.mark.parametrize('limit,ident', [('3', 'production'), ('3', None), (None, 'production')])
+def test_worker_budget_settings_rejected_before_pilot_artifacts_or_server(pilot, monkeypatch, tmp_path, limit, ident):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(pilot, 'load_dotenv', lambda *a, **k: None)
+    monkeypatch.setattr(pilot, 'load_settings', lambda: SimpleNamespace(
+        worker_budget_usd=limit, worker_budget_id=ident))
+    def forbidden(*args, **kwargs):
+        pytest.fail('mixed budget configuration reached server or provider')
+    monkeypatch.setattr(pilot, 'create_app', forbidden)
+    monkeypatch.setattr(pilot.anthropic, 'Anthropic', forbidden)
+    with pytest.raises(ValueError, match='own --prior-run budget chain'):
+        pilot.run(SimpleNamespace(allow_paid=True, prior_run=None))
+    assert not (tmp_path / 'data').exists()
+
+
 def finished(pilot, directory, input_tokens, *, prior_run=None):
     directory.mkdir()
     ledger = pilot.Ledger(directory, prior_run=prior_run)
