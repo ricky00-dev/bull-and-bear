@@ -65,6 +65,7 @@ docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
 ```bash
 cd ~/bull-and-bear && git pull
 docker compose -f deploy/compose.yml --env-file deploy/.env --profile worker up -d --build
+docker image prune -f   # 옛 이미지 정리 (디스크 20GB가 빌드마다 줄어든다)
 ```
 
 DB 마이그레이션은 Spring이 켜질 때 Flyway가 자동으로 한다. Spring은 저장된 워커 ID로 상태/이벤트를 다시 조회한다.
@@ -84,6 +85,30 @@ docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -
 docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -U bullbear -c \
   "select origin, count(*), sum(cost_usd) from debates where debate_day = current_date group by origin"
 ```
+
+한눈에 보기: `deploy/status.sh` (컨테이너, 상태 확인, 디스크·메모리, 오늘 토론·비용·판정·퀴즈, 마지막 백업)
+
+## 감시와 알림
+
+`https://<주소>/healthz`가 상태를 돌려준다. 문제가 있으면 503이다.
+- `db`: DB 연결
+- `worker`: 실제 워커일 때 워커 `/health` 응답
+- `forwardRun`: 전향 운용이 켜져 있으면, 평일 19:30 이후 고정 종목이 오늘 모두 토론됐는지. 실험 데이터가 조용히 빠지는 걸 막는 용도라 가장 중요하다. 휴장일에는 알림이 잘못 갈 수 있다 (11월에는 휴장일 없음).
+
+알림은 **UptimeRobot 무료**로 받는다 (5분 간격, 메일·앱 알림).
+1. uptimerobot.com 가입 → Add New Monitor → HTTP(s)
+2. URL: `https://<주소>/healthz`, 간격 5분
+3. 알림 받을 메일 추가 (팀원 여러 명 가능)
+
+서버 안 감시: 컨테이너는 `restart: unless-stopped`로 죽으면 다시 뜬다. 워커는 30초마다 헬스체크 (`docker compose ps`에 unhealthy로 보인다).
+
+## 백업과 복구
+
+- 백업: 매일 04:00 cron (`deploy/backup.sh`), 서버의 `~/backups`에 14일치.
+- 복구: `deploy/restore.sh ~/backups/bullbear-YYYYMMDD-HHMM.sql.gz`. 확인을 묻고, API를 멈춘 뒤 덮어쓰고 다시 켠다.
+  로컬 운영 구성에서 백업 → 데이터 변경 → 복구 → API 재기동까지 확인함 (2026-11-02).
+- 한계: 백업이 같은 서버에 있어서 서버(디스크)를 잃으면 같이 잃는다. 정식 운용(11/11) 전에 S3로 복사를 붙인다
+  (S3 몇 MB는 월 몇 원 수준). 그 전에는 큰 변경 전에 `scp`로 내려받아 둔다.
 
 ## 전시장 노트북 화면
 
