@@ -62,6 +62,11 @@ export function HomePage() {
   const pending = mine.data?.items.find(isPending)
   const nextScore = pending?.scores.find((s) => s.status === 'PENDING')
 
+  // 피드에 이미 있는 종목은 "종목을 골라 시작하기"에서 뺀다 (같은 종목이 두 번 보이지 않게)
+  const feed = useQuery({ queryKey: ['feed'], queryFn: api.feed, staleTime: 30_000 })
+  const inFeed = new Set(feed.data?.items.map((i) => i.ticker))
+  const suggestions = SUGGESTIONS.filter((s) => !inFeed.has(s.ticker))
+
   const items = search.data?.items ?? []
   const eligibleCount = items.filter((i) => i.eligible).length
 
@@ -82,7 +87,9 @@ export function HomePage() {
           <br />
           판정해 볼까요?
         </h1>
-        <p className="text-sm leading-relaxed text-sub">매수와 매도의 근거를 읽고, AI보다 먼저 판정해요.</p>
+        <p className="text-sm leading-relaxed text-sub">
+          <b className="text-up">매수</b>와 <b className="text-down">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
+        </p>
         <label
           className={`flex min-h-14 items-center gap-2 rounded-control border bg-white pl-4 pr-1.5 transition-colors focus-within:border-ink focus-within:ring-1 focus-within:ring-ink ${query ? 'border-ink' : 'border-line'}`}
         >
@@ -129,12 +136,10 @@ export function HomePage() {
                 </Link>
               )}
               <TodayFeed />
-              <section className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-base font-bold">종목을 골라 시작하기</h2>
-                </div>
+              {suggestions.length > 0 && <section className="flex flex-col gap-3">
+                <h2 className="text-base font-bold">종목을 골라 시작하기</h2>
                 <ul className="overflow-hidden rounded-panel border border-line bg-white">
-                  {SUGGESTIONS.map((s) => (
+                  {suggestions.map((s) => (
                     <li key={s.ticker} className="border-b border-line-soft last:border-0">
                       <Link
                         to={`/stocks/${s.ticker}`}
@@ -151,24 +156,15 @@ export function HomePage() {
                     </li>
                   ))}
                 </ul>
-              </section>
+              </section>}
               {recent.length > 0 && (
                 <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
               )}
             </div>
             <div className="flex min-w-0 flex-col gap-6">
-              <section className="flex flex-col gap-3">
-                <h2 className="text-base font-bold">판정은 내가 먼저</h2>
-                <div className="flex items-center justify-between gap-2 rounded-panel bg-white px-4 py-4 text-sm font-medium">
-                  <span>토론 읽기</span><Icon d={ICONS.chevron} size={14} className="text-faint" />
-                  <span>내 판정</span><Icon d={ICONS.chevron} size={14} className="text-faint" />
-                  <span className="flex items-center gap-1"><Icon d={ICONS.lock} size={14} />AI와 비교</span>
-                </div>
-                <p className="text-sm leading-relaxed text-sub">AI 판정은 내 판정을 제출한 뒤 열려요. 3·7거래일 뒤에는 코스피 대비 수익률로 함께 채점받아요.</p>
-              </section>
               <TodayTerm />
               <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel border border-line bg-white p-4 transition-colors">
-                <span className="flex flex-col gap-1"><span className="text-sm font-bold">과거의 종목으로 먼저 연습하기</span><span className="text-[13px] text-sub">타임머신 퀴즈에서 결과까지 바로 확인해요</span></span>
+                <span className="text-sm font-bold">결과를 아는 과거 종목으로 연습하기</span>
                 <Icon d={ICONS.chevron} size={18} className="shrink-0 text-sub" />
               </Link>
               <p className="text-[13px] leading-relaxed text-sub">
