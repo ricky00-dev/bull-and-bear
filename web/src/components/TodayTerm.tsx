@@ -11,10 +11,10 @@ function todayIndex(): number {
 export function TodayTerm() {
   const t = TERMS[todayIndex()]
   return (
-    <section className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+    <section className="flex flex-col gap-2 rounded-panel bg-white p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold text-mod">오늘의 용어</h2>
-        <Link to="/glossary" className="text-xs font-bold text-sub">
+        <h2 className="text-sm font-bold text-sub">오늘의 용어</h2>
+        <Link to="/glossary" className="pressable -mr-2 flex min-h-touch items-center rounded-control px-2 text-sm font-medium text-sub">
           용어 사전
         </Link>
       </div>

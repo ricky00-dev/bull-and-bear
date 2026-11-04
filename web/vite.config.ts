@@ -9,7 +9,8 @@ export default defineConfig({
     tailwindcss(),
     // 홈 화면 설치 + 나중에 웹 푸시(채점 알림). 앱으로 구울 때는 Capacitor가 같은 빌드를 감싼다.
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: false,
       // API·토론 스트림은 서비스 워커가 건드리지 않는다 (같은 출처로 배포하므로 명시)
       workbox: { navigateFallbackDenylist: [/^\/api\//] },
       manifest: {
@@ -17,8 +18,8 @@ export default defineConfig({
         short_name: '불앤베어',
         description: 'AI 토론을 보고 먼저 판정하는 모의투자 학습',
         lang: 'ko',
-        theme_color: '#F4F5F7',
-        background_color: '#F4F5F7',
+        theme_color: '#F5F6F8',
+        background_color: '#F5F6F8',
         display: 'standalone',
         start_url: '/',
         icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],

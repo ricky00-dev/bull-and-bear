@@ -1,5 +1,7 @@
 import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Ranking, Report, Reveal, StockDetail, StockItem } from './types'
 import type { DocumentResult, FactQuery, FactResult } from './rag'
+import { EVIDENCE_DRAFT_PREFIX } from './evidence'
+import { JUDGMENT_DRAFT_PREFIX } from './judgmentDraft'
 
 type Me = { userId: string; guest: boolean; nickname: string | null }
 
@@ -89,6 +91,9 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
 /** 내 기록을 지운 뒤: 토큰과 최근 검색어를 버려 다음 요청에서 새 게스트로 시작한다 */
 export function resetSession() {
   writeToken(null)
+  try {
+    for (const key of Object.keys(sessionStorage)) if (key.startsWith(EVIDENCE_DRAFT_PREFIX) || key.startsWith(JUDGMENT_DRAFT_PREFIX)) sessionStorage.removeItem(key)
+  } catch { /* 저장소를 사용할 수 없으면 메모리 세션만 초기화 */ }
   try {
     localStorage.removeItem('bb.recent')
   } catch {

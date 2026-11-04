@@ -1,0 +1,1655 @@
+{
+ "url": "http://localhost:5173",
+ "at": "2026-11-04T05:43:18.956Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.41,
+    0.43
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 1029,
+     "screens": 1.1,
+     "words": 131,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 1.7,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "lines": 2,
+     "size": 24,
+     "font": "Noto Sans KR"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Noto Sans KR",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 24,
+      "vw": 1.7,
+      "font": "Noto Sans KR",
+      "text": "어떤 종목을판정해 볼까요?"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.42,
+     "centerShare": 0,
+     "smallText": 2
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f5f6f8",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.18,
+      "l": 0.97
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f5f6f8",
+       "top": 0,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#4e5562",
+       "share": 0.75
+      },
+      {
+       "color": "#111318",
+       "share": 0.25
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#111318"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 3,
+     "inHero": 3,
+     "radius": 12,
+     "height": 80,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "SK하이닉스 000660 · 10/22 종가 기준 토론 읽기",
+      "삼성전자 005930 · 10/22 종가 기준 토론 읽기",
+      "과거의 종목으로 먼저 연습하기 타임머신 퀴즈에서 결과까지 바로 확인해요"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 5,
+     "hairlineSamples": [
+      "li.border-b.border-line-soft 482px",
+      "li.border-b.border-line-soft 482px",
+      "li.border-b.border-line-soft 482px",
+      "li.border-b.border-line-soft 482px",
+      "nav.pb-safe.sticky 960px"
+     ],
+     "outlinedBoxes": 3,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 4,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 72,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "noto sans kr"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 1029,
+    "margins": {
+     "left": 260,
+     "right": 272
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "size": 24,
+      "top": 84,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 260,
+      "n": 4
+     },
+     {
+      "x": 776,
+      "n": 1
+     },
+     {
+      "x": 792,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.14,
+    "voidBox": {
+     "x": 0,
+     "y": 120,
+     "w": 240,
+     "h": 780
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f5f6f8",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 260,
+     "right": 272
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 1.7,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 6,
+     "firstScreen": 6,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 6,
+     "radii": [
+      [
+       12,
+       5
+      ],
+      [
+       0,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.08,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ]
+    },
+    "title": {
+     "text": "어떤 종목을\n판정해 볼까요?",
+     "size": 24,
+     "top": 84
+    },
+    "colourShare": 0
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.53,
+    0.59
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 1029,
+     "screens": 1,
+     "words": 131,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "lines": 2,
+     "size": 24,
+     "font": "Noto Sans KR"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Noto Sans KR",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 24,
+      "vw": 3.1,
+      "font": "Noto Sans KR",
+      "text": "어떤 종목을판정해 볼까요?"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.42,
+     "centerShare": 0,
+     "smallText": 2
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f5f6f8",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.18,
+      "l": 0.97
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f5f6f8",
+       "top": 0,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#4e5562",
+       "share": 0.75
+      },
+      {
+       "color": "#111318",
+       "share": 0.25
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#111318"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 3,
+     "inHero": 3,
+     "radius": 12,
+     "height": 80,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "SK하이닉스 000660 · 10/22 종가 기준 토론 읽기",
+      "삼성전자 005930 · 10/22 종가 기준 토론 읽기",
+      "과거의 종목으로 먼저 연습하기 타임머신 퀴즈에서 결과까지 바로 확인해요"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 5,
+     "hairlineSamples": [
+      "li.border-b.border-line-soft 378px",
+      "li.border-b.border-line-soft 378px",
+      "li.border-b.border-line-soft 378px",
+      "li.border-b.border-line-soft 378px",
+      "nav.pb-safe.sticky 768px"
+     ],
+     "outlinedBoxes": 3,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 4,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 72,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "noto sans kr"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 1029,
+    "margins": {
+     "left": 20,
+     "right": 32
+    },
+    "sections": [
+     {
+      "sel": "div.flex.flex-col",
+      "tag": "div",
+      "top": 72,
+      "height": 201,
+      "words": 11,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "어떤 종목을",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 20,
+      "right": 235,
+      "textLeft": 20,
+      "textRight": 459,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "main.flex.flex-1",
+      "tag": "main",
+      "top": 273,
+      "height": 673,
+      "words": 106,
+      "media": 0,
+      "middle": 77,
+      "heading": {
+       "text": "바로 읽을 수 있는 토론",
+       "size": 16,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 20,
+      "textLeft": 20,
+      "textRight": 20,
+      "fullBleed": false,
+      "footer": true,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "size": 24,
+      "top": 84,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 20,
+      "n": 4
+     },
+     {
+      "x": 432,
+      "n": 1
+     },
+     {
+      "x": 448,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f5f6f8",
+    "sidebar": null,
+    "topbar": {
+     "h": 72
+    },
+    "canvas": {
+     "left": 20,
+     "right": 32
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 5,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       12,
+       5
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.08,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ]
+    },
+    "title": {
+     "text": "어떤 종목을\n판정해 볼까요?",
+     "size": 24,
+     "top": 84
+    },
+    "colourShare": 0
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.69,
+    0.7
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 1532,
+     "screens": 1.8,
+     "words": 131,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "lines": 2,
+     "size": 24,
+     "font": "Noto Sans KR"
+    },
+    "headings": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "words": 4,
+      "chars": 15,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Noto Sans KR",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 84,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Noto Sans KR",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 24,
+      "vw": 6.2,
+      "font": "Noto Sans KR",
+      "text": "어떤 종목을판정해 볼까요?"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.42,
+     "centerShare": 0,
+     "smallText": 2
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f5f6f8",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.18,
+      "l": 0.97
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f5f6f8",
+       "top": 0,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.97
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 558,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#4e5562",
+       "share": 0.75
+      },
+      {
+       "color": "#111318",
+       "share": 0.25
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#111318"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 3,
+     "inHero": 2,
+     "radius": 12,
+     "height": 80,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "SK하이닉스 000660 · 10/22 종가 기준 토론 읽기",
+      "삼성전자 005930 · 10/22 종가 기준 토론 읽기"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 5,
+     "hairlineSamples": [
+      "li.border-b.border-line-soft 348px",
+      "li.border-b.border-line-soft 348px",
+      "li.border-b.border-line-soft 348px",
+      "li.border-b.border-line-soft 348px",
+      "nav.pb-safe.sticky 390px"
+     ],
+     "outlinedBoxes": 3,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 4,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 72,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "noto sans kr"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 1532,
+    "margins": {
+     "left": 20,
+     "right": 27
+    },
+    "sections": [
+     {
+      "sel": "div.flex.flex-col",
+      "tag": "div",
+      "top": 72,
+      "height": 201,
+      "words": 11,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "어떤 종목을",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 20,
+      "right": 27,
+      "textLeft": 20,
+      "textRight": 81,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "main.flex.flex-1",
+      "tag": "main",
+      "top": 273,
+      "height": 1176,
+      "words": 106,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "바로 읽을 수 있는 토론",
+       "size": 16,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 24,
+      "textLeft": 20,
+      "textRight": 24,
+      "fullBleed": false,
+      "footer": true,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "size": 24,
+      "top": 84,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 20,
+      "n": 5
+     },
+     {
+      "x": 36,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f5f6f8",
+    "sidebar": null,
+    "topbar": {
+     "h": 72
+    },
+    "canvas": {
+     "left": 20,
+     "right": 27
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 3,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       12,
+       5
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.08,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ]
+    },
+    "title": {
+     "text": "어떤 종목을\n판정해 볼까요?",
+     "size": 24,
+     "top": 84
+    },
+    "colourShare": 0
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 320,
+   "height": 568,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.61,
+    0.86,
+    0.62
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 320,
+     "h": 568
+    },
+    "page": {
+     "height": 1641,
+     "screens": 2.9,
+     "words": 131,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 7.5,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "lines": 2,
+     "size": 24,
+     "font": "Noto Sans KR"
+    },
+    "headings": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "words": 4,
+      "chars": 15,
+      "lines": 2,
+      "size": 24,
+      "vw": 7.5,
+      "font": "Noto Sans KR",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.88,
+      "top": 84,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Noto Sans KR",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ],
+     "sizeCount": 8,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 24,
+      "vw": 7.5,
+      "font": "Noto Sans KR",
+      "text": "어떤 종목을판정해 볼까요?"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.42,
+     "centerShare": 0,
+     "smallText": 2
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f5f6f8",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.18,
+      "l": 0.97
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f5f6f8",
+       "top": 0,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.97
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 581,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#4e5562",
+       "share": 0.75
+      },
+      {
+       "color": "#111318",
+       "share": 0.25
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#111318"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": 12,
+     "height": 80,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "SK하이닉스 000660 · 10/22 종가 기준 토론 읽기",
+      "삼성전자 005930 · 10/22 종가 기준 토론 읽기"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 5,
+     "hairlineSamples": [
+      "li.border-b.border-line-soft 278px",
+      "li.border-b.border-line-soft 278px",
+      "li.border-b.border-line-soft 278px",
+      "li.border-b.border-line-soft 278px",
+      "nav.pb-safe.sticky 320px"
+     ],
+     "outlinedBoxes": 4,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 5,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 72,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "noto sans kr"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 320,
+     "h": 568
+    },
+    "pageH": 1641,
+    "margins": {
+     "left": 20,
+     "right": 28
+    },
+    "sections": [
+     {
+      "sel": "div.flex.flex-col",
+      "tag": "div",
+      "top": 72,
+      "height": 224,
+      "words": 11,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "어떤 종목을",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 20,
+      "right": 27,
+      "textLeft": 20,
+      "textRight": 41,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "main.flex.flex-1",
+      "tag": "main",
+      "top": 296,
+      "height": 1262,
+      "words": 106,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "바로 읽을 수 있는 토론",
+       "size": 16,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 28,
+      "textLeft": 20,
+      "textRight": 28,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "어떤 종목을 판정해 볼까요?",
+      "size": 24,
+      "top": 84,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 20,
+      "n": 5
+     },
+     {
+      "x": 36,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 320,
+     "h": 568
+    },
+    "dark": false,
+    "ground": "#f5f6f8",
+    "sidebar": null,
+    "topbar": {
+     "h": 72
+    },
+    "canvas": {
+     "left": 20,
+     "right": 28
+    },
+    "hero": {
+     "text": "어떤 종목을 판정해 볼까요?",
+     "words": 4,
+     "chars": 15,
+     "lines": 2,
+     "size": 24,
+     "vw": 7.5,
+     "font": "Noto Sans KR",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.38,
+     "top": 84,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       12,
+       5
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.08,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      24
+     ]
+    },
+    "title": {
+     "text": "어떤 종목을\n판정해 볼까요?",
+     "size": 24,
+     "top": 84
+    },
+    "colourShare": 0
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "/private/tmp/bullbear-experience-final/desktop-fold.jpg",
+   "pages": [
+    "/private/tmp/bullbear-experience-final/desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "/private/tmp/bullbear-experience-final/tablet-fold.jpg",
+   "pages": [
+    "/private/tmp/bullbear-experience-final/tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "/private/tmp/bullbear-experience-final/mobile-390-fold.jpg",
+   "pages": [
+    "/private/tmp/bullbear-experience-final/mobile-390-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 320,
+   "fold": "/private/tmp/bullbear-experience-final/mobile-320-fold.jpg",
+   "pages": [
+    "/private/tmp/bullbear-experience-final/mobile-320-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

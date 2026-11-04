@@ -14,7 +14,13 @@ import { DECISION_LABEL } from '../lib/types'
 import type { StockItem } from '../lib/types'
 
 const RECENT_KEY = 'bb.recent'
-const SUGGESTIONS = ['삼성전자', 'SK하이닉스', '카카오', '현대차', '에코프로비엠']
+const SUGGESTIONS = [
+  { name: '삼성전자', ticker: '005930', market: 'KOSPI' },
+  { name: 'SK하이닉스', ticker: '000660', market: 'KOSPI' },
+  { name: '카카오', ticker: '035720', market: 'KOSPI' },
+  { name: '현대차', ticker: '005380', market: 'KOSPI' },
+  { name: '에코프로비엠', ticker: '247540', market: 'KOSDAQ' },
+]
 
 function loadRecent(): string[] {
   try {
@@ -60,32 +66,36 @@ export function HomePage() {
   const eligibleCount = items.filter((i) => i.eligible).length
 
   return (
-    <Screen>
+    <Screen wide>
       <header className="pt-safe px-5">
         <div className="flex items-center justify-between pb-2 pt-5">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-ink text-[13px] font-extrabold text-white">B</span>
+            <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
+            </svg>
             <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
           </div>
-          <span className="rounded-full border border-line bg-white px-2.5 py-1.5 text-xs text-sub">게스트</span>
+          <Link to="/my" className="pressable flex min-h-touch items-center rounded-control px-3 text-sm text-sub">게스트</Link>
         </div>
       </header>
 
-      <div className="flex flex-col gap-3.5 px-5 pb-3 pt-2">
+      <div className="flex flex-col gap-3 px-5 pb-5 pt-3 md:max-w-[560px]">
         <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
-          AI 토론을 보고
+          어떤 종목을
           <br />
-          먼저 판정해 보세요
+          판정해 볼까요?
         </h1>
+        <p className="text-sm leading-relaxed text-sub">매수와 매도의 근거를 읽고, AI보다 먼저 판정해요.</p>
         <label
-          className={`flex min-h-13 items-center gap-2.5 rounded-2xl border-[1.5px] bg-white px-4 shadow-sm ${query ? 'border-ink' : 'border-line'}`}
+          className={`flex min-h-14 items-center gap-2 rounded-control border bg-white pl-4 pr-1.5 transition-colors focus-within:border-ink focus-within:ring-1 focus-within:ring-ink ${query ? 'border-ink' : 'border-line'}`}
         >
           <Icon d={ICONS.search} className="text-sub" />
           <span className="sr-only">종목 검색</span>
           <input
             value={query}
+            type="search"
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="종목명, 종목코드, 초성 (예: ㅅㅅㅈㅈ)"
+            placeholder="종목명·코드·초성으로 검색"
             autoComplete="off"
             enterKeyHint="search"
             className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
@@ -95,7 +105,7 @@ export function HomePage() {
               type="button"
               aria-label="검색어 지우기"
               onClick={() => setQuery('')}
-              className="flex size-8 items-center justify-center rounded-full bg-line text-sub"
+              className="pressable flex size-touch items-center justify-center rounded-control text-sub"
             >
               <Icon d={ICONS.close} size={14} stroke={2.5} />
             </button>
@@ -103,47 +113,91 @@ export function HomePage() {
         </label>
       </div>
 
-      <main className="flex flex-1 flex-col gap-5 px-5 pb-8">
+      <main className="flex flex-1 flex-col gap-6 px-5 pb-8">
         {!deferred && (
-          <>
-            {pending && nextScore && (
-              <Link
-                to={`/me/judgments/${pending.judgmentId}`}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-white"
-              >
-                <span className="flex flex-col gap-1">
-                  <span className="text-xs text-[#c9cdd6]">진행 중인 내 판정</span>
-                  <span className="text-[15px] font-bold">
-                    {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 {dueLabel(nextScore.scheduledDate)}
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-start md:gap-8">
+            <div className="flex min-w-0 flex-col gap-5">
+              {pending && nextScore && (
+                <Link
+                  to={`/me/judgments/${pending.judgmentId}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-white"
+                >
+                  <span className="flex flex-col gap-1">
+                    <span className="text-xs text-[#c9cdd6]">진행 중인 내 판정</span>
+                    <span className="text-[15px] font-bold">
+                      {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 {dueLabel(nextScore.scheduledDate)}
+                    </span>
                   </span>
-                </span>
-                <Icon d={ICONS.chevron} />
+                  <Icon d={ICONS.chevron} />
+                </Link>
+              )}
+              <TodayFeed />
+              <section className="flex flex-col gap-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-base font-bold">종목을 골라 시작하기</h2>
+                </div>
+                <ul className="overflow-hidden rounded-panel border border-line bg-white">
+                  {SUGGESTIONS.map((s) => (
+                    <li key={s.ticker} className="border-b border-line-soft last:border-0">
+                      <Link
+                        to={`/stocks/${s.ticker}`}
+                        onClick={() => saveRecent(s.name)}
+                        className="pressable flex min-h-16 items-center gap-3 px-4 py-3 transition-colors"
+                      >
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="text-[15px] font-bold">{s.name}</span>
+                          <span className="text-[13px] text-sub">{s.ticker} · {s.market}</span>
+                        </span>
+                        <span className="text-sm text-sub">살펴보기</span>
+                        <Icon d={ICONS.chevron} size={16} className="text-sub" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              {recent.length > 0 && (
+                <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col gap-6">
+              <section className="flex flex-col gap-3">
+                <h2 className="text-base font-bold">판정은 내가 먼저</h2>
+                <div className="flex items-center justify-between gap-2 rounded-panel bg-white px-4 py-4 text-sm font-medium">
+                  <span>토론 읽기</span><Icon d={ICONS.chevron} size={14} className="text-faint" />
+                  <span>내 판정</span><Icon d={ICONS.chevron} size={14} className="text-faint" />
+                  <span className="flex items-center gap-1"><Icon d={ICONS.lock} size={14} />AI와 비교</span>
+                </div>
+                <p className="text-sm leading-relaxed text-sub">AI 판정은 내 판정을 제출한 뒤 열려요. 3·7거래일 뒤에는 코스피 대비 수익률로 함께 채점받아요.</p>
+              </section>
+              <TodayTerm />
+              <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel border border-line bg-white p-4 transition-colors">
+                <span className="flex flex-col gap-1"><span className="text-sm font-bold">과거의 종목으로 먼저 연습하기</span><span className="text-[13px] text-sub">타임머신 퀴즈에서 결과까지 바로 확인해요</span></span>
+                <Icon d={ICONS.chevron} size={18} className="shrink-0 text-sub" />
               </Link>
-            )}
-            <TodayFeed />
-            <TodayTerm />
-            {recent.length > 0 && (
-              <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
-            )}
-            <ChipRow title="이런 종목은 어때요" items={SUGGESTIONS} onPick={setQuery} />
-            <p className="text-[11px] leading-relaxed text-sub">
-              모의·교육 서비스예요. AI 판정은 투자 권유가 아니에요.
-            </p>
-          </>
+              <p className="text-[13px] leading-relaxed text-sub">
+                모의·교육 서비스예요. AI 판정은 투자 권유가 아니에요.
+              </p>
+            </div>
+          </div>
         )}
 
         {deferred && (
           <div className="flex flex-col gap-2.5">
-            <p className="text-xs text-sub" aria-live="polite">
-              {search.isLoading ? '찾는 중…' : `토론할 수 있는 종목 ${eligibleCount}개 · 우선주·ETF는 토론하지 않아요`}
+            <p className="text-[13px] text-sub" aria-live="polite">
+              {search.fetchStatus === 'paused' ? '연결을 기다리고 있어요' : search.isFetching || query.trim() !== deferred ? '찾는 중…' : search.isError ? '검색을 완료하지 못했어요' : `토론할 수 있는 종목 ${eligibleCount}개 · 우선주·ETF 제외`}
             </p>
-            {search.isError && <p className="text-sm text-up-ink">검색에 실패했어요. 잠시 후 다시 시도해 주세요.</p>}
+            {(search.isError || search.fetchStatus === 'paused') && (
+              <div role="alert" className="flex flex-col items-start gap-2 rounded-panel border border-line bg-white p-4">
+                <p className="text-sm">{search.fetchStatus === 'paused' ? '네트워크 연결을 확인해 주세요. 연결되면 검색을 다시 시작해요.' : '종목을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.'}</p>
+                {search.fetchStatus !== 'paused' && <button type="button" onClick={() => search.refetch()} className="pressable min-h-touch rounded-control border border-line px-4 text-sm font-bold">다시 시도</button>}
+              </div>
+            )}
             {items.length > 0 && (
               <ul className="overflow-hidden rounded-2xl border border-line bg-white">
                 {items.map((s) => (
                   <li key={s.ticker} className="border-b border-line-soft last:border-0">
                     {s.eligible ? (
-                      <button type="button" onClick={() => open(s)} className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left">
+                      <button type="button" onClick={() => open(s)} className="pressable flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <Highlighted text={s.name} query={deferred} />
                           <span className="text-xs text-sub">
@@ -167,7 +221,7 @@ export function HomePage() {
                 ))}
               </ul>
             )}
-            {search.isSuccess && items.length === 0 && (
+            {search.isSuccess && !search.isFetching && items.length === 0 && (
               <div className="flex flex-col gap-1.5 py-8 text-center">
                 <p className="text-[15px] font-bold">'{deferred}'에 맞는 종목이 없어요</p>
                 <p className="text-[13px] text-sub">종목명 일부, 6자리 코드, 초성으로 찾아보세요</p>
@@ -192,7 +246,7 @@ function ChipRow({ title, items, onPick }: { title: string; items: string[]; onP
             key={name}
             type="button"
             onClick={() => onPick(name)}
-            className="min-h-9 rounded-full border border-line bg-white px-3.5 text-sm"
+            className="pressable min-h-touch rounded-control border border-line bg-white px-3.5 text-sm transition-colors"
           >
             {name}
           </button>
@@ -209,7 +263,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   return (
     <span className="text-[15px] font-medium">
       {text.slice(0, i)}
-      <strong className="font-extrabold text-down">{query}</strong>
+      <strong className="font-extrabold underline decoration-line underline-offset-4">{query}</strong>
       {text.slice(i + query.length)}
     </span>
   )
