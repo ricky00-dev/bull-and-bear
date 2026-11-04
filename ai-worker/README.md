@@ -13,6 +13,19 @@ HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응�
 
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
+### LangGraph 실행 엔진 (Phase 1)
+
+`bullbear.graph.build_debate_graph(bull=..., bear=..., mediate=...)`에 역할별 LLM과
+중재 함수를 전달한 뒤, 반환된 그래프에 `invoke({"snapshot": snapshot})`을 호출한다.
+Bull과 Bear는 최초 한 번 병렬 실행되고, 중재 함수는 양측의 검증된 발언과 조사 결과를 읽어
+`Mediation`을 반환한다. `CHALLENGE_BULL/BEAR`는 한쪽만 다시 실행하며,
+`REQUEST_RESEARCH`는 중재자가 고른 스냅샷 도구를 호출한다. 두 종류의 추가 요청을 합해
+세 번까지 실행한다. 네 번째 요청은 상태에 기록하고 `round_limit`으로 종료한다.
+결과 상태에서 역할별 발언·호출 도구, 중재 결정 이력, 추가 횟수와 종료 사유를 확인할 수 있다.
+
+무과금 실행 예시는 `uv run --group dev pytest tests/test_graph.py -q`로 검증한다.
+기존 CLI와 HTTP 서버는 기존 엔진을 사용한다.
+
 ## 시작하기
 
 ```bash
