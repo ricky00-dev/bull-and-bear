@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import { Icon } from './ui'
+import { Icon, Logo } from './ui'
 
 const TABS = [
   { to: '/', label: '홈', icon: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
@@ -36,9 +36,8 @@ export function SideNav() {
       aria-label="주 메뉴"
       className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-1 border-r border-line bg-white px-3 py-6 md:flex lg:w-64"
     >
-      <NavLink to="/" className="mb-5 flex items-center gap-2 px-3">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-ink text-[13px] font-extrabold text-white">B</span>
-        <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
+      <NavLink to="/" className="mb-5 px-3">
+        <Logo />
       </NavLink>
       {TABS.map((t) => (
         <NavLink

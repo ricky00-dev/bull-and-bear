@@ -171,3 +171,15 @@ export function BottomSheet({ label, onClose, children }: { label: string; onClo
     </ModalSheet>
   )
 }
+
+/** 불앤베어 로고: 오르는 소(왼쪽)와 내리는 곰(오른쪽) 선. 홈 머리와 왼쪽 메뉴가 같이 쓴다 */
+export function Logo() {
+  return (
+    <span className="flex items-center gap-2">
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
+      </svg>
+      <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
+    </span>
+  )
+}

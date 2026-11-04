@@ -5,7 +5,7 @@ import { IntroSheet } from '../components/IntroSheet'
 import { TabBar } from '../components/TabBar'
 import { TodayFeed } from '../components/TodayFeed'
 import { TodayTerm } from '../components/TodayTerm'
-import { Icon, Screen } from '../components/ui'
+import { Icon, Logo, Screen } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
 import { changeColor, dueLabel, pct, won } from '../lib/format'
@@ -69,11 +69,8 @@ export function HomePage() {
     <Screen wide>
       <header className="pt-safe px-5">
         <div className="flex items-center justify-between pb-2 pt-5">
-          <div className="flex items-center gap-2 md:invisible">
-            <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
-            </svg>
-            <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
+          <div className="md:invisible">
+            <Logo />
           </div>
           <Link to="/my" className="pressable flex min-h-touch items-center rounded-control px-3 text-sm text-sub">게스트</Link>
         </div>
