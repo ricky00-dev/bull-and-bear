@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { IntroSheet } from '../components/IntroSheet'
+import { KakaoButton } from '../components/KakaoButton'
 import { ICONS } from '../components/icons'
 import { TabBar } from '../components/TabBar'
 import { Card, ErrorNotice, Icon, Screen, Skeleton } from '../components/ui'
@@ -32,17 +33,13 @@ export function MyPage() {
                 <p className="text-xs text-sub">{me.data.guest ? '이 기기에만 기록이 남아요' : '카카오 계정'}</p>
               </div>
             </div>
-            {me.data.guest && (
+            {me.data.guest ? (
               <>
-                <button
-                  type="button"
-                  disabled
-                  className="min-h-12 rounded-xl bg-[#fee500] text-[15px] font-extrabold text-[#191600] opacity-60"
-                >
-                  카카오로 시작 (준비 중)
-                </button>
+                <KakaoButton className="text-[15px]" />
                 <p className="text-center text-xs text-sub">가입하면 지금까지의 판정·퀴즈 기록이 그대로 이어져요</p>
               </>
+            ) : (
+              <Logout />
             )}
           </Card>
         ) : me.isError ? (
@@ -110,6 +107,25 @@ export function MyPage() {
       <TabBar />
       {intro && <IntroSheet onClose={() => setIntro(false)} />}
     </Screen>
+  )
+}
+
+/** 이 기기에서만 로그아웃. 기록은 카카오 계정에 남고, 이 기기는 새 게스트로 시작한다 */
+function Logout() {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        resetSession()
+        queryClient.clear()
+        navigate('/', { replace: true })
+      }}
+      className="min-h-11 self-start text-[13px] text-sub underline"
+    >
+      이 기기에서 로그아웃
+    </button>
   )
 }
 

@@ -41,6 +41,11 @@ function writeToken(token: string | null) {
   }
 }
 
+/** 카카오 로그인으로 받은 이 기기용 토큰으로 바꾼다 */
+export function setToken(token: string) {
+  writeToken(token)
+}
+
 /** 토큰이 없으면 게스트 계정을 만든다. 가입 없이 바로 판정할 수 있게. */
 export async function ensureToken(): Promise<string> {
   const existing = readToken()
@@ -125,6 +130,9 @@ export const api = {
     request<QuizAnswer>(`/api/quiz/rounds/${id}/questions/${idx}/answer`, { method: 'POST', body: JSON.stringify({ decision }) }),
   quizRanking: (all: boolean) => request<Ranking>(`/api/quiz/ranking?scope=${all ? 'all' : 'today'}`),
   me: () => request<Me>('/api/me'),
+  kakaoConfig: () => request<{ enabled: boolean; clientId: string | null }>('/api/auth/kakao/config'),
+  kakaoLogin: (code: string, redirectUri: string) =>
+    request<{ userId: string; token: string; merged: boolean }>('/api/auth/kakao', { method: 'POST', body: JSON.stringify({ code, redirectUri }) }),
   deleteMe: () => request<void>('/api/me', { method: 'DELETE' }),
   setNickname: (nickname: string) => request<Me>('/api/me/nickname', { method: 'PUT', body: JSON.stringify({ nickname }) }),
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),

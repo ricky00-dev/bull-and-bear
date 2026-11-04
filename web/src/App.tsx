@@ -5,6 +5,7 @@ import { DebatePage } from './pages/DebatePage'
 import { ExhibitPage } from './pages/ExhibitPage'
 import { HomePage } from './pages/HomePage'
 import { JudgePage } from './pages/JudgePage'
+import { KakaoCallbackPage } from './pages/KakaoCallbackPage'
 import { GlossaryPage } from './pages/GlossaryPage'
 import { MyJudgmentsPage } from './pages/MyJudgmentsPage'
 import { MyPage } from './pages/MyPage'
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/policy/:kind" element={<PolicyPage />} />
           <Route path="/exhibit" element={<ExhibitPage />} />
+          <Route path="/auth/kakao" element={<KakaoCallbackPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

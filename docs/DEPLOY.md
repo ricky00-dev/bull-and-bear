@@ -94,6 +94,20 @@ docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -
 - 화면 꺼짐은 브라우저가 지원하면 막는다(Wake Lock). 그래도 노트북 절전·화면보호기는 꺼 둔다
 - 노트북도 게스트 하나로 접속하므로 랭킹·판정 수에는 영향이 없다
 
+## 카카오 로그인
+
+키가 없으면 버튼이 "카카오로 시작 (준비 중)"으로 보이고 나머지는 그대로 동작한다.
+
+1. [카카오 developers](https://developers.kakao.com) → 내 애플리케이션 → 애플리케이션 추가 (앱 이름 "불앤베어")
+2. 앱 설정 → 플랫폼 → **Web** 사이트 도메인: `https://배포주소`, `http://localhost:5173`
+3. 카카오 로그인 → **활성화 ON**, Redirect URI: `https://배포주소/auth/kakao`, `http://localhost:5173/auth/kakao`
+4. 동의항목은 **아무것도 켜지 않는다** (회원번호만 쓴다. 이름·이메일을 받으면 개인정보 처리방침을 고쳐야 한다)
+5. 앱 키 → **REST API 키**를 `deploy/.env`의 `KAKAO_REST_KEY`에 넣고 `up -d` 다시 실행
+   - 보안 → 클라이언트 시크릿을 "사용함"으로 켰다면 그 값도 `KAKAO_CLIENT_SECRET`에
+   - 로컬: `api/.env`에 `KAKAO_REST_KEY=...` 한 줄 (커밋 금지, .gitignore에 있음) 후 API 재시작
+
+동작: 게스트로 쌓은 판정·퀴즈 기록은 카카오 계정에 그대로 이어진다. 다른 기기에서 같은 카카오로 들어오면 그 기기의 게스트 기록을 합친다(같은 토론을 양쪽에서 판정했으면 먼저 가입한 쪽 판정을 남긴다).
+
 ## 로컬에서 운영 구성 확인
 
 ```bash
