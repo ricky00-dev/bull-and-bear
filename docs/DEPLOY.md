@@ -85,6 +85,15 @@ docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -
   "select origin, count(*), sum(cost_usd) from debates where debate_day = current_date group by origin"
 ```
 
+## 전시장 노트북 화면
+
+노트북 브라우저로 `https://<배포 주소>/exhibit`를 열고 전체 화면(F11, 맥은 ⌃⌘F)으로 둔다.
+
+- 큰 QR(관람객 입장), 오늘 퀴즈 랭킹(15초마다), 오늘의 토론 판정 수(30초마다)가 알아서 갱신된다
+- QR에는 지금 연 주소가 들어간다. 노트북에서 로컬로 띄우는 경우에만 `web/.env.local`의 `VITE_PUBLIC_URL`에 배포 주소를 넣는다
+- 화면 꺼짐은 브라우저가 지원하면 막는다(Wake Lock). 그래도 노트북 절전·화면보호기는 꺼 둔다
+- 노트북도 게스트 하나로 접속하므로 랭킹·판정 수에는 영향이 없다
+
 ## 로컬에서 운영 구성 확인
 
 ```bash
