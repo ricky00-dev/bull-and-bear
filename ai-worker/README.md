@@ -21,7 +21,7 @@ cd ai-worker
 uv sync                    # Python 3.12 + 의존성 설치
 # 아래 데이터 소스 설정을 참고해 .env 생성 (기존 .env는 덮어쓰지 않음)
 
-uv run bullbear universe           # 대상 30종목
+uv run bullbear universe           # 대형주 30종목 목록 (CLI 기본)
 uv run bullbear snapshot 삼성전자   # 데이터만 확인 (LLM 호출 없음)
 uv run bullbear debate 005930      # 토론 → 내 판정 → 중재자 판정 공개
 uv run bullbear replay <debate_id> # 기록 재생
@@ -74,7 +74,7 @@ KST 15:40 이전 당일 값과 미래 날짜는 제외한다. 종목 화면·스
 코스피·코스닥 지수도 KRX에서 가져온다. 네이버는 뉴스 검색 API만 사용하며, 시세 실패 시 네이버 차트로 대체하지 않는다.
 검색은 기본 30종목 + 예시 우선주·ETF, DART 키가 있으면 상장회사 목록을 추가한다.
 DART에 시장 구분이 없는 추가 종목은 `market: null`이며, 전체 ETF·우선주 목록은 제공하지 않는다.
-현재 토론 허용 기준은 `UNIVERSE`의 대형주 30종목이다. 시장 전체의 시총·거래대금 필터는 아직 구현하지 않았다.
+토론 허용 기준은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다 (`server/market.py`의 `block_reasons`). `UNIVERSE`의 대형주 30종목은 검색 정렬과 CLI 기본 목록으로만 쓴다.
 
 운영 HTTP와 Claude CLI는 **Haiku·Sonnet만 허용**한다. 기본 역할은 토론자
 `claude-haiku-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.

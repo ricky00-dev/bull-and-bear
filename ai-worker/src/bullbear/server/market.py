@@ -22,6 +22,21 @@ def initial(text):
     return ''.join(CHOSEONG[(ord(c) - 0xAC00) // 588] if 0xAC00 <= ord(c) <= 0xD7A3 else c for c in text)
 
 
+def block_reasons(ticker, name, market):
+    """토론 대상은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다.
+
+    UNIVERSE(대형주 30종목)는 검색 정렬과 CLI 기본 목록일 뿐 허용 기준이 아니다.
+    보통주 코드는 끝자리가 0이고, 우선주는 5·7·9·K 등으로 끝난다.
+    """
+    if market == 'ETF' or ticker == '069500':
+        return ['ETF는 토론하지 않습니다']
+    if not ticker.endswith('0'):
+        return ['우선주는 토론하지 않습니다']
+    if '스팩' in name:
+        return ['스팩(기업인수목적회사)은 토론하지 않습니다']
+    return []
+
+
 @dataclass
 class Quote:
     ticker: str
@@ -137,11 +152,7 @@ class Market:
         if len(bars) < 2:
             raise DataUnavailable('확정 종가가 2거래일 이상 필요합니다')
         name, market = self.catalog[ticker]
-        reasons = [] if ticker in UNIVERSE else ['현재 토론 대상 대형주 30종목에 포함되지 않습니다']
-        if ticker == '005935':
-            reasons = ['우선주는 토론하지 않습니다']
-        if ticker == '069500':
-            reasons = ['ETF는 토론하지 않습니다']
+        reasons = block_reasons(ticker, name, market)
         quote = Quote(ticker, name, market, bars, reasons)
         with self.lock:
             self.cache[(ticker, cutoff)] = (time.monotonic(), quote)
