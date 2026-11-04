@@ -18,7 +18,7 @@ export function TabBar() {
           to={t.to}
           end
           className={({ isActive }) =>
-            `flex min-h-13 flex-col items-center justify-center gap-0.5 text-[11px] font-bold ${isActive ? 'text-ink' : 'text-faint'}`
+            `pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-control text-xs transition-colors ${isActive ? 'font-bold text-ink' : 'font-medium text-sub'}`
           }
         >
           <Icon d={t.icon} size={22} />

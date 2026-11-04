@@ -31,12 +31,12 @@ export function BandBar({ excess, band }: { excess: number; band: number }) {
     <div className="flex flex-col gap-1.5">
       <div
         className="relative h-7 rounded-lg"
-        style={{
-          background: `linear-gradient(90deg, var(--color-down-soft) 0 ${lo}%, #eef0f3 ${lo}% ${hi}%, var(--color-up-soft) ${hi}% 100%)`,
-        }}
         role="img"
         aria-label={`초과수익 ${pctPoint(excess)}`}
       >
+        <span className="absolute inset-y-0 left-0 rounded-l-lg bg-down-soft" style={{ width: `${lo}%` }} />
+        <span className="absolute inset-y-0 bg-ground" style={{ left: `${lo}%`, width: `${hi-lo}%` }} />
+        <span className="absolute inset-y-0 right-0 rounded-r-lg bg-up-soft" style={{ width: `${100-hi}%` }} />
         <span className="absolute -bottom-1 -top-1 w-[3px] -translate-x-1/2 rounded-sm bg-ink" style={{ left: `${pos(excess)}%` }} />
       </div>
       <div className="flex justify-between text-[11px] font-bold">

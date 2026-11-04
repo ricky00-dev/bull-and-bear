@@ -5,12 +5,12 @@ import { VerdictText } from '../components/VerdictText'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
-import { monthDay, won } from '../lib/format'
 import { describe } from '../lib/glossary'
-import type { Decision, Score } from '../lib/types'
-import { DECISION_LABEL } from '../lib/types'
+import type { Score } from '../lib/types'
+import { JudgmentComparison } from '../components/JudgmentComparison'
+import { EvidenceComparison } from '../components/EvidenceComparison'
+import { useDebateStream } from '../lib/useDebateStream'
 
-const DECISION_COLOR: Record<Decision, string> = { BUY: 'text-up-ink', HOLD: 'text-ink', SELL: 'text-down-ink' }
 const RUBRIC: { key: keyof Omit<Score, 'comment'>; label: string }[] = [
   { key: 'relevance', label: '관련성' },
   { key: 'materiality', label: '중요도' },
@@ -27,6 +27,7 @@ export function RevealPage() {
   const mineId = reveal.data?.mine.id
   const detail = useQuery({ queryKey: ['me', 'judgment', mineId], queryFn: () => api.myJudgment(mineId!), enabled: !!mineId })
   const schedule = detail.data?.judgment.scores ?? []
+  const stream = useDebateStream(reveal.data ? id : undefined)
 
   // 아직 판정하지 않았으면 판정 화면으로 (봉인)
   const sealed = reveal.error instanceof ApiError && reveal.error.code === 'SEALED'
@@ -47,7 +48,7 @@ export function RevealPage() {
   }
 
   return (
-    <Screen>
+    <Screen wide>
       <TopBar title={d?.stockName ?? '판정 결과'} sub="판정 결과" back={`/debates/${id}`} />
       <main className="flex flex-1 flex-col gap-3.5 px-5 pb-6 pt-1">
         {!r ? (
@@ -63,25 +64,16 @@ export function RevealPage() {
               <h2 className="text-2xl font-extrabold tracking-tight">{r.agrees ? 'AI와 같은 판정이에요' : 'AI와 판정이 엇갈렸어요'}</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <Card className="flex flex-col gap-1.5">
-                <p className="text-xs text-sub">나</p>
-                <p className={`text-[26px] font-extrabold ${DECISION_COLOR[r.mine.decision]}`}>{DECISION_LABEL[r.mine.decision]}</p>
-                <p className="text-xs text-sub">확신 {r.mine.confidence}%</p>
-              </Card>
-              <Card className="flex flex-col gap-1.5 border-mod-line bg-mod-soft">
-                <p className="text-xs text-mod">AI 중재자</p>
-                <p className={`text-[26px] font-extrabold ${DECISION_COLOR[r.verdict.decision]}`}>{DECISION_LABEL[r.verdict.decision]}</p>
-                <p className="text-xs text-mod">확신 {Math.round(r.verdict.confidence * 100)}%</p>
-              </Card>
-            </div>
+            <JudgmentComparison mine={r.mine.decision} moderator={r.verdict.decision} scores={schedule} holdBand={detail.data?.holdBand} loading={detail.isLoading} error={detail.isError} onRetry={() => detail.refetch()} />
+            <p className="text-[13px] leading-relaxed text-sub">확신: 나 {r.mine.confidence}% / AI {Math.round(r.verdict.confidence * 100)}%. 판정의 일치와 실제 적중은 달라요.</p>
+            <EvidenceComparison mine={r.mine.evidencePicks} decisive={r.verdict.decisive_evidence} turns={stream.statements} asOf={d?.tradeDate} debateId={id} memo={r.mine.memo} />
 
             <Crowd crowd={r.crowd} />
 
             <Card className="flex flex-col gap-2.5">
               <h3 className="text-sm font-extrabold">중재자가 이렇게 본 이유</h3>
               <p className="text-[15px] leading-relaxed">
-                <VerdictText text={r.verdict.reasoning} decisive={r.verdict.decisive_evidence} />
+                <VerdictText text={r.verdict.reasoning} decisive={r.verdict.decisive_evidence} debateId={id} asOf={d?.tradeDate} turns={stream.statements} />
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {r.verdict.decisive_evidence.map((id) => (
@@ -113,23 +105,9 @@ export function RevealPage() {
               ))}
             </Card>
 
-            <Card className="flex items-center gap-3">
-              <Icon d={ICONS.calendar} size={22} className="shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-sm font-extrabold">
-                  {schedule.length
-                    ? schedule.map((s) => `${monthDay(s.scheduledDate)}(${s.horizonDays}거래일)`).join(' · ') + ' 채점 예정'
-                    : '3거래일 · 7거래일 뒤 채점'}
-                </p>
-                <p className="text-xs text-sub">
-                  {d?.tradeDate && d.basePrice ? `${d.tradeDate.slice(5).replace('-', '/')} 종가 ${won(d.basePrice)} 기준, ` : ''}
-                  코스피 대비로 채점해요
-                </p>
-                <Link to={`/me/judgments/${r.mine.id}`} className="mt-1 text-xs font-bold text-down">
-                  내 판정에서 결과 보기
-                </Link>
-              </div>
-            </Card>
+            <Link to={`/me/judgments/${r.mine.id}`} className="pressable flex min-h-touch items-center justify-between rounded-control border border-line bg-white px-4 py-3 text-sm font-bold">
+              내 판정에서 채점 결과 보기 <Icon d={ICONS.chevron} size={16} />
+            </Link>
 
             {me.data?.guest && <SignupCard />}
             <p className="text-center text-[11px] leading-relaxed text-sub">

@@ -24,3 +24,6 @@ node_modules/
 
 # Claude Code 개인 설정
 .claude/settings.local.json
+
+# 검증용 스크린샷·측정 기록 (PR 설명에 붙이고 레포에는 올리지 않는다)
+output/

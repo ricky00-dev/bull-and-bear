@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PrimaryButton } from './ui'
+import { useNavigate } from 'react-router'
+import { ModalSheet, PrimaryButton } from './ui'
 
 const KEY = 'bb.intro.v1'
 
@@ -19,6 +20,7 @@ const STEPS = [
 
 /** 첫 방문 안내 + 투자 유의 고지. 한 번 확인하면 다시 뜨지 않는다. onClose를 주면 마이 탭처럼 언제든 다시 연다. */
 export function IntroSheet({ onClose }: { onClose?: () => void }) {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(() => !!onClose || !seen())
   if (!open) return null
 
@@ -33,14 +35,7 @@ export function IntroSheet({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-end md:justify-center md:p-6">
-      <div className="absolute inset-0 bg-ink/45" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="intro-title"
-        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-4 rounded-t-[22px] bg-white px-5.5 pt-6 md:rounded-[22px]"
-      >
+    <ModalSheet label="불앤베어는 이렇게 해요" onClose={close}>
         <h2 id="intro-title" className="text-xl font-extrabold tracking-tight">
           불앤베어는 이렇게 해요
         </h2>
@@ -62,9 +57,9 @@ export function IntroSheet({ onClose }: { onClose?: () => void }) {
           실제 투자 판단과 그 결과의 책임은 본인에게 있어요.
         </p>
         <div className="pb-4">
-          <PrimaryButton onClick={close}>확인했어요, 시작하기</PrimaryButton>
+          <PrimaryButton onClick={close}>{onClose ? '확인했어요' : '토론부터 살펴보기'}</PrimaryButton>
+          {!onClose && <button type="button" onClick={() => {close();navigate('/quiz')}} className="pressable mt-2 min-h-touch w-full rounded-control border border-line text-sm font-bold">과거 퀴즈로 먼저 연습하기</button>}
         </div>
-      </div>
-    </div>
+    </ModalSheet>
   )
 }

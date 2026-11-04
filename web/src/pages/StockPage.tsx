@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { Sparkline } from '../components/Sparkline'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
@@ -26,7 +26,7 @@ export function StockPage() {
   }
 
   const s = stock.data
-  const today = s?.existingDebate
+  const today = s?.existingDebate?.status === 'FAILED' ? null : s?.existingDebate
   const startError = start.error instanceof ApiError ? start.error.message : start.error ? '토론을 시작하지 못했어요' : null
   const blocked = quotaBlock(s?.quota)
 
@@ -34,6 +34,7 @@ export function StockPage() {
     <Screen>
       <TopBar title={s?.name ?? ''} sub={s ? `${s.ticker} · ${s.market}` : undefined} back="/" />
       <main className="flex flex-1 flex-col gap-3.5 px-5 pb-5 pt-1">
+        {start.isPending && <Card className="flex flex-col gap-2" ><p role="status" className="text-sm font-bold">토론 시작을 요청하고 있어요</p><p className="text-[13px] leading-relaxed text-sub">요청이 연결되면 자료 고정·양측 토론·AI 판정 순서로 진행 상황을 보여드려요.</p></Card>}
         {!s ? (
           <>
             <Skeleton className="h-16 w-48" />
@@ -73,7 +74,7 @@ export function StockPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-mod-line bg-mod-soft px-4 py-3.5">
                 <Icon d={ICONS.clock} className="shrink-0 text-mod" />
                 <p className="text-[13px] leading-normal text-mod-ink">
-                  {monthDay(today.dataDate)} 종가 기준 토론이 이미 있어요. 지금과 같은 데이터라 기다리지 않고 바로 볼 수 있어요.
+                  {monthDay(today.dataDate)} 종가 기준 {today.status === 'COMPLETED' ? '완료된 토론이 있어요. 새로 준비하지 않고 바로 읽을 수 있어요.' : '토론이 진행 중이에요. 새로 시작하지 않고 먼저 나온 발언부터 읽을 수 있어요.'}
                 </p>
               </div>
             )}
@@ -82,17 +83,18 @@ export function StockPage() {
       </main>
 
       <BottomBar>
-        {startError && <p className="text-[13px] font-bold text-up-ink">{startError}</p>}
+        {startError && <p role="alert" className="text-[13px] font-bold text-up-ink">{startError}</p>}
         {today ? (
-          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>토론 보기</PrimaryButton>
+          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>{today.status === 'COMPLETED' ? '준비된 토론 읽기' : '진행 중인 토론 보기'}</PrimaryButton>
         ) : (
           <PrimaryButton disabled={!s?.eligible || !!blocked || start.isPending} onClick={() => start.mutate()}>
             {start.isPending ? '토론 준비 중…' : 'AI 토론 시작'}
           </PrimaryButton>
         )}
         <p className="text-center text-xs text-sub">
-          {today ? '이미 끝난 토론은 처음부터 다시 볼 수 있어요' : (blocked ?? quotaHint(s?.quota))}
+          {today ? today.status === 'COMPLETED' ? '내 판정을 제출하기 전까지 AI 판정은 가려져 있어요' : '준비 중인 단계와 먼저 나온 발언을 볼 수 있어요' : (blocked ?? quotaHint(s?.quota))}
         </p>
+        {blocked && <Link to="/quiz" className="pressable flex min-h-touch items-center justify-center rounded-control text-sm font-bold">과거 퀴즈 확인하기</Link>}
       </BottomBar>
     </Screen>
   )
@@ -120,7 +122,7 @@ function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; d
         {ok ? <Icon d={ICONS.check} size={12} stroke={3} /> : <span className="text-xs">–</span>}
       </span>
       <span className="flex-1">{label}</span>
-      <span className="text-xs text-sub">{detail}</span>
+      <span className="max-w-[60%] text-right text-xs text-sub">{detail}</span>
     </div>
   )
 }

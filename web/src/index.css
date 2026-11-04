@@ -4,10 +4,10 @@
 @theme {
   --font-sans: "Noto Sans KR", system-ui, sans-serif;
 
-  --color-ground: #f4f5f7;
+  --color-ground: #f5f6f8;
   --color-ink: #111318;
   --color-sub: #4e5562;
-  --color-faint: #9aa1ad;
+  --color-faint: #687180;
   --color-line: #e6e8ec;
   --color-line-soft: #f0f1f4;
 
@@ -21,10 +21,15 @@
   --color-down-soft: #f0f5fe;
   --color-down-line: #cfddf7;
 
-  --color-mod: #4a3fc7;
-  --color-mod-ink: #2e2785;
-  --color-mod-soft: #eef0ff;
-  --color-mod-line: #d9dcfb;
+  --color-mod: #465564;
+  --color-mod-ink: #293744;
+  --color-mod-soft: #eef2f5;
+  --color-mod-line: #d7e0e7;
+
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-sheet: 24px;
+  --spacing-touch: 44px;
 
   --color-ok: #067647;
   --color-ok-soft: #dcfae6;
@@ -44,6 +49,7 @@
 }
 
 @layer base {
+  :root { --topbar-height: calc(68px + env(safe-area-inset-top, 0px)); }
   html, body, #root {
     height: 100%;
   }
@@ -53,13 +59,49 @@
     color: var(--color-ink);
     font-variant-numeric: tabular-nums;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
   }
   button {
     cursor: pointer;
   }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
   :focus-visible {
     outline: 2px solid var(--color-ink);
     outline-offset: 2px;
+  }
+}
+
+.modal-sheet::backdrop {
+  background: rgb(17 19 24 / 45%);
+}
+
+.sheet-content { max-height: 90dvh; overscroll-behavior: contain; }
+
+@media (max-width: 767px) {
+  body:has(textarea:focus, input[type="search"]:focus, input[type="text"]:focus, input:not([type]):focus) .action-bar { position: static; }
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+@media (hover: hover) {
+  .pressable:hover:not(:disabled) { background-color: var(--color-line-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
