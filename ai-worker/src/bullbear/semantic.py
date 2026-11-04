@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 
 from .llm import Conversation, LLMError
 from .prompts import JUDGMENT_POLICY
+from .presentation import argument_quote_spans
 from .rag.context import KnowledgeContext, render_background
 from .verifier import Issue
 
@@ -34,6 +35,10 @@ SYSTEM = """당신은 투자 교육 토론의 독립된 검토 역할이다. 매
 3. 공통 7거래일·코스피 상대수익 판단을 장기 매수나 절대수익 판단으로 대체.
 4. 자기모순, 상대가 하지 않은 주장을 반박, 반박된 논점을 설명 없이 사실로 재사용.
 5. HOLD를 애매함·자료 부족으로만 정당화하는 오류: 왜 코스피와 비슷하게 움직일지 예측 근거가 있어야 한다.
+   공통 정책의 관측 기반 유지 가정은 조건부 예측으로 검사한다. 같은 기간의 상대수익 Fact,
+   유지 가정임을 밝힌 문장, 관계가 깨질 위험이 함께 있다면 시장 전체 원인·베타·실현 확률의
+   증명이 없다는 이유만으로 반려하지 않는다. 단, 실제 인용이 틀리거나 자료 부재만이 근거인 경우,
+   과거 동반 하락의 원인을 시장 요인으로 확정하거나 미래 동행을 보장하면 계속 반려한다.
 6. 뉴스·공시의 일정/내용을 지어내거나 7거래일 내 계기와 연결 없이 사건을 나열하는 오류.
    같은 사건을 다룬 기사 ID만 바꾸는 것을 새로운 논거로 취급하지 않는다.
 7. 중재자의 [E1]은 candidate.decisive_evidence[0]이고 [E2]는 [1]이다.
@@ -41,9 +46,21 @@ SYSTEM = """당신은 투자 교육 토론의 독립된 검토 역할이다. 매
    토론자 역시 매 발언마다 reference_map을 새로 정한다. 서로 다른 발언의 E1이 다른 source_id인 것은 정상이다.
    candidate_role과 history의 speaker를 확인한다. '상대가 말했다'는 내용은 반대편 speaker의 실제 발언에 있어야 한다.
    자기의 과거 발언이나 검증 피드백을 상대 주장으로 돌리면 contradiction이다.
+   argument_quotes는 본문 인용 구간과 history 원문의 일치 위치다. source_matches의 speaker를 확인한다.
+   상대 원문과 일치한 인용은 상대가 했던 말이지 candidate 자신의 판단이 아니다. 인용 뒤의 반박·동의 문장을
+   함께 읽어야 한다. 인용문과 claim의 방향이 다르다는 이유만으로 자기모순을 만들거나 상대 견해로 바꾸게 하지 않는다.
+   이 목록은 문자열 대조일 뿐 동의/부정 판정이 아니다. 후보가 인용 내용에 실제로 동의하면서 양립 불가능한
+   자기 판단도 단정하면 계속 contradiction으로 반려하고, message에 후보 자신의 두 주장과 문맥을 설명한다.
 중재자 reasoning/comment는 쉬운 말이어야 하며 내부 ID·검증 통계·투자자별 권고를 출력하지 않는다.
 통계가 입력으로 제공돼도 내부 점검용일 뿐 문장에 쓰라고 요구하지 않는다.
 스냅샷 facts와 history를 기준으로 판단한다. 새 사실이나 수치를 지어내지 않는다.
+facts는 고정된 전체 스냅샷이다. selected_source_ids는 검토 대상으로 선택된 근거이고,
+candidate의 실제 인용은 reference_map이다. 전체 스냅샷에 존재하지만 인용하지 않은 사실은
+날조나 데이터 부재로 부르지 않는다. 필요한 경우 해당 Fact를 인용하라는 구체적 수정 방향을 준다.
+다른 Fact에 값이 있다는 이유로 잘못 연결한 [E번호]를 통과시키지 않는다.
+facts에 없는 값은 추정해 채우지 않으며, history의 주장도 관측 사실의 대체 출처가 아니다.
+뉴스·공시의 label/note는 제목·요약 범위다. 취득·처분 합계를 취득액으로 바꾸거나,
+생략된 본문에 있을 법한 목적·일정·인과를 사실로 보충하면 반려한다.
 합리적인 조건부 가설·명시적인 불확실성·서로 다른 의견은 오류가 아니다.
 단순 표현 취향이나 더 많은 자료를 원한다는 이유로 반려하지 않는다.
 예측의 근거가 약한 것과 논리적으로 틀린 것을 구분한다. +2%p/-2%p는 판정 구간이지 정확한 수익률 보장이 아니다.
@@ -121,13 +138,22 @@ class SemanticReviewer:
                 "reference_map": dict(re.findall(r"^\s+(E\d+): (\S+) =", entry, re.M)),
                 "text": entry,
             })
-        facts = {key: self.snapshot.facts[key].model_dump(mode="json")
-                 for key in source_ids if key in self.snapshot.facts}
+        argument_quotes = []
+        for span in argument_quote_spans(payload.get("argument", "")):
+            matches = [{"history_index": index, "speaker": turn["speaker"]}
+                       for index, turn in enumerate(history_turns)
+                       if len(span["quote"].strip()) >= 6
+                       and span["quote"] in turn["text"].partition("\n")[2].split("\n근거:\n", 1)[0]]
+            argument_quotes.append({**span, "source_matches": matches})
+        # Existence and citation correctness are separate checks.
+        facts = {key: fact.model_dump(mode="json") for key, fact in self.snapshot.facts.items()}
         conversation = Conversation(SYSTEM + self.background, [{"role": "user", "content": json.dumps({
             "candidate": payload, "candidate_role": side.value if side is not None else
                 ("moderator" if "decisive_evidence" in payload else None),
             "candidate_round": round_kind, "reference_map": reference_map,
+            "argument_quotes": argument_quotes,
             "history": history_turns, "facts": facts,
+            "selected_source_ids": sorted(set(source_ids)),
             "verification_stats": stats,
             "price_as_of": str(self.snapshot.as_of), "snapshot_created_at": str(self.snapshot.created_at),
             "warnings": self.snapshot.warnings,

@@ -8,7 +8,23 @@ AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 
 현재 단계: **CLI + HTTP/SSE 서버**. Spring·웹과 연결해 검색 → 토론 → 판정 봉인·공개 → 채점 예약을 실행한다.
 HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응답을 지원한다.
 
+구현 완료와 실제 운용 준비는 구분한다. [최신 현황·실측·남은 순서](../docs/evaluations/worker-goal-readiness-20261102.md)에서
+실모델 검증, fixture 통합, 배포 상태를 확인한다.
+
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
+
+### LangGraph 실행 엔진 (Phase 1)
+
+`bullbear.graph.build_debate_graph(bull=..., bear=..., mediate=...)`에 역할별 LLM과
+중재 함수를 전달한 뒤, 반환된 그래프에 `invoke({"snapshot": snapshot})`을 호출한다.
+Bull과 Bear는 최초 한 번 병렬 실행되고, 중재 함수는 양측의 검증된 발언과 조사 결과를 읽어
+`Mediation`을 반환한다. `CHALLENGE_BULL/BEAR`는 한쪽만 다시 실행하며,
+`REQUEST_RESEARCH`는 중재자가 고른 스냅샷 도구를 호출한다. 두 종류의 추가 요청을 합해
+세 번까지 실행한다. 네 번째 요청은 상태에 기록하고 `round_limit`으로 종료한다.
+결과 상태에서 역할별 발언·호출 도구, 중재 결정 이력, 추가 횟수와 종료 사유를 확인할 수 있다.
+
+무과금 실행 예시는 `uv run --group dev pytest tests/test_graph.py -q`로 검증한다.
+기존 CLI와 HTTP 서버는 기존 엔진을 사용한다.
 
 ## 시작하기
 
@@ -18,7 +34,7 @@ cd ai-worker
 uv sync                    # Python 3.12 + 의존성 설치
 # 아래 데이터 소스 설정을 참고해 .env 생성 (기존 .env는 덮어쓰지 않음)
 
-uv run bullbear universe           # 대상 30종목
+uv run bullbear universe           # 대형주 30종목 목록 (CLI 기본)
 uv run bullbear snapshot 삼성전자   # 데이터만 확인 (LLM 호출 없음)
 uv run bullbear debate 005930      # 토론 → 내 판정 → 중재자 판정 공개
 uv run bullbear replay <debate_id> # 기록 재생
@@ -71,7 +87,7 @@ KST 15:40 이전 당일 값과 미래 날짜는 제외한다. 종목 화면·스
 코스피·코스닥 지수도 KRX에서 가져온다. 네이버는 뉴스 검색 API만 사용하며, 시세 실패 시 네이버 차트로 대체하지 않는다.
 검색은 기본 30종목 + 예시 우선주·ETF, DART 키가 있으면 상장회사 목록을 추가한다.
 DART에 시장 구분이 없는 추가 종목은 `market: null`이며, 전체 ETF·우선주 목록은 제공하지 않는다.
-현재 토론 허용 기준은 `UNIVERSE`의 대형주 30종목이다. 시장 전체의 시총·거래대금 필터는 아직 구현하지 않았다.
+토론 허용 기준은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다 (`server/market.py`의 `block_reasons`). `UNIVERSE`의 대형주 30종목은 검색 정렬과 CLI 기본 목록으로만 쓴다.
 
 운영 HTTP와 Claude CLI는 **Haiku·Sonnet만 허용**한다. 기본 역할은 토론자
 `claude-haiku-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
@@ -275,13 +291,15 @@ HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 
 | 검증 | `verifier.py`, `presentation.py`, `semantic.py` | 수치/ID·표현·인용 규칙, LLM 의미 검토 |
 | RAG | `rag/ingest.py`, `store.py`, `index.py`, `retrieval.py`, `context.py`, `replay.py` | 수집·검수 이력, 검색, 배경 저장·재생 (`rag/` 하위 파일) |
 | 전달 상태 | `server/store.py` | `data/http/worker.sqlite3`: 요청·토론 상태·스냅샷·SSE 이벤트 |
+| HTTP 비용 장부 | `anthropic_budget.py` | 선택적 `data/http/provider-budget.sqlite3`: 요청별 최대 비용 예약·정산·미확정 보존 |
 | 비공개 기록 | `events.py`, `audit.py` | `data/debates/*.jsonl`, `data/audits/<run_id>/manifest.json`: 시도·검증·사용량·실행 출처 |
 | 별도 실행·평가 도구 | `cli.py`, `experiment.py`, `benchmark.py`, `budget.py` | CLI, 선공 비교, 단일/토론·RAG 비교, benchmark 예산 원장 |
 | 비용 없는 점검 | `preflight.py`, `diagnostics.py` | 설정 검사, 저장된 benchmark 결과의 오프라인 진단·검수 목록 |
 
 표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다. RAG 저장은 `data/rag/` 아래 별도 원문·색인·컨텍스트로 관리한다.
 실험/진단 도구는 운영 HTTP 요청에서 자동 실행되지 않는다. `budget.py`의 benchmark 예산 원장을
-운영 HTTP의 강제 비용 상한으로 해석하면 안 된다. 운영 비용 제한은 현재 Spring 정책과 구분해야 한다.
+운영 HTTP 비용 제한과 혼동하지 않는다. HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
+[운영 안내](../docs/WORKER-OPERATIONS.md)에서 적용 범위를 구분한다.
 CLI는 토론 엔진을 직접 호출하며 HTTP 요청 관리·SSE 경로를 거치지 않는다.
 
 ## 데이터 소스 메모
@@ -330,7 +348,7 @@ OPENAI_API_KEY=
 
 ## 판단 기간과 개념·논리 검토
 
-- `7d-concise-v4`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
+- `7d-concise-v8`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
   7거래일 뒤 코스피와 비슷하게 움직여 상대수익이 −2%p~+2%p 안일 것이라는 예측이다.
 - 주장 한 줄·한 문장, 본문 최대 3문장, 서로 다른 근거 최대 3개. 반박·마무리는
   양측의 이전 전체 토론에 없던 source_id를 최소 1개 인용하며 7거래일 안의 계기가 될
@@ -357,5 +375,7 @@ OPENAI_API_KEY=
   evidence.ref는 E1 형식만 허용하며 본문의 [E1]과 구분한다.
 
 ## 테스트
+
+운영 인증·동시 실행·재시작·선택적 영속 비용 장부는 [워커 운영 안내](../docs/WORKER-OPERATIONS.md)를 참고한다.
 
 - 파이프라인 동작을 바꾸면 `tests/fakes.py`의 가짜 소스·에이전트로 테스트를 추가한다.

@@ -7,10 +7,13 @@ from bullbear.events import EventLog
 from bullbear.llm import LLMError
 from bullbear.presentation import verdict_issues
 from bullbear.semantic import SemanticReviewer, horizon_issues
+from bullbear.prompts import render_statement
+from bullbear.schemas import Side
 from bullbear.single import SingleAnalyst, SingleVerdict
 from bullbear.snapshot import build_snapshot
 from .fakes import FakeSource, NOW
 from .test_semantic import QueueLLM
+from .fakes import statement
 
 
 @pytest.fixture
@@ -80,3 +83,107 @@ def test_context_does_not_waive_reference_or_horizon_errors():
     broken = verdict.model_copy(update={'reasoning': verdict.reasoning.replace('[E1]', '[E2]')})
     assert 'verdict_refs' in [issue.code for issue in verdict_issues(broken)]
     assert horizon_issues(verdict.reasoning.replace('7거래일', '17거래일'))
+
+
+def test_review_has_uncited_snapshot_facts_without_promoting_them_to_citations(snap):
+    # Live pilot: CLOSE/VOL_20D were present, but the reviewer called them absent.
+    verdict = candidate().model_copy(update={'decisive_evidence': ['VAL.PER_TTM']})
+    llm = QueueLLM([{'issues': []}])
+    SemanticReviewer(llm, snap).check(verdict, [], verdict.decisive_evidence)
+    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    assert payload['facts'] == {k: f.model_dump(mode='json') for k, f in snap.facts.items()}
+    assert payload['reference_map'] == {'E1': 'VAL.PER_TTM'}
+    assert payload['selected_source_ids'] == ['VAL.PER_TTM']
+    assert payload['facts']['PX.CLOSE']['value'] == snap.facts['PX.CLOSE'].value
+    assert payload['facts']['PX.VOL_20D']['value'] == snap.facts['PX.VOL_20D'].value
+    assert '전체 스냅샷에 존재하지만 인용하지 않은 사실' in llm.calls[0][0].system
+
+
+def test_review_does_not_fill_missing_benchmark_or_volatility(snap):
+    missing = snap.model_copy(update={'facts': {k: f for k, f in snap.facts.items()
+                                               if not k.startswith('MKT.') and k != 'PX.VOL_20D'},
+                                     'warnings': ['코스피 비교 자료 없음']})
+    llm = QueueLLM([{'issues': []}])
+    SemanticReviewer(llm, missing).check(candidate(), [], ['PX.CLOSE'])
+    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    assert 'PX.VOL_20D' not in payload['facts']
+    assert not any(k.startswith('MKT.') for k in payload['facts'])
+    assert payload['warnings'] == ['코스피 비교 자료 없음']
+
+
+@pytest.mark.parametrize('reasoning,quote,message', [
+    ('7거래일 코스피 대비 비슷할 것으로 봅니다 [E1]. 양쪽 주장이 약하니 보류합니다.',
+     '양쪽 주장이 약하니 보류합니다', '양측 근거 부족은 HOLD 구간의 근거가 아닙니다.'),
+    ('7거래일 코스피 대비 상승을 예상합니다 [E1]. 자사주 취득·처분 합계는 모두 취득액입니다.',
+     '합계는 모두 취득액입니다', '취득·처분 합계를 취득액으로 바꿀 수 없습니다.'),
+    ('종가가 399원이므로 7거래일 코스피 대비 상승을 예상합니다 [E1].',
+     '종가가 399원', '종가는 존재하지만 E1의 PER 근거에는 없습니다. 종가 Fact를 인용하세요.'),
+])
+def test_more_review_context_does_not_waive_hold_news_or_citation_rejections(snap, tmp_path, reasoning, quote, message):
+    verdict = candidate().model_copy(update={'reasoning': reasoning,
+                                             'decisive_evidence': ['VAL.PER_TTM']})
+    finding = {'issues': [{'code': 'unsupported_inference', 'quote': quote, 'message': message}]}
+    llm = QueueLLM([item for _ in range(3) for item in (verdict.model_dump(mode='json'), finding)])
+    log = EventLog(tmp_path / 'rejected.jsonl')
+    with pytest.raises(LLMError, match='after 3 attempts'):
+        SingleAnalyst(llm, snap).evaluate(log)
+    assert all(not event['passed'] for event in EventLog.read(log.path))
+    assert len(llm.calls) == 6
+
+
+def test_rebuttal_quote_maps_to_opponent_without_changing_candidate(snap):
+    # v7 live failure: reviewer attributed the opponent's HOLD quote to the bear.
+    quote = '현재 근거로는 보류 구간이 더 가능성 높다고 봅니다'
+    opponent = statement(('E1', 'PX.CLOSE', 399), argument='조건부 설명입니다 [E1].').model_copy(
+        update={'claim': quote + '.'})
+    rebuttal = statement(('E1', 'PX.CLOSE', 399), argument=(
+        f'"{quote}"라는 판단은 과거 관측에 기대지만 미래 결과를 정하지 못합니다. '
+        '7거래일 코스피 대비 하락 가능성은 열려 있습니다 [E1].'))
+    history = [render_statement(Side.BULL, 'rebuttal', opponent)]
+    llm = QueueLLM([{'issues': []}])
+    SemanticReviewer(llm, snap).check(rebuttal, history, ['PX.CLOSE'], side=Side.BEAR, round_kind='rebuttal')
+    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    assert payload['candidate'] == rebuttal.model_dump(mode='json')
+    assert payload['candidate_role'] == 'bear'
+    span, = payload['argument_quotes']
+    assert rebuttal.argument[span['start']:span['end']] == quote
+    assert span['source_matches'] == [{'history_index': 0, 'speaker': 'bull'}]
+    assert payload['history'][0]['text'] == history[0]
+
+
+@pytest.mark.parametrize('location,expected', [
+    ('own', [{'history_index': 0, 'speaker': 'bear'}]),
+    ('evidence', []),
+    ('absent', []),
+    ('both', [{'history_index': 0, 'speaker': 'bear'}, {'history_index': 1, 'speaker': 'bull'}]),
+])
+def test_quote_context_does_not_invent_opponent_ownership(snap, location, expected):
+    quote = '현재 관측으로 보류가 더 가능성 높습니다'
+    previous = statement(('E1', 'PX.CLOSE', 399), argument='원래 본문입니다 [E1].')
+    if location in ('own', 'both'):
+        previous.claim = quote
+    elif location == 'evidence':
+        previous.evidence[0].interpretation = quote
+    history = [render_statement(Side.BEAR if location in ('own', 'both') else Side.BULL, 'opening', previous)]
+    if location == 'both':
+        history.append(render_statement(Side.BULL, 'opening', previous))
+    rebuttal = previous.model_copy(update={'argument': f'"{quote}"라는 상대 주장에 반박합니다 [E1].'})
+    llm = QueueLLM([{'issues': []}])
+    SemanticReviewer(llm, snap).check(rebuttal, history, ['PX.CLOSE'], side=Side.BEAR, round_kind='rebuttal')
+    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    assert payload['argument_quotes'][0]['source_matches'] == expected
+
+
+def test_quoting_opponent_does_not_silently_waive_actual_contradiction(snap):
+    quote = '보류 구간이 더 가능성 높다고 봅니다'
+    opponent = statement(('E1', 'PX.CLOSE', 399), argument=quote + ' [E1].')
+    candidate = opponent.model_copy(update={
+        'claim': '7거래일 코스피 대비 매도가 가장 가능성 높습니다.',
+        'argument': f'"{quote}"에 동의하며 저도 보류가 가장 가능성 높습니다 [E1].'})
+    finding = {'issues': [{'code': 'contradiction', 'quote': '저도 보류가 가장 가능성 높습니다',
+                           'message': '자신의 claim과 동의한 판단이 양립하지 않습니다.'}]}
+    llm = QueueLLM([finding])
+    issues = SemanticReviewer(llm, snap).check(candidate,
+        [render_statement(Side.BULL, 'opening', opponent)], ['PX.CLOSE'], side=Side.BEAR, round_kind='rebuttal')
+    assert len(issues) == 1 and issues[0].code == 'contradiction'
+    assert len(llm.calls) == 1  # No automatic pass or extra paid review.

@@ -18,7 +18,11 @@ public enum ErrorCode {
 	DAILY_LIMIT(HttpStatus.TOO_MANY_REQUESTS),
 	/** 오늘 LLM 비용 상한을 다 썼다. */
 	BUDGET_EXHAUSTED(HttpStatus.SERVICE_UNAVAILABLE),
-	WORKER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE);
+	WORKER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE),
+	/** 카카오가 인가 코드를 받아주지 않았다 (만료·재사용 등). 처음부터 다시 로그인한다. */
+	LOGIN_FAILED(HttpStatus.BAD_REQUEST),
+	/** 카카오 로그인이 설정되지 않았거나 카카오 서버에 연결할 수 없다. */
+	LOGIN_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE);
 
 	private final HttpStatus status;
 

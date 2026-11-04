@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { Sparkline } from '../components/Sparkline'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
@@ -26,7 +26,7 @@ export function StockPage() {
   }
 
   const s = stock.data
-  const today = s?.existingDebate
+  const today = s?.existingDebate?.status === 'FAILED' ? null : s?.existingDebate
   const startError = start.error instanceof ApiError ? start.error.message : start.error ? '토론을 시작하지 못했어요' : null
   const blocked = quotaBlock(s?.quota)
 
@@ -34,6 +34,7 @@ export function StockPage() {
     <Screen>
       <TopBar title={s?.name ?? ''} sub={s ? `${s.ticker} · ${s.market}` : undefined} back="/" />
       <main className="flex flex-1 flex-col gap-3.5 px-5 pb-5 pt-1">
+        {start.isPending && <Card className="flex flex-col gap-2" ><p role="status" className="text-sm font-bold">토론 시작을 요청하고 있어요</p><p className="text-[13px] leading-relaxed text-sub">요청이 연결되면 자료 고정·양측 토론·AI 판정 순서로 진행 상황을 보여드려요.</p></Card>}
         {!s ? (
           <>
             <Skeleton className="h-16 w-48" />
@@ -59,13 +60,13 @@ export function StockPage() {
             )}
 
             <Card className="flex flex-col gap-3">
-              <h2 className="text-sm font-extrabold">AI가 근거로 쓸 데이터</h2>
+              <h2 className="text-sm font-extrabold">AI가 확인할 데이터</h2>
               <DataRow ok label="시세 지표" detail="수익률·이동평균·변동성·거래량" />
-              <DataRow label="재무제표" detail="DART · 워커 연동 후" />
-              <DataRow label="공시" detail="최근 90일 · 워커 연동 후" />
-              <DataRow label="뉴스" detail="최근 7일 · 워커 연동 후" />
+              <DataRow label="재무제표" detail="정기보고서 · 토론 시작 시 조회" />
+              <DataRow label="공시" detail="최근 90일 · 토론 시작 시 조회" />
+              <DataRow label="뉴스" detail="최근 7일 · 토론 시작 시 조회" />
               <p className="border-t border-line-soft pt-2 text-xs leading-relaxed text-sub">
-                토론을 시작하는 순간 이 데이터를 고정해요. 두 AI는 고정된 데이터만 근거로 쓰고, 모든 수치는 원본과 대조해 검증해요.
+                토론 시작 시 확보한 데이터를 고정해요. 두 AI는 같은 자료를 근거로 쓰고, 인용한 수치를 고정된 자료와 대조해요. 수집하지 못한 자료는 근거로 쓰지 않아요.
               </p>
             </Card>
 
@@ -73,7 +74,7 @@ export function StockPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-mod-line bg-mod-soft px-4 py-3.5">
                 <Icon d={ICONS.clock} className="shrink-0 text-mod" />
                 <p className="text-[13px] leading-normal text-mod-ink">
-                  {monthDay(today.dataDate)} 종가 기준 토론이 이미 있어요. 지금과 같은 데이터라 기다리지 않고 바로 볼 수 있어요.
+                  {monthDay(today.dataDate)} 종가 기준 {today.status === 'COMPLETED' ? '완료된 토론이 있어요. 새로 준비하지 않고 바로 읽을 수 있어요.' : '토론이 진행 중이에요. 새로 시작하지 않고 먼저 나온 발언부터 읽을 수 있어요.'}
                 </p>
               </div>
             )}
@@ -82,17 +83,18 @@ export function StockPage() {
       </main>
 
       <BottomBar>
-        {startError && <p className="text-[13px] font-bold text-up-ink">{startError}</p>}
+        {startError && <p role="alert" className="text-[13px] font-bold text-up-ink">{startError}</p>}
         {today ? (
-          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>토론 보기</PrimaryButton>
+          <PrimaryButton onClick={() => navigate(`/debates/${today.id}`)}>{today.status === 'COMPLETED' ? '준비된 토론 읽기' : '진행 중인 토론 보기'}</PrimaryButton>
         ) : (
           <PrimaryButton disabled={!s?.eligible || !!blocked || start.isPending} onClick={() => start.mutate()}>
             {start.isPending ? '토론 준비 중…' : 'AI 토론 시작'}
           </PrimaryButton>
         )}
         <p className="text-center text-xs text-sub">
-          {today ? '이미 끝난 토론은 처음부터 다시 볼 수 있어요' : (blocked ?? quotaHint(s?.quota))}
+          {today ? today.status === 'COMPLETED' ? '내 판정을 제출하기 전까지 AI 판정은 가려져 있어요' : '준비 중인 단계와 먼저 나온 발언을 볼 수 있어요' : (blocked ?? quotaHint(s?.quota))}
         </p>
+        {blocked && <Link to="/quiz" className="pressable flex min-h-touch items-center justify-center rounded-control text-sm font-bold">과거 퀴즈 확인하기</Link>}
       </BottomBar>
     </Screen>
   )
@@ -107,7 +109,7 @@ function quotaBlock(q: StockDetail['quota'] | undefined): string | null {
 }
 
 function quotaHint(q: StockDetail['quota'] | undefined): string {
-  return q ? `1~2분 걸려요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '1~2분 걸려요'
+  return q ? `자료 조회·검증에 수 분 걸릴 수 있어요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '자료 조회·검증에 수 분 걸릴 수 있어요'
 }
 
 function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; detail: string }) {
@@ -115,12 +117,12 @@ function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; d
     <div className="flex items-center gap-2.5 text-sm">
       <span
         className={`flex size-5.5 items-center justify-center rounded-full ${ok ? 'bg-ok-soft text-ok' : 'bg-line-soft text-sub'}`}
-        aria-label={ok ? '준비됨' : '대기'}
+        aria-label={ok ? '준비됨' : '토론 시작 시 확인'}
       >
         {ok ? <Icon d={ICONS.check} size={12} stroke={3} /> : <span className="text-xs">–</span>}
       </span>
       <span className="flex-1">{label}</span>
-      <span className="text-xs text-sub">{detail}</span>
+      <span className="max-w-[60%] text-right text-xs text-sub">{detail}</span>
     </div>
   )
 }

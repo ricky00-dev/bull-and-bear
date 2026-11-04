@@ -1,9 +1,9 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 
-/** 모바일 우선: 폰 폭 기준, 넓은 화면에서는 가운데 480px */
-export function Screen({ children }: { children: ReactNode }) {
-  return <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col bg-ground">{children}</div>
+/** 상세 흐름은 읽기 폭을 유지하고, 홈은 넓은 화면에서 두 열을 사용한다. */
+export function Screen({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  return <div className={`mx-auto flex min-h-dvh w-full flex-col bg-ground ${wide ? 'max-w-[480px] md:max-w-[720px] lg:max-w-[960px]' : 'max-w-[480px] md:max-w-[720px] lg:max-w-[880px]'}`}>{children}</div>
 }
 
 export function TopBar({ title, sub, back }: { title: string; sub?: string; back?: string }) {
@@ -15,13 +15,13 @@ export function TopBar({ title, sub, back }: { title: string; sub?: string; back
           type="button"
           aria-label="뒤로"
           onClick={() => (back ? navigate(back) : navigate(-1))}
-          className="flex size-11 items-center justify-center rounded-xl"
+          className="pressable flex size-touch items-center justify-center rounded-control transition-colors"
         >
           <Icon d="M15 6l-6 6 6 6" size={22} />
         </button>
         <div className="flex min-w-0 flex-col">
           <h1 className="truncate text-base font-extrabold tracking-tight">{title}</h1>
-          {sub && <p className="text-[11px] text-sub">{sub}</p>}
+          {sub && <p className="text-xs leading-relaxed text-sub">{sub}</p>}
         </div>
       </div>
     </header>
@@ -31,7 +31,7 @@ export function TopBar({ title, sub, back }: { title: string; sub?: string; back
 /** 화면 아래 고정 행동 영역. 홈 바 영역은 비운다. */
 export function BottomBar({ children }: { children: ReactNode }) {
   return (
-    <div className="pb-safe sticky bottom-0 z-10 flex flex-col gap-2 border-t border-line bg-white px-5 pt-3">
+    <div className="action-bar pb-safe sticky bottom-0 z-10 flex flex-col gap-2 border-t border-line bg-white px-5 pt-3">
       {children}
     </div>
   )
@@ -48,12 +48,12 @@ export function PrimaryButton({
   onClick?: () => void
   variant?: 'solid' | 'outline'
 }) {
-  const base = 'min-h-14 w-full rounded-2xl text-[17px] font-extrabold transition-colors'
+  const base = 'min-h-14 w-full rounded-control px-4 text-base font-bold transition-[background-color,transform] duration-150 motion-safe:enabled:active:scale-[0.96]'
   const style = disabled
     ? 'bg-line text-sub'
     : variant === 'solid'
-      ? 'bg-ink text-white active:bg-black'
-      : 'border-[1.5px] border-ink bg-white text-ink'
+      ? 'bg-ink text-white hover:bg-black active:bg-black'
+      : 'pressable border-[1.5px] border-ink bg-white text-ink'
   return (
     <button type="button" disabled={disabled} onClick={onClick} className={`${base} ${style}`}>
       {children}
@@ -62,7 +62,7 @@ export function PrimaryButton({
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-line bg-white p-4 ${className}`}>{children}</section>
+  return <section className={`rounded-panel border border-line bg-white p-4 ${className}`}>{children}</section>
 }
 
 export function Icon({ d, size = 20, stroke = 2, className = '' }: { d: string; size?: number; stroke?: number; className?: string }) {
@@ -91,7 +91,7 @@ export function Skeleton({ className }: { className: string }) {
 
 export function ErrorNotice({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+    <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       <p className="text-[15px] font-bold">{message}</p>
       {onRetry && (
         <button type="button" onClick={onRetry} className="min-h-11 rounded-xl border border-line bg-white px-4 text-sm">
@@ -102,27 +102,84 @@ export function ErrorNotice({ message, onRetry }: { message: string; onRetry?: (
   )
 }
 
-/** 아래에서 올라오는 시트. 배경을 누르거나 Esc로 닫는다. */
-export function BottomSheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+/** 네이티브 dialog가 포커스 가두기·배경 비활성화·포커스 복귀를 담당한다. */
+export function ModalSheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    const dialog = ref.current!
+    const previous = document.activeElement
+    const overflow = document.body.style.overflow
+    dialog.showModal()
+    dialog.querySelector<HTMLElement>('[data-sheet-content]')?.focus({ preventScroll: true })
+    const viewport = window.visualViewport
+    const fitViewport = () => {
+      if (!viewport) return
+      dialog.style.height = `${viewport.height}px`
+      dialog.style.top = `${viewport.offsetTop}px`
+      const content = dialog.querySelector<HTMLElement>('[data-sheet-content]')
+      if (content) content.style.maxHeight = `${Math.min(window.innerHeight*0.9, viewport.height-16)}px`
+    }
+    fitViewport()
+    viewport?.addEventListener('resize', fitViewport)
+    viewport?.addEventListener('scroll', fitViewport)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      dialog.close()
+      viewport?.removeEventListener('resize', fitViewport)
+      viewport?.removeEventListener('scroll', fitViewport)
+      document.body.style.overflow = overflow
+      if (previous instanceof HTMLElement) previous.focus({ preventScroll: true })
+    }
+  }, [])
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col justify-end">
-      <button type="button" aria-label="닫기" onClick={onClose} className="absolute inset-0 bg-ink/45" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        className="pb-safe animate-rise relative mx-auto flex w-full max-w-[480px] flex-col gap-3.5 rounded-t-[22px] bg-white px-5.5 pt-2.5"
-      >
-        <div className="h-1 w-10 self-center rounded-full bg-line" />
-        {children}
-        <PrimaryButton onClick={onClose}>확인</PrimaryButton>
+    <dialog
+      ref={ref}
+      aria-label={label}
+      className="modal-sheet fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-transparent p-0 text-ink"
+      onCancel={(event) => { event.preventDefault(); onClose() }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter((el) => el.getClientRects().length > 0)
+        const first = controls[0]
+        const last = controls.at(-1)
+        if (!first || !last) { event.preventDefault(); return }
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+      }}
+    >
+      <div className="flex min-h-full flex-col justify-end md:justify-center md:p-6" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
+        <div
+          data-sheet-content
+          tabIndex={-1}
+          className="sheet-content pb-safe animate-rise relative mx-auto flex max-h-full w-full max-w-[480px] flex-col gap-4 overflow-y-auto rounded-t-sheet md:rounded-sheet bg-white px-5 pt-3 focus:outline-none"
+        >
+          <div className="sticky top-0 z-10 flex min-h-touch shrink-0 items-center justify-center bg-white"><div aria-hidden="true" className="h-1 w-10 rounded-full bg-line" /><button type="button" onClick={onClose} aria-label="창 닫기" className="pressable absolute right-0 flex size-touch items-center justify-center rounded-control text-sub"><Icon d="M6 6l12 12M6 18L18 6" size={20} /></button></div>
+          {children}
+        </div>
       </div>
-    </div>
+    </dialog>
+  )
+}
+
+/** 아래에서 올라오는 시트. 배경을 누르거나 Esc로 닫는다. */
+export function BottomSheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  return (
+    <ModalSheet label={label} onClose={onClose}>
+      {children}
+      <PrimaryButton onClick={onClose}>확인</PrimaryButton>
+    </ModalSheet>
+  )
+}
+
+/** 불앤베어 로고: 오르는 소(왼쪽)와 내리는 곰(오른쪽) 선. 홈 머리와 왼쪽 메뉴가 같이 쓴다 */
+export function Logo() {
+  return (
+    <span className="flex items-center gap-2">
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
+      </svg>
+      <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
+    </span>
   )
 }

@@ -51,13 +51,14 @@ docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
 (crontab -l 2>/dev/null; echo "0 4 * * * $HOME/bull-and-bear/deploy/backup.sh >> $HOME/backup.log 2>&1") | crontab -
 ```
 
-## 실제 워커 붙이기 (M2, 워커 FastAPI 완성 후)
+## 실제 워커 붙이기
 
-1. 워커 의존성에 `fastapi`, `uvicorn` 추가, `bullbear.server:app` 구현 (jangwonii, `docs/worker-api.md`)
+1. FastAPI/HTTP 워커는 구현되어 있다. 실제 모델 완주, 비개발용 토큰, 영속 데이터/비용 장부를
+   [워커 운영 안내](WORKER-OPERATIONS.md)에 따라 검증한다. Docker가 없는 PC의 로컬 통합 검증과 실제 서버 배포는 구분한다.
 2. 워커는 요청 헤더 `X-Worker-Token`이 환경 변수 `WORKER_TOKEN`과 같은지 확인한다 (Spring이 보냄)
 3. `deploy/.env`: `WORKER_MODE=http`, API 키들 입력
 4. `docker compose -f deploy/compose.yml --env-file deploy/.env --profile worker up -d --build`
-5. 토론 한 번 돌려 보고 이상 없으면 `FORWARD_RUN_ENABLED=true` → `up -d`
+5. 동일 스냅샷 토론/단일 완주·반복 품질/비용·봉인·복구를 확인한 후 전향 운용 활성화를 결정한다.
 
 ## 업데이트
 
@@ -67,10 +68,14 @@ docker compose -f deploy/compose.yml --env-file deploy/.env --profile worker up 
 docker image prune -f   # 옛 이미지 정리 (디스크 20GB가 빌드마다 줄어든다)
 ```
 
-DB 마이그레이션은 Spring이 켜질 때 Flyway가 자동으로 한다. 진행 중이던 토론은 재시작 후 이어 받는다.
+DB 마이그레이션은 Spring이 켜질 때 Flyway가 자동으로 한다. Spring은 저장된 워커 ID로 상태/이벤트를 다시 조회한다.
+워커 프로세스가 중단된 토론은 실패로 복구하며 모델 생성을 자동 재개하지 않는다. 미확정 비용은 유지한다.
 배포 중 1분 정도 API가 내려간다 (전시 당일에는 배포하지 않는다).
 
 ## 운영 명령
+
+`deploy/backup.sh`는 PostgreSQL만 백업한다. 워커 스냅샷·감사·HTTP 결과·비용 장부는
+`worker_data`에 별도로 있으므로 [워커 백업/복구 절차](WORKER-OPERATIONS.md#중단과-복구)도 필요하다.
 
 ```bash
 docker compose -f deploy/compose.yml --env-file deploy/.env ps        # 상태
@@ -104,6 +109,29 @@ docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -
   로컬 운영 구성에서 백업 → 데이터 변경 → 복구 → API 재기동까지 확인함 (2026-11-02).
 - 한계: 백업이 같은 서버에 있어서 서버(디스크)를 잃으면 같이 잃는다. 정식 운용(11/11) 전에 S3로 복사를 붙인다
   (S3 몇 MB는 월 몇 원 수준). 그 전에는 큰 변경 전에 `scp`로 내려받아 둔다.
+
+## 전시장 노트북 화면
+
+노트북 브라우저로 `https://<배포 주소>/exhibit`를 열고 전체 화면(F11, 맥은 ⌃⌘F)으로 둔다.
+
+- 큰 QR(관람객 입장), 오늘 퀴즈 랭킹(15초마다), 오늘의 토론 판정 수(30초마다)가 알아서 갱신된다
+- QR에는 지금 연 주소가 들어간다. 노트북에서 로컬로 띄우는 경우에만 `web/.env.local`의 `VITE_PUBLIC_URL`에 배포 주소를 넣는다
+- 화면 꺼짐은 브라우저가 지원하면 막는다(Wake Lock). 그래도 노트북 절전·화면보호기는 꺼 둔다
+- 노트북도 게스트 하나로 접속하므로 랭킹·판정 수에는 영향이 없다
+
+## 카카오 로그인
+
+키가 없으면 버튼이 "카카오로 시작 (준비 중)"으로 보이고 나머지는 그대로 동작한다.
+
+1. [카카오 developers](https://developers.kakao.com) → 내 애플리케이션 → 애플리케이션 추가 (앱 이름 "불앤베어")
+2. 앱 설정 → 플랫폼 → **Web** 사이트 도메인: `https://배포주소`, `http://localhost:5173`
+3. 카카오 로그인 → **활성화 ON**, Redirect URI: `https://배포주소/auth/kakao`, `http://localhost:5173/auth/kakao`
+4. 동의항목은 **아무것도 켜지 않는다** (회원번호만 쓴다. 이름·이메일을 받으면 개인정보 처리방침을 고쳐야 한다)
+5. 앱 키 → **REST API 키**를 `deploy/.env`의 `KAKAO_REST_KEY`에 넣고 `up -d` 다시 실행
+   - 보안 → 클라이언트 시크릿을 "사용함"으로 켰다면 그 값도 `KAKAO_CLIENT_SECRET`에
+   - 로컬: `api/.env`에 `KAKAO_REST_KEY=...` 한 줄 (커밋 금지, .gitignore에 있음) 후 API 재시작
+
+동작: 게스트로 쌓은 판정·퀴즈 기록은 카카오 계정에 그대로 이어진다. 다른 기기에서 같은 카카오로 들어오면 그 기기의 게스트 기록을 합친다(같은 토론을 양쪽에서 판정했으면 먼저 가입한 쪽 판정을 남긴다).
 
 ## 로컬에서 운영 구성 확인
 

@@ -96,6 +96,32 @@ def test_index_selects_benchmark_not_first_subindex(tmp_path, monkeypatch):
     assert source.get_index_prices("KOSPI", date(2026, 10, 16), date(2026, 10, 16)) == [(date(2026, 10, 16), 2500.25)]
 
 
+@pytest.mark.parametrize("code,name,other", [
+    ("KOSPI", "코스피", "코스피 (외국주포함)"),
+    ("KOSDAQ", "코스닥", "코스닥 기타 지수"),
+])
+def test_unused_index_blank_close_does_not_discard_valid_benchmark(tmp_path, monkeypatch, code, name, other):
+    calls = transport(monkeypatch, {"OutBlock_1": [
+        {"BAS_DD": "20261016", "IDX_NM": other, "CLSPRC_IDX": ""},
+        {"BAS_DD": "20261016", "IDX_NM": name, "CLSPRC_IDX": "2,500.25"},
+    ]})
+    day = date(2026, 10, 16)
+    assert KrxOpenApiSource("test-key", None, tmp_path).get_index_prices(code, day, day) == [(day, 2500.25)]
+    # The whole response cache must remain usable after reopening, without a key.
+    assert KrxOpenApiSource(None, None, tmp_path).get_index_prices(code, day, day) == [(day, 2500.25)]
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("close", ["", "NaN", "0", "-1"])
+def test_invalid_requested_benchmark_still_fails(tmp_path, monkeypatch, close):
+    transport(monkeypatch, {"OutBlock_1": [
+        {"BAS_DD": "20261016", "IDX_NM": "코스피 200", "CLSPRC_IDX": "300"},
+        {"BAS_DD": "20261016", "IDX_NM": "코스피", "CLSPRC_IDX": close},
+    ]})
+    with pytest.raises(DataUnavailable):
+        KrxOpenApiSource("test-key", None, tmp_path).get_index_prices("KOSPI", date(2026, 10, 16), date(2026, 10, 16))
+
+
 def test_default_routes_use_krx_dart_and_naver_news(tmp_path):
     settings = replace(load_settings(), data_dir=tmp_path, krx_api_key="test-key",
                        naver_client_id="test-id", naver_client_secret="test-secret")

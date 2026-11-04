@@ -1,5 +1,7 @@
 import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, MyStats, QuizAnswer, QuizRound, QuizStats, Ranking, Report, Reveal, StockDetail, StockItem } from './types'
 import type { DocumentResult, FactQuery, FactResult } from './rag'
+import { EVIDENCE_DRAFT_PREFIX } from './evidence'
+import { JUDGMENT_DRAFT_PREFIX } from './judgmentDraft'
 
 type Me = { userId: string; guest: boolean; nickname: string | null }
 
@@ -37,6 +39,11 @@ function writeToken(token: string | null) {
   } catch {
     // 저장 못 해도 이번 세션은 메모리 토큰으로 동작
   }
+}
+
+/** 카카오 로그인으로 받은 이 기기용 토큰으로 바꾼다 */
+export function setToken(token: string) {
+  writeToken(token)
 }
 
 /** 토큰이 없으면 게스트 계정을 만든다. 가입 없이 바로 판정할 수 있게. */
@@ -82,7 +89,21 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
     return request<T>(path, init, true)
   }
   if (!res.ok) throw await toError(res)
+  if (res.status === 204) return undefined as T
   return (await res.json()) as T
+}
+
+/** 내 기록을 지운 뒤: 토큰과 최근 검색어를 버려 다음 요청에서 새 게스트로 시작한다 */
+export function resetSession() {
+  writeToken(null)
+  try {
+    for (const key of Object.keys(sessionStorage)) if (key.startsWith(EVIDENCE_DRAFT_PREFIX) || key.startsWith(JUDGMENT_DRAFT_PREFIX)) sessionStorage.removeItem(key)
+  } catch { /* 저장소를 사용할 수 없으면 메모리 세션만 초기화 */ }
+  try {
+    localStorage.removeItem('bb.recent')
+  } catch {
+    // 저장소를 못 쓰면 지울 것도 없다
+  }
 }
 
 export const api = {
@@ -109,6 +130,10 @@ export const api = {
     request<QuizAnswer>(`/api/quiz/rounds/${id}/questions/${idx}/answer`, { method: 'POST', body: JSON.stringify({ decision }) }),
   quizRanking: (all: boolean) => request<Ranking>(`/api/quiz/ranking?scope=${all ? 'all' : 'today'}`),
   me: () => request<Me>('/api/me'),
+  kakaoConfig: () => request<{ enabled: boolean; clientId: string | null }>('/api/auth/kakao/config'),
+  kakaoLogin: (code: string, redirectUri: string) =>
+    request<{ userId: string; token: string; merged: boolean }>('/api/auth/kakao', { method: 'POST', body: JSON.stringify({ code, redirectUri }) }),
+  deleteMe: () => request<void>('/api/me', { method: 'DELETE' }),
   setNickname: (nickname: string) => request<Me>('/api/me/nickname', { method: 'PUT', body: JSON.stringify({ nickname }) }),
   myJudgments: () => request<{ items: JudgmentView[] }>('/api/me/judgments'),
   myJudgment: (id: string) => request<JudgmentDetail>(`/api/me/judgments/${id}`),
