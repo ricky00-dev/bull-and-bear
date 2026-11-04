@@ -91,7 +91,7 @@ export function DebatePage() {
         {pairStatements(stream.statements).map(pair => (
           <section key={pair.key} aria-label={`${ROUND_LABEL[pair.round]} 비교${pair.index ? ` ${pair.index + 1}` : ''}`} className="flex flex-col gap-3 py-3">
             <h3 className="text-base font-bold">{ROUND_LABEL[pair.round]}{pair.index > 0 ? ` ${pair.index + 1}` : ''}</h3>
-            <div className="grid items-stretch gap-5 md:grid-cols-2">
+            <div className="grid items-stretch gap-5 lg:grid-cols-2">
               {(['bull', 'bear'] as const).map(side => {
                 const s = pair[side]
                 const previous = s ? previousOpponent(s, stream.statements) : undefined

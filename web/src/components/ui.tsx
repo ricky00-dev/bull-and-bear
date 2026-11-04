@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 
 /** 상세 흐름은 읽기 폭을 유지하고, 홈은 넓은 화면에서 두 열을 사용한다. */
 export function Screen({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  return <div className={`mx-auto flex min-h-dvh w-full flex-col bg-ground ${wide ? 'max-w-[960px]' : 'max-w-[480px]'}`}>{children}</div>
+  return <div className={`mx-auto flex min-h-dvh w-full flex-col bg-ground ${wide ? 'max-w-[480px] md:max-w-[720px] lg:max-w-[960px]' : 'max-w-[480px] md:max-w-[720px] lg:max-w-[880px]'}`}>{children}</div>
 }
 
 export function TopBar({ title, sub, back }: { title: string; sub?: string; back?: string }) {
@@ -148,11 +148,11 @@ export function ModalSheet({ label, onClose, children }: { label: string; onClos
         if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
       }}
     >
-      <div className="flex min-h-full flex-col justify-end" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <div className="flex min-h-full flex-col justify-end md:justify-center md:p-6" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
         <div
           data-sheet-content
           tabIndex={-1}
-          className="sheet-content pb-safe animate-rise relative mx-auto flex max-h-full w-full max-w-[480px] flex-col gap-4 overflow-y-auto rounded-t-sheet bg-white px-5 pt-3 focus:outline-none"
+          className="sheet-content pb-safe animate-rise relative mx-auto flex max-h-full w-full max-w-[480px] flex-col gap-4 overflow-y-auto rounded-t-sheet md:rounded-sheet bg-white px-5 pt-3 focus:outline-none"
         >
           <div className="sticky top-0 z-10 flex min-h-touch shrink-0 items-center justify-center bg-white"><div aria-hidden="true" className="h-1 w-10 rounded-full bg-line" /><button type="button" onClick={onClose} aria-label="창 닫기" className="pressable absolute right-0 flex size-touch items-center justify-center rounded-control text-sub"><Icon d="M6 6l12 12M6 18L18 6" size={20} /></button></div>
           {children}

@@ -160,3 +160,10 @@ PWA는 입력 도중 강제로 새로고침하지 않고 ‘새 화면으로 업
 - 미확인: 실제 기기, 설치형 standalone PWA, 스크린리더, 새 SSE 도착 순간의 수동 스크롤 경합, 전체 API/워커 회귀. 실모델·유료 호출·배포·판정 제출 없음.
 
 캡처: [모바일 홈](../output/ui-review-20261104/first-experience-mobile/home-local-final.png), [짧은 화면 메모](../output/ui-review-20261104/first-experience-mobile/short-viewport-memo.png), [짧은 근거 창](../output/ui-review-20261104/first-experience-mobile/short-sheet.png). 홈의 네 폭 전체 캡처와 측정 JSON은 같은 폴더의 home/에 보관한다.
+
+
+## PR 준비: develop 반응형 작업 통합
+
+최신 origin/develop 71ef6d4(#34)를 현재 브랜치에 병합했다. 데스크톱 왼쪽 메뉴, 상세 화면의 md720/lg880px 본문, 내 판정 목록 2열을 유지한다. 홈/토론은 lg부터 내부 2열로 표시하고 그보다 좁은 태블릿에서는 왼쪽 메뉴 옆의 실제 가용 폭을 고려해 단일 열로 읽는다. 공통 네이티브 시트는 md부터 가운데 배치한다. 이전 독립 시트 구현을 되살리지 않고 접근성·키보드/visualViewport 처리를 유지했다.
+
+통합 후 build/lint와 단위13개를 다시 통과했고, 최신 배포 빌드 홈1440/768/390px을 실제 미리보기 브라우저에서 확인했다. 캡처는 [데스크톱](../output/ui-review-20261104/develop-integration/home-desktop.png), [태블릿](../output/ui-review-20261104/develop-integration/home-tablet.png), [모바일](../output/ui-review-20261104/develop-integration/home-mobile.png). 앞선 상세 측정 기록은 각 검증 시점의 결과이며 통합 후 전체 재검사라는 뜻은 아니다.

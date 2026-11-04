@@ -69,7 +69,7 @@ export function HomePage() {
     <Screen wide>
       <header className="pt-safe px-5">
         <div className="flex items-center justify-between pb-2 pt-5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 md:invisible">
             <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
             </svg>
@@ -115,7 +115,7 @@ export function HomePage() {
 
       <main className="flex flex-1 flex-col gap-6 px-5 pb-8">
         {!deferred && (
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-start md:gap-8">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
             <div className="flex min-w-0 flex-col gap-5">
               {pending && nextScore && (
                 <Link
