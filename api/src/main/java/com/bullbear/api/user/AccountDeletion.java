@@ -28,6 +28,7 @@ public class AccountDeletion {
 				.param("u", userId).update();
 		jdbc.sql("delete from quiz_rounds where user_id = :u").param("u", userId).update();
 		jdbc.sql("update debates set requested_by = null where requested_by = :u").param("u", userId).update();
+		jdbc.sql("delete from auth_tokens where user_id = :u").param("u", userId).update();
 		jdbc.sql("delete from users where id = :u").param("u", userId).update();
 	}
 }

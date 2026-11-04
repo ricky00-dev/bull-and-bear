@@ -9,6 +9,7 @@ import { describe } from '../lib/glossary'
 import type { Score } from '../lib/types'
 import { JudgmentComparison } from '../components/JudgmentComparison'
 import { EvidenceComparison } from '../components/EvidenceComparison'
+import { KakaoButton } from '../components/KakaoButton'
 import { useDebateStream } from '../lib/useDebateStream'
 
 const RUBRIC: { key: keyof Omit<Score, 'comment'>; label: string }[] = [
@@ -154,12 +155,10 @@ function SignupCard() {
       <div className="flex flex-col gap-1">
         <h3 className="text-[17px] font-extrabold">채점 결과를 놓치지 마세요</h3>
         <p className="text-[13px] leading-relaxed text-[#c9cdd6]">
-          지금은 게스트예요. 가입하면 이 판정이 그대로 저장되고, 채점일에 알림을 보내드려요.
+          지금은 게스트라 이 기기에만 기록이 남아요. 카카오로 시작하면 이 판정이 그대로 이어지고, 다른 기기에서도 채점 결과를 볼 수 있어요.
         </p>
       </div>
-      <button type="button" disabled className="min-h-13 rounded-xl bg-[#fee500] text-base font-extrabold text-[#191600] opacity-60">
-        카카오로 시작 (준비 중)
-      </button>
+      <KakaoButton className="min-h-13 text-base" />
     </section>
   )
 }
