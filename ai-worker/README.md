@@ -38,6 +38,16 @@ HTTP·CLI는 `fixed_rounds=True`와 검증 콜백을 사용한다. 각 단계의
 무과금 검증: `uv run pytest tests/test_graph.py tests/test_graph_runtime.py -q`.
 Spring 판정 봉인은 유지하며 사용자 판정 허용 정책·프론트는 이번 변경 범위 밖이다.
 
+### 검증 책임
+
+토론자마다 별도 LLM 검토를 호출하지 않는다. 코드가 자료 ID·원본 값·구조화 반박 연결·역할 등
+기본 계약을 검사하고, 6개 발언 후 중재자가 전체 고정 자료와 발언의 논리·가정·반론을 검토한다.
+본문에 따옴표로 상대 문구를 반복할 의무는 없으며 analysis.rebuttal의 원문 연결은 유지한다.
+중재자는 verdict.analysis.statement_reviews에 각 발언의 문제 미발견/우려/불확실과 이유를 기록한다.
+이는 정오 채점이나 인과 증명이 아니다. 중재자 판단도 오류가 가능하며, 발언 공개 전에 내용 전체를 검증한 것으로
+간주하지 않는다. verified=true는 verification_scope=source_values_and_structure 범위다.
+프론트·Spring은 수정하지 않았으며 새 리뷰는 기존 판정 봉인 경로에 포함된다.
+
 ## 시작하기
 
 ```bash

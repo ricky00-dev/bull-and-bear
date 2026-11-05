@@ -82,6 +82,13 @@ class StatementAnalysis(StructuredPart):
     closing: Closing | None
 
 
+class StatementReview(StructuredPart):
+    statement_id: str
+    assessment: Literal['no_issue_found', 'concern', 'uncertain']
+    reason: str = Field(min_length=1)
+    source_ids: list[str] = Field(max_length=3)
+
+
 class ModeratorAnalysis(StructuredPart):
     common_ground: list[str] = Field(max_length=3)
     core_issues: list[str] = Field(min_length=1, max_length=3)
@@ -90,6 +97,8 @@ class ModeratorAnalysis(StructuredPart):
     outlook_basis: list[str] = Field(min_length=1, max_length=3)
     outlook_limits: list[str] = Field(min_length=1, max_length=3)
     key_interpretation_ids: list[str] = Field(max_length=6)
+    # Older verdicts remain readable; live generation requires all six statements.
+    statement_reviews: list[StatementReview] = Field(default_factory=list, max_length=6)
 
 
 class Statement(BaseModel):
@@ -188,6 +197,8 @@ def _with_analysis(schema: dict, model: type[BaseModel]) -> dict:
     result = deepcopy(schema)
     analysis = model.model_json_schema()
     result["$defs"] = analysis.pop("$defs", {})
+    # Defaults support old persisted data, not omission in newly generated output.
+    analysis["required"] = list(analysis["properties"])
     result["properties"]["analysis"] = analysis
     result["required"].append("analysis")
     return result

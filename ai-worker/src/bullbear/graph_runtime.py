@@ -11,12 +11,13 @@ from pydantic import ValidationError
 
 from . import prompts
 from .graph import Analysis, Mediation, build_debate_graph
-from .interpretations import analysis_issues, bind_statement
+from .interpretations import analysis_issues, bind_statement, history_records
 from .llm import Conversation, LLMError
-from .presentation import statement_issues, rebuttal_target_issues, moderator_issues
+from .presentation import statement_issues, moderator_issues
 from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_SCHEMA,
                       STRUCTURED_MODERATOR_SCHEMA)
-from .semantic import SemanticReviewer, concept_issues, horizon_issues
+from .semantic import BACKGROUND_RULES, concept_issues, horizon_issues
+from .rag.context import render_background
 from .tools import SnapshotTools, TOOL_DEFINITIONS
 from .verifier import verify, Issue, VerificationResult
 
@@ -52,6 +53,17 @@ analysis의 common_ground/core_issues/disagreements/unverified를 구분하고 o
 추가 라운드나 조사 요청은 하지 않는다. action은 ACCEPT 또는 ABSTAIN, tool은 null이다.
 토론자는 배정된 매수·매도 입장을 논증한 것이며 독립적인 예측 투표가 아니다.
 공통 사실, 해석 차이, 반박으로 약화·유지된 논점과 미해결 불확실성을 정리한다.
+당신이 토론 내용의 검증을 담당한다. 발언의 verified=true는 자료 ID·인용 값 등 코드 검사만 통과했다는 뜻이다.
+전체 facts와 실제 history를 대조해 사실/가정 혼동, 근거 없는 인과, 상대 주장 왜곡, 역할 이탈을 검토한다.
+과거 3/7거래일 상대수익은 기준일에 끝나는 관측이지 미래 7거래일의 실현 결과가 아니다.
+약한 조건부 논거·불확실성 인정 자체는 오류가 아니다. 반박 본문의 따옴표·첫 문장 형식으로 감점하지 않는다.
+구조화된 rebuttal 대상과 내용을 읽고 상대의 중요한 해석을 제대로 다뤘는지 평가한다.
+analysis.statement_reviews에 각 발언당 정확히 한 항목을 써서 6개 모두 검토한다:
+statement_id는 실제 발언 ID, assessment는 no_issue_found/concern/uncertain,
+reason은 판단 이유와 오류 또는 미확인 사항, source_ids는 대조한 실제 Fact ID(최대 3개, 없으면 빈 배열)다.
+no_issue_found는 오류를 발견하지 못했다는 뜻이며 사실성·인과·수익 예측의 보증이 아니다.
+문제 있는 해석은 최종 전망의 확정 사실로 재사용하지 말고 unverified/outlook_limits와 평가에 반영한다.
+문제가 있어도 토론을 재생성하지 않는다. 전망이 불가능하면 ABSTAIN을 선택한다.
 """ + prompts.JUDGMENT_POLICY
 
 
@@ -79,9 +91,10 @@ class GraphRuntime:
         self.context = background_context
         self.lock = threading.RLock()
         self.attempts = {side.value: [] for side in Side}
-        self.reviewers = {side.value: SemanticReviewer(llm, snapshot, background_context=background_context)
-                          for side, llm in ((Side.BULL, bull), (Side.BEAR, bear))}
-        self.moderator_reviewer = SemanticReviewer(moderator, snapshot, background_context=background_context)
+        if background_context is not None and background_context.snapshot_id != snapshot.snapshot_id:
+            raise ValueError('Background context does not match the frozen snapshot')
+        rendered = render_background(background_context)
+        self.background = BACKGROUND_RULES + rendered if rendered else ''
 
     def emit(self, event, payload):
         # Parallel initial nodes must not interleave event sequence assignment.
@@ -99,7 +112,6 @@ class GraphRuntime:
         history = state.get(side.value, [])
         stage = ('opening', 'rebuttal', 'closing')[len(history)]
         transcript = self.transcript(state)
-        reviewer = self.reviewers[side.value]
         task = {
             'opening': '첫 주장: 관측·해석·가정·한계를 구분해 배정 입장을 논증하세요.',
             'rebuttal': '상대 첫 주장의 중요한 해석을 인용하고 인정·반박 이유·미해결 쟁점을 작성하세요.',
@@ -111,7 +123,7 @@ class GraphRuntime:
                    'research_results': state.get('research_results', []),
                    'decision_at': self.snapshot.created_at.isoformat()}
         conv = Conversation(prompts.debater_system(side, name=self.snapshot.name, ticker=self.snapshot.ticker,
-            as_of=str(self.snapshot.as_of)) + reviewer.background,
+            as_of=str(self.snapshot.as_of)) + self.background,
             [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}])
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
                                    'debate_flow': 'fixed_three_rounds'})
@@ -138,7 +150,6 @@ class GraphRuntime:
             result = verify(statement, self.snapshot)
             issues = list(result.issues) + horizon_issues(statement.claim)
             issues += statement_issues(statement, stage, set())
-            issues += rebuttal_target_issues(statement, side, stage, transcript)
             issues += analysis_issues(statement, transcript=transcript, side=side, round_kind=stage)
             expected = 'BUY' if side == Side.BULL else 'SELL'
             if statement.analysis is not None and statement.analysis.outlook != expected:
@@ -146,9 +157,9 @@ class GraphRuntime:
                     message=f'배정 입장 {expected}를 유지하세요. 지지가 약하면 가정·한계에 명시하고 사실을 만들지 마세요.'))
             issues += concept_issues('\n'.join([statement.claim, statement.argument,
                                               *(e.interpretation for e in statement.evidence)]))
-            if not any(i.severity == 'error' for i in issues):
-                issues += reviewer.check(statement, transcript, [e.source_id for e in statement.evidence],
-                                         side=side, round_kind=stage)
+            # Stylistic/semantic concerns are moderator inputs, not generation gates.
+            deferred = {'claim_length', 'argument_length', 'money_unit', 'concept_error'}
+            issues = [i.model_copy(update={'severity': 'warning'}) if i.code in deferred else i for i in issues]
             result = result.model_copy(update={'issues': issues,
                                                'passed': not any(i.severity == 'error' for i in issues)})
             with self.lock:
@@ -159,7 +170,7 @@ class GraphRuntime:
                 statement = bind_statement(statement, self.snapshot,
                     debate_id=f'{self.debate_id}:{side.value}', turn_index=len(history) + 1)
                 self.emit('statement_accepted', {'side': side, 'round': stage, 'attempts': attempt,
-                    'verified': True, 'statement': statement, 'verification': result, 'engine': 'langgraph'})
+                    'verified': True, 'verification_scope': 'source_values_and_structure', 'statement': statement, 'verification': result, 'engine': 'langgraph'})
                 return Analysis(statement, tuple(calls))
             self.emit('statement_rejected', {'side': side, 'round': stage, 'attempt': attempt, 'issues': issues})
             conv.messages.append({'role': 'user', 'content': prompts.verifier_feedback(result.feedback())})
@@ -168,8 +179,9 @@ class GraphRuntime:
     def mediate(self, state):
         self.emit('moderator_started', {'engine': 'langgraph'})
         transcript = self.transcript(state)
-        conv = Conversation(MEDIATOR_SYSTEM + self.moderator_reviewer.background,
+        conv = Conversation(MEDIATOR_SYSTEM + self.background,
             [{'role': 'user', 'content': json.dumps({'history': transcript,
+                'facts': {key: fact.model_dump(mode='json') for key, fact in self.snapshot.facts.items()},
                 'research_results': state.get('research_results', []),
                 'remaining_actions': 0,
                 'price_as_of': str(self.snapshot.as_of),
@@ -198,8 +210,15 @@ class GraphRuntime:
                 issues += analysis_issues(candidate, transcript=transcript)
                 if any(key not in self.snapshot.facts for key in candidate.decisive_evidence):
                     issues.append(Issue(severity='error', code='unknown_source', message='스냅샷에 없는 판정 근거'))
-                if not issues:
-                    issues += self.moderator_reviewer.check(candidate, transcript, candidate.decisive_evidence)
+                records = history_records(transcript)
+                reviews = candidate.analysis.statement_reviews
+                ids = [r.statement_id for r in reviews]
+                if len(ids) != len(set(ids)) or set(ids) != {r['statement_id'] for r in records}:
+                    issues.append(Issue(severity='error', code='review_coverage',
+                        message='실제 6개 발언 ID를 각각 한 번씩 검토하세요.'))
+                if any(key not in self.snapshot.facts for r in reviews for key in r.source_ids):
+                    issues.append(Issue(severity='error', code='review_source',
+                        message='검토 source_ids는 실제 Fact ID만 사용하세요.'))
                 if issues:
                     self.log.append('moderator_rejected', attempt=attempt, category='content_validation',
                                     issues=issues)

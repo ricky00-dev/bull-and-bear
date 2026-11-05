@@ -15,6 +15,30 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-05 · Codex · 중재자 검토 변경 커밋
+- 한 것: 사용자 요청으로 중재자 중심 검토 코드·회귀 테스트·계약 v1.2 초안·실모델 검증 기록을 커밋 대상으로 확인했다. 프론트·Spring 코드와 키·로컬 실행 데이터는 포함하지 않는다.
+- 진행 중: feat/worker-structured-interpretations 브랜치에서 한국어 Conventional Commit 생성. 기존 전체 테스트 611 통과·78 건너뜀 및 삼성전자 6발언·중재자 완료 실검증 이후 코드 변경 없음.
+- 다음: 계약 공동 리뷰 및 필요시 원격 푸시·PR. 이번 요청에는 푸시를 포함하지 않는다.
+- 막힘·결정 필요: 중재자 검토가 사실성·인과 타당성의 보증은 아니다. 새 리뷰 항목의 화면 표시는 별도 범위다.
+
+## 2026-11-05 · Codex · 중재자 검토 방식 삼성전자 실실행 완료
+- 한 것: langgraph-moderator-review-v3 정책으로 삼성전자 1건을 Spring API에서 생성하고 웹에 열도록 연결했다. API ID 5a31c4b1-5d1a-4060-8fbb-12b5bf8d50e8, Worker ID 14826b905b5348c4b1d66220674c00f0. 주장·반박·최종 정리 각 양측 2개, 총 6발언이 저장·SSE 전달·브라우저 표시되었다. 모든 단계 bull BUY/bear SELL 유지 확인.
+- 진행 중: 토론 및 중재자 모두 completed. 중재자 검토 statement_reviews 6개 저장, Spring 공개 스트림은 debate_sealed로 종료하며 사용자 판정 없는 reveal은 403이다. 실제 브라우저에서 모든 단계·양측 발언과 'AI 중재자 판정 완료 · 내 판정을 내면 열려요', '내 판정 내리기' 표시 및 JS 오류 0 확인. 사용자 판정은 제출하지 않았다.
+- 다음: 사용자가 웹에서 실제 발언을 읽고 직접 판정할 수 있다. 새 발언별 검토 필드의 별도 화면 표시는 이번 범위에 포함하지 않았다. 실제 문장의 기간 혼동 등 내용 품질은 완료 여부와 별도로 검토해야 한다.
+- 막힘·결정 필요: 약 174초, 이번 비용 USD 0.5103252, 기존 포함 누적 0.9976365, 미확인 사용량 0. 중재자는 schema_or_action, verdict_refs 오류로 2회 재작성 후 완료했다. 검증용 SSE 클라이언트의 60초 읽기 제한으로 구독만 재연결했으며 토론 재실행은 없었다. 산출물은 ai-worker/data/web-live-20261105/rerun-moderator 아래(git 제외). 유료 실행은 1건이며 커밋·푸시는 하지 않았다. 로컬 서비스 계속 실행 중.
+
+## 2026-11-05 · Codex · 중재자 중심 내용 검토
+- 한 것: 사용자 요청으로 GraphRuntime의 발언별 LLM 자기검토와 중재자 출력의 별도 LLM 자기검토를 제거하고, 최종 중재자가 6개 발언과 전체 고정 facts를 대조해 내용 검토와 전망을 함께 작성하도록 변경했다. 본문의 따옴표/첫 문장 인용 형식 강제를 없애되 analysis.rebuttal의 실제 상대 ID·원문 연결, 자료 ID·인용 값·역할·스키마 검사는 유지한다. 길이·금액 표기·개념 표현 문제는 경고로 남긴다.
+- 진행 중: verdict.analysis.statement_reviews에 발언별 statement_id, assessment(no_issue_found/concern/uncertain), reason, source_ids를 추가했다. 신규 생성은 6개 검토와 실제 참조를 코드로 확인하고, 기존 기록은 빈 배열 기본값으로 읽는다. statement_accepted.verification_scope=source_values_and_structure로 범위를 표시한다. 중재자 검토는 최종 verdict에만 포함해 기존 봉인 경로를 따른다. 프론트·Spring 코드는 수정하지 않았다.
+- 다음: 새 정책의 실모델 검증과 계약 v1.2 초안 공동 리뷰. ABSTAIN 시에는 기존처럼 전망 없이 종료하며 새 리뷰 배열은 반환하지 않는다. 화면에서 새 검토 내용을 보여주는 일은 별도 범위다.
+- 막힘·결정 필요: 전체 무과금 테스트 611 통과·78 건너뜀, git diff --check 통과. 인용 형식 없이 6발언 진행, 잘못된 반박 대상/자료 거부, 중재 검토 커버리지/ID 검증과 봉인 확인. 개별 발언은 의미 검토 전에 공개되며 중재자 검토도 사실성·인과 타당성을 보장하지 않는다. 유료 토론 추가 실행 및 커밋·푸시는 하지 않았다. 활성 토론이 없는 것을 확인하고 로컬 Worker를 새 코드로 재시작했다. 이전 실검증 WORKLOG 수정은 보존했다.
+
+## 2026-11-05 · Codex · 고정 6발언 실모델 재검증
+- 한 것: 수정된 로컬 Worker(9c132d1)의 삼성전자 토론 1건을 API·SSE·실제 브라우저에서 확인했다. API가 이미 RUNNING인 신규 정책 토론을 reused=true로 반환하여 중복 생성하지 않았다. API ID c990f601-6382-40c7-ad59-c75c9b0c3534, Worker ID 946c1a5a41c241749f7b68f5fa5b8b94. turn_started의 fixed_three_rounds를 확인했다.
+- 진행 중: FAILED로 종료. 양측 opening 및 bear rebuttal의 총 3개 발언만 승인·저장·웹 표시되었다. bull BUY/bear SELL 역할은 유지했다. bull rebuttal이 본문 원문 인용 검증(rebuttal_target)을 3회 연속 통과하지 못해 closing과 moderator는 실행되지 않았다. generation.debate_complete=false, moderator_status=not_started. 실행 약 118초, 이번 확인 건의 추가 비용 USD 0.0532262(기존 포함 누적 0.4873113), 미확인 사용량 0.
+- 다음: 구조화된 target_statement_id/target_quote 검증과 본문의 별도 인용 형식 검증이 중복되는 부분을 검토해야 한다. 실제 후보에서 구조화 반박은 작성됐지만 본문 인용 생략/의역으로 탈락했다. 이를 수정하더라도 상대 주장 연결의 정확성은 유지해야 한다. 이번 실검증은 6발언·중재자 완료 기준을 통과하지 못했다.
+- 막힘·결정 필요: 브라우저 JS 오류 0, 사용자 판정 전 reveal 403 확인. 추가 유료 재실행·사용자 판정 제출·소스 수정은 하지 않았다. 기록은 ai-worker/data/web-live-20261105/rerun-fixed 아래(git 제외)에 저장했다. 로컬 서비스는 계속 실행 중이다.
+
 ## 2026-11-05 · Codex · 고정 공방·매수매도 역할 유지
 - 한 것: HTTP·CLI의 LangGraph를 양측 첫 주장 → 양측 반박 → 양측 최종 정리 → 중재자 흐름으로 변경했다. 각 단계는 양측 완료를 기다리며 총 6개 발언을 생성한다. 매수 BUY·매도 SELL을 구조화 검증하고, 본문 역할 이탈은 의미 검토 대상으로 지정했다. 약한 근거·반론 인정은 허용하되 HOLD 전환/사실 날조를 요구하지 않는다. 과거 상대수익 지표와 미래 평가 구간을 구분하는 검토 지침도 추가했다.
 - 진행 중: 중재자는 ACCEPT/ABSTAIN만 허용하며 추가 라운드는 실행하지 않는다. 비공개 moderator_rejected 로그와 공개 moderator_validation_failed 오류를 추가했다. fixed_three_rounds 표시로 신규 6발언 완료와 기존 2발언 기록을 구별한다. 계약 v1.1 초안·README·CLI 안내 갱신. 별도 feat/worker-structured-interpretations 브랜치에 이전 승인된 LangGraph 연결·구형 엔진 삭제·해석 구조화 변경을 함께 커밋한다.

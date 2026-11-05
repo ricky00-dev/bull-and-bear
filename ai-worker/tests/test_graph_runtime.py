@@ -37,9 +37,6 @@ def test_parallel_initial_nodes_keep_separate_clients_ids_and_events(snapshot, t
     run = runtime(snapshot, tmp_path)
     run.bull = Parallel(snapshot)
     run.bear = Parallel(snapshot)
-    # Rebuild reviewers too: each side's generation and review share only its own client.
-    from bullbear.semantic import SemanticReviewer
-    run.reviewers = {'bull': SemanticReviewer(run.bull, snapshot), 'bear': SemanticReviewer(run.bear, snapshot)}
     result = run.run()
     assert result['engine'] == 'langgraph' and result['graph_status'] == 'accepted'
     events = EventLog.read(run.log.path)
@@ -109,19 +106,49 @@ def test_invalid_statements_never_publish_and_retry_is_bounded(snapshot, tmp_pat
     assert len(bull.calls) == 3
 
 
-def test_semantic_review_checks_new_analysis_and_can_reject(snapshot, tmp_path):
+def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, tmp_path):
     class Unsupported(GraphLLM):
         def structured(self, conv, **kwargs):
+            assert 'issues' not in kwargs['schema']['properties']
             raw = super().structured(conv, **kwargs)
             if 'claim' in raw:
                 raw['analysis']['interpretations'][0]['assumptions'] = ['기관 매수가 이미 발생했다']
-            if 'issues' in raw:
-                assert '기관 매수가 이미 발생했다' in conv.messages[0]['content']
-                raw['issues'] = [{'code': 'unsupported_inference', 'quote': '기관 매수가 이미 발생했다',
-                                  'message': '스냅샷에 없는 수급 사실입니다.'}]
+                raw['argument'] = '조건부 해석에는 확인되지 않은 가정이 남는다 [E1].'
+            return raw
+    class Reviewing(GraphLLM):
+        def structured(self, conv, **kwargs):
+            payload = json.loads(conv.messages[0]['content'])
+            assert len(payload['history']) == 6
+            assert payload['facts']['PX.CLOSE']['value'] == 399
+            assert '기관 매수가 이미 발생했다' in conv.messages[0]['content']
+            raw = super().structured(conv, **kwargs)
+            for review in raw['forecast']['analysis']['statement_reviews']:
+                if ':bull:' in review['statement_id']:
+                    review.update(assessment='concern', reason='기관 매수는 스냅샷에 없는 주장이다.')
+            return raw
+    bull, moderator = Unsupported(snapshot), Reviewing(snapshot)
+    result = runtime(snapshot, tmp_path, bull=bull, moderator=moderator).run()
+    assert len(bull.calls) == 3 and len(moderator.calls) == 1
+    assert sum(r['assessment']=='concern' for r in result['verdict']['analysis']['statement_reviews']) == 3
+    events = EventLog.read(tmp_path/'graph.jsonl')
+    accepted = [e for e in events if e['type']=='statement_accepted']
+    assert len(accepted) == 6  # No literal quotation in the rebuttal body is necessary.
+    assert all(e['verification_scope']=='source_values_and_structure' for e in accepted)
+
+
+@pytest.mark.parametrize('problem', ['missing', 'duplicate', 'unknown_source'])
+def test_moderator_review_coverage_and_sources_are_checked(snapshot, tmp_path, problem):
+    class InvalidReview(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            reviews = raw['forecast']['analysis']['statement_reviews']
+            if problem=='missing': reviews.pop()
+            elif problem=='duplicate': reviews[0]['statement_id'] = reviews[1]['statement_id']
+            else: reviews[0]['source_ids'] = ['INVENTED']
             return raw
     with pytest.raises(LLMError):
-        runtime(snapshot, tmp_path, bull=Unsupported(snapshot)).run()
+        runtime(snapshot, tmp_path, moderator=InvalidReview(snapshot)).run()
+
 
 
 def test_final_forecast_rejects_nonexistent_interpretation(snapshot, tmp_path):
@@ -162,7 +189,7 @@ def test_frozen_rag_context_reaches_graph_generators_and_reviews_once(snapshot, 
         emit=lambda kind, data: events.append((kind, data))).run()
     assert result['graph_status'] == 'accepted'
     for client in clients:
-        assert len(client.calls) == (2 if client is clients[2] else 6)
+        assert len(client.calls) == (1 if client is clients[2] else 3)
         for conv, _ in client.calls:
             assert conv.system.count('RAG_UNIQUE_DEFINITION') == 1
             assert 'RAG_UNIQUE_DEFINITION' not in conv.messages[0]['content']
@@ -220,7 +247,7 @@ def test_live_http_uses_graph_and_preserves_usage_and_sealed_payload(setup, monk
             assert 'usage' not in result and not manifest['usage_complete']
         else:
             assert manifest['usage'] == result['usage']
-        assert len(manifest['llm_calls']) == (15 if action == 'INVALID' else 14 if action == 'ACCEPT' else 13)
+        assert len(manifest['llm_calls']) == (9 if action == 'INVALID' else 7)
         assert 'PRIVATE_INVALID_ID' not in json.dumps(events)
         if action == 'INVALID':
             private = EventLog.read(settings.debate_dir / f'{ident}.jsonl')
@@ -276,3 +303,17 @@ def test_rebuttal_failure_preserves_openings_without_calling_moderator(snapshot,
     events = EventLog.read(run.log.path)
     assert len([e for e in events if e['type']=='statement_accepted' and e['round']=='opening']) == 2
     assert not run.moderator.calls
+
+
+def test_invalid_structured_opponent_is_still_rejected(snapshot, tmp_path):
+    class InvalidTarget(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            if raw.get('analysis', {}).get('rebuttal'):
+                raw['analysis']['rebuttal']['target_statement_id'] = 'invented-opponent'
+            return raw
+    run = runtime(snapshot, tmp_path, bull=InvalidTarget(snapshot))
+    with pytest.raises(LLMError): run.run()
+    assert not run.moderator.calls
+    rejected = [e for e in EventLog.read(run.log.path) if e['type']=='statement_rejected']
+    assert any(i['code']=='structured_rebuttal_target' for e in rejected for i in e['issues'])

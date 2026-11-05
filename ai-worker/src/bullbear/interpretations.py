@@ -31,7 +31,7 @@ def prose(value):
     if isinstance(value, dict):
         return [s for key, item in value.items()
                 if key not in {"evidence_ref", "target_statement_id", "key_interpretation_ids",
-                               "outlook", "expected_outcome", "stance_change"}
+                               "outlook", "expected_outcome", "stance_change", "statement_id", "source_ids", "assessment"}
                 for s in prose(item)]
     return []
 
