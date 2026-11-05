@@ -1,6 +1,6 @@
 """Bounded HTTPS transport for the same chart feed used by pykrx's stock prices.
 
-This unofficial feed is isolated so it can be replaced by KIS later.
+This unofficial feed is isolated from the default KRX market-data path.
 """
 from datetime import datetime
 from xml.etree import ElementTree

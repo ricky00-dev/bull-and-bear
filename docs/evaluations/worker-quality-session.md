@@ -1,5 +1,7 @@
 # 워커 오프라인 품질 평가 세션
 
+> 2026-11-05 변경: 기존 순차 토론 엔진 및 전용 experiment/benchmark/diagnostics/quality_evaluation 실행기는 삭제됐습니다. 아래 관련 명령·측정값은 당시 구현의 이력입니다. 현재 토론은 HTTP 또는 `bullbear debate`의 LangGraph 경로를 사용하며, 단일 분석 HTTP 모드는 유지합니다.
+
 2026-10-31. 기준 커밋 `5d2a8e53ce2f9d0f434a1e8567dbc6290091bda5`, 격리 브랜치
 `fix/worker-quality-evaluation`. 작업 폴더는
 `C:/Users/이장원/.codex/worktrees/worker-quality/bull-and-bear`다.

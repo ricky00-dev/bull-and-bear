@@ -1,5 +1,7 @@
 # 동일 스냅샷 단일 분석가·토론 비교 실행기
 
+> 2026-11-05 변경: 기존 순차 토론 엔진 및 전용 experiment/benchmark/diagnostics/quality_evaluation 실행기는 삭제됐습니다. 아래 관련 명령·측정값은 당시 구현의 이력입니다. 현재 토론은 HTTP 또는 `bullbear debate`의 LangGraph 경로를 사용하며, 단일 분석 HTTP 모드는 유지합니다.
+
 2026-10-30 · 내부 연구용 · `paired-baseline-v1`
 
 `python -m bullbear.benchmark`는 저장된 시장 스냅샷을 한 번 읽고 같은 입력으로 단일 분석가와 기존 매수·매도 토론을 실행한다. 운영 HTTP API·당일 토론 재사용 키·Spring 판정 봉인·기존 선공 비교 `experiment.py`는 변경하지 않는다. 실제 채점 결과를 수집하는 백테스트나 포트폴리오 시뮬레이터는 아니다.

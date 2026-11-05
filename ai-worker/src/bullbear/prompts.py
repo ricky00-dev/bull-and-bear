@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from .schemas import ROUND_LABELS, RoundKind, Side, Statement
 
-POLICY_VERSION = "7d-concise-v8"
+POLICY_VERSION = "langgraph-fixed-roles-v2"
 JUDGMENT_POLICY = """
 공통 판단 기준 (양측·중재자 모두 동일):
 - 주가 기준일 종가에서 이후 7거래일 종가까지의 종목 수익률 minus 코스피 수익률(%p)을 예측한다.
 - 판정 질문: "7거래일 뒤 코스피 대비 초과수익이 +2%p 초과면 매수, −2%p 미만이면 매도, 그 사이면 보류".
 - HOLD(보류)는 코스피와 비슷하게 움직여 초과수익이 −2%p 이상 +2%p 이하일 것이라는 예측이다.
 - claim과 최종 판정 이유에 '7거래일'과 '코스피 대비'를 명시한다.
-- 3거래일은 보조 채점일 뿐 이번 판단 목표가 아니다. 중장기 보유·단기 매도처럼 기간을 바꾸지 않는다.
+- 3거래일은 중간 관찰이며 7거래일 전망의 적중 판정이 아니다. 중장기 보유·단기 매도처럼 기간을 바꾸지 않는다.
 - 과거 장기 지표는 배경으로만 쓰고 향후 7거래일 상대수익과 연결되는 경로와 불확실성을 설명한다.
 - 코스피 비교 자료나 단기 촉매가 없으면 그 한계를 인정한다. 절대 하락이 곧 코스피 대비 하락은 아니다.
 - 애매함·자료 부족·양측 대등함 자체를 HOLD의 이유로 삼지 않는다. 가장 가능성이 높은 구간을 예측하고 불확실성은 confidence에 반영한다. HOLD라면 왜 코스피와 비슷하게 움직일지 근거를 설명한다.
@@ -55,22 +55,24 @@ _DEBATER = """\
 - 변동성이 크다는 사실은 상승 방향이나 특정 뉴스의 가격 반영 확률을 높인다는 근거가 아니다.
 - 각 발언의 E1~E3은 그 발언 안에서만 유효하다. 과거 발언의 같은 번호와 다른 근거를 가리켜도 된다.
 - 반박 라운드 본문의 첫 문장은 상대의 “원문 일부” 형식으로 시작한다. 상대의 주장·본문에서 문장부호 없는 6~30자 문구를 그대로 복사한다. 내 이전 주장이나 검증 피드백을 상대 주장으로 바꾸지 않는다.
-- 반박 본문은 '상대의 실제 논점과 한계 → 새 근거와 내 예측 경로 → 불확실성' 순서로 최대 3문장에 담는다.
+- 반박 본문은 '상대의 중요한 논점과 인정할 부분 → 반박 이유와 내 예측 경로 → 미해결 쟁점' 순서로 최대 3문장에 담는다. 기존 근거를 재사용해도 된다.
 - 확인되지 않은 미래 사건을 지어내지 않는다. 조건부 가설은 조건이라고 표시하며, 현재 관찰 사실과 구분한다.
 - 상대를 비난하지 말고 상대의 근거를 다룬다. 확정적 수익 약속이나 투자 권유 표현은 쓰지 않는다.
+
+구조화 정보(analysis):
+- outlook은 배정 입장으로 매수 측은 BUY, 매도 측은 SELL을 모든 단계에서 유지한다. HOLD나 반대편으로 전환하지 않는다. 이는 역할상 논증이며 중재자와 사용자의 독립 판단과 다르다. 근거가 약하면 약하다고 명시하고 강한 확신이나 관측 사실을 만들어내지 않는다. claim과 argument도 같은 입장을 논증해야 한다.
+- interpretations는 각 evidence.ref마다 한 항목이다. evidence.interpretation은 관측 자료에 대한 해석이며, expected_outcome은 그 해석이 예상하는 상대수익 구간이다.
+- assumptions에 해석이 성립할 미래 조건을, limitations에 자료·추론의 한계를 따로 쓴다. 관측 사실과 미래 가정을 한 문장에 섞지 않는다. 원본 관측값과 해석 ID는 Worker가 부여하므로 만들어 쓰지 않는다.
+- 반박 시 rebuttal에 상대의 실제 target_statement_id, claim/argument에서 복사한 target_quote, acknowledged(인정할 부분), reason(반박 이유), unresolved(미해결 쟁점)를 쓴다. 인정할 부분이 없다면 그 이유를 쓰고 가짜 동의를 만들지 않는다. 첫 주장에서는 null로 둔다.
+- 최종 변론의 closing에는 retained(유지된 주장), conceded(상대에게 인정할 부분), outlook_reason(최종 전망 이유), uncertainties, change_conditions(전망을 바꿀 조건), stance_change(maintained/weakened/revised)를 쓴다. weakened/revised는 같은 입장 안에서 논거·가정의 약화·수정이며 BUY/SELL 역할 전환이 아니다. 다른 단계에서는 null이다.
+- 자료에 없는 사실·수치를 어느 필드에도 보충하지 않는다. 확인하지 못한 것은 불확실성으로 남긴다. 기존 자료의 재해석·인정·유보도 의미 있는 토론이다.
 """
 
 _STANCE = {
-    Side.BULL: "매수(상승)",
-    Side.BEAR: "매도(하락)",
+    Side.BULL: "매수(상승) — 7거래일 코스피 대비 +2%p 초과",
+    Side.BEAR: "매도(하락) — 7거래일 코스피 대비 −2%p 미만",
 }
 
-_ROUND_TASK: dict[RoundKind, str] = {
-    "opening": "첫 주장 라운드다. 도구로 데이터를 살펴본 뒤 {stance} 입장의 가장 강한 근거로 주장하라.",
-    "rebuttal": "반박 라운드다. 상대의 근거 중 가장 약한 것을 짚어 반박하고, 이전 전체 토론에서 아직 인용하지 않은 새 근거를 반드시 1개 이상 쓰라. 향후 7거래일 안의 계기가 될 뉴스·공시를 우선 조회하고, 없으면 새 수치 근거를 쓰되 단기 계기 자료의 한계를 말하라.",
-    "closing": "최종 변론이다. 지금까지의 토론을 정리하고, 상대가 맞는 부분은 인정하되 왜 그래도 {stance}가 맞는지 말하라. 이전 전체 토론에 없는 새 근거를 반드시 1개 이상 쓰고, 향후 7거래일의 계기가 될 뉴스·공시를 우선 조회하라. 새 근거를 지어내거나 같은 사건의 기사만 바꿔 새 근거라고 하지 말라.",
-    "extra": "중재자가 추가 질문을 했다. 질문에 직접 답하라.\n질문: {question}",
-}
 
 
 def debater_system(side: Side, *, name: str, ticker: str, as_of: str) -> str:
@@ -78,16 +80,17 @@ def debater_system(side: Side, *, name: str, ticker: str, as_of: str) -> str:
 
 
 def render_statement(side: Side, round_kind: RoundKind, st: Statement) -> str:
+    import json
     ev = "\n".join(
         f"  {e.ref}: {e.source_id} = {e.value} ({e.interpretation})" for e in st.evidence
     )
-    return f"[{ROUND_LABELS[round_kind]}] {side.label} 측\n주장: {st.claim}\n{st.argument}\n근거:\n{ev}"
+    rendered = f"[{ROUND_LABELS[round_kind]}] {side.label} 측\n주장: {st.claim}\n{st.argument}\n근거:\n{ev}"
+    if st.statement_id:
+        metadata = {"side": side.value, "round": round_kind, **st.model_dump(mode="json")}
+        rendered += "\n구조화 정보: " + json.dumps(metadata, ensure_ascii=False)
+    return rendered
 
 
-def debater_turn(side: Side, round_kind: RoundKind, transcript: list[str], question: str | None = None) -> str:
-    history = "\n\n".join(transcript) if transcript else "(아직 발언 없음)"
-    task = _ROUND_TASK[round_kind].format(stance=_STANCE[side], question=question or "")
-    return f"지금까지의 토론:\n\n{history}\n\n---\n{task}"
 
 
 def verifier_feedback(feedback: str) -> str:
@@ -97,49 +100,6 @@ def verifier_feedback(feedback: str) -> str:
         "argument 또는 reasoning은 불확실성 설명까지 포함해 최대 3문장이다. "
         "필요한 단서를 지우거나 긴 나열문으로 합치지 말고 핵심 근거와 한계에 집중하라. "
         "반박 라운드라면 첫 문장의 상대 원문 인용도 유지하라. "
-        "반박·최종 변론은 재작성 후에도 이전 전체 토론에 없는 새 source_id를 최소 1개 포함해야 한다. "
-        "새 근거를 모두 빼고 이미 사용된 근거로만 바꾸지 말라. "
+        "반박·최종 변론에서도 기존 근거를 재사용해도 된다. 새 근거 추가보다 해석·반론·불확실성을 정확히 고쳐라. "
         "형식만 고칠 때도 근거 값·번호를 임의로 바꾸지 말라. 필요하면 도구를 다시 조회하라.\n" + feedback
-    )
-
-
-MODERATOR_SYSTEM = """\
-당신은 투자 교육 토론의 중재자다. 매수 측과 매도 측의 토론을 기준표로 평가해 판정한다.
-필요하면 도구로 같은 고정 스냅샷의 원본 근거를 확인한다. 특히 코스피 비교 지표가 토론에 나오지 않았다는 이유로 자료가 없다고 단정하지 않는다.
-판정은 시청자가 자기 판정과 비교하며 배우기 위한 것이므로, 이유는 입문자에게 쉬운 말로 최대 3문장으로 쓴다. 근거는 [E1] 같은 번호로만 표시한다.
-
-기준표 (각 1~5점):
-- relevance: 근거가 주장과 직접 관련 있는가
-- materiality: 근거가 주가에 의미 있는 크기인가 (사소한 지표에 기대지 않는가)
-- rebuttal: 상대 근거를 정확히 다뤘는가
-- risk_awareness: 자기 주장의 약점과 리스크를 인정했는가
-
-검증 통계는 내부 점검용이다. 숫자·필드명·반려 횟수는 reasoning, comment, extra_question에 쓰지 않는다.
-최종 수정된 근거와 논리로 판단하며 반려 횟수만으로 어느 편을 유리하게 평가하지 않는다.
-
-판정:
-- decision: BUY / HOLD / SELL. 양측 논쟁의 승패가 아니라 상대수익 구간을 예측한다. HOLD는 코스피와 비슷하게 움직일 것이라는 예측이어야 한다.
-- confidence: 0~1. 근거가 탄탄하고 한쪽으로 기울수록 높게.
-- decisive_evidence: 판정에 결정적이었던 서로 다른 source_id 최대 3개를 인용 순서로 기록한다.
-- [E1]은 decisive_evidence[0], [E2]는 [1], [E3]은 [2]에 대응한다. 본문 번호와 배열을 일치시킨다.
-- reasoning과 양측 comment에는 PX./VAL./FIN./NEWS./DISC. 같은 내부 근거 이름을 절대 쓰지 않는다.
-- 투자자별 권고(단기 투자자는 매도, 장기 투자자는 매수 등), 손절·분할매수 권유는 쓰지 않는다.
-- comment는 각각 쉬운 한 문장으로 쓰고 필요한 경우 같은 번호 체계를 쓴다. 큰 금액은 조 원 단위로 쓴다.
-
-추가 질문 라운드:
-- 판정에 꼭 필요한 쟁점이 해소되지 않았으면 action을 "extra_round"로 하고 extra_question에 양측에게 물을 질문 하나를 쓴다.
-- 그래도 decision 등 나머지 필드는 현재 기준으로 채운다.
-- 추가 라운드가 허용되지 않으면 반드시 action을 "verdict"로, extra_question을 null로 한다.
-"""
-
-
-MODERATOR_SYSTEM += JUDGMENT_POLICY
-
-
-def moderator_turn(*, name: str, ticker: str, as_of: str, transcript: list[str], stats: dict, extra_allowed: bool) -> str:
-    return (
-        f"대상: {name}({ticker}), 데이터 기준일 {as_of}\n\n"
-        f"토론 기록:\n\n" + "\n\n".join(transcript) + "\n\n"
-        f"검증 통계 (코드 계산):\n{stats}\n\n"
-        f"추가 질문 라운드 허용: {'예' if extra_allowed else '아니오'}"
     )

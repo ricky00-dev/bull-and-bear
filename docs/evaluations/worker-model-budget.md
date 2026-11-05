@@ -1,5 +1,7 @@
 # 모델 입력·비용 예산 구현과 검증
 
+> 2026-11-05 변경: 기존 순차 토론 엔진 및 전용 experiment/benchmark/diagnostics/quality_evaluation 실행기는 삭제됐습니다. 아래 관련 명령·측정값은 당시 구현의 이력입니다. 현재 토론은 HTTP 또는 `bullbear debate`의 LangGraph 경로를 사용하며, 단일 분석 HTTP 모드는 유지합니다.
+
 2026-10-30. 사용자가 명시한 모델은 **OpenAI `gpt-5-mini`**, 이번 작업 전체 API 상한은 **USD 3**다.
 조건별·재실행별로 USD 3을 새로 배정하는 뜻이 아니다. 실제 호출은 부모 총괄 세션에서 수행하며
 이 문서의 모듈 검증은 네트워크 없는 테스트다.

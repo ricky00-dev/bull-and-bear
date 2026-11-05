@@ -115,7 +115,7 @@ def test_replay_resume_contract_and_private_data_filter(setup):
         assert started.status_code == 202
         debate_id = started.json()['debate_id']
         result = completed(c, debate_id)
-        assert result['status'] == 'completed' and len(result['statements']) == 8
+        assert result['status'] == 'completed' and len(result['statements']) == 6
         assert set(result['verdict']['scores']) == {'bull', 'bear'}
         assert result['usage']['calls'][0]['cache_creation_input_tokens'] == 5
         url = f'/debates/{debate_id}/events'
@@ -272,27 +272,6 @@ def test_snapshot_is_built_after_202_and_failure_is_terminal(setup):
         assert 'private provider' not in str(result)
 
 
-def test_live_runner_uses_pipeline_and_contract_verdict(setup, monkeypatch):
-    from bullbear.server import service
-    from .fakes import ScriptedDebater, ScriptedModerator, statement
-    class Client:
-        def __init__(self, model):
-            self.client = self
-        def usage_payload(self):
-            return {'calls': [{'model': 'model', 'input_tokens': 2, 'output_tokens': 1,
-                               'cache_read_input_tokens': 0, 'cache_creation_input_tokens': 1}]}
-        def close(self):
-            pass
-    monkeypatch.setattr(service, 'LLM', Client)
-    monkeypatch.setattr(service, 'Debater', lambda llm, snap, **kw: ScriptedDebater(statement(('E1', 'PX.CLOSE', 399))))
-    monkeypatch.setattr(service, 'Moderator', lambda *a, **kw: ScriptedModerator(['verdict']))
-    with TestClient(app_for(setup, runner_factory=lambda: service.LiveRunner(setup[0]))) as c:
-        result = completed(c, start(c).json()['debate_id'])
-        assert result['status'] == 'completed'
-        assert len(result['statements']) == 6
-        assert 'bull' not in result['verdict'] and 'action' not in result['verdict']
-        assert set(result['verdict']['scores']) == {'bull', 'bear'}
-        assert result['usage']['calls'][0]['cache_creation_input_tokens'] == 2
 
 
 def test_submit_failure_is_terminal_and_capacity_is_released(setup, monkeypatch):

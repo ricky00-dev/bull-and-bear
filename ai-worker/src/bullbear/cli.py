@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from contextlib import ExitStack
 from datetime import datetime
 
 from .config import Settings, load_settings
@@ -95,9 +94,8 @@ def _ask_user() -> tuple[Decision, str]:
 
 
 def cmd_debate(args, settings: Settings) -> None:
-    from .agents import Debater, Moderator  # anthropic 클라이언트는 토론할 때만 만든다
-    from .debate import Debate, verification_stats
-    from .llm import LLM, validate_model
+    from .server.service import LiveRunner
+    from .llm import validate_model
     from .audit import selected_models
 
     snap = Snapshot.load(settings.snapshot_dir, args.snapshot) if args.snapshot else _make_snapshot(settings, args.ticker)
@@ -109,41 +107,33 @@ def cmd_debate(args, settings: Settings) -> None:
     models = selected_models(settings)
     for model in models.values():
         validate_model(model)
-    with ExitStack() as clients:
-        llm = LLM(models['debater'])
-        clients.callback(llm.client.close)
-        moderator_llm = LLM(models['moderator'])
-        clients.callback(moderator_llm.client.close)
-        debate = Debate(
-            snap,
-            Debater(llm, snap, effort=settings.debater_effort),
-            Moderator(moderator_llm, snap, effort=settings.moderator_effort),
-            EventLog(settings.debate_dir / f"{debate_id}.jsonl"),
-            debate_id=debate_id,
-            max_extra_rounds=args.max_extra_rounds,
-            on_event=_printer,
-        )
-        result = debate.run()
+    runner = LiveRunner(settings)
+    try:
+        result = runner.run(snap, debate_id, args.max_extra_rounds, _printer)
+        usage = runner.usage()
+    finally:
+        runner.close()
+    log = EventLog(settings.debate_dir / f'{debate_id}.jsonl')
 
     if args.no_judge:
         user, reason = None, ""
     else:
         user, reason = _ask_user()
-        debate.submit_user_verdict(user, reason)
+        log.append('user_verdict', decision=user, reason=reason, submitted_at=datetime.now().astimezone())
 
-    v = result.verdict
-    print(f"\n══ 중재자 판정: {v.decision.label} (확신도 {v.confidence:.0%})")
+    v = result['verdict']
+    decision = Decision(v['decision'])
+    print(f"\n══ 중재자 판정: {decision.label} (확신도 {v['confidence']:.0%})")
     if user:
-        print(f"   당신의 판정: {user.label} → {'일치' if user is v.decision else '불일치'}")
-    print(f"\n{v.reasoning}")
+        print(f"   당신의 판정: {user.label} → {'일치' if user is decision else '불일치'}")
+    print(f"\n{v['reasoning']}")
     for side in (Side.BULL, Side.BEAR):
-        s = getattr(v, side.value)
-        print(f"  {side.label} 측  관련성 {s.relevance} 중요도 {s.materiality} 반박 {s.rebuttal} 리스크 {s.risk_awareness}  {s.comment}")
-    print(f"  결정적 근거: {', '.join(v.decisive_evidence)}")
-    print(f"\n검증 통계: {verification_stats(result.turns)}")
-    u = llm.usage
-    print(f"토큰: 입력 {u.input_tokens:,} / 출력 {u.output_tokens:,} / 캐시 읽기 {u.cache_read_input_tokens:,} ({u.requests}회 호출)")
-    print(f"기록: {debate.log.path}")
+        s = v['scores'][side.value]
+        print(f"  {side.label} 측  관련성 {s['relevance']} 중요도 {s['materiality']} 반박 {s['rebuttal']} 리스크 {s['risk_awareness']}  {s['comment']}")
+    print(f"  결정적 근거: {', '.join(v['decisive_evidence'])}")
+    print(f"\n검증 통계: {result['stats']}")
+    print(f"모델 사용량: {usage}")
+    print(f"기록: {log.path}")
 
 
 def cmd_replay(args, settings: Settings) -> None:
@@ -178,7 +168,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("ticker")
     p.add_argument("--snapshot", help="기존 스냅샷 ID로 토론 (같은 시점 데이터로 재실험)")
     p.add_argument("--no-judge", action="store_true", help="사용자 판정 입력 생략")
-    p.add_argument("--max-extra-rounds", type=int, default=1)
+    p.add_argument("--max-extra-rounds", type=int, choices=range(4), default=1,
+                   help="기존 호출 호환 옵션 (0~3). 현재 고정 3단계 토론에서는 추가 실행하지 않음")
     p = sub.add_parser("replay")
     p.add_argument("debate_id")
     args = parser.parse_args(argv)

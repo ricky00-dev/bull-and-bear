@@ -1,5 +1,7 @@
 # RAG 4조건 CLI 실행
 
+> 2026-11-05 변경: 기존 순차 토론 엔진 및 전용 experiment/benchmark/diagnostics/quality_evaluation 실행기는 삭제됐습니다. 아래 관련 명령·측정값은 당시 구현의 이력입니다. 현재 토론은 HTTP 또는 `bullbear debate`의 LangGraph 경로를 사용하며, 단일 분석 HTTP 모드는 유지합니다.
+
 2026-10-30. `python -m bullbear.benchmark`에 `--rag-comparison`을 추가했다.
 기본 동작은 기존 `run_batch`이며, 플래그를 명시했을 때만 RAG 4조건 비교를 실행한다.
 

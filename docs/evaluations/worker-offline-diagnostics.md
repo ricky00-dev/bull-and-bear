@@ -1,5 +1,7 @@
 # 유료 호출 없는 실패 진단과 검수 준비
 
+> 2026-11-05 변경: 기존 순차 토론 엔진 및 전용 experiment/benchmark/diagnostics/quality_evaluation 실행기는 삭제됐습니다. 아래 관련 명령·측정값은 당시 구현의 이력입니다. 현재 토론은 HTTP 또는 `bullbear debate`의 LangGraph 경로를 사용하며, 단일 분석 HTTP 모드는 유지합니다.
+
 2026-10-30. 사용자가 실제 Claude 호출을 보류하고 나머지 작업 진행을 요청했다.
 `python -m bullbear.diagnostics`는 기존 benchmark 조건 폴더의 `report.json`과
 `events.jsonl`을 읽어 집계와 사람이 검토할 목록을 만든다. API·환경 파일을 읽지 않는다.

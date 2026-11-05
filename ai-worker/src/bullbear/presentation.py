@@ -46,8 +46,6 @@ def statement_issues(statement, round_kind, used):
     ids = [e.source_id for e in statement.evidence]
     if len(ids) > 3 or len(ids) != len(set(ids)):
         issues.append(error("evidence_limit", "서로 다른 근거를 최대 3개만 쓰세요."))
-    if round_kind in ("rebuttal", "closing") and not set(ids) - used:
-        issues.append(error("no_new_evidence", "이전 전체 토론에서 쓰지 않은 source_id를 1개 이상 인용하세요. 뉴스·공시를 우선 확인하세요."))
     text = "\n".join([statement.claim, statement.argument, *(e.interpretation for e in statement.evidence)])
     issues += money_issues(text)
     issues += knowledge_leakage_issues(text)

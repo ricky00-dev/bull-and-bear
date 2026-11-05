@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.6, 초안)
+# AI 워커 API 계약 (기본 v0.6 / LangGraph v1.1 구현 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -81,6 +81,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 ```
 
 - `request_id`: Spring이 만드는 멱등 키. 같은 키로 다시 보내면 같은 `debate_id`를 돌려준다 (중복 토론 방지).
+- `max_extra_rounds`: 기존 호출 호환용으로 기본 1, 범위 0~3을 받는다. 현재 v1.1 고정 3단계 흐름에서는 추가 라운드/조사를 실행하지 않는다.
 - 같은 스냅샷의 토론이 이미 있으면 새로 돌리지 않고 재사용한다 (`reused: true`).
 - `mode` (v0.6, 선택): `"debate"`(기본) | `"single"`. 아래 "단일 모드" 참고.
 - `snapshot_id` (v0.6, 선택): 이 스냅샷으로 진행한다. 단일 모드에서는 **필수** (짝이 되는 토론과 같은 스냅샷).
@@ -332,7 +333,142 @@ asOf/unit은 선택이며 생략 시 워커 기본값을 따른다. 날짜는 �
 fake 모드에서는 결과를 만들어내지 않고503을 반환한다. 조회는 토론 생성·시장 수집·모델 호출로 우회하지 않는다.
 웹은 날짜·출처·문서 한계와 근거 부족을 표시하며, 조회 방식/조건 변경 시 이전 결과를 지운다.
 
+## v1.1: 고정 공방과 역할 유지 (구현 초안)
+
+- HTTP·CLI는 양측 opening → 양측 rebuttal → 양측 closing → 중재자 순서로 총 6개 발언을 생성한다.
+  각 단계는 병렬이며 양측의 이전 단계 완료 후 다음 단계가 시작된다. 새 근거를 강제하지 않는다.
+- 토론자의 analysis.outlook은 bull=BUY, bear=SELL이며 claim/argument도 배정 입장을 유지한다.
+  가정·한계와 closing.stance_change로 논거 약화·수정을 설명할 수 있다. 배정 역할은 예측 투표가 아니다.
+  개별 해석의 expected_outcome은 반대 근거를 인정할 수 있도록 BUY/HOLD/SELL을 유지한다.
+- 중재자는 공통 사실·해석 차이·약화/유지된 논점·불확실성을 정리한다. 독립 전망은 BUY/HOLD/SELL,
+  판단 유보는 ABSTAIN이다. 추가 라운드/조사 요청을 생성하지 않는다.
+- turn_started에 debate_flow=fixed_three_rounds를 추가한다. 이 기록은 6개 발언 완료가
+  generation.base_rounds_complete/debate_complete 기준이다. 기존 engine=langgraph만 있는 기록은
+  2개 opening 완료 기준으로, engine이 없는 과거 기록은 6개 기준으로 계속 읽는다.
+- 중재자 검증 재시도 소진은 error.code=LLM_ERROR, error.reason=moderator_validation_failed다.
+  세부 검증 코드는 비공개 JSONL moderator_rejected에만 보존한다. SSE에는 탈락 이유/전망을 보내지 않는다.
+- 이미 완료된 토론과 중재자 실패는 generation에서 구분한다. Spring 사용자 판정 허용/저장 정책은 변경하지 않는다.
+- 기존 필드 삭제 없음. 발언 ID·해석 ID·최종 verdict 봉인 형식은 유지한다. 공동 계약 리뷰는 필요하다.
+
+## v1.0: LangGraph HTTP·CLI 연결 (이전 동작 기록)
+
+아래는 v1.0 동작이다. 신규 생성은 위 v1.1 규칙을 적용한다.
+
+
+기존 순차 `Debater/Moderator/Debate` 실행 코드는 삭제했다. HTTP `mode=debate`와 CLI의
+`bullbear debate`는 `LiveRunner → GraphRuntime → build_debate_graph`를 사용한다.
+Spring·웹 코드는 변경하지 않았으며 공동 담당자 리뷰·실제 모델·운영 통합 검증은 미완료다.
+
+- 최초 양측 분석은 독립 LLM 클라이언트로 병렬 실행한다. 양쪽 완료 후 중재한다.
+- CHALLENGE_BULL/BEAR는 해당 쪽만 다시 실행하며 REQUEST_RESEARCH는 고정 스냅샷만 조회한다.
+  추가 실행은 요청 상한 이내에서만 이루어지고, 상한 뒤 추가 요청은 실행하지 않는다.
+- 최초 발언의 기존 round 값은 opening, 재검토는 rebuttal이다. **고정 6발언·closing 발언을 생성하지 않는다.**
+  기존 화면의 라운드 구역 일부가 비어 있을 수 있다. 모든 초기 발언이 완료된 후에만 중재하며,
+  병렬 발언의 도착 순서에 의미를 부여하지 않는다.
+- ACCEPT와 검증된 forecast가 있어야 기존 `debate_completed.verdict`를 반환한다.
+  decision/confidence/reasoning/decisive_evidence/scores 및 analysis의 형식은 유지한다.
+- ABSTAIN은 HOLD 예측이 아니다. `debate_failed.error.reason=graph_abstained`로 종료한다.
+  상한 도달은 `graph_round_limit`, 모델·검증 오류는 `generation_failed`다. 기존 error.code는 LLM_ERROR다.
+  확정 발언은 조회·재생할 수 있지만 Spring의 사용자 판정 허용 정책은 이 변경에 포함하지 않는다.
+- 중간 중재자의 forecast·reason 원문은 공개 이벤트로 내보내지 않는다. extra_round_requested의 question은
+  자료 재확인/주장 재검토 요청이라는 고정 안내이며, 최종 verdict는 기존처럼 Spring이 봉인한다.
+- 새 생성의 진행 이벤트와 완료 payload에는 `engine=langgraph`를 추가한다. terminal payload의
+  graph_status는 accepted/abstained/round_limit이다(일반 생성 오류에서는 생략).
+- generation.base_rounds_complete는 engine=langgraph일 때 최초 양측 opening 완료를 뜻한다.
+  과거 이벤트는 종전 6발언 기준으로 읽는다. moderator_status에는 abstained/round_limit이 추가된다.
+- 발언 ID는 `{debate_id}:{bull|bear}:t{해당 쪽의 1부터 발언순번}`, 해석 ID는 여기에 `:{ref}`를 붙인다.
+  병렬 완료 순서·검증 재시도와 무관하며, 소비자는 ID를 분해하지 않고 불투명 식별자로 사용한다.
+- 단일 분석(`mode=single`), RAG·시세 조회, 기존 이벤트 재생, 비용 장부는 유지한다.
+  새 엔진과 과거 순차 엔진의 실험 결과를 같은 정책의 결과로 합치지 않는다.
+
+## v0.9: 구조화된 토론 해석 (v1.0에서도 유지하는 필드)
+
+현재 적용 경로는 HTTP·CLI의 GraphRuntime이다. 직접 build_debate_graph를 호출하고 analyze 콜백을
+주입하지 않는 라이브러리 사용은 기존 기본 Statement 검증만 수행한다. 단일 분석은 기존 생성 스키마를 유지한다.
+
+### 발언과 해석
+
+`statement_accepted.statement`의 기존 `claim`, `argument`, `evidence`와 evidence의
+`ref`, `source_id`, `value`, `interpretation`은 유지한다. 다음 필드만 추가한다.
+
+| 필드 | 의미 |
+|---|---|
+| `statement_id` | 확정 발언의 불투명 식별자. v1.0의 역할별 ID 형식 참고. 재시도 횟수와 무관 |
+| `evidence[].interpretation_id` | `{statement_id}:{ref}`. 같은 source_id라도 서로 다른 발언의 해석은 다른 ID |
+| `evidence[].observation` | 고정 snapshot의 해당 Fact 전체 사본. id/label/value/unit/as_of/source/inputs/note/url/published_at/category. LLM 작성 아님 |
+| `analysis.outlook` | 현재 발언자의 BUY/HOLD/SELL 상대수익 전망. 배정된 side와 달라도 허용 |
+| `analysis.interpretations[]` | 각 evidence.ref와 정확히 1:1. `evidence_ref`, `expected_outcome`(BUY/HOLD/SELL), `assumptions`, `limitations` |
+| `analysis.rebuttal` | 반박 시 필수 객체. `target_statement_id`, `target_quote`, `acknowledged`, `reason`, `unresolved` |
+| `analysis.closing` | 최종 정리 단계에 생성하며 opening/rebuttal에서는 null. 기존 객체는 `retained`, `conceded`, `outlook_reason`, `uncertainties`, `change_conditions`, `stance_change` |
+
+가정/한계/미해결 쟁점/유지/인정/불확실성/변경 조건은 문자열 배열이다. 반박 대상·인정 내용·이유 및
+최종 전망 이유는 문자열이다. 반박 대상은 실제 이전 **상대편** 발언이어야 하며 quote는 그 claim 또는
+argument의 6자 이상 연속 원문이다. 판단상 중요한 논점을 고르는지는 의미 검토 대상으로 남는다.
+첫 주장에서는 rebuttal=null, 최종 변론 이외에서는 closing=null이다. 최종 변론·기존 추가 질문에서
+특정 반론을 기록할 경우 rebuttal도 사용할 수 있다. 인정할 부분이 없으면 그 이유를 명시하며 가짜 합의를 만들지 않는다.
+
+예: 매수 첫 발언의 `d1:bull:t1:E1`과 매도 첫 발언의 `d1:bear:t1:E1`은 source_id가 둘 다 `PX.CLOSE`여도
+별개의 해석이다. 해석 문장은 기존 `evidence[].interpretation`에서, 가정·한계는 같은 ref의 analysis에서 읽는다.
+관찰 사본은 해당 시점의 **자료 내용**이지 뉴스 속 전망의 사실성이나 인과관계를 보증하지 않는다.
+발언자의 side와 round는 기존 statement_accepted 이벤트 바깥 필드에서 읽는다.
+
+### 중재자
+
+기존 `verdict.decision/confidence/reasoning/decisive_evidence/scores`는 유지한다.
+추가 `verdict.analysis`에는 문자열 배열 `common_ground`, `core_issues`, `disagreements`,
+`unverified`, `outlook_basis`, `outlook_limits`와 실제 확정 해석 ID 배열 `key_interpretation_ids`가 들어간다.
+outlook_basis/limits는 기존 decision의 근거·한계이며 새로운 별도 예측이 아니다.
+AI 간 동의는 독립된 검증이나 인과 증명이 아니다. confidence는 기존 비보정 자기평가이며 정밀 확률을 추가하지 않는다.
+이 정보는 terminal verdict 안에만 내보내고 moderator_started에는 넣지 않는다. 기존 Spring 판정 봉인을 유지한다.
+
+### 생성 상태와 오류
+
+`GET /debates/{id}` 및 생성의 terminal 이벤트에 `generation`을 추가한다.
+
+```json
+{
+  "status": "failed",
+  "generation": {
+    "stage": "moderator",
+    "base_rounds_complete": true,
+    "debate_complete": true,
+    "moderator_status": "failed"
+  },
+  "error": {"code": "LLM_ERROR", "message": "AI 토론을 완료하지 못했습니다",
+            "stage": "moderator", "reason": "generation_failed"}
+}
+```
+
+- 기존 status는 running/completed/failed 그대로다. 위 예에서도 저장된 statements는 삭제하지 않는다.
+- stage: preparation/statements/moderator/completed. 실패·중단 시 마지막 진행 단계다.
+- base_rounds_complete: fixed_three_rounds는 양측 opening/rebuttal/closing 6개 완료 여부. 이전 LangGraph는 양측 opening 완료 여부. engine 표시가 없는 과거 기록은 6개 완료 여부.
+- debate_complete: 기본 분석이 완료되고 요청된 추가 조사·재검토가 진행 중이지 않은지. single 모드는 null이다.
+- moderator_status: not_started/running/waiting/completed/failed/interrupted.
+  v1.0의 abstained/round_limit도 허용한다.
+  waiting은 중재자가 추가 조사·재검토를 요청하고 다음 판정을 기다리는 상태다.
+- `error.reason=generation_failed`는 생성 실패, `worker_restart`는 프로세스 재시작으로 미완료 작업을 종결한 경우다.
+  provider 원문 오류나 키는 공개하지 않는다. 시작 전 작업 제출 실패는 기존 INTERNAL_ERROR를 유지한다.
+- 상태는 영속 이벤트에서 계산하며 기존 데이터도 조회 가능하다. 예전 실패 이벤트에 중단 사유가 없으면
+  재시작 여부를 소급 추정하지 않는다. 사용자 판정 가능 여부·저장 정책은 결정하지 않는다.
+
+### 호환·검증 범위
+
+새 생성에는 analysis를 요구하지만 과거 Statement/ModeratorDecision 모델 파싱은 누락/null을 허용한다.
+과거 기록을 다시 생성하거나 추정 가정·ID로 채우지 않는다. DB 마이그레이션·요청 필드 변경은 없다.
+Spring `DebateRelay`는 이벤트 원문과 verdict JSON을 저장하고 알려진 필드만 읽으므로 추가 필드를 수용한다.
+`ClientEvent`는 debate_completed 내용을 기존대로 숨긴다. 웹의 기존 필드 접근도 유지되지만 새 필드 표시·선택 저장은 구현하지 않았다.
+
+Fact ID/값, ref 1:1 연결, 상대 발언 ID/인용, 중재자 해석 ID, 필수 구조를 검사한다.
+가정·한계·반론 문장도 기존 의미 검토 대상에 포함한다. 의미 검토 역시 모델이므로 사실성·인과 타당성을 완전히 보장하지 못한다.
+새 근거 강제는 프롬프트·사전 조건·검증에서 제거했고 기존 값 검증 오차 허용 정책은 유지한다.
+유료 실제 모델의 출력 품질·지연·비용과 소비자의 새 필드 활용은 후속 검증 대상이다.
+
 ## 변경 이력
+
+- v1.1 구현 초안 (2026-11-05): 사용자 요청으로 고정 3단계 양측 공방·BUY/SELL 역할 유지 적용. max_extra_rounds 수신 호환 유지, 운영 추가 실행 중단. 완료 기준 식별 및 중재자 검증 실패 reason 추가. 프론트·Spring 코드 변경 없음.
+- v1.0 구현 초안 (2026-11-05): 사용자 승인으로 기존 순차 토론 엔진과 전용 실험 실행기를 삭제하고 LangGraph를 HTTP·CLI에 연결. 기존 이벤트 종류·판정 필드는 유지하되 고정 라운드 수와 max_extra_rounds 의미를 변경. 역할별 식별자·중재 종료 상태 추가. Spring/web 수정 없음. 공동 리뷰·실모델·배포 검증은 미완료.
+
+- v0.9 구현 초안 (2026-11-05): 사용자 요청으로 기존 토론 생성 경로에 해석 식별자·관측 사본·구조화된 해석/반박/최종 변론/중재 정보를 추가. 생성 진행 상태·실패 단계·재시작 중단 사유 추가. 기존 요청, 필드, 이벤트 종류, 종결 status, 점수 의미 유지. Spring의 원문 JSON 저장 및 선택 필드 읽기와 호환되는 추가 필드 방식이며 Spring/web 수정 없음. 공동 담당자 리뷰·운영 배포·실제 모델 연동 검증은 미완료. 아래 확장 명세 참고.
 
 - v0.8 내부 라우팅 보강 (2026-11-02): 공개 요청/응답 형식 유지. 최초 저장 snapshot별 generation/게시 receipt 고정,
   과거 조회 자동 라우팅, 명시적 legacy context 이관과 무연결503 처리. 미래 색인/reconstructed-v1 우회 없음.
@@ -370,7 +506,7 @@ fake 모드에서는 결과를 만들어내지 않고503을 반환한다. 조회
   SQLite로 이벤트·멱등 키를 보존하며 데이터 디렉터리당 단일 프로세스로 실행한다.
   `uv run uvicorn bullbear.server:app --port 8000`, Spring은 `worker` 프로필과 같은 `WORKER_TOKEN`을 사용한다.
 - 토론 엔진은 7거래일 판정 기준, 수치·개념·논리·표현 검증과 재작성을 적용한다.
-  HTTP/CLI는 Anthropic 경로이고, OpenAI는 `python -m bullbear.experiment` 비교 실험에서 사용한다.
+  HTTP/CLI는 Anthropic 기반 LangGraph 경로다. 과거 OpenAI 비교 실행기는 삭제했다.
 - 주가·지수는 KRX 공식 OPEN API, 재무·공시는 OpenDART, 뉴스는 NAVER API HUB를 사용한다.
   최초 시세 캐시는 `bullbear snapshot`으로 미리 준비한다. 원시 종가의 기업행사 보정은 아직 없다.
 - 종목 검색은 OpenDART 목록으로 확장하며, 토론 허용 대상은 현재 대형주 30종목이다.

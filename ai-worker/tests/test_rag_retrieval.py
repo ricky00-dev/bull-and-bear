@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from bullbear.benchmark import BenchmarkConfig, run_rag_comparison
 from bullbear.config import load_settings
 from bullbear.events import EventLog
 from bullbear.rag import AnnotationInput, ChunkInput, RagStore
@@ -292,18 +291,6 @@ def test_sqlite_long_query_obeys_caller_deadline(tmp_path, snapshot, monkeypatch
         assert time.monotonic() - before < 1.5
 
 
-def test_real_archive_search_benchmark_and_saved_report(tmp_path, snapshot):
-    with RagStore(tmp_path / "rag") as store:
-        seed(store)
-        context = retrieve(store, snapshot)
-        assert context.payload["status"] == "completed"
-        result = run_rag_comparison(snapshot, BenchmarkConfig(), tmp_path / "comparison", context)
-        assert result["completed_arms"] == 4 and result["accuracy"] is None and result["cost_usd"] is None
-        for arm in ("single", "debate"):
-            events = EventLog.read(tmp_path / "comparison" / "common_short" / arm / "generations.jsonl")
-            assert all(context.rendered in e["system"] for e in events if e["type"] == "generation_started")
-        assert (tmp_path / "comparison" / "rag-comparison.json").exists()
-        print("RAG_COMPARISON_MEASURED=" + json.dumps(result, ensure_ascii=False))
 
 
 def test_repeated_search_latency_and_replay_evaluation(tmp_path, snapshot):
