@@ -38,6 +38,8 @@ services:
       BULLBEAR_SINGLE_ENABLED: ${SINGLE_ENABLED:-false}
       BULLBEAR_BUDGET_USER_DAILY_USD: ${BUDGET_USER_DAILY_USD:-3.0}
       BULLBEAR_BUDGET_PER_USER_DAILY_DEBATES: ${BUDGET_PER_USER_DAILY_DEBATES:-5}
+      KAKAO_REST_KEY: ${KAKAO_REST_KEY:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
       interval: 10s
@@ -65,6 +67,11 @@ services:
       BULLBEAR_WORKER_BUDGET_ID: ${WORKER_BUDGET_ID:-}
     volumes:
       - worker_data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      start_period: 30s
+      retries: 3
     mem_limit: 512m
 
   web:

@@ -15,6 +15,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 
 ---
 
+## 2026-11-05 · Codex · Worker PR 준비
+- 한 것: 사용자 요청으로 feat/worker-structured-interpretations를 develop 대상으로 푸시·PR 준비했다. 최신 origin/develop(4ee6f32)을 병합하고 WORKLOG 충돌은 양측 기록을 모두 보존해 해결했다.
+- 진행 중: 기존 9c132d1·3471988의 LangGraph 고정 공방·중재자 검토 변경을 하나의 PR로 제출한다. GitHub 앱 저장소 접근 오류로 인증된 로컬 gh CLI를 사용한다.
+- 다음: CI와 계약 v1.2 초안 공동 리뷰. 중재자 새 검토 배열의 화면 표시는 별도 범위다.
+- 막힘·결정 필요: 이전 전체 테스트 611 통과·78 건너뜀 및 삼성전자 6발언·중재자 완료 실검증을 PR에 명시한다. 이번 요청은 PR 생성까지이며 develop 병합·배포는 하지 않는다.
+
 ## 2026-11-05 · Codex · 중재자 검토 변경 커밋
 - 한 것: 사용자 요청으로 중재자 중심 검토 코드·회귀 테스트·계약 v1.2 초안·실모델 검증 기록을 커밋 대상으로 확인했다. 프론트·Spring 코드와 키·로컬 실행 데이터는 포함하지 않는다.
 - 진행 중: feat/worker-structured-interpretations 브랜치에서 한국어 Conventional Commit 생성. 기존 전체 테스트 611 통과·78 건너뜀 및 삼성전자 6발언·중재자 완료 실검증 이후 코드 변경 없음.
@@ -68,6 +74,18 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: 구현과 최종 전체 회귀 테스트 완료(692 통과, 외부 서비스·설정 필요 등 78 건너뜀, git diff --check 통과). 같은 자료의 해석 구별, 잘못된 대상/수치/ref 거부, 자료 재사용·입장 수정, 중재자 실패 후 6개 발언 보존, SSE/HTTP 상태, 재시작 중단, 기존 LangGraph 회귀를 확인했다. 별도 경로 ../bull-and-bear-worker-interpretations의 미커밋 변경이며 커밋·PR·배포하지 않았다.
 - 다음: 계약 v0.9 추가 필드 초안을 양쪽 담당자가 리뷰하고 필요시 소비자 연동 범위를 별도 작업으로 결정한다. 실제 모델의 발언 품질·지연·비용 검증은 후속 작업이다.
 - 막힘·결정 필요: session-brief.sh는 CRLF로 실행되지 않아 Git/WORKLOG를 직접 확인했다. 기존 환경에는 langgraph가 없어 별도 작업 트리에 uv sync --frozen으로 잠금 의존성을 설치했다. 네트워크·유료 모델 호출 없는 fixture 검증이며 원문 사실성·인과 타당성은 모델 의미 검토만으로 보장할 수 없다. 독립 graph.py·single 생성 스키마에는 새 analysis를 연결하지 않았다. Spring의 사용자 판정 허용·저장·채점·UI 정책은 범위 밖이다.
+
+## 2026-11-05 · Claude(PM) · api, web
+- 한 것: 카카오 로그인. 인가 코드 방식(`/auth/kakao` 콜백 → `POST /api/auth/kakao`). 처음이면 지금 게스트 계정에 카카오 연결(기록 그대로), 이미 가입한 카카오면 그 계정으로 들어가며 게스트 기록을 합침. 기기마다 토큰(`auth_tokens`, V8). 동의항목 없이 회원번호만 저장. 마이·판정 공개 화면 버튼 연결, 이 기기 로그아웃, 개인정보 처리방침 갱신. #37에 develop 병합(WORKLOG 충돌 해결)
+- 진행 중: 없음
+- 다음: 사용자 카카오 앱 등록 → `KAKAO_REST_KEY` 입력 → 실제 로그인 1회 확인 (DEPLOY.md "카카오 로그인")
+- 막힘·결정 필요: 실제 카카오 서버와는 아직 안 붙여 봄(키 없음). 테스트는 가짜 카카오 서버로 함
+
+## 2026-11-04 · Claude(PM) · web
+- 한 것: #35(이용찬 UI 개선) 검토·머지(output/ 스크린샷 제외, .gitignore). #36 로고 통일, #38 홈 다듬기(참여 수·매일 토론 배지 복원, 중복 제거, 글 줄이기). 전시장 노트북 화면 `/exhibit`(큰 QR + 오늘 랭킹 + 오늘 토론 판정 수, 자동 갱신, 메뉴 없음, Wake Lock). 의존성 qrcode.react 추가. 사용법은 DEPLOY.md "전시장 노트북 화면"
+- 진행 중: #37(토론 대상 보통주 전체) 장원 리뷰 대기
+- 다음: 카카오 로그인(Claude, 앱 등록은 사용자). 배포 뒤 실제 주소로 QR 확인
+- 막힘·결정 필요: 장원 엔진 재설계 → 예비 운용 연기 검토 중. 정식 운용 시작은 늦어도 11/12 (첫 7거래일 결과가 전시 전에 나오려면)
 
 ## 2026-11-04 · Codex · ai-worker 최종 검토
 - 한 것: Bull/Bear의 독립 상태 키, 중재자 단일 라우팅, 추가 3회 상한을 검토하고 그래프 테스트 9개를 다시 실행해 모두 통과했다.
@@ -157,6 +175,26 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 - 진행 중: 없음.
 - 다음: 문의처(팀 메일) 정해지면 `web/src/pages/PolicyPage.tsx`의 CONTACT 교체. 카카오 로그인 붙이면 방침의 저장 항목 갱신.
 - 막힘·결정 필요: (jangwonii) develop의 `ai-worker/tests/test_rag_evidence.py::test_http_facts_missing_concept_auth_and_no_model_or_market_calls`가 로컬·CI 모두 실패 (`/rag/search` 503 RETRIEVAL_UNAVAILABLE, 로그 "snapshot publication binding unavailable"). 나머지 575 통과. 법률 검토는 받지 않은 학생 프로젝트 초안.
+
+## 2026-11-02 · ricky00-dev (Claude Code) · api, deploy, docs
+- 한 것: 운영 감시·백업 (chore/ops-monitoring-backup).
+  - Spring `GET /ops/health` (인증 없음). Caddy가 `/healthz`로 공개하고, 문제 있으면 503.
+    - 확인 항목: DB, 실제 워커 `/health`
+    - 전향 운용: 평일 19:30 이후 고정 종목이 오늘 모두 COMPLETED인지
+    - actuator와 분리해서 컨테이너 헬스체크에 영향을 주지 않음
+  - compose 워커 헬스체크(30초)
+  - `deploy/restore.sh`: 확인 후 API 정지 → 복구 → 재기동
+  - `deploy/status.sh`: 운영 상태 한눈에
+  - `backup.sh`: `--clean --if-exists`, 임시 파일, ENV_FILE
+  - DEPLOY.md: 감시·알림(UptimeRobot), 백업·복구, 업데이트 후 image prune
+- 확인: OpsHealthTest(대기·정상·누락 503·주말). 로컬에서 운영 구성(별도 프로젝트)으로 확인한 것:
+  - `/healthz` 200, `/actuator` 404
+  - 백업 → users 3→8 → 복구 → 3, API 재기동 후 게스트 생성 201
+  - status.sh 출력
+  - 워커 healthy
+- 다음: 배포 후 UptimeRobot 모니터 등록 (ricky00-dev). 정식 운용 전 S3 백업 복사.
+- 막힘·결정 필요: 휴장일에 forwardRun 알림이 잘못 갈 수 있음 (11월 휴장일 없음). 백업이 아직 같은 서버에만 있음.
+
 ## 2026-11-02 · ricky00-dev (Claude Code) · ci
 - 한 것: GitHub Actions CI 추가 (`.github/workflows/ci.yml`). develop·main으로 가는 PR과 develop 푸시마다 바뀐 폴더만 검사: api `./gradlew test`(Testcontainers), web `lint`·`build`, ai-worker `uv run pytest`. develop 푸시 때는 운영 이미지 3개 빌드도 확인. 배포 점검: 최신 develop(RAG 머지 후)으로 운영 이미지 3개 로컬 빌드 성공, 워커는 메모리 512MB 제한에서 서버 import 정상.
 - 진행 중: 없음.

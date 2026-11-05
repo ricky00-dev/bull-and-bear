@@ -11,6 +11,9 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  config:
+    # 로컬에서 api/.env에 KAKAO_REST_KEY 등을 넣어 둘 수 있다 (커밋 금지, .gitignore)
+    import: optional:file:.env[.properties]
 
 server:
   port: 8080
@@ -63,6 +66,13 @@ bullbear:
     single-enabled: ${BULLBEAR_SINGLE_ENABLED:false}
     max-attempts: 3
     poll-interval: 5m
+  kakao:
+    # 카카오 developers > 내 애플리케이션 > 앱 키 > REST API 키. 비우면 카카오 로그인 버튼이 "준비 중"
+    rest-key: ${KAKAO_REST_KEY:}
+    # 보안 > 클라이언트 시크릿을 "사용함"으로 켰을 때만
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    auth-url: https://kauth.kakao.com
+    api-url: https://kapi.kakao.com
 
 management:
   endpoints:

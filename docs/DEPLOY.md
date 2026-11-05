@@ -65,6 +65,7 @@ docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
 ```bash
 cd ~/bull-and-bear && git pull
 docker compose -f deploy/compose.yml --env-file deploy/.env --profile worker up -d --build
+docker image prune -f   # 옛 이미지 정리 (디스크 20GB가 빌드마다 줄어든다)
 ```
 
 DB 마이그레이션은 Spring이 켜질 때 Flyway가 자동으로 한다. Spring은 저장된 워커 ID로 상태/이벤트를 다시 조회한다.
@@ -84,6 +85,53 @@ docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -
 docker compose -f deploy/compose.yml --env-file deploy/.env exec postgres psql -U bullbear -c \
   "select origin, count(*), sum(cost_usd) from debates where debate_day = current_date group by origin"
 ```
+
+한눈에 보기: `deploy/status.sh` (컨테이너, 상태 확인, 디스크·메모리, 오늘 토론·비용·판정·퀴즈, 마지막 백업)
+
+## 감시와 알림
+
+`https://<주소>/healthz`가 상태를 돌려준다. 문제가 있으면 503이다.
+- `db`: DB 연결
+- `worker`: 실제 워커일 때 워커 `/health` 응답
+- `forwardRun`: 전향 운용이 켜져 있으면, 평일 19:30 이후 고정 종목이 오늘 모두 토론됐는지. 실험 데이터가 조용히 빠지는 걸 막는 용도라 가장 중요하다. 휴장일에는 알림이 잘못 갈 수 있다 (11월에는 휴장일 없음).
+
+알림은 **UptimeRobot 무료**로 받는다 (5분 간격, 메일·앱 알림).
+1. uptimerobot.com 가입 → Add New Monitor → HTTP(s)
+2. URL: `https://<주소>/healthz`, 간격 5분
+3. 알림 받을 메일 추가 (팀원 여러 명 가능)
+
+서버 안 감시: 컨테이너는 `restart: unless-stopped`로 죽으면 다시 뜬다. 워커는 30초마다 헬스체크 (`docker compose ps`에 unhealthy로 보인다).
+
+## 백업과 복구
+
+- 백업: 매일 04:00 cron (`deploy/backup.sh`), 서버의 `~/backups`에 14일치.
+- 복구: `deploy/restore.sh ~/backups/bullbear-YYYYMMDD-HHMM.sql.gz`. 확인을 묻고, API를 멈춘 뒤 덮어쓰고 다시 켠다.
+  로컬 운영 구성에서 백업 → 데이터 변경 → 복구 → API 재기동까지 확인함 (2026-11-02).
+- 한계: 백업이 같은 서버에 있어서 서버(디스크)를 잃으면 같이 잃는다. 정식 운용(11/11) 전에 S3로 복사를 붙인다
+  (S3 몇 MB는 월 몇 원 수준). 그 전에는 큰 변경 전에 `scp`로 내려받아 둔다.
+
+## 전시장 노트북 화면
+
+노트북 브라우저로 `https://<배포 주소>/exhibit`를 열고 전체 화면(F11, 맥은 ⌃⌘F)으로 둔다.
+
+- 큰 QR(관람객 입장), 오늘 퀴즈 랭킹(15초마다), 오늘의 토론 판정 수(30초마다)가 알아서 갱신된다
+- QR에는 지금 연 주소가 들어간다. 노트북에서 로컬로 띄우는 경우에만 `web/.env.local`의 `VITE_PUBLIC_URL`에 배포 주소를 넣는다
+- 화면 꺼짐은 브라우저가 지원하면 막는다(Wake Lock). 그래도 노트북 절전·화면보호기는 꺼 둔다
+- 노트북도 게스트 하나로 접속하므로 랭킹·판정 수에는 영향이 없다
+
+## 카카오 로그인
+
+키가 없으면 버튼이 "카카오로 시작 (준비 중)"으로 보이고 나머지는 그대로 동작한다.
+
+1. [카카오 developers](https://developers.kakao.com) → 내 애플리케이션 → 애플리케이션 추가 (앱 이름 "불앤베어")
+2. 앱 설정 → 플랫폼 → **Web** 사이트 도메인: `https://배포주소`, `http://localhost:5173`
+3. 카카오 로그인 → **활성화 ON**, Redirect URI: `https://배포주소/auth/kakao`, `http://localhost:5173/auth/kakao`
+4. 동의항목은 **아무것도 켜지 않는다** (회원번호만 쓴다. 이름·이메일을 받으면 개인정보 처리방침을 고쳐야 한다)
+5. 앱 키 → **REST API 키**를 `deploy/.env`의 `KAKAO_REST_KEY`에 넣고 `up -d` 다시 실행
+   - 보안 → 클라이언트 시크릿을 "사용함"으로 켰다면 그 값도 `KAKAO_CLIENT_SECRET`에
+   - 로컬: `api/.env`에 `KAKAO_REST_KEY=...` 한 줄 (커밋 금지, .gitignore에 있음) 후 API 재시작
+
+동작: 게스트로 쌓은 판정·퀴즈 기록은 카카오 계정에 그대로 이어진다. 다른 기기에서 같은 카카오로 들어오면 그 기기의 게스트 기록을 합친다(같은 토론을 양쪽에서 판정했으면 먼저 가입한 쪽 판정을 남긴다).
 
 ## 로컬에서 운영 구성 확인
 
