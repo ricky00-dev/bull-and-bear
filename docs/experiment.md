@@ -266,4 +266,8 @@ uv run python -m bullbear.experiment --env-file .env --provider openai --model g
 
 ## 예산
 
-추정(실측 전): 조건 A ≈ $0.08, 조건 B ≈ $0.03 → 10종목 × $0.11 × 약 17거래일(예비 포함) ≈ **$19**. 전향 운용 하루 상한 $4 (`forward-run.daily-usd`).
+처음 추정은 조건 A ≈ $0.08이었지만, LangGraph 6발언 엔진(#42) 실측 1건이 **$0.51**이다 (삼성전자, 중재자 재작성 2회 포함).
+조건 B ≈ $0.03(추정)을 더하면 10종목 × 약 $0.55 × 약 13거래일(11/10~11/26) ≈ **$72**.
+전향 운용 하루 상한 $8 (`forward-run.daily-usd`, 배포에서는 `FORWARD_RUN_DAILY_USD`), 사용량을 모를 때 추정 $0.6 (`budget.estimate-usd`).
+사용자 토론 상한 $3/일은 하루 약 5건이다. 전시 당일에는 `BUDGET_USER_DAILY_USD`를 올린다.
+월 크레딧 $200(11/8 충전) 안에서 전향 운용 + 사용자 토론 + 전시 당일을 맞춘다.
