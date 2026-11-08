@@ -40,8 +40,9 @@ bullbear:
     # 사용자가 시작한 토론의 하루 비용 상한 (USD). 전시 당일에는 환경 변수로 올린다
     user-daily-usd: 3.0
     per-user-daily-debates: 5
-    # 사용량을 아직 모르는 토론 (토론자 Haiku + 중재자 Sonnet 기준, 넉넉히 잡은 추정)
-    estimate-usd: 0.15
+    # 사용량을 아직 모르는 토론 (토론자 Haiku + 중재자 Sonnet 기준).
+    # LangGraph 6발언 엔진 실측 1건이 $0.51이라 그보다 조금 넉넉히 잡는다 (#42)
+    estimate-usd: 0.6
     # USD / 100만 토큰. 바뀌면 https://platform.claude.com/docs/en/about-claude/pricing 보고 고친다
     # Haiku 5.5는 프롬프트가 10만 토큰 이하일 때 단가 (토론 한 번의 호출은 그보다 훨씬 작다)
     prices:
@@ -56,7 +57,8 @@ bullbear:
     # 채점(16:10) 뒤, 종가가 들어온 다음. 18:40은 실패한 종목 재시도
     cron: "0 40 16,18 * * MON-FRI"
     max-concurrent: 2
-    daily-usd: 4.0
+    # 10종목 × (토론 약 $0.5 + 단일 판정) + 재시도 여유. 실측이 쌓이면 다시 맞춘다
+    daily-usd: 8.0
     poll-interval: 10s
 
   experiment:
