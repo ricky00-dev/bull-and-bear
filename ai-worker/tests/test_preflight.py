@@ -18,7 +18,7 @@ def configured(monkeypatch):
 
 def test_default_roles_and_no_secret_values(monkeypatch):
     report = inspect_settings(configured(monkeypatch))
-    assert report['models'] == {'debater': 'claude-haiku-5-5', 'moderator': 'claude-sonnet-5-5'}
+    assert report['models'] == {'debater': 'claude-sonnet-5-5', 'moderator': 'claude-sonnet-5-5'}
     assert report['configuration_ready']
     assert 'private-test-value' not in json.dumps(report)
     assert not report['model_access_verified']

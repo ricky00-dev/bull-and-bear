@@ -16,7 +16,7 @@ from bullbear.llm import Conversation, LLMError
 from bullbear.server import service as service_module
 from bullbear.server.app import create_app
 from bullbear.server.service import Service
-from .fakes import NOW, ScriptedDebater, ScriptedModerator, statement
+from .fakes import NOW, ScriptedModerator, statement
 from .http_fixture import TestRunner, fixture_market
 from .test_server import AUTH, completed, parse_sse, start
 
@@ -64,7 +64,7 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert manifest['snapshot_payload_hash'] == canonical_hash(snap)
         assert manifest['provenance']['code'] == {'revision': 'a' * 40, 'dirty': False}
         assert set(manifest['provenance']['schema_hashes']) == {'statement', 'moderator', 'semantic_review'}
-        assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic'}
+        assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime'}
         assert manifest['usage'] == result['usage']
         assert manifest['runner']['llm_call_observation'] is False
         assert {s['name'] for s in manifest['stages']} == {'snapshot', 'runner_initialization', 'debate'}
@@ -72,7 +72,8 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert manifest['elapsed_seconds'] >= sum(s['elapsed_seconds'] for s in manifest['stages'])
         assert events[0][1] == 'snapshot_created' and events[-1][1] == 'debate_completed'
         assert 'audit' not in str(events) and 'PRIVATE' not in str(manifest)
-        assert len(manifest['events']) > 6
+        assert sum(e['type'] == 'statement_accepted' for e in manifest['events']) == 6
+        assert sum(e['type'] == 'statement_rejected' for e in manifest['events']) == 1
         assert len(list((settings.data_dir / 'audits').iterdir())) == 1
         assert start(client).json()['debate_id'] == accepted['debate_id']
         assert len(list((settings.data_dir / 'audits').iterdir())) == 1
@@ -123,58 +124,12 @@ def test_partial_client_construction_failure_closes_first_client_and_preserves_p
     monkeypatch.setattr(service_module, 'LLM', llm)
     result, manifest = run_once(setup, lambda: service_module.LiveRunner(settings))
     assert result['status'] == 'failed' and result['error']['code'] == 'LLM_ERROR'
-    assert closed == ['selected-debater']
+    assert closed == ['selected-debater', 'selected-debater']
     assert manifest['status'] == 'failure' and manifest['usage'] == {'calls': []}
     assert next(s for s in manifest['stages'] if s['name'] == 'moderator_client_initialization')['status'] == 'failed'
     assert 'private-constructor' not in json.dumps(manifest)
 
 
-def test_live_runner_wires_audited_clients_and_reviews_without_changing_public_usage(setup, monkeypatch):
-    settings, _ = setup
-    closed = []
-    class Provider:
-        def __init__(self, model):
-            self.model, self.count = model, 0
-            self.client = NS(close=lambda: closed.append(model))
-        def usage_payload(self):
-            return {'calls': [{'model': 'actual-server-fallback', 'input_tokens': self.count * 10,
-                               'output_tokens': self.count * 5}]}
-        def structured(self, conv, **kwargs):
-            path = next((settings.data_dir / 'audits').glob('*/manifest.json'))
-            manifest = json.loads(path.read_text(encoding='utf-8'))
-            assert manifest['snapshot_id'] and manifest['llm_calls'][-1]['status'] == 'running'
-            self.count += 1
-            return {}
-    class Debater(ScriptedDebater):
-        def __init__(self, llm, snapshot, **kwargs):
-            self.llm = llm
-            super().__init__(statement(('E1', 'PX.CLOSE', snapshot.facts['PX.CLOSE'].value)))
-        def speak(self, *args, **kwargs):
-            self.llm.structured(Conversation('debater prompt'), schema=schemas.STATEMENT_SCHEMA, effort='medium')
-            self.llm.structured(Conversation('review prompt'), schema=semantic.Review.model_json_schema(), effort='medium')
-            return super().speak(*args, **kwargs)
-    class Moderator(ScriptedModerator):
-        def __init__(self, llm, snapshot, **kwargs):
-            self.llm = llm
-            super().__init__(['verdict'])
-        def evaluate(self, *args, **kwargs):
-            self.llm.structured(Conversation('moderator prompt'), schema=schemas.MODERATOR_SCHEMA, effort='high')
-            self.llm.structured(Conversation('review prompt'), schema=semantic.Review.model_json_schema(), effort='medium')
-            return super().evaluate(*args, **kwargs)
-    monkeypatch.setattr(service_module, 'LLM', Provider)
-    monkeypatch.setattr(service_module, 'Debater', Debater)
-    monkeypatch.setattr(service_module, 'Moderator', Moderator)
-    result, manifest = run_once(setup, lambda: service_module.LiveRunner(settings))
-    assert result['status'] == 'completed' and manifest['status'] == 'success'
-    assert len(closed) == 2 and len(manifest['llm_calls']) == 14
-    assert manifest['runner']['llm_call_observation'] is True
-    assert {role: sum(c['role'] == role for c in manifest['llm_calls'])
-            for role in ('debater', 'moderator', 'semantic_reviewer')} == {
-                'debater': 6, 'moderator': 1, 'semantic_reviewer': 7}
-    assert manifest['usage'] == result['usage']
-    assert manifest['usage']['calls'][0]['input_tokens'] == 140
-    assert manifest['role_usage']['semantic_reviewer']['calls'][0]['input_tokens'] == 70
-    assert all(c['actual_models'] == ['actual-server-fallback'] for c in manifest['llm_calls'])
 
 
 def test_verification_failure_preserves_rejection_metadata_usage_and_no_public_statement(setup):

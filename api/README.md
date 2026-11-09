@@ -23,6 +23,8 @@ cd api
 
 ## API (브라우저용)
 
+주요 경로 요약이다. 퀴즈·피드·차트·RAG 조회의 전체 요청 필드는 각 Controller와 웹 `src/lib/api.ts`를 함께 확인한다.
+
 인증은 `Authorization: Bearer <token>`. 첫 접속 때 게스트 토큰을 받는다.
 브라우저 `EventSource`는 헤더를 못 붙이므로 `/stream`만 `?access_token=` 쿼리도 받는다.
 
@@ -32,7 +34,7 @@ cd api
 | GET | `/api/me` | 내 정보 |
 | GET | `/api/stocks/search?q=` | 종목명·코드·초성 검색. 토론 불가 종목은 `eligible:false` + `blockReason` |
 | GET | `/api/stocks/{ticker}` | 종목 확인 화면: 종가, 60일 스파크라인, 토론 가능 여부, 오늘 토론(`todayDebate`) |
-| POST | `/api/debates` | `{ticker}` 토론 시작. 오늘 같은 종목 토론이 있으면 재사용(`reused:true`) |
+| POST | `/api/debates` | `{ticker}` 토론 시작. 같은 종목·데이터 기준일의 실패하지 않은 토론이 있으면 재사용(`reused:true`) |
 | GET | `/api/debates/{id}` | 토론 상태, 스냅샷 기준일·기준가 |
 | GET | `/api/debates/{id}/stream` | SSE. 쌓인 이벤트 재생 후 라이브. `Last-Event-ID` 또는 `?after=`로 이어 받기 |
 | POST | `/api/debates/{id}/judgment` | 내 판정 `{decision, confidence, evidencePicks, memo}` → 중재자 판정 공개 |
@@ -40,6 +42,7 @@ cd api
 | GET | `/api/me/judgments` | 내 판정 목록 + 채점 상태(3·7거래일, 예상일, 결과) |
 | GET | `/api/me/judgments/{id}` | 채점 결과 화면: 내가 고른 근거, 중재자의 결정적 근거, 메모 |
 | GET | `/api/me/stats` | 7거래일 기준 적중률, AI 적중률, AI를 이긴 판정 수, 근거 습관 |
+| GET | `/api/report?scope=official` | 토론·단일·기준선 및 관람객 통계. `scope=all`은 예비 운용 포함 |
 
 오류는 모두 `{"error": {"code", "message"}}`.
 

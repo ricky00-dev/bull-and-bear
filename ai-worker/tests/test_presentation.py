@@ -6,7 +6,6 @@ from datetime import timedelta
 import pytest
 
 from bullbear import prompts
-from bullbear.agents import Debater
 from bullbear.llm import LLMError
 from bullbear.presentation import sentence_count, money_issues, statement_issues, moderator_issues, used_sources
 from bullbear.schemas import Side
@@ -50,6 +49,17 @@ def test_mkt_decisive_id_is_allowed_when_prose_uses_numbered_reference():
     assert not moderator_issues(d)
 
 
+@pytest.mark.parametrize('claim,too_long', [
+    ('관측된 흐름의 지속은 불확실합니다.', False),
+    ('최근 수익률은 1.57%입니다. 같은 흐름이 이어진다는 조건이 필요합니다.', False),
+    ('최근 흐름이 약했습니다. 지속 여부는 불확실합니다. 새 자료가 필요합니다.', True),
+])
+def test_summary_accepts_two_sentences_without_splitting_decimals(claim, too_long):
+    candidate = statement(('E1', 'PX.CLOSE', 399))
+    candidate.claim = claim
+    assert ('claim_length' in codes(statement_issues(candidate, 'opening', set()))) is too_long
+
+
 def test_limits_and_decimal_citations():
     assert sentence_count("변동성은 68.17%입니다. [E1] 비율은 9.39배입니다 [E2]. 세 번째입니다.") == 3
     s = statement(('E1','PX.CLOSE',399), argument='하나. 둘. 셋. 넷.')
@@ -61,22 +71,16 @@ def test_limits_and_decimal_citations():
 
 
 @pytest.mark.parametrize('round_kind',['rebuttal','closing'])
-def test_new_means_unused_by_either_side(snap,round_kind):
+def test_reusing_evidence_is_allowed_for_both_sides(snap,round_kind):
     old = statement(('E1','PX.CLOSE',399))
     history = [prompts.render_statement(Side.BEAR,'opening',old)]
     used = used_sources(history,snap)
     assert used == {'PX.CLOSE'}
-    assert 'no_new_evidence' in codes(statement_issues(old,round_kind,used))
+    assert 'no_new_evidence' not in codes(statement_issues(old,round_kind,used))
     fresh = statement(('E1','PX.RET_1M',2))
     assert 'no_new_evidence' not in codes(statement_issues(fresh,round_kind,used))
 
 
-def test_empty_new_evidence_does_not_call_llm(snap):
-    snap = snap.model_copy(update={'facts':{'PX.CLOSE':snap.facts['PX.CLOSE']}})
-    llm = object()
-    history=[prompts.render_statement(Side.BULL,'opening',statement(('E1','PX.CLOSE',399)))]
-    with pytest.raises(LLMError,match='No unused evidence'):
-        Debater(llm,snap).speak(Side.BEAR,'rebuttal',history,verify=lambda _:None)
 
 
 def test_rebuttal_requires_actual_opponent_quote():

@@ -7,10 +7,9 @@ from contextlib import nullcontext
 
 from fastapi.encoders import jsonable_encoder
 
-from ..agents import Debater, Moderator
 from ..audit import AuditedLLM, RunAudit, selected_models
 from ..data.base import DataUnavailable
-from ..debate import Debate, verification_stats
+from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
 from ..llm import LLM, LLMError
 from ..rag.context import execution_policy
@@ -23,13 +22,14 @@ log = logging.getLogger(__name__)
 
 
 class LiveRunner:
-    def __init__(self, settings, *, budget=None):
+    def __init__(self, settings, *, budget=None, review_statements=None):
         self.settings = settings
         self.clients = []
         self.audit = None
         self.background_context = None
         self.budget = budget
         self.budget_scopes = set()
+        self.review_statements = settings.review_statements if review_statements is None else review_statements
 
     def new_client(self, model, scope):
         if self.budget is not None:
@@ -61,25 +61,23 @@ class LiveRunner:
         settings = self.settings
         models = self.audit.data['config']['selected_models'] if self.audit else selected_models(settings)
 
-        def client(role):
+        def client(role, model_role):
             with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
-                llm = self.new_client(models[role], f'{debate_id}:{role}')
+                llm = self.new_client(models[model_role], f'{debate_id}:{role}')
+                if role.startswith('reviewer_'):
+                    llm.max_output_tokens = 4096
                 self.clients.append(llm)
-                return AuditedLLM(llm, self.audit, role) if self.audit else llm
+                audit_role = 'statement_reviewer' if role.startswith('reviewer_') else model_role
+                return AuditedLLM(llm, self.audit, audit_role) if self.audit else llm
 
-        debater_llm = client('debater')
-        moderator_llm = client('moderator')
-        result = Debate(snapshot, Debater(debater_llm, snapshot, effort=settings.debater_effort,
-                                         background_context=self.background_context),
-                        Moderator(moderator_llm, snapshot, effort=settings.moderator_effort,
-                                  background_context=self.background_context),
-                        EventLog(settings.debate_dir / f'{debate_id}.jsonl'), debate_id=debate_id,
-                        max_extra_rounds=max_extra_rounds, on_event=emit).run()
-        verdict = result.verdict.model_dump(mode='json')
-        verdict['scores'] = {side: verdict.pop(side) for side in ('bull', 'bear')}
-        verdict.pop('action')
-        verdict.pop('extra_question')
-        return {'debate_id': debate_id, 'verdict': verdict, 'stats': verification_stats(result.turns)}
+        return GraphRuntime(snapshot, debate_id=debate_id,
+            bull=client('bull', 'debater'), bear=client('bear', 'debater'),
+            moderator=client('moderator', 'moderator'),
+            log=EventLog(settings.debate_dir / f'{debate_id}.jsonl'), emit=emit,
+            max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
+            moderator_effort=settings.moderator_effort, background_context=self.background_context,
+            statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
+                if self.review_statements else None).run()
 
     def close(self):
         for client in self.clients:
@@ -223,6 +221,7 @@ class Service:
         return {'debate_id': row['id'], 'snapshot_id': row['snapshot_id'], 'status': row['status'], 'reused': reused}
 
     def run(self, debate_id, quote, max_extra_rounds, *, mode='debate', snapshot=None):
+        from .progress import generation_progress
         runner = None
         audit = None
 
@@ -338,12 +337,21 @@ class Service:
             usage = collect_usage()
             audit.finish('success', usage=usage, result=completed)
             self.store.emit(debate_id, 'debate_completed', {
-                **completed, **({'usage': usage} if usage is not None else {})})
+                **completed, **({'usage': usage} if usage is not None else {}),
+                'generation': generation_progress(self.store.events(debate_id), terminal='completed', mode=mode)})
         except Exception as exc:
             # Provider exception strings may contain API keys. Keep public errors generic.
             code = 'DATA_UNAVAILABLE' if isinstance(exc, DataUnavailable) or runner is None else 'LLM_ERROR'
             log.warning('debate %s failed (%s)', debate_id, type(exc).__name__)
             payload = {'error': {'code': code, 'message': '데이터 조회에 실패했습니다' if code == 'DATA_UNAVAILABLE' else 'AI 토론을 완료하지 못했습니다'}}
+            payload['generation'] = generation_progress(self.store.events(debate_id), terminal='failed', mode=mode)
+            payload['error']['stage'] = payload['generation']['stage']
+            payload['error']['reason'] = ('moderator_validation_failed'
+                if isinstance(exc, MediationFailed) else 'generation_failed')
+            if isinstance(exc, GraphStopped):
+                payload['error']['reason'] = 'graph_' + exc.graph_status
+                payload['graph_status'] = exc.graph_status
+                payload['generation']['moderator_status'] = exc.graph_status
             if runner is not None:
                 usage = collect_usage()
                 if usage is not None:
@@ -367,12 +375,15 @@ class Service:
                             log.warning('debate %s cleanup audit persistence failed', debate_id)
 
     def detail(self, debate_id):
+        from .progress import generation_progress
         row = self.store.get(debate_id)
         result = {'debate_id': row['id'], 'snapshot_id': row['snapshot_id'], 'status': row['status'], 'statements': []}
-        for event in self.store.events(debate_id):
+        events = self.store.events(debate_id)
+        for event in events:
             if event['type'] == 'statement_accepted':
                 result['statements'].append(json.loads(event['data']))
             elif event['type'] in ('debate_completed', 'debate_failed'):
                 result.update(json.loads(event['data']))
                 result['status'] = 'completed' if event['type'] == 'debate_completed' else 'failed'
+        result['generation'] = generation_progress(events, mode=row['mode'])
         return result

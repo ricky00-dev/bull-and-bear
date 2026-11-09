@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from bullbear.agents import Attempt
 from bullbear.data import (
     AccountValue, Disclosure, FinancialReport, MarketDataSource, NewsArticle, NewsSource, PriceBar, ShareCount,
 )
@@ -13,6 +12,8 @@ from bullbear.snapshot import KST
 
 AS_OF = date(2026, 10, 16)
 NOW = datetime(2026, 10, 16, 18, 0, tzinfo=KST)  # 장 마감 후
+
+
 
 
 class FakeSource(MarketDataSource):
@@ -76,21 +77,6 @@ def statement(*evidence: tuple[str, str, float | None], argument: str | None = N
     })
 
 
-class ScriptedDebater:
-    """정해진 발언을 순서대로 낸다. 첫 발언만 한 번 반려되게 할 수 있다."""
-
-    def __init__(self, good: Statement, bad_first: Statement | None = None):
-        self.good = good
-        self.bad_first = bad_first
-        self.calls = []
-
-    def speak(self, side, round_kind, transcript, *, verify, question=None, on_event=None):
-        self.calls.append((side, round_kind, len(transcript), question))
-        attempts = []
-        if self.bad_first is not None and len(self.calls) == 1:
-            attempts.append(Attempt(self.bad_first, verify(self.bad_first)))
-        attempts.append(Attempt(self.good, verify(self.good)))
-        return attempts
 
 
 class ScriptedModerator:
@@ -99,10 +85,12 @@ class ScriptedModerator:
         self.calls = []
 
     def evaluate(self, transcript, stats, *, extra_allowed):
+        from .learning_fixtures import moderator_analysis
         self.calls.append((len(transcript), stats, extra_allowed))
         action = self.actions.pop(0) if self.actions else "verdict"
         score = SideScore(relevance=3, materiality=3, rebuttal=3, risk_awareness=3, comment="")
         return ModeratorDecision(
             action=action, extra_question="자사주 매입 규모는?" if action == "extra_round" else None,
             bull=score, bear=score, decision=Decision.HOLD, confidence=0.5, reasoning="비슷함", decisive_evidence=[],
+            analysis=moderator_analysis(),
         )

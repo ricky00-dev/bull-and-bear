@@ -1,10 +1,12 @@
 # RAG 1주 구현 진행과 실행 안내
 
-계획: [1주 범위와 장기 아키텍처](RAG-LONG-TERM.md). 기준: develop `2cca67f`, 구현 브랜치 `feat/rag-week-one`.
+> 보관 기록: 작성 당시 계획·구현·검증 상태를 보존합니다. 현재 실행 절차는 [문서 안내](../README.md)를 따릅니다.
+
+계획: [1주 범위와 장기 아키텍처](../RAG-LONG-TERM.md). 기준: develop `2cca67f`, 구현 브랜치 `feat/rag-week-one`.
 
 2026-11-02 운영 준비 추가: snapshot별 generation/원본 receipt를 HTTP 저장과 원자적으로 고정한다. 재시작·설정 교체 후에도
 과거 연결로 조회하며 미연결 snapshot은 자동 보정하지 않는다. `bind-snapshot`과 `check-bindings`, 선택적 compose RAG 설정,
-PostgreSQL 이미지 의존성을 추가했다. [이관·교체·복구 절차](RAG-PUBLICATION-RUNBOOK.md)가 현재 기준이다.
+PostgreSQL 이미지 의존성을 추가했다. [이관·교체·복구 절차](../RAG-PUBLICATION-RUNBOOK.md)가 현재 기준이다.
 실제 배포·Docker 실행·클라우드 복원·사람 검수 다종목 검색 품질은 완료하지 않았다.
 
 ## 1일차 구현 범위
@@ -289,7 +291,7 @@ compare는 검색 실패·금지 문단 선택·expect_empty 위반 중 하나�
 
 출력은 기간별 최종 선택 cap(common k=2/short k=3)의 Recall/MRR/nDCG, 금지 문단 선택 수, expect_empty 위반, 실패 수, context ID, 임베딩 원장과 p95를 포함한다. 실패한 검색의 relevance 점수는 null로 두고 실패 수를 따로 집계한다. 정답이 없는 case의 recall/MRR/nDCG도 null이다. p95는 **이미 준비된 검색+context 저장 시간**이며 API 임베딩·색인 빌드 시간을 포함하지 않는다. 작은 fixture의 속도를 운영 p95로 일반화하지 않는다.
 
-합성 벡터·합성 정답 3개 case의 실제 pgvector 실행 결과는 [fixture 보고서](evaluations/rag-vector-fixture.json)에 남겼다. 이 결과는 연산·필터·평가 연결 검사다. dense가 긍정 사례를 맞혔지만 negative case 1개에 답을 반환했고 hybrid도 같은 문제를 보였다. **실제 임베딩 모델의 의미 검색 품질이나 BM25 대비 우월성을 입증하는 결과가 아니다.** 운영 기본값은 계속 BM25다.
+합성 벡터·합성 정답 3개 case의 실제 pgvector 실행 결과는 [fixture 보고서](../evaluations/rag-vector-fixture.json)에 남겼다. 이 결과는 연산·필터·평가 연결 검사다. dense가 긍정 사례를 맞혔지만 negative case 1개에 답을 반환했고 hybrid도 같은 문제를 보였다. **실제 임베딩 모델의 의미 검색 품질이나 BM25 대비 우월성을 입증하는 결과가 아니다.** 운영 기본값은 계속 BM25다.
 
 
 2026-11-02 4일차 전체 검증: **581 passed / 외부 Spring 5 skipped (129.14초)**. 로컬 PostgreSQL16.4용 pgvector0.8.7을 공식 소스 `f37c13f68b57d2c3472b2214fbcff699d6d34876`에서 빌드하여 실제 extension/type/cosine 연산·테이블 불변성·무결성·cache·원장·ready/시점·짝 비교를 검사했다. 기존 Windows SDK 누락 헤더는 Microsoft SDK 패키지에서 작업용 경로로 보완했고, 빌드물·DB·다운로드는 ignored data/로 분리했다. 유료 임베딩 API 호출은 0회이며 OpenAI adapter는 가짜 client로 검증했다. `uv lock --check`, wheel 빌드·새 모듈과 Alembic0004 포함을 확인했다. 완전 신규 의존성 설치·실제 클라우드/실모델 품질/대량 지연은 미검증이다.
@@ -298,7 +300,7 @@ compare는 검색 실패·금지 문단 선택·expect_empty 위반 중 하나�
 
 ## 5일차: 실제 모델 평가와 HTTP shadow
 
-위 4일차의 실모델 미검증 상태에서 추가 진행했다. 실제 small/large API 평가 결과와 비용은 [평가 보고서](evaluations/rag-real-embedding-pilot.md)에 기록했다. 6문서·24질문에서 dense의 Recall은 1.0이었지만 답 없음 6개 모두 과잉 검색했다. 운영 기본값은 BM25이며 모델 품질 채택은 보류한다. S3 연결도 계속 미룬다.
+위 4일차의 실모델 미검증 상태에서 추가 진행했다. 실제 small/large API 평가 결과와 비용은 [평가 보고서](../evaluations/rag-real-embedding-pilot.md)에 기록했다. 6문서·24질문에서 dense의 Recall은 1.0이었지만 답 없음 6개 모두 과잉 검색했다. 운영 기본값은 BM25이며 모델 품질 채택은 보류한다. S3 연결도 계속 미룬다.
 
 실모델 평가 CLI는 다음과 같다. `--spec`은 여러 개 지정할 수 있다. DB migrate/vector install을 먼저 끝내고 API 키는 환경변수로 제공한다. 아래 명령은 캐시가 없으면 비용이 발생한다. 저장한 사례·입력 해시·관측 시점을 고정하며 같은 output에 변경한 자료를 넣으면 거부한다. 예산 초과는 첫 API 호출 전에 거부한다. 공급자 오류의 미확정 예약은 자동 재시도하지 않는다. 종료 코드 0은 평가 실행 완료를 뜻하며 품질 채택을 뜻하지 않는다.
 
@@ -352,7 +354,7 @@ $env:BULLBEAR_RAG_SHADOW_SELECTION_POLICY='data/selection-quality-v2/text-embedd
 shadow를 쓰려면 이전 절의 활성화·spec·generation·query 준비/예산 설정이 별도로 필요하다. CLI `rag retrieve`, `vector_cli prepare-query`, `vector_cli compare`에도 `--selection-policy <파일>`을 같은 값으로 전달해야 focused 질의를 재사용한다. 미지정 시 기존 질의/정책을 사용한다. 정책 선택만으로 S3나 유료 query 생성이 자동 활성화되지 않는다.
 
 
-실제 실행 결과와 이전 음성 지표 정정은 [문단 선택 평가 보고서](evaluations/rag-selection-pilot.md)에 기록했다. 평가 CLI 종료 코드 0은 실행 완료이며 품질 통과가 아니다. 48개 holdout에서 개선 BM25는 정밀도 66.7%/재현율 90.0%/음성 오류 9/18, large는 68.9%/90.0%/8/18이었다. 정책 자동 활성화나 운영 전환은 하지 않았다.
+실제 실행 결과와 이전 음성 지표 정정은 [문단 선택 평가 보고서](../evaluations/rag-selection-pilot.md)에 기록했다. 평가 CLI 종료 코드 0은 실행 완료이며 품질 통과가 아니다. 48개 holdout에서 개선 BM25는 정밀도 66.7%/재현율 90.0%/음성 오류 9/18, large는 68.9%/90.0%/8/18이었다. 정책 자동 활성화나 운영 전환은 하지 않았다.
 
 
 6일차 검증: 실제 PostgreSQL/pgvector 포함 전체 **601 passed / 외부 Spring 5 skipped (156.64초)**. 최종 집계 필드 보완 후 selection/vector **29 passed (38.35초)**. lock/diff/wheel 포함 검사 통과. 전용 PostgreSQL은 종료하고 평가 DB/cache를 보존했다.
@@ -371,8 +373,8 @@ HTTP는 저장된 snapshot_id만 받고 수집/LLM/임베딩/shadow를 시작하
 불변 context/검색 감사에 저장한다. CLI는 `--request request.json`으로 같은 검증을 사용한다.
 수치 조회는 FTS generation 없이도 처리하며 조회 감사 저장은 필수다. 개념 검색에만 generation이 필요하다.
 
-구체 요청/응답은 [worker-api v0.7 추가 구현 초안](worker-api.md), 오프라인 재검사와 제한은
-[Fact 연결 보고서](evaluations/rag-fact-binding.md)를 따른다. 기존 v0.6 호환이며 Spring/웹 연동·공동 승인·배포는
+구체 요청/응답은 [worker-api v0.7 추가 구현 초안](../worker-api.md), 오프라인 재검사와 제한은
+[Fact 연결 보고서](../evaluations/rag-fact-binding.md)를 따른다. 기존 v0.6 호환이며 Spring/웹 연동·공동 승인·배포는
 별도 미완료다. 외부 모델0회, S3 연결 없음. 이전72개는 재사용 회귀 자료이며 독립 holdout이 아니다.
 검증용48개 오선택9→4/18, precision66.7→75.0%, recall90→83.3%, 완전누락1→3으로 보수적 판별 비용이 남았다.
 
@@ -385,7 +387,7 @@ HTTP는 저장된 snapshot_id만 받고 수집/LLM/임베딩/shadow를 시작하
 사용자 요청으로 자연어 의도/종목/날짜/단위 추정용 정규식을 삭제했다. 기존 토큰 정규화·티커 형식 검사와
 문서 관련성 기준은 유지한다. `/rag/search`는 질문을 문서 검색으로 보내며 수치를 검증했다고 표시하지 않는다.
 `/rag/facts`는 ticker/metric/as_of/unit으로 Fact를 조회하며 question을 받지 않는다.
-혼합 `/rag/query`는 인증 후410으로 새 경로를 안내한다. 계약은 [v0.8 구현 초안](worker-api.md)이다.
+혼합 `/rag/query`는 인증 후410으로 새 경로를 안내한다. 계약은 [v0.8 구현 초안](../worker-api.md)이다.
 
 CLI의 `--request` JSON도 mode를 명시해야 한다. 예를 들어 다음 두 형태를 사용한다.
 
@@ -400,7 +402,7 @@ CLI의 `--request` JSON도 mode를 명시해야 한다. 예를 들어 다음 두
 문서 요청에는 `--generation`이 필요하고 수치 요청에서는 생략할 수 있다. 추가/혼합 필드나 mode 미지정은
 거부한다. 기존 저장 context는 수정하지 않으며 새 context는 explicit-evidence-v2와 명시된 요청을 기록한다.
 HTTP는 저장 snapshot만 사용하고 자동 수집·LLM·임베딩·shadow를 호출하지 않는다. 기본 토론 경로는 유지한다.
-새 문서 회귀 자료는 [분리 이후 결과](evaluations/rag-document-search-regression-v2.json)에 보존했다.
+새 문서 회귀 자료는 [분리 이후 결과](../evaluations/rag-document-search-regression-v2.json)에 보존했다.
 기존72개를 재사용한 문서 검색 검사이며 Fact 답변 정확성이나 독립 holdout 평가가 아니다.
 이전48개 질문의 검색 recall은90%, 완전누락1개로 의도 관문 이전 수준으로 돌아왔다. 수치 질문에 문단이
 반환되더라도 그것은 문서 검색 결과이며 수치 답변 성공으로 해석하지 않는다. 수치는 /rag/facts로 별도 요청한다.
@@ -420,7 +422,7 @@ Spring `/api/debates/{id}/rag/search`와 `/facts`가 해당 토론의 저장 sna
 실행에는 기존 HTTP 워커 설정과 `BULLBEAR_RAG_ENABLED=true`, 저장 snapshot이 필요하다.
 문서 검색은 게시된 generation이 필요하며 수치 조회는 저장 Fact만 사용한다. fake 모드에서는503 안내를 반환한다.
 자료가 없다고 토론을 새로 만들지 않는다. 스냅샷이 아직 없으면409, 정상 근거 부족/문서 없음은200이다.
-계약/오류는 [worker-api v0.8 Spring·웹 연동](worker-api.md)에 기록했다.
+계약/오류는 [worker-api v0.8 Spring·웹 연동](../worker-api.md)에 기록했다.
 
 검증: Spring MockMvc + 로컬 HTTP 워커 stub의8개 검사와 기존 워커 클라이언트4개 검사 통과,
 웹 build/lint 통과. `web/tests/rag-smoke.mjs`는 Playwright와 로컬 Vite 서버로 실행하며 API를 전부 가로챈다.
@@ -431,13 +433,13 @@ Spring 검사는 `./gradlew test --tests '*RagIntegrationTest' --tests '*HttpWor
 Docker 미설치로 전체 DB 통합 검사는 실행하지 않았다. 실제 Python 워커+Spring+웹 전체 연결/공동 승인/배포는 미실행.
 외부 모델 호출0, S3 연결0. 이는 위 이전 단계의 'Spring/웹 연동 미완료' 상태를 대체한다.
 
-후속 실제 연동 검증도 완료했다: [실제 워커·Spring·웹 연결 보고서](evaluations/rag-live-e2e.md).
+후속 실제 연동 검증도 완료했다: [실제 워커·Spring·웹 연결 보고서](../evaluations/rag-live-e2e.md).
 종가 단위 정의를 원본과 같은 KRW/share로 정정했으며 저장 종가/PER 화면 표시와 문서 검색을 확인했다.
 문서는 게시 이후 별도 검증 snapshot을 사용했고 과거 snapshot의 시간 검증은 유지했다.
 브라우저15개 검사·워커74개 회귀·웹 build/lint 통과, 외부 모델/S3 호출0. 운영 배포는 미실행.
 
-다음 운영 순서와 다종목 연결 검증은 [색인 게시·스냅샷 운영 안내](RAG-PUBLICATION-RUNBOOK.md)에 정리했다.
+다음 운영 순서와 다종목 연결 검증은 [색인 게시·스냅샷 운영 안내](../RAG-PUBLICATION-RUNBOOK.md)에 정리했다.
 `rag check-generation`으로 게시 무결성/시점과 여러 저장 스냅샷의 적합성을 읽기 전용으로 확인한다.
 005930 실제 저장본·000660 기존 모의 저장본의 원본을 보존하고 게시 이후 새 테스트 복사본으로 종목 격리를 확인했다.
 이후 운영 준비 작업에서 스냅샷별 generation 고정/라우팅을 구현했다. 과거 미연결 자료는 당시 observed context를
-근거로 명시적으로 이관하며, 상세 정책은 [운영 안내](RAG-PUBLICATION-RUNBOOK.md)를 따른다.
+근거로 명시적으로 이관하며, 상세 정책은 [운영 안내](../RAG-PUBLICATION-RUNBOOK.md)를 따른다.
