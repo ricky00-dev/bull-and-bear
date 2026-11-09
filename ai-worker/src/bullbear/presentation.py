@@ -38,8 +38,9 @@ def used_sources(transcript, snapshot):
 
 def statement_issues(statement, round_kind, used):
     issues = []
-    if "\n" in statement.claim or sentence_count(statement.claim) > 1:
-        issues.append(error("claim_length", "주장은 한 줄·한 문장 이내로 쓰세요."))
+    # New summaries target two sentences; old one-sentence records stay valid.
+    if sentence_count(statement.claim) > 2:
+        issues.append(error("claim_length", "요약은 핵심 주장과 주요 근거·조건을 담아 두 문장 이내로 쓰세요."))
     count = sentence_count(statement.argument)
     if count > 3:
         issues.append(error("argument_length", f"본문이 {count}문장입니다. 불확실성 설명까지 포함해 최대 3문장으로 다시 쓰세요."))

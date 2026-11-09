@@ -54,10 +54,22 @@ def test_limits_and_decimal_citations():
     assert sentence_count("변동성은 68.17%입니다. [E1] 비율은 9.39배입니다 [E2]. 세 번째입니다.") == 3
     s = statement(('E1','PX.CLOSE',399), argument='하나. 둘. 셋. 넷.')
     assert 'argument_length' in codes(statement_issues(s,'opening',set()))
-    s.claim = "첫 줄\n둘째 줄"
+    s.claim = "첫 문장. 두 번째 문장. 세 번째 문장."
     assert 'claim_length' in codes(statement_issues(s,'opening',set()))
     s.evidence *= 4
     assert 'evidence_limit' in codes(statement_issues(s,'opening',set()))
+
+
+@pytest.mark.parametrize('summary,too_long', [
+    ('이익 유지가 반등의 조건입니다.', False),  # Existing one-sentence records remain valid.
+    ('이익이 유지되면 반등 여지가 있습니다. 다만 수요 회복은 아직 확인되지 않았습니다.', False),
+    ('이익이 유지되면 반등 여지가 있습니다.\n다만 수요 회복은 아직 확인되지 않았습니다.', False),
+    ('이익이 유지되면 반등 여지가 있습니다. 수요 회복은 아직 확인되지 않았습니다. 확신은 낮습니다.', True),
+])
+def test_summary_allows_two_sentences_and_legacy_records(summary, too_long):
+    s = statement(('E1', 'PX.CLOSE', 399), argument='근거를 확인했습니다 [E1].')
+    s.claim = summary
+    assert ('claim_length' in codes(statement_issues(s, 'opening', set()))) is too_long
 
 
 @pytest.mark.parametrize('round_kind',['rebuttal','closing'])

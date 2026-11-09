@@ -77,7 +77,9 @@ class Debater:
             except ValidationError as e:
                 raise LLMError(f"발언 형식 오류: {e}") from e
             result = verify(statement)
-            issues = list(result.issues) + horizon_issues(statement.claim)
+            # The shared policy supplies the horizon; each speech need not restate it.
+            # Actual changes of horizon/benchmark remain part of semantic review.
+            issues = list(result.issues)
             issues += statement_issues(statement, round_kind, used)
             issues += rebuttal_target_issues(statement, side, round_kind, transcript)
             issues += concept_issues("\n".join([statement.claim, statement.argument,

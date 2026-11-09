@@ -72,12 +72,38 @@ def test_rewrite_receives_new_evidence_ids_from_rejected_candidate(snap, round_k
     assert len(attempts) == 2 and not attempts[0].verification.passed and attempts[1].verification.passed
 
 
-def test_wrong_horizon_rejected_before_paid_review(snap):
+def test_speech_can_omit_shared_horizon_phrase(snap):
+    candidate = st("가격 부담이 줄어들면 반등 여지가 있지만 추가 근거가 필요합니다 [E1].").model_copy(
+        update={"claim": "가격 부담 완화가 반등의 조건이다"})
+    llm = QueueLLM([candidate.model_dump(), {"issues": []}])
+    attempts = Debater(llm, snap).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
+    assert len(attempts) == 1 and attempts[0].verification.passed
+    assert attempts[0].statement == candidate
+    assert len(llm.calls) == 2  # Generation plus semantic review, with no forced rewrite.
+
+
+def test_summary_distortion_feedback_rewrites_summary_without_changing_body(snap):
+    body = "가격 부담이 줄어들면 반등할 수 있지만 그 조건이 충족됐는지는 확인되지 않았습니다 [E1]."
+    bad = st(body).model_copy(update={"claim": "반등이 확실합니다. 가격 부담이 줄었습니다."})
+    good = bad.model_copy(update={"claim": "가격 부담이 줄어들면 반등 여지가 있습니다. 다만 그 조건의 충족 여부는 확인되지 않았습니다."})
+    finding = {"issues": [{"code": "unsupported_inference", "quote": "반등이 확실합니다",
+                           "message": "본문의 조건부 전망을 요약에서 확정적 주장으로 강화했습니다."}]}
+    llm = QueueLLM([bad.model_dump(), finding, good.model_dump(), {"issues": []}])
+    attempts = Debater(llm, snap).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
+    assert [attempt.verification.passed for attempt in attempts] == [False, True]
+    assert all(attempt.statement.argument == body for attempt in attempts)
+    assert attempts[-1].statement.claim == good.claim
+    assert attempts[0].verification.issues[0].code == "unsupported_inference"
+
+
+def test_actual_horizon_change_still_rejected_by_semantic_review(snap):
     bad = st("장기 매수 [E1]").model_copy(update={"claim": "중장기 매수"})
-    llm = QueueLLM([bad.model_dump()])
+    llm = QueueLLM([bad.model_dump(), {"issues": [{"code": "horizon_mismatch",
+        "quote": "중장기 매수", "message": "단기 상대수익 판단을 중장기 보유 판단으로 바꾸었습니다."}]}])
     result = Debater(llm, snap, max_retries=0).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
     assert not result[-1].verification.passed
-    assert len(llm.calls) == 1
+    assert "horizon_mismatch" in {issue.code for issue in result[-1].verification.issues}
+    assert len(llm.calls) == 2
 
 
 def test_reviewer_cannot_invent_offending_quote(snap):

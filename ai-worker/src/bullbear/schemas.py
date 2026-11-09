@@ -51,7 +51,7 @@ class Statement(BaseModel):
 STATEMENT_SCHEMA = {
     "type": "object",
     "properties": {
-        "claim": {"type": "string", "description": "한 문장 핵심 주장"},
+        "claim": {"type": "string", "description": "사용자에게 먼저 보이는 본문 요약 두 문장: 핵심 주장과 주요 근거·반박. 중요한 조건·한계를 보존하며 본문에 없는 사실은 추가하지 않음"},
         "argument": {"type": "string", "description": "최대 3문장 본문. 근거는 [E1] 같은 표식으로 참조"},
         "evidence": {
             "type": "array",
