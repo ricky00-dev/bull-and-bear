@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-09 · Codex · api · SSE 재생 중 완료 시 마지막 발언 누락 수정
+- 한 것: 구독 등록을 Subscriber 잠금 안으로 옮겨 라이브 publish가 초기 재생을 앞지르지 않게 했다. 완료/실패 상태 확인 후 마지막 전송 seq 이후의 저장 이벤트를 재조회해 전송한 뒤 연결을 닫는다. 판정 봉인과 seq 중복 제거는 유지한다.
+- 검증: StreamCompletionRaceTest4개 및 HttpWorkerClientTest 통과. 수정 jar의 격리 브라우저 확인·Spring 연결pytest5개·DB복구7개 통과. 실제 API 재시작 후 저장 토론SSE20회/재연결4회/새로고침5회 및 요약6개·펼침/접기·판정 봉인 확인.
+- 진행 중: 사용자 요청으로 fix/sse-completion-replay에서 수정·회귀 테스트·작업 로그를 커밋해 원격에 푸시한다. 원래 작업 폴더의 별도 미커밋 변경은 보존했다.
+- 다음: develop 대상 PR 검토와 병합. 이번 작업은 원격 브랜치 푸시까지이며 develop 병합은 포함하지 않는다.
+- 막힘·결정 필요: 이후 별도 실제 웹 새 토론1회는 워커 BudgetDenied로 첫 발언 전 실패했다. 이는 SSE 누락과 별개이며 이번 수정으로 실모델 완주까지 검증됐다는 뜻은 아니다. API 임시 예산 변경은3달러로 복원했다. 예산 정책은 변경하지 않는다.
+
 ## 2026-11-09 · Codex · ai-worker, docs · develop 병합 검증
 - 한 것: 사용자 요청으로 origin/develop d8bf4ef 기반 별도 feat/worker-quality-develop-merge 작업 트리에서 통합 브랜치7568b6b를 병합하고14개 충돌을 해소했다. 엔진·요약·공개 전 검토는 최신 통합본, 보통주 전체 허용·카카오·운영 예산·비용 보호는 develop 변경을 보존했다.
 - 검증: 병합본 워커679 passed/78 skipped(79.60초), 웹 build/lint·diff 검사 통과. 초기 테스트용 부모 폴더 누락으로403개 setup 오류가 있었으나 기존 별도 임시경로 지정 후 전체 통과. 제외78건은 별도DB·선택 의존성·Spring fixture 요건으로 미검증이다. 웹/API 소스·판정 봉인 계약은 develop과 동일하며 요약 기본 표시+주장 자세히 읽기/설명 접기 유지.

@@ -35,17 +35,23 @@ public class DebateStreamHub {
 		SseEmitter emitter = new SseEmitter(TIMEOUT.toMillis());
 		Subscriber s = new Subscriber(emitter, afterSeq);
 		Set<Subscriber> set = subscribers.computeIfAbsent(debateId, k -> ConcurrentHashMap.newKeySet());
-		set.add(s);
 		Runnable remove = () -> set.remove(s);
 		emitter.onCompletion(remove);
 		emitter.onTimeout(remove);
 		emitter.onError(e -> remove.run());
 
 		synchronized (s) {
+			// Publish must not overtake the initial replay and advance lastSent.
+			set.add(s);
 			for (DebateEvent e : events.findByDebateIdAndSeqGreaterThanOrderBySeq(debateId, afterSeq)) {
 				s.send(ClientEvent.from(e));
 			}
 			if (debates.findById(debateId).map(d -> d.getStatus().isTerminal()).orElse(true)) {
+				// Completion can commit after the first query. Drain its committed
+				// events before closing; a waiting publish is deduplicated by seq.
+				for (DebateEvent e : events.findByDebateIdAndSeqGreaterThanOrderBySeq(debateId, s.lastSent)) {
+					s.send(ClientEvent.from(e));
+				}
 				s.complete();
 			}
 		}
