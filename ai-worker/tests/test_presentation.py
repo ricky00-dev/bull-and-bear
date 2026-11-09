@@ -49,6 +49,17 @@ def test_mkt_decisive_id_is_allowed_when_prose_uses_numbered_reference():
     assert not moderator_issues(d)
 
 
+@pytest.mark.parametrize('claim,too_long', [
+    ('관측된 흐름의 지속은 불확실합니다.', False),
+    ('최근 수익률은 1.57%입니다. 같은 흐름이 이어진다는 조건이 필요합니다.', False),
+    ('최근 흐름이 약했습니다. 지속 여부는 불확실합니다. 새 자료가 필요합니다.', True),
+])
+def test_summary_accepts_two_sentences_without_splitting_decimals(claim, too_long):
+    candidate = statement(('E1', 'PX.CLOSE', 399))
+    candidate.claim = claim
+    assert ('claim_length' in codes(statement_issues(candidate, 'opening', set()))) is too_long
+
+
 def test_limits_and_decimal_citations():
     assert sentence_count("변동성은 68.17%입니다. [E1] 비율은 9.39배입니다 [E2]. 세 번째입니다.") == 3
     s = statement(('E1','PX.CLOSE',399), argument='하나. 둘. 셋. 넷.')

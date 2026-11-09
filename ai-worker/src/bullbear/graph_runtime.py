@@ -160,7 +160,8 @@ class GraphRuntime:
                 conv.messages.append({'role': 'user', 'content': '필수 analysis와 발언 스키마를 지켜 다시 작성하세요.'})
                 continue
             result = verify(statement, self.snapshot)
-            issues = list(result.issues) + horizon_issues(statement.claim)
+            # The shared horizon is context; each utterance need not repeat its label.
+            issues = list(result.issues)
             refs = {e.ref: e.source_id for e in statement.evidence}
             for text in (statement.claim, statement.argument):
                 issues += return_issues(text, self.snapshot, refs)
@@ -177,7 +178,7 @@ class GraphRuntime:
             issues += concept_issues('\n'.join([statement.claim, statement.argument,
                                               *(e.interpretation for e in statement.evidence)]))
             # Stylistic/semantic concerns are moderator inputs, not generation gates.
-            deferred = {'claim_length', 'argument_length', 'money_unit', 'concept_error'}
+            deferred = {'argument_length', 'money_unit', 'concept_error'}
             issues = [i.model_copy(update={'severity': 'warning'}) if i.code in deferred else i for i in issues]
             result = result.model_copy(update={'issues': issues,
                                                'passed': not any(i.severity == 'error' for i in issues)})

@@ -20,6 +20,65 @@ def snapshot():
     return build_snapshot(FakeSource(), '000000', '가짜전자', now=NOW)
 
 
+def test_overlong_summary_is_rewritten_before_publication(snapshot, tmp_path):
+    class Summary(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            raw['claim'] += '. 관측된 흐름의 지속은 불확실합니다.'
+            if self.count == 1:
+                raw['claim'] += ' 추가 확인이 필요합니다.'
+            return raw
+    run = runtime(snapshot, tmp_path, bull=Summary(snapshot))
+    run.run()
+    events = EventLog.read(run.log.path)
+    rejected = [e for e in events if e['type'] == 'statement_rejected']
+    assert len(rejected) == 1
+    assert any(i['code'] == 'claim_length' and i['severity'] == 'error' for i in rejected[0]['issues'])
+    accepted = [e for e in events if e['type'] == 'statement_accepted' and e['side'] == 'bull']
+    from bullbear.presentation import sentence_count
+    assert len(accepted) == 3 and all(sentence_count(e['statement']['claim']) == 2 for e in accepted)
+    assert accepted[0]['attempts'] == 2
+
+
+def test_shared_horizon_need_not_be_repeated_in_each_utterance(snapshot, tmp_path):
+    class NaturalClaim(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            if 'claim' in raw:
+                raw['claim'] = '관측된 흐름이 이어진다는 가정 아래 전망을 유지합니다.'
+                if raw['analysis']['rebuttal'] is not None:
+                    quote = '관측된 가격을 배경으로'
+                    raw['analysis']['rebuttal']['target_quote'] = quote
+                    raw['argument'] = f'상대의 “{quote}”라는 설명만으로는 흐름의 지속을 확정할 수 없습니다 [E1].'
+            return raw
+    run = runtime(snapshot, tmp_path)
+    run.bull = NaturalClaim(snapshot)
+    run.bear = NaturalClaim(snapshot)
+    run.run()
+    events = EventLog.read(run.log.path)
+    accepted = [e for e in events if e['type'] == 'statement_accepted']
+    assert len(accepted) == 6 and all(e['attempts'] == 1 for e in accepted)
+    assert all('7거래일' not in e['statement']['claim'] for e in accepted)
+    assert all('코스피 대비' not in e['statement']['argument'] for e in accepted)
+
+
+def test_final_forecast_still_requires_an_explicit_horizon(snapshot, tmp_path):
+    class MissingFirst(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            if self.count == 1:
+                raw['forecast']['reasoning'] = '비슷한 흐름을 가정하지만 관계의 지속은 불확실합니다 [E1].'
+            return raw
+    moderator = MissingFirst(snapshot)
+    run = runtime(snapshot, tmp_path, moderator=moderator)
+    result = run.run()
+    assert moderator.count == 2
+    assert '7거래일 코스피 대비' in result['verdict']['reasoning']
+    assert any(e['type'] == 'moderator_rejected' and
+               any(i['code'] == 'horizon_mismatch' for i in e.get('issues', []))
+               for e in EventLog.read(run.log.path))
+
+
 def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path):
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):

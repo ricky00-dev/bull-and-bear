@@ -92,3 +92,63 @@ def test_reviewer_requests_are_serialized(snapshot, tmp_path):
     run.statement_reviewers = {'bull': reviewer, 'bear': reviewer}
     run.run()
     assert len(reviewer.calls) == 6 and reviewer.peak == 1
+
+
+class ReviewSequence:
+    def __init__(self, responses):
+        self.responses = iter(responses)
+        self.messages = []
+
+    def structured(self, conv, **kwargs):
+        self.messages.append([dict(message) for message in conv.messages])
+        return next(self.responses)
+
+
+def review_candidate(snapshot):
+    from .fakes import statement
+    return statement(('E1', 'PX.CLOSE', snapshot.facts['PX.CLOSE'].value),
+                     argument='확인되지 않은 수치로 상승을 단정했습니다 [E1].')
+
+
+def concern(quote, *, sources=('PX.CLOSE',)):
+    return dict(quote=quote, kind='unsupported_inference', reason='자료로 단정할 수 없습니다.',
+                source_ids=list(sources), instruction='단정 표현을 조건부 설명으로 고치세요.')
+
+
+def test_invalid_quote_then_valid_review_recovers_once(snapshot):
+    candidate = review_candidate(snapshot)
+    reviewer = ReviewSequence([{'issues': [concern('원문에 없는 인용')]}, {'issues': []}])
+    result = review_statement(reviewer, candidate, snapshot, [], effort='high')
+    assert result.issues == [] and len(reviewer.messages) == 2
+    assert reviewer.messages[0][0] == reviewer.messages[1][0]
+    assert '연속된 문구' in reviewer.messages[1][-1]['content']
+    assert 'facts의 키' in reviewer.messages[1][-1]['content']
+
+
+def test_valid_concern_rejects_immediately_even_with_an_invalid_other_finding(snapshot):
+    candidate = review_candidate(snapshot)
+    valid = concern(candidate.argument)
+    reviewer = ReviewSequence([{'issues': [valid, concern('원문에 없는 인용')]}])
+    result = review_statement(reviewer, candidate, snapshot, [], effort='high')
+    assert len(reviewer.messages) == 1
+    assert len(result.issues) == 1 and result.issues[0].quote == candidate.argument
+
+
+def test_unknown_review_source_gets_one_repair_then_fails_closed(snapshot):
+    candidate = review_candidate(snapshot)
+    invalid = {'issues': [concern(candidate.argument, sources=('UNKNOWN',))]}
+    reviewer = ReviewSequence([invalid, invalid])
+    with pytest.raises(LLMError, match='unknown source'):
+        review_statement(reviewer, candidate, snapshot, [], effort='high')
+    assert len(reviewer.messages) == 2
+
+
+def test_unknown_review_source_can_be_corrected_without_losing_concern(snapshot):
+    candidate = review_candidate(snapshot)
+    reviewer = ReviewSequence([
+        {'issues': [concern(candidate.argument, sources=('UNKNOWN',))]},
+        {'issues': [concern(candidate.argument)]},
+    ])
+    result = review_statement(reviewer, candidate, snapshot, [], effort='high')
+    assert len(reviewer.messages) == 2
+    assert len(result.issues) == 1 and result.issues[0].source_ids == ['PX.CLOSE']
