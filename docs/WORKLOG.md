@@ -16,6 +16,22 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-09 · Codex · ai-worker, docs · 실험 워커 채택 및 기존 요약 UI 보존
+- 한 것: feat/worker-quality-integration에서 adda79f의 LangGraph 고정6발언·구조화 해석·수익률/출처 대조·검토 응답1회 복구를 HTTP/CLI 기본 경로로 통합했다. 기존 순차 엔진과 전용 실험/benchmark 도구 제거는 실험 브랜치대로 반영하고 docs/experiment.md에 과거 명령임을 표시했다. 단일 HTTP 모드·RAG·비용 장부는 유지한다.
+- 한 것: 실제 마지막 실험과 맞춰 발언 공개 전 검토를 기본 ON으로 설정했다. BULLBEAR_REVIEW_STATEMENTS=false/compose WORKER_REVIEW_STATEMENTS=false로 끌 수 있다. 검토6회·비공개 이벤트·사용량·클라이언트 정리 테스트를 갱신했다. 실험 브랜치의 유료 파일럿 예산 혼용 차단도 함께 반영했다. 전 역할 Sonnet 유지, 로컬 uv frozen offline 동기화 완료.
+- 검증: 최종 워커 전체670 passed/78 skipped(88.94초). 별도DB DSN/선택 boto3·psycopg/Spring fixture 미설정 항목은 미검증. 첫 실행7실패는 검토 호출수 기대값4건과 동반 파일럿 보호코드 누락3건이며 보완 후 전체 통과. 웹 build/lint 및 diff 검사 통과.
+- 검증: 실제 Chromium으로 기존 최신 토론을 재조회. 요약6개 모두2문장·저장 원문 일치·6개 초기접힘/펼침/접기·판정 전 reveal403·브라우저 오류0 확인. 새 토론/판정 POST 없음. 결과는 ai-worker/data/ui-live-connect-20261109/integration-ui-20261109.json 및 PNG. 이는 기존 저장 토론 UI 재검증이며 통합 코드로 새 실모델 토론을 생성한 결과는 아니다.
+- 진행 중: 통합 변경을 한국어 Conventional Commit 후 origin/feat/worker-quality-integration으로 푸시. develop 병합·런타임 전환·서비스 재시작·배포 없음. 웹5176→API8082→별도 text-quality 워커8002 연결은 유지한다.
+- 다음: 통합 브랜치 검토 후 develop 반영 및 실행 경로 전환. 요약 핵심 수치 생략·논거 반복·KRX401/시세188800·188200 차이는 여전히 개선 과제다.
+- 막힘·결정 필요: 실험 브랜치의 웹 개편/보통주 전체 확대는 제외했다. 현재 StatementBubble과 기존 30종목 정책은 HEAD와 동일하다. 원래 웹/API 미커밋 변경·미추적 평가/인계 자료·기존 비용 장부와 미정산 기록을 보존했다. 새 유료 호출 없음. 검토 기본ON은 추가 비용을 발생시키며 승인도 정확성 보증이 아니다.
+
+## 2026-11-09 · Codex · web, ai-worker · 실험 워커 채택 전 요약 UI 확인
+- 한 것: 현재 기본 웹 StatementBubble과 5176에서 제공하는 실제 Vite 모듈(HTTP 200)에 claim 기본 표시·본문 초기 접힘·자세히 보기/접기가 있음을 확인했다. 기존 실제 UI 검증 JSON은 최신 토론의 6개 요약 모두 두 문장·6개 펼침/접기 성공을 기록한다.
+- 한 것: feat/worker-text-quality adda79f의 워커는 두 문장 요약 지침이나, 같은 브랜치의 웹 StatementBubble은 argument 직접 표시·claim은 본문 없을 때 대체이며 자세히 보기가 없다. 현재 연결은 기본 웹+실험 워커 조합이므로 실험 브랜치 전체 채택과 구분해야 한다.
+- 진행 중: 확인 완료. 제품 코드 수정·추가 커밋/푸시 없음.
+- 다음: 실험 워커를 통합할 때 현재 요약+자세히 보기 UI를 보존하거나 실험 브랜치 웹에 같은 동작을 반영한 뒤 검증할 것.
+- 막힘·결정 필요: 이번에는 브라우저 클릭을 새로 재현하지 않고 코드/실제 제공 모듈/기존 검증 기록을 대조했다. 새 토론·유료 호출·판정 제출·서비스 재시작 없음.
+
 ## 2026-11-09 · Codex · ai-worker · 워커 변경 커밋 및 원격 보존
 - 한 것: 기본 워커의 두 문장 요약·반복 문구 제거·요약 의미 검토·Sonnet 기본값과 RAG 공개시각 회귀 테스트 변경을 검토했다. 워커 관련 93개 테스트 통과. 실험 브랜치의 요약·공개 전 검토 복구 관련 65개 테스트도 통과했다.
 - 진행 중: 기본 브랜치와 feat/worker-text-quality에 각각 한국어 Conventional Commit 후 기존 origin 브랜치로 일반 푸시한다. 완료 여부는 원격 커밋 해시로 확인한다.

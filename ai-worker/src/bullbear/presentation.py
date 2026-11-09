@@ -38,17 +38,14 @@ def used_sources(transcript, snapshot):
 
 def statement_issues(statement, round_kind, used):
     issues = []
-    # New summaries target two sentences; old one-sentence records stay valid.
-    if sentence_count(statement.claim) > 2:
-        issues.append(error("claim_length", "요약은 핵심 주장과 주요 근거·조건을 담아 두 문장 이내로 쓰세요."))
+    if "\n" in statement.claim or sentence_count(statement.claim) > 2:
+        issues.append(error("claim_length", "요약은 한 문단·두 문장 이내로 쓰고 본문의 핵심 근거와 판단 조건을 담으세요."))
     count = sentence_count(statement.argument)
     if count > 3:
         issues.append(error("argument_length", f"본문이 {count}문장입니다. 불확실성 설명까지 포함해 최대 3문장으로 다시 쓰세요."))
     ids = [e.source_id for e in statement.evidence]
     if len(ids) > 3 or len(ids) != len(set(ids)):
         issues.append(error("evidence_limit", "서로 다른 근거를 최대 3개만 쓰세요."))
-    if round_kind in ("rebuttal", "closing") and not set(ids) - used:
-        issues.append(error("no_new_evidence", "이전 전체 토론에서 쓰지 않은 source_id를 1개 이상 인용하세요. 뉴스·공시를 우선 확인하세요."))
     text = "\n".join([statement.claim, statement.argument, *(e.interpretation for e in statement.evidence)])
     issues += money_issues(text)
     issues += knowledge_leakage_issues(text)

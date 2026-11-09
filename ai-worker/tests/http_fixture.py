@@ -12,14 +12,15 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from bullbear.config import load_settings
-from bullbear.debate import Debate, verification_stats
+from bullbear.graph_runtime import GraphRuntime
 from bullbear.events import EventLog
 from bullbear.server.app import create_app
 from bullbear.server.market import Market
 from bullbear.server.service import LiveRunner
 from bullbear.llm import Conversation
 from types import SimpleNamespace
-from .fakes import NOW, FakeNews, FakeSource, ScriptedDebater, ScriptedModerator, statement
+from .fakes import NOW, FakeNews, FakeSource, ScriptedModerator, statement
+from .graph_fakes import GraphLLM
 
 
 class TestRunner:
@@ -47,17 +48,12 @@ class TestRunner:
         emit('token', {'text': 'PRIVATE RAW TOKEN'})
         emit('moderator_evaluated', {'verdict': 'PRIVATE VERDICT'})
         emit('tool_call', {'side': 'bull', 'name': 'get_price'})
-        good = statement(('E1', 'PX.CLOSE', -1 if self.invalid else snapshot.facts['PX.CLOSE'].value))
-        bad = statement(('E1', 'PX.CLOSE', -1))
-        result = Debate(snapshot, ScriptedDebater(good, bad_first=bad),
-                        ScriptedModerator(['extra_round', 'verdict'] if self.extra else ['verdict']),
-                        EventLog(self.settings.debate_dir / f'{debate_id}.jsonl'),
-                        debate_id=debate_id, max_extra_rounds=max_extra_rounds, on_event=emit).run()
-        v = result.verdict.model_dump(mode='json')
-        v['scores'] = {side: v.pop(side) for side in ('bull', 'bear')}
-        v.pop('action')
-        v.pop('extra_question')
-        return {'debate_id': debate_id, 'verdict': v, 'stats': verification_stats(result.turns)}
+        return GraphRuntime(snapshot, debate_id=debate_id,
+            bull=GraphLLM(snapshot, invalid=self.invalid, bad_first=True),
+            bear=GraphLLM(snapshot, invalid=self.invalid),
+            moderator=GraphLLM(snapshot, actions=['CHALLENGE_BULL', 'ACCEPT'] if self.extra else []),
+            log=EventLog(self.settings.debate_dir / f'{debate_id}.jsonl'),
+            max_extra_rounds=max_extra_rounds, emit=emit, background_context=self.background_context).run()
 
     def close(self):
         pass

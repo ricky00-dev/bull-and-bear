@@ -1,12 +1,12 @@
 import pytest
 
-from bullbear.agents import Debater, Moderator
 from bullbear.llm import LLMError
 from bullbear.schemas import Side
 from bullbear.semantic import SemanticReviewer, horizon_issues
 from bullbear.snapshot import build_snapshot
 from bullbear.verifier import verify
 from .fakes import FakeSource, NOW, statement, ScriptedModerator
+from .learning_fixtures import with_analysis
 
 
 class QueueLLM:
@@ -25,85 +25,14 @@ def snap():
 
 
 def st(text):
-    return statement(("E1", "PX.CLOSE", 399), argument=text).model_copy(
-        update={"claim": "7거래일 코스피 대비 상승 가능성"})
+    return with_analysis(statement(("E1", "PX.CLOSE", 399), argument=text).model_copy(
+        update={"claim": "7거래일 코스피 대비 상승 가능성"}))
 
 
-def test_semantic_rejection_rewrites_and_keeps_numeric_stats(snap):
-    bad = st("PER이 낮아서 수익은 보장된다. [E1]")
-    good = st("7거래일 코스피 대비 상승은 불확실하다. [E1]")
-    llm = QueueLLM([bad.model_dump(), {"issues": [{"code": "concept_error",
-        "quote": "수익은 보장된다", "message": "근거 없는 수익 보장입니다."}]},
-        good.model_dump(), {"issues": []}])
-    attempts = Debater(llm, snap).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
-    assert len(attempts) == 2
-    assert attempts[0].verification.correct == 1
-    assert not attempts[0].verification.passed
-    assert attempts[1].verification.passed
-    assert "수익 보장" in llm.calls[2][0].messages[-1]["content"]
-    assert llm.calls[1][0] is not llm.calls[0][0]
 
 
-@pytest.mark.parametrize('round_kind', ['rebuttal', 'closing'])
-def test_rewrite_receives_new_evidence_ids_from_rejected_candidate(snap, round_kind):
-    from bullbear.prompts import render_statement
-    quote = '7거래일 코스피 대비 상승 가능성'
-    history = [render_statement(Side.BULL, 'opening', st('조건부 가설 [E1].'))]
-    fresh = 'VAL.PER_TTM'
-    bad = statement(('E1', 'PX.CLOSE', 399), ('E2', fresh, snap.facts[fresh].value),
-                    argument=f'"{quote}"에 반박하지만 잘못된 해석입니다 [E1] [E2].').model_copy(
-        update={'claim': '7거래일 코스피 대비 하락 가능성'})
-    good = bad.model_copy(update={'argument': f'"{quote}"에 대해 다른 조건부 경로를 제시합니다 [E1] [E2].'})
-
-    class InspectingLLM(QueueLLM):
-        def structured(self, conv, **kwargs):
-            if len(self.calls) == 2:
-                feedback = conv.messages[-1]['content']
-                fresh_line = next(line for line in feedback.splitlines() if line.startswith('이번 후보에서'))
-                assert fresh in fresh_line and 'PX.CLOSE' not in fresh_line
-                assert '새 source_id를 최소 1개' in feedback
-                assert '최대 3개' in feedback
-            return super().structured(conv, **kwargs)
-
-    llm = InspectingLLM([bad.model_dump(mode='json'), {'issues': [{
-        'code': 'unsupported_inference', 'quote': '잘못된 해석', 'message': '해석을 고치세요.'}]},
-        good.model_dump(mode='json'), {'issues': []}])
-    attempts = Debater(llm, snap).speak(Side.BEAR, round_kind, history, verify=lambda s: verify(s, snap))
-    assert len(attempts) == 2 and not attempts[0].verification.passed and attempts[1].verification.passed
 
 
-def test_speech_can_omit_shared_horizon_phrase(snap):
-    candidate = st("가격 부담이 줄어들면 반등 여지가 있지만 추가 근거가 필요합니다 [E1].").model_copy(
-        update={"claim": "가격 부담 완화가 반등의 조건이다"})
-    llm = QueueLLM([candidate.model_dump(), {"issues": []}])
-    attempts = Debater(llm, snap).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
-    assert len(attempts) == 1 and attempts[0].verification.passed
-    assert attempts[0].statement == candidate
-    assert len(llm.calls) == 2  # Generation plus semantic review, with no forced rewrite.
-
-
-def test_summary_distortion_feedback_rewrites_summary_without_changing_body(snap):
-    body = "가격 부담이 줄어들면 반등할 수 있지만 그 조건이 충족됐는지는 확인되지 않았습니다 [E1]."
-    bad = st(body).model_copy(update={"claim": "반등이 확실합니다. 가격 부담이 줄었습니다."})
-    good = bad.model_copy(update={"claim": "가격 부담이 줄어들면 반등 여지가 있습니다. 다만 그 조건의 충족 여부는 확인되지 않았습니다."})
-    finding = {"issues": [{"code": "unsupported_inference", "quote": "반등이 확실합니다",
-                           "message": "본문의 조건부 전망을 요약에서 확정적 주장으로 강화했습니다."}]}
-    llm = QueueLLM([bad.model_dump(), finding, good.model_dump(), {"issues": []}])
-    attempts = Debater(llm, snap).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
-    assert [attempt.verification.passed for attempt in attempts] == [False, True]
-    assert all(attempt.statement.argument == body for attempt in attempts)
-    assert attempts[-1].statement.claim == good.claim
-    assert attempts[0].verification.issues[0].code == "unsupported_inference"
-
-
-def test_actual_horizon_change_still_rejected_by_semantic_review(snap):
-    bad = st("장기 매수 [E1]").model_copy(update={"claim": "중장기 매수"})
-    llm = QueueLLM([bad.model_dump(), {"issues": [{"code": "horizon_mismatch",
-        "quote": "중장기 매수", "message": "단기 상대수익 판단을 중장기 보유 판단으로 바꾸었습니다."}]}])
-    result = Debater(llm, snap, max_retries=0).speak(Side.BULL, "opening", [], verify=lambda s: verify(s, snap))
-    assert not result[-1].verification.passed
-    assert "horizon_mismatch" in {issue.code for issue in result[-1].verification.issues}
-    assert len(llm.calls) == 2
 
 
 def test_reviewer_cannot_invent_offending_quote(snap):
@@ -127,71 +56,14 @@ def test_reviewer_quote_uses_text_not_json_escaping(snap):
     assert issues[0].code == "unsupported_inference"
 
 
-def test_moderator_retries_concept_error(snap):
-    d = ScriptedModerator([]).evaluate([], {}, extra_allowed=False)
-    d.decisive_evidence = ["PX.CLOSE"]
-    d.reasoning = "7거래일 코스피 대비 비슷할 것이다 [E1]. 수치 검증은 예측 정확성을 보장한다."
-    good = d.model_copy(update={"reasoning": "7거래일 코스피 대비 비슷하게 움직일 것으로 보아 보류 [E1]."})
-    llm = QueueLLM([d.model_dump(mode="json"), {"issues": [{"code": "unsupported_inference",
-        "quote": "수치 검증은 예측 정확성을 보장한다", "message": "인용 일치는 예측 보장이 아닙니다."}]},
-        good.model_dump(mode="json"), {"issues": []}])
-    stats = {"bull": {"evidence_accuracy": 1.0}}
-    assert Moderator(llm, snap).evaluate([], stats, extra_allowed=False).reasoning == good.reasoning
-    import json
-    assert json.loads(llm.calls[1][0].messages[0]['content'])['verification_stats'] == stats
 
 
-def test_moderator_stops_after_failed_retries(snap):
-    d = ScriptedModerator([]).evaluate([], {}, extra_allowed=False)
-    with pytest.raises(LLMError):
-        Moderator(QueueLLM([d.model_dump(mode="json")] * 3), snap).evaluate([], {}, extra_allowed=False)
 
 
-def test_moderator_can_verify_omitted_market_facts_from_same_snapshot(snap):
-    import json
-    d = ScriptedModerator([]).evaluate([], {}, extra_allowed=False)
-    d.decisive_evidence = ['PX.CLOSE']
-    d.reasoning = '7거래일 코스피 대비 비슷하게 움직일 것으로 예상합니다 [E1].'
-
-    class InspectingLLM(QueueLLM):
-        def structured(self, conv, **kwargs):
-            if not self.calls:
-                assert kwargs['tools']
-                assert kwargs['tool_handler'].snapshot is snap
-                data = json.loads(kwargs['tool_handler']('get_price_metrics', {}))
-                assert data['snapshot_id'] == snap.snapshot_id
-                assert any(f['id'] == 'PX.VOL_20D' for f in data['items'])
-                assert snap.created_at.isoformat() in conv.messages[0]['content']
-            return super().structured(conv, **kwargs)
-
-    llm = InspectingLLM([d.model_dump(mode='json'), {'issues': []}])
-    assert Moderator(llm, snap).evaluate([], {}, extra_allowed=False) == d
 
 
-def test_policy_applies_to_both_roles():
-    from bullbear import prompts
-    for side in Side:
-        assert prompts.JUDGMENT_POLICY in prompts.debater_system(side, name="x", ticker="0", as_of="2026-10-28")
-    assert prompts.JUDGMENT_POLICY in prompts.MODERATOR_SYSTEM
-    assert not horizon_issues("7거래일 코스피 대비")
 
 
-def test_debate_does_not_publish_failed_statement(snap, tmp_path):
-    from bullbear.agents import Attempt
-    from bullbear.debate import Debate
-    from bullbear.events import EventLog
-    class FailedDebater:
-        def speak(self, *a, verify, **kw):
-            bad = statement(("E1", "PX.CLOSE", -1))
-            return [Attempt(bad, verify(bad))]
-    log = EventLog(tmp_path / "failed.jsonl")
-    debate = Debate(snap, FailedDebater(), ScriptedModerator([]), log, debate_id="failed")
-    with pytest.raises(LLMError):
-        debate.run()
-    types = [e["type"] for e in EventLog.read(log.path)]
-    assert "statement_attempt" in types
-    assert "statement_accepted" not in types
-    assert "verdict_sealed" not in types
 
 
 @pytest.mark.parametrize("text,expected", [
