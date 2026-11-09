@@ -1,11 +1,14 @@
+import { lazy, Suspense } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Sparkline } from '../components/Sparkline'
 import { BottomBar, Card, ErrorNotice, Icon, PrimaryButton, Screen, Skeleton, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api, ApiError } from '../lib/api'
 import { changeColor, monthDay, pct, won } from '../lib/format'
 import type { StockDetail } from '../lib/types'
+
+// 차트 라이브러리(bklit·d3)는 종목 화면에서만 받는다
+const Sparkline = lazy(() => import('../components/Sparkline').then((m) => ({ default: m.Sparkline })))
 
 export function StockPage() {
   const { ticker = '' } = useParams()
@@ -49,7 +52,9 @@ export function StockPage() {
               </p>
             </div>
             <Card className="pb-2.5">
-              <Sparkline closes={s.sparkline} />
+              <Suspense fallback={<div className="h-[150px]" />}>
+                <Sparkline closes={s.sparkline} />
+              </Suspense>
             </Card>
 
             {!s.eligible && (

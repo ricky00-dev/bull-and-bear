@@ -3,11 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { EvidenceSheet } from '../components/EvidenceSheet'
 import { DebatePreparation } from '../components/DebatePreparation'
+import { DebateStage } from '../components/DebateStage'
+import { Mascot } from '../components/Mascot'
 import { RagPanel } from '../components/RagPanel'
 import { StatementBubble } from '../components/StatementBubble'
 import { BottomBar, Icon, PrimaryButton, Screen, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
 import { api } from '../lib/api'
+import { countBySide, sideMood } from '../lib/debateStage'
 import { evidenceCitations, MAX_EVIDENCE_PICKS, pairStatements, previousOpponent } from '../lib/evidence'
 import { useEvidencePicks } from '../lib/useEvidencePicks'
 import type { Evidence, Round } from '../lib/types'
@@ -29,6 +32,7 @@ export function DebatePage() {
   const followRef = useRef<boolean | null>(null)
 
   const done = stream.phase === 'sealed'
+  const counts = countBySide(stream.statements)
   // 이미 판정한 토론이면 결과로 바로 갈 수 있게
   const reveal = useQuery({ queryKey: ['reveal', id], queryFn: () => api.reveal(id), enabled: done, retry: false })
 
@@ -69,13 +73,16 @@ export function DebatePage() {
 
       <div className="sticky top-[var(--topbar-height)] z-10 flex flex-col gap-2.5 bg-ground px-5 pb-2.5">
         <RoundProgress statements={stream.statements} current={stream.currentRound} done={done} />
-        <div className="flex min-h-9 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13px]" aria-live="polite">
-          <span className={`size-2 shrink-0 rounded-full ${done ? 'bg-ok' : stream.phase === 'failed' ? 'bg-faint' : 'animate-pulse-dot bg-up'}`} />
-          <span className="py-2 leading-relaxed">{stream.phase === 'failed' ? stream.error : stream.activity}</span>
+        {/* 위 무대가 스크롤로 사라져도 누가 생각 중인지 보이게 작은 불·베어를 붙인다 */}
+        <div className="flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-2 text-[13px]">
+          <Mascot side="bull" facing={1} size={32} mood={sideMood(stream, 'bull')} strike={counts.bull} />
+          <span className="flex-1 py-2 text-center leading-relaxed" aria-live="polite">{stream.phase === 'failed' ? stream.error : stream.activity}</span>
+          <Mascot side="bear" facing={-1} size={32} mood={sideMood(stream, 'bear')} strike={counts.bear} />
         </div>
       </div>
 
       <main className="flex flex-1 flex-col gap-3.5 px-4 pb-4 pt-1">
+        <DebateStage stream={stream} />
         <DebatePreparation state={{...stream,asOf:asOf ?? null}} onReconnect={stream.reconnect} />
         <div className="flex flex-col gap-1 py-3">
           <h2 className="text-lg font-bold">같은 자료, 두 가지 해석</h2>

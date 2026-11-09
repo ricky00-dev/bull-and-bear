@@ -112,3 +112,15 @@ input[type="search"]::-webkit-search-cancel-button {
 @utility pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 20px);
 }
+
+/* bklit 차트(components/charts)가 읽는 변수. 우리 토큰에 맞춘다 */
+:root {
+  --chart-background: #fff;
+  --chart-foreground: var(--color-ink);
+  --chart-foreground-muted: var(--color-sub);
+  --chart-label: var(--color-sub);
+  --chart-line-primary: var(--color-ink);
+  --chart-line-secondary: var(--color-faint);
+  --chart-crosshair: var(--color-faint);
+  --chart-grid: var(--color-line);
+}

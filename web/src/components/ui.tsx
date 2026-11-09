@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
+import { BrandMark } from './Mascot'
 
 /** 상세 흐름은 읽기 폭을 유지하고, 홈은 넓은 화면에서 두 열을 사용한다. */
 export function Screen({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
@@ -176,9 +177,7 @@ export function BottomSheet({ label, onClose, children }: { label: string; onClo
 export function Logo() {
   return (
     <span className="flex items-center gap-2">
-      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
-      </svg>
+      <BrandMark size={30} />
       <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
     </span>
   )
