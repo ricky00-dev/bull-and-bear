@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { Screen, TopBar } from '../components/ui'
 
 /** 문의처. 팀 메일이 정해지면 여기만 바꾼다 */
-export const CONTACT = '전시 부스 또는 팀 메일(준비 중)'
+export const CONTACT = '졸업 전시 부스에서 팀원에게 물어봐 주세요. 내 기록은 마이 > 내 기록 모두 삭제에서 바로 지울 수 있어요.'
 const EFFECTIVE = '2026년 11월 4일'
 
 /**
