@@ -62,8 +62,13 @@ class Store:
             with self.transaction() as db:
                 db.execute('INSERT INTO recoveries VALUES (?,?)',
                            (row['id'], json.dumps(recovery, ensure_ascii=False)))
+                from .progress import generation_progress
+                progress = generation_progress(self.events(row['id']), terminal='interrupted',
+                                               mode=self.get(row['id'])['mode'])
                 self.emit(row['id'], 'debate_failed', {
-                    'error': {'code': 'LLM_ERROR', 'message': '워커 재시작으로 토론이 중단되었습니다. 새 요청으로 재시도하세요.'}})
+                    'generation': progress,
+                    'error': {'code': 'LLM_ERROR', 'reason': 'worker_restart', 'stage': progress['stage'],
+                              'message': '워커 재시작으로 토론이 중단되었습니다. 새 요청으로 재시도하세요.'}})
 
     @staticmethod
     def recovery_record(data_dir, debate_id):

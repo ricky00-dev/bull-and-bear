@@ -18,12 +18,12 @@
 
 | 문서 | 역할 |
 |---|---|
-| [RAG-DATA](RAG-DATA.md) | 자료 수집·저장 설계 |
-| [RAG-LONG-TERM](RAG-LONG-TERM.md) | 시험 운영 계획·단계 |
-| [RAG-WEEK-ONE](RAG-WEEK-ONE.md) | 구현 진행과 실행 안내 |
+| [RAG-DATA](RAG-DATA.md) | corpus 작성·출처·검수·입력 |
+| [RAG-LONG-TERM](RAG-LONG-TERM.md) | 설계 방향·확장 조건 |
+| [RAG-OPERATIONS](RAG-OPERATIONS.md) | 저장소 설치·이관·캡처 큐·검색 평가 |
 | [RAG-PUBLICATION-RUNBOOK](RAG-PUBLICATION-RUNBOOK.md) | 검색 세대 공개·전환 절차 |
 | [RAG-READINESS-AUDIT](RAG-READINESS-AUDIT.md) | 준비 상태 점검 기록 |
-| [RAG-PRIORITIES-20261030](RAG-PRIORITIES-20261030.md) | 당시 우선순위·평가 조건의 이력 |
+| [보관 문서](archive/README.md) | 이전 계획·일차별 구현 기록·과거 작업 로그 |
 
 RAG는 기본 비활성이다. 위 문서의 구현·실험 결과를 운영 활성화 또는 최신 실모델 완주로 해석하지 않는다.
 
@@ -33,6 +33,13 @@ RAG는 기본 비활성이다. 위 문서의 구현·실험 결과를 운영 활
 기준 실행→v5→v7→v8 순서로 연결된다. 각 보고서·JSON·대화록은 당시 코드와 결과를 보존한다.
 과거 문서의 ‘다음’, ‘미검증’, 승인 대기 문구는 당시 상태이며, 현재 상태는 최신 인계와 WORKLOG를 우선한다.
 
-`evaluations/`의 다른 날짜·조건별 보고서와 [지표 감사](metric-audit-20261029.md)는 실험 근거로 유지한다.
+[평가 기록 색인](evaluations/README.md)에서 주제별 보고서·지표 감사·단일 모드 검증을 찾는다. 실험 근거는 삭제하지 않는다.
 fixture 통합 성공, 실모델 성공, 실제 배포 성공은 서로 대체하지 않는다.
 보고서가 가리키는 `ai-worker/data/` 원자료는 Git 제외 대상이므로 새 clone에는 포함되지 않는다.
+
+## 문서를 갱신할 때
+
+- 현행 사용법·설정은 위 역할별 안내 한 곳에서 관리하고 다른 문서에서는 링크한다.
+- 계획이 대체되면 보관 영역에 작성 당시 상태를 남기고 현재 안내에서 분리한다.
+- 평가 보고서는 날짜·대상 코드·입력 조건·미검증 범위를 유지한다. 후속 결과는 새 기록으로 연결한다.
+- WORKLOG는 짧은 인수인계와 상세 근거 링크로 작성한다. 과거 항목을 옮겨도 최근 항목과 구분선 형식은 유지한다.

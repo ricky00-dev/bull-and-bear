@@ -5,26 +5,50 @@ Spring API 서버가 호출하는 Python 서비스. API 계약은 [`../docs/work
 매수 에이전트와 매도 에이전트가 실제 시장 데이터를 근거로 토론하고, 사용자가 먼저 판정한 뒤
 AI 중재자의 판정과 실제 주가로 채점받으며 투자 근거 읽는 법을 배우는 모의투자 교육 서비스.
 
+채택 원본은 `feat/worker-text-quality`의 `adda79f`다. 웹은 현재의 두 문장 `claim` 기본 표시 + 자세히 보기/접기로 `argument`를 펼치는 방식을 유지한다. 실험 브랜치의 웹 개편은 가져오지 않았다.
+
 현재 단계: **CLI + HTTP/SSE 서버**. Spring·웹과 연결해 검색 → 토론 → 판정 봉인·공개 → 채점 예약을 실행한다.
 HTTP는 계약 v0.6의 토론·단일 모드와 v0.5의 비동기 스냅샷 응답을 지원한다.
+
+HTTP·CLI 토론은 `LiveRunner → GraphRuntime → build_debate_graph`를 실행한다.
+양측 첫 주장 → 양측 상호 반박 → 양측 최종 정리 → 중재자 순서다. 각 단계의 양측은 독립 클라이언트로 병렬 실행한다.
+해석 ID·관측 Fact 사본·가정/한계·반박 연결·중재자 쟁점 분석을 유지한다. 새 근거는 필수가 아니다.
+기존 순차 엔진(`agents.py`, `debate.py`)과 전용 선공/paired benchmark·OpenAI 비교 어댑터·오프라인
+실험 진단 도구는 삭제했다. 단일 분석 모드, RAG, 감사·비용 제한, 공용 검증기는 유지한다.
 
 구현 완료와 실제 운용 준비는 구분한다. [최신 현황·실측·남은 순서](../docs/evaluations/worker-goal-readiness-20261102.md)에서
 실모델 검증, fixture 통합, 배포 상태를 확인한다.
 
 구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
 
-### LangGraph 실행 엔진 (Phase 1)
+### LangGraph 실행 엔진
 
 `bullbear.graph.build_debate_graph(bull=..., bear=..., mediate=...)`에 역할별 LLM과
 중재 함수를 전달한 뒤, 반환된 그래프에 `invoke({"snapshot": snapshot})`을 호출한다.
-Bull과 Bear는 최초 한 번 병렬 실행되고, 중재 함수는 양측의 검증된 발언과 조사 결과를 읽어
-`Mediation`을 반환한다. `CHALLENGE_BULL/BEAR`는 한쪽만 다시 실행하며,
-`REQUEST_RESEARCH`는 중재자가 고른 스냅샷 도구를 호출한다. 두 종류의 추가 요청을 합해
-세 번까지 실행한다. 네 번째 요청은 상태에 기록하고 `round_limit`으로 종료한다.
-결과 상태에서 역할별 발언·호출 도구, 중재 결정 이력, 추가 횟수와 종료 사유를 확인할 수 있다.
+HTTP·CLI는 `fixed_rounds=True`와 검증 콜백을 사용한다. 각 단계의 양측 완료를 기다려
+다음 단계가 같은 이전 발언 전체를 읽도록 한다. `opening`, `rebuttal`, `closing` 각 2개,
+총 6개 발언 이후 중재한다. 매수는 BUY, 매도는 SELL을 유지하되 논거의 약화·반론 인정은 허용한다.
+자료가 약하면 한계로 표시하며 사실을 만들거나 무조건 확신하지 않는다. 새 근거는 필수가 아니다.
 
-무과금 실행 예시는 `uv run --group dev pytest tests/test_graph.py -q`로 검증한다.
-기존 CLI와 HTTP 서버는 기존 엔진을 사용한다.
+`max_extra_rounds`는 기존 요청 호환을 위해 0~3을 받지만 운영 고정 흐름에서 추가 실행하지 않는다.
+중재자는 ACCEPT/ABSTAIN만 반환하며 독립 전망과 쟁점 요약을 작성한다. HOLD는 중재자에게 허용된다.
+중재자 검증 탈락은 비공개 JSONL의 `moderator_rejected`에 저장하고 공개 오류에는
+`moderator_validation_failed` 코드만 제공한다. 실패해도 이미 저장된 6개 발언은 유지한다.
+`turn_started.debate_flow=fixed_three_rounds`로 신규 완료 기준과 기존 2발언 기록을 구분한다.
+
+독립 그래프의 기본 adaptive 모드는 이전 라이브러리 호출 호환용으로 남아 있으며 운영 경로는 사용하지 않는다.
+무과금 검증: `uv run pytest tests/test_graph.py tests/test_graph_runtime.py -q`.
+Spring 판정 봉인은 유지하며 사용자 판정 허용 정책·프론트는 이번 변경 범위 밖이다.
+
+### 검증 책임
+
+HTTP·CLI는 발언 공개 전 LLM 근거 검토를 기본 활성화한다. `BULLBEAR_REVIEW_STATEMENTS=false`로 끌 수 있으며 검토 호출도 비용 장부에 포함된다. 코드가 자료 ID·원본 값·구조화 반박 연결·역할 등
+기본 계약을 검사하고, 6개 발언 후 중재자가 전체 고정 자료와 발언의 논리·가정·반론을 검토한다.
+본문에 따옴표로 상대 문구를 반복할 의무는 없으며 analysis.rebuttal의 원문 연결은 유지한다.
+중재자는 verdict.analysis.statement_reviews에 각 발언의 문제 미발견/우려/불확실과 이유를 기록한다.
+이는 정오 채점이나 인과 증명이 아니다. 공개 전 검토와 중재자 판단도 오류가 가능하며, 발언 내용 전체의 정확성을 보증한 것으로
+간주하지 않는다. verified=true는 verification_scope=source_values_and_structure 범위다.
+프론트·Spring은 수정하지 않았으며 새 리뷰는 기존 판정 봉인 경로에 포함된다.
 
 ## 시작하기
 
@@ -87,10 +111,10 @@ KST 15:40 이전 당일 값과 미래 날짜는 제외한다. 종목 화면·스
 코스피·코스닥 지수도 KRX에서 가져온다. 네이버는 뉴스 검색 API만 사용하며, 시세 실패 시 네이버 차트로 대체하지 않는다.
 검색은 기본 30종목 + 예시 우선주·ETF, DART 키가 있으면 상장회사 목록을 추가한다.
 DART에 시장 구분이 없는 추가 종목은 `market: null`이며, 전체 ETF·우선주 목록은 제공하지 않는다.
-토론 허용 기준은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다 (`server/market.py`의 `block_reasons`). `UNIVERSE`의 대형주 30종목은 검색 정렬과 CLI 기본 목록으로만 쓴다.
+토론 허용 기준은 develop의 국내 보통주 전체 정책을 유지한다. 우선주·ETF·스팩은 제외하며 `UNIVERSE` 30종목은 검색 정렬과 CLI 기본 목록이다.
 
 운영 HTTP와 Claude CLI는 **Haiku·Sonnet만 허용**한다. 기본 역할은 토론자
-`claude-haiku-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
+`claude-sonnet-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
 `BULLBEAR_MODEL`은 공통 재정의, `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`은
 역할별 재정의다. 기존 Opus 설정은 호출 전에 거부한다. 서버 측 자동 모델 대체는 사용하지 않는다.
 모델 ID가 계정에서 실제 사용 가능한지는 별도 확인해야 하며, 위 기본값만으로 접근을 보장하지 않는다.
@@ -105,7 +129,7 @@ uv run python -m bullbear.preflight --env-file /absolute/path/to/.env
 키 값은 출력하지 않고 존재 여부만 표시한다. 필수 설정 누락·Opus 등 비허용 모델·개발 기본 토큰은
 종료 코드 2로 알린다. 선택한 환경 파일은 해당 프로세스에서만 기존 환경값보다 우선한다.
 이 점검은 네트워크를 사용하지 않으며 키 인증·모델 접근·RAG 원문 무결성·운영 준비 완료를 보증하지 않는다.
-이전 OpenAI 비교 도구와 기록은 과거 실험 재현용으로 보존하며 운영 워커가 사용하지 않는다.
+이전 OpenAI 비교 실행 도구는 삭제했다. 과거 실험 문서·기록은 당시 구현의 이력이며 현재 실행 명령으로 사용할 수 없다.
 
 RAG는 기본 비활성이다. 활성화 시 명시적 세대가 필요하며 검색 결과 없음과 명시적 시간 초과만
 배경 없이 진행한다. 무결성·시점·감사 저장 오류는 모델 호출 전에 중단한다. 대체 진행 사유는
@@ -113,7 +137,7 @@ RAG는 기본 비활성이다. 활성화 시 명시적 세대가 필요하며 �
 
 ## HTTP 통합 검증
 
-`POST /debates`는 `mode`를 생략하면 기존 토론을 실행한다. `mode: "single"`은 저장된
+`POST /debates`는 `mode`를 생략하면 LangGraph 토론을 실행한다. `mode: "single"`은 저장된
 `snapshot_id`가 필수이며, 현재 시장 데이터를 새로 조회하지 않는다.
 
 ```json
@@ -176,7 +200,7 @@ flowchart TB
         Market["Market<br/>종목 조회 · 시세 준비 · 공급자 연결"]
         Service["Service<br/>중복 방지 · 재사용 · 동시 실행 제한"]
         Snapshot["Snapshot<br/>시점과 ID가 고정된 시장 Fact"]
-        Engine["LiveRunner / Debate<br/>매수·매도 → 검증 → 중재자"]
+        Engine["LiveRunner / GraphRuntime<br/>병렬 분석 → 검증 → 그래프 중재"]
         Single["LiveRunner / SingleAnalyst<br/>중립 판정 → 검증<br/>중재자와 같은 모델"]
         RAG["선택적 RAG<br/>고정된 비공개 배경지식<br/>기본 비활성"]
         Store[("HTTP SQLite<br/>요청 · 상태 · 스냅샷 · 전달 이벤트")]
@@ -220,43 +244,18 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    Request["POST /debates"] --> Reuse{"같은 요청 ID 또는<br/>스냅샷·모드 재사용?<br/>스냅샷 생략: 종목·기준일"}
-    Reuse -->|"예"| Existing["기존 토론 반환<br/>저장 이벤트 재생 · 추가 LLM 호출 없음"]
-    Reuse -->|"아니오"| Ready{"시세 준비 · 토론 가능 종목<br/>동시 실행 여유 확인"}
-    Ready -->|"미충족"| Reject["접수 전 오류 응답<br/>시세 준비 중 503 · 대상 제외 422 · 용량 초과 429"]
-    Ready -->|"충족"| Accepted["요청 저장 · 202 반환<br/>이후 백그라운드 처리"]
-    Accepted --> Freeze["스냅샷 고정 · 저장<br/>snapshot_created 이벤트"]
-    Freeze --> Context["RAG 설정·검색 정책 확인<br/>컨텍스트 또는 대체 진행 사유 감사 저장"]
-    Context -->|"저장·무결성·시점 오류"| Failed["debate_failed<br/>사용량은 수집 가능한 범위 기록"]
-    Context -->|"debate"| Generate["매수 → 매도 순차 발언<br/>주장 → 반박 → 최종 변론<br/>이전 통과 발언 누적 전달"]
-    Context -->|"single"| Single["중립 분석가 · 스냅샷 직접 조회<br/>기간·표현·근거 ID·의미 검증<br/>반려 시 최대 3회 생성"]
-    Single -->|"검증 실패 또는 호출 실패"| Failed
-    Single -->|"통과 · scores/stats=null"| SingleDone["debate_completed<br/>단일 판정 · 모델별 사용량"]
-    SingleDone --> Experiment["Spring 실험 결과 저장<br/>사용자 비공개"]
-    Generate --> Rules["결정론적 검사<br/>Fact ID·값 · 표현 · 기간 · 상대 인용"]
-    Rules -->|"통과"| Meaning["LLM 의미 검토<br/>별도 대화, 해당 역할과 같은 모델"]
-    Rules -->|"반려"| Retry{"해당 발언 생성<br/>3회 미만?"}
-    Meaning -->|"반려"| Retry
-    Retry -->|"예 · 피드백"| Generate
-    Retry -->|"아니오"| Failed
-    Meaning -->|"호출 실패"| Failed
-    Meaning -->|"통과"| Publish["발언 저장 · SSE 전달"]
-    Publish --> More{"남은 기본 발언?"}
-    More -->|"예"| Generate
-    More -->|"아니오"| Moderator["중재자 평가 · 출력 검증<br/>반려 시 최대 3회 생성"]
-    Moderator -->|"검증 실패 또는 호출 실패"| Failed
-    Moderator -->|"추가 질문 · 허용 횟수 내"| Extra["추가 질문 라운드<br/>양측 발언도 같은 검증 적용"]
-    Extra -->|"통과 후 재평가"| Moderator
-    Extra -->|"검증 실패 또는 호출 실패"| Failed
-    Moderator -->|"최종 판정"| Completed["debate_completed<br/>판정 · 검증 통계 · 모델별 사용량"]
-    Completed --> Seal["Spring 저장·봉인<br/>사용자 판정 제출 뒤 공개"]
+    Request["POST /debates 또는 CLI"] --> Snapshot["고정 스냅샷 · 선택적 RAG"]
+    Snapshot --> Opening["양측 첫 주장 · 병렬 생성과 검증"]
+    Opening --> Rebuttal["양측 반박 · 상대 첫 주장 읽기"]
+    Rebuttal --> Closing["양측 최종 정리 · 상대 반박 읽기"]
+    Closing --> Moderator["중재자 쟁점 요약 · 독립 전망"]
+    Moderator -->|ACCEPT| Done["debate_completed · Spring 판정 봉인"]
+    Moderator -->|ABSTAIN 또는 검증 실패| Failed["debate_failed · 완료된 발언 보존"]
 ```
 
-위 그림의 접수 단계는 개념적으로 묶었다. 실제로는 요청 ID를 먼저 확인하고 시세를 조회한 뒤,
-명시적 스냅샷이면 시세 조회를 건너뛴다. DB 트랜잭션에서 요청 ID·스냅샷/모드 재사용과 실행 한도를 다시 확인한다. 같은 요청 ID에 다른 본문을
-보내면 409다. 시세 준비 중 503이 나면 토론·LLM 작업은 시작되지 않지만 시세 수집은 계속된다.
-추가 질문은 기본 최대 1회이며 요청의 `max_extra_rounds`로 제한한다. 발언 생성·파싱·도구 호출 중 오류도
-성공으로 처리하지 않고 실패 경로로 보낸다. 의미 검토 통과는 사실·추론·투자 성과의 정확성 보장이 아니다.
+양측은 처음에 서로의 미완료 결과를 읽지 않는다. 재검토는 완료된 양측 기록과 중재 요청을 읽는다.
+모델 재작성은 각 발언·중재 응답당 최대 3회이며, 그래프의 추가 실행 횟수와 별도로 제한한다.
+단일 분석(`mode=single`)은 기존 중립 분석 경로를 유지한다.
 
 ### RAG: 공개 시장 근거와 비공개 배경지식 분리
 
@@ -276,7 +275,7 @@ flowchart LR
 
 RAG는 **기본 꺼짐**이며 활성화하려면 명시적인 검색 세대가 필요하다. 검색·감사 저장 실패도 모델 호출 전에 중단한다.
 지식은 개념·조건·한계를 해석하는 배경이고, 공개 `evidence.source_id`는 스냅샷 Fact만 가리킨다.
-HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 RAG 없는 조건으로 바꾸지 않는다.
+삭제된 paired benchmark의 과거 정책은 실험 문서에 남아 있으며 현재 실행 경로와 구별한다.
 
 ### 코드와 저장소 대응
 
@@ -287,18 +286,17 @@ HTTP의 대체 진행 정책과 달리 실험 benchmark는 RAG 조건 실패를 
 | 실행 관리 | `server/service.py` | 중복/재사용, 백그라운드 실행, 이벤트 선별, `LiveRunner` |
 | 시장 데이터 | `server/market.py`, `data/` | 공급자·캐시 연결, 종목/시세/지수, 시세 준비 작업 풀 |
 | 고정 근거 | `snapshot.py`, `tools.py` | Fact·파생 지표 고정, 스냅샷 조회 도구 |
-| 토론·모델 | `debate.py`, `agents.py`, `prompts.py`, `llm.py` | 순차 토론, 누적 기록, 중재자, Claude 호출 |
+| 토론·모델 | `graph.py`, `graph_runtime.py`, `prompts.py`, `llm.py` | 병렬 분석, 선택 재검토, 그래프 중재, Claude 호출 |
 | 검증 | `verifier.py`, `presentation.py`, `semantic.py` | 수치/ID·표현·인용 규칙, LLM 의미 검토 |
 | RAG | `rag/ingest.py`, `store.py`, `index.py`, `retrieval.py`, `context.py`, `replay.py` | 수집·검수 이력, 검색, 배경 저장·재생 (`rag/` 하위 파일) |
 | 전달 상태 | `server/store.py` | `data/http/worker.sqlite3`: 요청·토론 상태·스냅샷·SSE 이벤트 |
 | HTTP 비용 장부 | `anthropic_budget.py` | 선택적 `data/http/provider-budget.sqlite3`: 요청별 최대 비용 예약·정산·미확정 보존 |
 | 비공개 기록 | `events.py`, `audit.py` | `data/debates/*.jsonl`, `data/audits/<run_id>/manifest.json`: 시도·검증·사용량·실행 출처 |
-| 별도 실행·평가 도구 | `cli.py`, `experiment.py`, `benchmark.py`, `budget.py` | CLI, 선공 비교, 단일/토론·RAG 비교, benchmark 예산 원장 |
-| 비용 없는 점검 | `preflight.py`, `diagnostics.py` | 설정 검사, 저장된 benchmark 결과의 오프라인 진단·검수 목록 |
+| 실행·예산 | `cli.py`, `budget.py`, `anthropic_budget.py` | CLI, 운영 및 RAG 평가의 공유 예산 원장 |
+| 비용 없는 점검 | `preflight.py` | 운영 설정 검사 |
 
 표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다. RAG 저장은 `data/rag/` 아래 별도 원문·색인·컨텍스트로 관리한다.
-실험/진단 도구는 운영 HTTP 요청에서 자동 실행되지 않는다. `budget.py`의 benchmark 예산 원장을
-운영 HTTP 비용 제한과 혼동하지 않는다. HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
+`budget.py`는 RAG 평가와 운영 비용 장부가 공유하므로 기존 benchmark 삭제 후에도 유지한다. HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
 [운영 안내](../docs/WORKER-OPERATIONS.md)에서 적용 범위를 구분한다.
 CLI는 토론 엔진을 직접 호출하며 HTTP 요청 관리·SSE 경로를 거치지 않는다.
 
@@ -324,7 +322,7 @@ KRX_API_KEY=
 OPENDART_API_KEY=
 NAVER_CLIENT_ID=
 NAVER_CLIENT_SECRET=
-# OpenAI 실험용. 기존 HTTP 워커는 ANTHROPIC_API_KEY 사용.
+# RAG 임베딩용. HTTP·CLI 토론은 ANTHROPIC_API_KEY 사용.
 OPENAI_API_KEY=
 ```
 
@@ -341,18 +339,15 @@ OPENAI_API_KEY=
 - KRX 키가 없으면 시세 조회가 실패한다. DART·뉴스 키가 없으면 해당 자료를 제외하고 스냅샷 경고를 남긴다.
 - DART·뉴스의 HTTP/타임아웃·JSON 오류도 해당 자료를 제외하고 스냅샷 경고로 기록한다.
   OpenDART의 자료 없음(013) 응답은 저장하지 않으며, 이전 버전의 013 캐시도 무시해 새 보고서를 다시 확인한다.
-- 기존 셸 환경변수가 `.env`보다 우선이다. 실험에서 파일을 명시적으로 우선하려면
-  `uv run python -m bullbear.experiment --env-file .env --provider openai --model gpt-5-mini`를 사용한다.
+- 기존 셸 환경변수가 `.env`보다 우선이다. 설정 검사에는 `bullbear.preflight --env-file`을 사용할 수 있다.
 - 2026-10-29: 사용자 인증키로 유가증권 일봉·KOSPI 지수 조회와 삼성전자 265거래일 수집을 확인했다.
   실제 키의 코스닥 시세·지수 권한은 별도 확인이 필요하다.
 
 ## 판단 기간과 개념·논리 검토
 
-- `7d-concise-v8`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
+- `langgraph-two-sentence-summary-v9`: 판정 질문을 그대로 공유한다. HOLD는 자료 부족/애매함이 아니라
   7거래일 뒤 코스피와 비슷하게 움직여 상대수익이 −2%p~+2%p 안일 것이라는 예측이다.
-- 주장 한 줄·한 문장, 본문 최대 3문장, 서로 다른 근거 최대 3개. 반박·마무리는
-  양측의 이전 전체 토론에 없던 source_id를 최소 1개 인용하며 7거래일 안의 계기가 될
-  뉴스·공시를 우선 조회한다. 새 근거가 전혀 없으면 발언을 지어내지 않고 중단한다.
+- 사용자용 요약은 본문의 핵심 주장·근거와 중요한 반박·조건·한계를 두 문장에 담는다. 길이 검사는 한 문단·최대 2문장으로 기존 한 문장 기록도 허용한다. 본문 최대 3문장, 서로 다른 근거 최대 3개. 재검토에서도 기존 근거를 재사용할 수 있고, 근거 없는 사실·숫자를 보충하지 않는다.
 - 1조 원 이상 금액은 사용자 글에서 조 원으로 표현한다. 도구의 display는 표현용이며
   evidence.value는 원 단위 그대로다. 중재자 글에서는 내부 ID·검증 통계·투자자별 권고를 제외한다.
 - 중재자 [E1]은 decisive_evidence[0]에 대응한다(토론자 번호와 별도). 이유 최대 3문장,
@@ -362,13 +357,13 @@ OPENAI_API_KEY=
 
 - `prompts.JUDGMENT_POLICY`를 양측·중재자·검토 역할이 공유한다. 주가 기준일 이후
   7거래일 코스피 대비 초과수익률 기준: BUY > +2%p, SELL < -2%p, HOLD는 경계 포함 사이 구간.
-  서비스의 3거래일 채점은 보조 지표다. 장기 지표를 쓸 경우 이 기간과의 연결 및 한계를 설명한다.
-- 기존 수치/ID 대조 → 판단 기간 명시·알려진 PER 역전 규칙 검사 → 별도 대화의 LLM 의미 검토 순서다.
+  3거래일 결과는 중간 관찰이며 7거래일 전망의 정답 판정이 아니다. 장기 지표를 쓸 경우 이 기간과의 연결 및 한계를 설명한다.
+- 수치/ID·해석 연결·과거 수익률/기사 출처를 대조한 뒤, 활성화된 공개 전 검토가 요약과 본문의 사실·조건·불확실성을 함께 확인한다. 토론자는 공통 판단 기간 문구를 매번 반복할 필요가 없다.
   의미 검토는 개념 오류, 근거 없는 인과 단정, 기간 이탈, 모순을 원문 인용과 함께 반려한다.
 - 발언과 중재자 판정은 최대 3회 생성한다. 끝까지 실패하거나 검토 호출이 실패하면
   미검증 발언/판정을 성공 처리하지 않고 토론을 중단한다. 기존 API 응답 형식은 바꾸지 않는다.
-- 실험 보고서의 `policy_version`, `judgment_policy`, `semantic_reviews`에 기준과 검토 대상/결과를 저장한다.
-  검토 호출 토큰도 해당 토론자/중재자 사용량에 포함된다. 별도 대화지만 같은 모델이므로
+- 감사 기록에 정책·프롬프트·스키마 해시와 모델 호출·검증 결과를 저장한다.
+  공개 전 검토는 감사 기록의 `statement_reviewer` 역할과 전체 모델 사용량에 포함된다. 별도 대화지만 같은 모델이므로
   독립적인 사실 확인이나 논리적 정확성 증명이 아니며 오탐·누락 가능성이 있다.
 - 현재 명시적 개념 규칙은 알려진 PER 역전 표현을 좁게 다룬다. 모든 표현을 정규식으로 판별하지 않는다.
 - 인용 정확도를 원천 사실의 무오류로 확대하는 관측 사례도 규칙으로 반려한다.
@@ -378,4 +373,4 @@ OPENAI_API_KEY=
 
 운영 인증·동시 실행·재시작·선택적 영속 비용 장부는 [워커 운영 안내](../docs/WORKER-OPERATIONS.md)를 참고한다.
 
-- 파이프라인 동작을 바꾸면 `tests/fakes.py`의 가짜 소스·에이전트로 테스트를 추가한다.
+- 파이프라인 동작을 바꾸면 `tests/fakes.py`의 가짜 소스와 `tests/graph_fakes.py`의 가짜 모델로 테스트를 추가한다.

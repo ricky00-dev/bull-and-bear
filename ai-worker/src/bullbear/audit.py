@@ -68,6 +68,7 @@ def selected_models(settings) -> dict:
 
 
 def provenance() -> dict:
+    from . import graph, graph_runtime
     # Hash source files as well as schemas: template rendering and reviewer
     # policy changes must be distinguishable without storing prompt text.
     result = {
@@ -77,11 +78,11 @@ def provenance() -> dict:
         "prompt_source_hashes": {
             module.__name__.rsplit(".", 1)[-1]: "sha256:" + hashlib.sha256(
                 Path(module.__file__).read_bytes()).hexdigest()
-            for module in (prompts, semantic)
+            for module in (prompts, semantic, graph, graph_runtime)
         },
         "schema_hashes": {
-            "statement": canonical_hash(schemas.STATEMENT_SCHEMA),
-            "moderator": canonical_hash(schemas.MODERATOR_SCHEMA),
+            "statement": canonical_hash(schemas.STRUCTURED_STATEMENT_SCHEMA),
+            "moderator": canonical_hash(graph_runtime.MEDIATION_SCHEMA),
             "semantic_review": canonical_hash(semantic.Review.model_json_schema()),
         },
     }
@@ -92,7 +93,7 @@ def provenance() -> dict:
     }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py')
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py')
     }
     return result
 
@@ -155,7 +156,8 @@ class RunAudit:
             "snapshot_id": None, "decision_at": None, "snapshot": None,
             "provenance": provenance(),
             "config": {"selected_models": models, "efforts": efforts,
-                       "max_extra_rounds": max_extra_rounds, "first_side": "bull" if mode == 'debate' else None,
+                       "max_extra_rounds": max_extra_rounds, "first_side": None,
+                       "engine": "langgraph" if mode == 'debate' else 'single',
                        "mode": mode},
             "runner": None, "stages": [], "events": [], "llm_calls": [],
             "usage": {"calls": []}, "role_usage": {}, "usage_complete": True,
