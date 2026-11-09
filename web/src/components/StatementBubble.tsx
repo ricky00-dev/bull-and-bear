@@ -7,7 +7,7 @@ import { ICONS } from './icons'
 import { TermText } from './TermText'
 import { Icon } from './ui'
 
-/** 퀴즈는 기존 말풍선, 토론은 같은 라운드의 양쪽을 맞춘 카드로 읽는다. */
+/** 기본은 말풍선(매수 왼쪽, 매도 오른쪽 지그재그). comparison은 양쪽을 같은 높이 카드로 맞춘다. */
 export function StatementBubble({ s, onChip, comparison = false, selected = [], onPick, previousId }: {
   s: { side: Side; round: Round; attempts: number; statement: Statement }
   onChip: (e: Evidence) => void; comparison?: boolean; selected?: string[]
@@ -22,7 +22,7 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
   const raw = s.statement.argument?.replace(/[ \t]*\[E\d+\]/g, '').trim() ?? ''
   const argument = (raw.startsWith(claim) ? raw.slice(claim.length) : raw).trim()
   return (
-    <article aria-label={`${bull ? '매수' : '매도'} 측 ${ROUND_LABEL[s.round]}`} className={`flex min-w-0 flex-col gap-2 ${comparison ? 'h-full' : bull ? 'mr-9' : 'ml-9'}`}>
+    <article aria-label={`${bull ? '매수' : '매도'} 측 ${ROUND_LABEL[s.round]}`} className={`flex min-w-0 flex-col gap-2 ${comparison ? 'h-full' : bull ? 'mr-9 md:mr-[22%]' : 'ml-9 md:ml-[22%]'}`}>
       <header className={`flex flex-wrap items-center justify-between gap-2 text-sm font-bold ${tone.name}`}>
         <span>{bull ? '매수 측' : '매도 측'} <span className="font-normal text-sub">{ROUND_LABEL[s.round]}</span></span>
         {previousId !== undefined && <a href={`#turn-${previousId}`} className="pressable flex min-h-touch items-center rounded-control px-2 text-xs font-medium text-sub underline underline-offset-4">앞선 상대 주장</a>}

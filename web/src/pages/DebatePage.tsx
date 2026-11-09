@@ -89,15 +89,16 @@ export function DebatePage() {
           </div>
         )}
         {pairStatements(stream.statements).map(pair => (
-          <section key={pair.key} aria-label={`${ROUND_LABEL[pair.round]} 비교${pair.index ? ` ${pair.index + 1}` : ''}`} className="flex flex-col gap-3 py-3">
+          <section key={pair.key} aria-label={`${ROUND_LABEL[pair.round]}${pair.index ? ` ${pair.index + 1}` : ''}`} className="flex flex-col gap-3 py-3">
             <h3 className="text-base font-bold">{ROUND_LABEL[pair.round]}{pair.index > 0 ? ` ${pair.index + 1}` : ''}</h3>
-            <div className="grid items-stretch gap-5 lg:grid-cols-2">
+            {/* 매수는 왼쪽, 매도는 오른쪽에서 번갈아 말을 주고받는 지그재그 */}
+            <div className="flex flex-col gap-4">
               {(['bull', 'bear'] as const).map(side => {
                 const s = pair[side]
                 const previous = s ? previousOpponent(s, stream.statements) : undefined
                 return s ? <div id={`turn-${s.seq}`} key={s.seq} className="min-w-0 scroll-mt-[calc(var(--topbar-height)+100px)]">
-                  <StatementBubble s={s} comparison onChip={setSheet} selected={picks} onPick={toggle} previousId={previous?.seq} />
-                </div> : <div key={side} className="flex min-h-36 flex-col justify-center gap-2 rounded-panel border border-dashed border-line p-4 text-sm text-sub"><span className="font-bold">{side === 'bull' ? '매수 측' : '매도 측'}</span><p>{done || stream.phase === 'failed' ? '이 라운드의 발언이 전달되지 않았어요.' : '발언을 기다리고 있어요.'}</p></div>
+                  <StatementBubble s={s} onChip={setSheet} selected={picks} onPick={toggle} previousId={previous?.seq} />
+                </div> : <div key={side} className={`flex flex-col gap-1 rounded-panel border border-dashed border-line px-4 py-3 text-sm text-sub ${side === 'bull' ? 'mr-9 md:mr-[22%]' : 'ml-9 md:ml-[22%]'}`}><span className="font-bold">{side === 'bull' ? '매수 측' : '매도 측'}</span><p>{done || stream.phase === 'failed' ? '이 라운드의 발언이 전달되지 않았어요.' : '발언을 기다리고 있어요.'}</p></div>
               })}
             </div>
           </section>
