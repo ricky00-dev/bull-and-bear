@@ -40,6 +40,7 @@ NEWS_LOOKBACK_DAYS = 7
 MAX_NEWS = 30
 KST = timezone(timedelta(hours=9))
 MARKET_CLOSE = time(15, 40)  # 종가 확정 여유 포함
+NEWS_CLOSE = time(15, 30)  # 기준일 정규장 마감. 그 뒤 기사는 채점 구간(기준일 종가 이후) 정보다
 
 
 def confirmed_date(now: datetime) -> date:
@@ -165,10 +166,13 @@ def build_snapshot(
         warnings.append("뉴스 소스 미설정")
     else:
         try:
-            # 스냅샷 생성 시각 이후 기사는 받지 않는다
-            articles = news.search(ticker, name, now - timedelta(days=NEWS_LOOKBACK_DAYS), now)
+            # 기준일(마지막 일봉) 장 마감까지만. 시세가 늦게 올라와 기준일이 며칠 전이어도
+            # 그 사이 기사는 채점 구간의 정보라 넣지 않는다 (재무·공시도 as_of로 자른다)
+            news_end = min(now, datetime.combine(as_of, NEWS_CLOSE, tzinfo=KST))
+            news_start = news_end - timedelta(days=NEWS_LOOKBACK_DAYS)
+            articles = news.search(ticker, name, news_start, news_end)
             articles = [a for a in articles if a.published_at.utcoffset() is not None
-                        and now - timedelta(days=NEWS_LOOKBACK_DAYS) <= a.published_at <= now]
+                        and news_start <= a.published_at <= news_end]
             _add(facts, news_facts(articles[:MAX_NEWS]))
         except DataUnavailable as e:
             warnings.append(f"뉴스 없음: {e}")

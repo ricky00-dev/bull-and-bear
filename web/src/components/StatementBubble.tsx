@@ -7,7 +7,7 @@ import { ICONS } from './icons'
 import { TermText } from './TermText'
 import { Icon } from './ui'
 
-/** 퀴즈는 기존 말풍선, 토론은 같은 라운드의 양쪽을 맞춘 카드로 읽는다. */
+/** 기본은 말풍선(매수 왼쪽, 매도 오른쪽 지그재그). comparison은 양쪽을 같은 높이 카드로 맞춘다. */
 export function StatementBubble({ s, onChip, comparison = false, selected = [], onPick, previousId }: {
   s: { side: Side; round: Round; attempts: number; statement: Statement }
   onChip: (e: Evidence) => void; comparison?: boolean; selected?: string[]
@@ -22,7 +22,7 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
   const raw = s.statement.argument?.replace(/[ \t]*\[E\d+\]/g, '').trim() ?? ''
   const argument = (raw.startsWith(claim) ? raw.slice(claim.length) : raw).trim()
   return (
-    <article aria-label={`${bull ? '매수' : '매도'} 측 ${ROUND_LABEL[s.round]}`} className={`flex min-w-0 flex-col gap-2 ${comparison ? 'h-full' : bull ? 'mr-9' : 'ml-9'}`}>
+    <article aria-label={`${bull ? '매수' : '매도'} 측 ${ROUND_LABEL[s.round]}`} className={`flex min-w-0 flex-col gap-2 ${comparison ? 'h-full' : bull ? 'mr-9 md:mr-[22%]' : 'ml-9 md:ml-[22%]'}`}>
       <header className={`flex flex-wrap items-center justify-between gap-2 text-sm font-bold ${tone.name}`}>
         <span>{bull ? '매수 측' : '매도 측'} <span className="font-normal text-sub">{ROUND_LABEL[s.round]}</span></span>
         {previousId !== undefined && <a href={`#turn-${previousId}`} className="pressable flex min-h-touch items-center rounded-control px-2 text-xs font-medium text-sub underline underline-offset-4">앞선 상대 주장</a>}
@@ -37,9 +37,9 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
             const full = !picked && selected.length >= MAX_EVIDENCE_PICKS
             return <div key={e.ref} className="flex items-stretch gap-2">
               <button type="button" onClick={() => onChip(e)} className={`flex min-h-touch min-w-0 flex-1 items-center justify-between gap-2 rounded-control border px-3 py-2 text-left text-[13px] font-medium ${tone.chip}`}>
-                <span>{chipText(e.source_id, e.value)}</span><Icon d={ICONS.chevron} size={14} className="shrink-0" />
+                <span>{chipText(e.source_id, e.value, e.observation?.label)}</span><Icon d={ICONS.chevron} size={14} className="shrink-0" />
               </button>
-              {onPick && <button type="button" aria-label={`${chipText(e.source_id, e.value)} ${picked ? '선택 해제' : '판정 근거로 담기'}`} aria-pressed={picked} disabled={full} onClick={() => onPick(e.source_id)}
+              {onPick && <button type="button" aria-label={`${chipText(e.source_id, e.value, e.observation?.label)} ${picked ? '선택 해제' : '판정 근거로 담기'}`} aria-pressed={picked} disabled={full} onClick={() => onPick(e.source_id)}
                 className={`flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-control border px-2 text-xs font-bold ${picked ? 'border-ink bg-ink text-white' : 'pressable border-line bg-white text-sub disabled:opacity-40'}`}>
                 {picked ? <><Icon d={ICONS.check} size={16} /><span className="sr-only">담음</span></> : '담기'}
               </button>}

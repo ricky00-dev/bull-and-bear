@@ -1,11 +1,12 @@
-from datetime import date
+from datetime import date, datetime
 
 import httpx
 import pytest
 
+from bullbear.data import NewsArticle, NewsSource
 from bullbear.data.naver_news import NaverNewsSource
 from bullbear.data.pykrx_dart import PykrxDartSource
-from bullbear.snapshot import build_snapshot
+from bullbear.snapshot import KST, build_snapshot
 from bullbear.tools import SnapshotTools
 
 from .fakes import AS_OF, NOW, FakeNews, FakeSource
@@ -69,6 +70,29 @@ def test_news_facts_and_cutoff(snap):
     news = snap.by_category("news")
     assert [n.label for n in news] == ["가짜전자, 자사주 1조 매입 결정"]  # 생성 시각 이후 기사는 제외
     assert news[0].value is None and news[0].published_at is not None
+
+
+def test_news_stops_at_as_of_close_when_prices_lag():
+    """시세가 늦게 올라와 기준일이 며칠 전이면, 그 뒤 기사(채점 구간 정보)는 넣지 않는다."""
+    class LateNews(NewsSource):
+        name = "late-news"
+        calls = []
+
+        def search(self, ticker, name, start, end):
+            self.calls.append(end)
+            articles = [
+                NewsArticle("1", datetime(2026, 10, 16, 9, 30, tzinfo=KST), "기준일 장중 기사", "요약", "https://news/1"),
+                NewsArticle("2", datetime(2026, 10, 16, 16, 10, tzinfo=KST), "기준일 장 마감 뒤 기사", "요약", "https://news/2"),
+                NewsArticle("3", datetime(2026, 10, 19, 10, 0, tzinfo=KST), "다음 거래일 장중 반등", "요약", "https://news/3"),
+            ]
+            return articles  # 공급자가 범위를 무시해도 스냅샷이 다시 자른다
+
+    news = LateNews()
+    snap = build_snapshot(FakeSource(), "000000", "가짜전자", news=news,
+                          now=datetime(2026, 10, 19, 21, 0, tzinfo=KST))
+    assert snap.as_of == AS_OF
+    assert news.calls == [datetime(2026, 10, 16, 15, 30, tzinfo=KST)]
+    assert [n.label for n in snap.by_category("news")] == ["기준일 장중 기사"]
 
 
 def test_without_news_source_warns():
