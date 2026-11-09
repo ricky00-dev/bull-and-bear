@@ -79,6 +79,7 @@ export function DebatePage() {
         <DebatePreparation state={{...stream,asOf:asOf ?? null}} onReconnect={stream.reconnect} />
         <div className="flex flex-col gap-1 py-3">
           <h2 className="text-lg font-bold">같은 자료, 두 가지 해석</h2>
+          <p className="text-[13px] leading-relaxed text-sub">기준일 종가부터 7거래일 뒤 코스피 대비 수익률을 예상해요. +2%p 초과는 매수, −2%p 미만은 매도, 그 사이는 보류예요.</p>
           <p className="text-[13px] leading-relaxed text-sub">같은 라운드의 매수·매도 주장을 비교해 보세요. 설득력 있는 근거는 {MAX_EVIDENCE_PICKS}개까지 담아 판정할 때 다시 볼 수 있어요.</p>
         </div>
         {d && <RagPanel key={id} debateId={id} stockName={d.stockName} asOf={asOf} />}

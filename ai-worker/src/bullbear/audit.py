@@ -93,7 +93,7 @@ def provenance() -> dict:
     }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py')
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py')
     }
     return result
 

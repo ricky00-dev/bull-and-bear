@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { chipText } from '../lib/glossary'
 import { MAX_EVIDENCE_PICKS } from '../lib/evidence'
 import type { Evidence, Round, Side, Statement } from '../lib/types'
@@ -17,10 +16,10 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
   const tone = bull
     ? { name: 'text-up-ink', border: 'border-up-line', chip: 'border-up-line bg-up-soft' }
     : { name: 'text-down-ink', border: 'border-down-line', chip: 'border-down-line bg-down-soft' }
-  const [open, setOpen] = useState(false)
-  const claim = s.statement.claim.trim()
-  const raw = s.statement.argument?.replace(/[ \t]*\[E\d+\]/g, '').trim() ?? ''
-  const argument = (raw.startsWith(claim) ? raw.slice(claim.length) : raw).trim()
+  // The body is a complete utterance; claim remains an internal summary.
+  // Old records without a body can still display their summary.
+  const speech = (s.statement.argument?.trim() || s.statement.claim.trim())
+    .replace(/[ \t]*\[E\d+\]/g, '')
   return (
     <article aria-label={`${bull ? '매수' : '매도'} 측 ${ROUND_LABEL[s.round]}`} className={`flex min-w-0 flex-col gap-2 ${comparison ? 'h-full' : bull ? 'mr-9' : 'ml-9'}`}>
       <header className={`flex flex-wrap items-center justify-between gap-2 text-sm font-bold ${tone.name}`}>
@@ -28,9 +27,7 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
         {previousId !== undefined && <a href={`#turn-${previousId}`} className="pressable flex min-h-touch items-center rounded-control px-2 text-xs font-medium text-sub underline underline-offset-4">앞선 상대 주장</a>}
       </header>
       <div className={`flex flex-1 flex-col gap-3 rounded-panel border bg-white p-4 ${tone.border}`}>
-        <p className="text-[15px] font-medium leading-relaxed"><TermText text={claim} /></p>
-        {argument && open && <p className="whitespace-pre-line border-t border-line-soft pt-3 text-sm leading-relaxed text-sub"><TermText text={argument} /></p>}
-        {argument && <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="pressable -ml-2 flex min-h-touch self-start items-center gap-2 rounded-control px-2 text-[13px] font-bold text-sub">{open ? '설명 접기' : '주장 자세히 읽기'}<Icon d={open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} size={14} /></button>}
+        <p className="whitespace-pre-line text-[15px] leading-relaxed"><TermText text={speech} /></p>
         <div className="mt-auto flex flex-col gap-2">
           {s.statement.evidence.map(e => {
             const picked = selected.includes(e.source_id)

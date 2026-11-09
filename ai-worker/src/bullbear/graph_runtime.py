@@ -18,6 +18,9 @@ from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_S
                       STRUCTURED_MODERATOR_SCHEMA)
 from .semantic import BACKGROUND_RULES, concept_issues, horizon_issues
 from .rag.context import render_background
+from .return_grounding import return_context, return_issues
+from .source_grounding import source_context, source_issues
+from .statement_review import review_statement
 from .tools import SnapshotTools, TOOL_DEFINITIONS
 from .verifier import verify, Issue, VerificationResult
 
@@ -64,7 +67,10 @@ reason은 판단 이유와 오류 또는 미확인 사항, source_ids는 대조�
 no_issue_found는 오류를 발견하지 못했다는 뜻이며 사실성·인과·수익 예측의 보증이 아니다.
 문제 있는 해석은 최종 전망의 확정 사실로 재사용하지 말고 unverified/outlook_limits와 평가에 반영한다.
 문제가 있어도 토론을 재생성하지 않는다. 전망이 불가능하면 ABSTAIN을 선택한다.
-""" + prompts.JUDGMENT_POLICY
+""" + prompts.JUDGMENT_POLICY + prompts.TEXT_QUALITY_RULES + """
+중재 문체: 양측 주장을 기계적으로 나열하거나 대등하다고 하지 말고, 어느 논거가 어떤 자료로 더 잘
+뒷받침되는지와 결론을 바꿀 핵심 불확실성을 설명한다. 말투의 자신감·문장 길이를 근거의 강도로 평가하지 않는다.
+"""
 
 
 class GraphStopped(LLMError):
@@ -80,7 +86,7 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 background_context=None):
+                 background_context=None, statement_reviewers=None):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.emit_hook = emit or (lambda *_: None)
@@ -89,7 +95,11 @@ class GraphRuntime:
         # Accepted for caller compatibility; fixed rounds never schedule extras.
         self.debater_effort, self.moderator_effort = debater_effort, moderator_effort
         self.context = background_context
+        self.statement_reviewers = statement_reviewers or {}
         self.lock = threading.RLock()
+        # Sonnet requests reserve a full context window; avoid two simultaneous
+        # reviewer reservations exhausting a shared pilot budget unnecessarily.
+        self.review_lock = threading.Lock()
         self.attempts = {side.value: [] for side in Side}
         if background_context is not None and background_context.snapshot_id != snapshot.snapshot_id:
             raise ValueError('Background context does not match the frozen snapshot')
@@ -120,6 +130,8 @@ class GraphRuntime:
         }[stage]
         payload = {'task': task, 'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
                    'history': transcript,
+                   'return_context': return_context(self.snapshot),
+                   'source_context': source_context(self.snapshot),
                    'research_results': state.get('research_results', []),
                    'decision_at': self.snapshot.created_at.isoformat()}
         conv = Conversation(prompts.debater_system(side, name=self.snapshot.name, ticker=self.snapshot.ticker,
@@ -149,6 +161,13 @@ class GraphRuntime:
                 continue
             result = verify(statement, self.snapshot)
             issues = list(result.issues) + horizon_issues(statement.claim)
+            refs = {e.ref: e.source_id for e in statement.evidence}
+            for text in (statement.claim, statement.argument):
+                issues += return_issues(text, self.snapshot, refs)
+                issues += source_issues(text, self.snapshot, refs)
+            for evidence in statement.evidence:
+                issues += return_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
+                issues += source_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
             issues += statement_issues(statement, stage, set())
             issues += analysis_issues(statement, transcript=transcript, side=side, round_kind=stage)
             expected = 'BUY' if side == Side.BULL else 'SELL'
@@ -162,6 +181,19 @@ class GraphRuntime:
             issues = [i.model_copy(update={'severity': 'warning'}) if i.code in deferred else i for i in issues]
             result = result.model_copy(update={'issues': issues,
                                                'passed': not any(i.severity == 'error' for i in issues)})
+            if result.passed and side.value in self.statement_reviewers:
+                with self.review_lock:
+                    review = review_statement(self.statement_reviewers[side.value], statement,
+                        self.snapshot, transcript, effort=self.moderator_effort)
+                # Private audit only: unpublished text/reviews never enter the public event stream.
+                with self.lock:
+                    self.log.append('statement_reviewed', side=side, round=stage, attempt=attempt,
+                                    statement=statement, review=review)
+                if review.issues:
+                    issues += [Issue(severity='error', code='statement_review_' + i.kind,
+                        message=f'문제 구절: {i.quote}\n근거 대조: {i.reason}\n수정 방향: {i.instruction}')
+                        for i in review.issues]
+                    result = result.model_copy(update={'issues': issues, 'passed': False})
             with self.lock:
                 self.attempts[side.value].append((len(history), result))
                 self.log.append('statement_attempt', side=side, round=stage, attempt=attempt,
@@ -172,7 +204,9 @@ class GraphRuntime:
                 self.emit('statement_accepted', {'side': side, 'round': stage, 'attempts': attempt,
                     'verified': True, 'verification_scope': 'source_values_and_structure', 'statement': statement, 'verification': result, 'engine': 'langgraph'})
                 return Analysis(statement, tuple(calls))
-            self.emit('statement_rejected', {'side': side, 'round': stage, 'attempt': attempt, 'issues': issues})
+            public_issues = [i.model_copy(update={'message': '공개 전 근거 검토에서 수정이 필요합니다.'})
+                             if i.code.startswith('statement_review_') else i for i in issues]
+            self.emit('statement_rejected', {'side': side, 'round': stage, 'attempt': attempt, 'issues': public_issues})
             conv.messages.append({'role': 'user', 'content': prompts.verifier_feedback(result.feedback())})
         raise LLMError('Graph statement failed verification after retries')
 
@@ -182,6 +216,8 @@ class GraphRuntime:
         conv = Conversation(MEDIATOR_SYSTEM + self.background,
             [{'role': 'user', 'content': json.dumps({'history': transcript,
                 'facts': {key: fact.model_dump(mode='json') for key, fact in self.snapshot.facts.items()},
+                'return_context': return_context(self.snapshot),
+                'source_context': source_context(self.snapshot),
                 'research_results': state.get('research_results', []),
                 'remaining_actions': 0,
                 'price_as_of': str(self.snapshot.as_of),
@@ -206,6 +242,9 @@ class GraphRuntime:
                 candidate = ModeratorDecision(action='verdict', extra_question=None,
                                              **decision.forecast.model_dump())
                 issues = horizon_issues(candidate.reasoning) + moderator_issues(candidate)
+                refs = {f'E{i}': key for i, key in enumerate(candidate.decisive_evidence, 1)}
+                issues += return_issues(candidate.reasoning, self.snapshot, refs)
+                issues += source_issues(candidate.reasoning, self.snapshot, refs)
                 issues += concept_issues('\n'.join([candidate.reasoning, candidate.bull.comment, candidate.bear.comment]))
                 issues += analysis_issues(candidate, transcript=transcript)
                 if any(key not in self.snapshot.facts for key in candidate.decisive_evidence):

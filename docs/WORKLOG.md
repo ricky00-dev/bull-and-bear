@@ -14,6 +14,54 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 ```
 
 ---
+## 2026-11-09 · Codex · ai-worker, web, docs · 실험용 변경 커밋 검증
+- 한 것: 사용자 요청으로 feat/worker-text-quality의 전체 변경을 확인·스테이징. 전 역할 Sonnet 기본값, 수익률/발행일/PER 근거 대조, 선택적 공개 전 검토, 문체 프롬프트, 본문 중심 웹/CLI 표시, 파일럿 실행 도구와 관련 테스트 포함.
+- 진행 중: 이 기록을 포함해 한국어 Conventional Commit 후 origin/feat/worker-text-quality로 푸시. 기본 작업 트리의 별도 변경은 이 커밋 대상이 아님.
+- 다음: develop 대상 리뷰에서 검증 정책과 출력 변경 검토. 배포는 별도 작업.
+- 막힘·결정 필요: 추가 grounding/statement_review/presentation/semantic 87 passed, 앞선 config/preflight/run_audit/graph_runtime 48 passed. 웹 build·lint 통과, staged diff 공백 검사 통과. 전체 테스트·Spring/브라우저 E2E·운영 배포는 미실행. 키·로컬 원자료·비용 장부는 포함하지 않음.
+
+## 2026-11-09 · Codex · ai-worker, docs · 두 워커 각2건 실제 토론 비교
+- 한 것: 사용자 요청으로 양쪽 LiveRunner를 전 역할 Sonnet·동일 삼성전자 스냅샷2개·추가0·RAG OFF로 실행. 실험용 공개 전 추가 검토는 기본 OFF. 실험용2건 각6발언+판정 HOLD 완료. 현재2건은 첫 발언3회 반려로 실패, 동일조건 각1회 재시도도 실패. 원문·반려피드백·요약은 기본 작업 트리 docs/evaluations/worker-version-comparison-20261109/README.md.
+- 진행 중: 실행 종료·미커밋. 총6실행50요청/$3.190790/상한$10/미정산0. 현재 워커 완성본2개는 확보하지 못함을 명시. 조건부 매수 가설과 의미 검증의 방향 변경 요구 충돌 관측. 실행 코드·검증 규칙은 변경하지 않았다.
+- 다음: 현재 워커의 역할 고정과 의미 검증 기준 정합성 개선. 약한 가설과 사실 오류 분리 후 재비교. 실험용 완주를 정확성 우위로 해석하지 말 것.
+- 막힘·결정 필요: lockfile로 실험용 환경 설치 후 관련48 tests passed. 모든 모델Sonnet/스냅샷동일/소스해시불변/원문보존/완료건당6발언·6검토/비용정산 검증. 실제배포·Spring/브라우저 통합·예측적중 검증 없음. 주가 기준10/30·11/4와 수집11/2·11/5가 달라 과거시점 백테스트 아님. 원자료·장부는 기본 작업 트리 ai-worker/data/version-comparison-20261109/.
+
+## 2026-11-09 · Codex · ai-worker, docs · 전 역할 Sonnet 기본값 통일
+- 한 것: 사용자 요청으로 현재 작업 트리와 feat/worker-text-quality의 토론자 기본값을 claude-sonnet-5-5로 변경. 중재자·검토자도 Sonnet을 사용하며 compose, 배포 환경 예시, README, 기존 preflight 기대값을 함께 수정. 기존 환경변수 재정의 기능은 유지.
+- 진행 중: 변경 완료·미커밋. 현재 작업 트리 config/preflight/run_audit 20 passed, text-quality config/preflight 5 passed.
+- 다음: 배포 시 기존 외부 모델 환경변수도 Sonnet인지 확인하고 워커 재시작.
+- 막힘·결정 필요: text-quality run_audit는 로컬 공유 Python 환경의 langgraph 미설치로 수집 실패. 실제 모델 호출·배포·프로세스 재시작 없음. 기존 사용자 변경 보존.
+
+## 2026-11-08 · Codex · ai-worker · 발언별 검토 실험과 3토론 완료
+- 한 것: statement_review.py로 출처/항목/기간/상대발언 검토를 추가, GraphRuntime에서 코드검사 후 승인된 발언만 공개하며 기존3작성 한도 유지. LiveRunner(review_statements=False) 기본OFF, 파일럿 --review-statements로 켠다. 별도 reviewer 클라이언트/감사역할/출력4096토큰, private 검토이력·공개 반려메시지 비식별화, audit 소스해시 추가. 동시 Sonnet 예약한도 충돌 후 검토호출만 직렬화했다.
+- 진행 중: 미커밋·사용자검토 대기. 관련99 passed(9.68초), 최종18발언 검토승인 선행/원문·해시 일치/기존검사0건. 완료3건 검토31회/반려13회/지적21개(참오류 수 아님), 74실제요청/$2.1299605/664.345초. 실패포함5실행98요청/$2.4090204/미확정0/상한$5, 실행종료.
+- 다음: 원래 bull-and-bear/docs/evaluations/text-quality-reviewed-20261108 검토. 1번 최초배치, 2·3번 순차검토 재실행. 원자료 data/text-quality-reviewed-20261108와 text-quality-reviewed-retry-20261108, 전자의 장부공유 및 comparison.json 확인. 전체 Fact 맥락/조회 보완과 약한 가설의 반려 축소가 우선.
+- 막힘·결정 필요: 인용자료만 보는 검토자가 전체자료 부재로 오판해 2번 과거7일/3번21일 자료없음 오류가 통과(3번 이후 정정). 개선효과 정량확정 아님·기본활성화 비권고. 운영/계약/봉인/커밋/푸시/전체통합 변경·검증 없음. 기존변경 보존.
+
+## 2026-11-08 · Codex · ai-worker · 기사 날짜·PER v7와 실제 3토론
+- 한 것: source_grounding.py에 KST 발행일/사건일 분리·현재 PER 비교근거 부재 context와 제한적 문장 검사를 추가하고 graph_runtime의 본문/요약/근거해석/중재이유 및 audit 소스해시에 연결했다. prompts v7, 날짜·PER·반려 후 공개 회귀 추가. 관련 115 passed(10.49초), 이전 실제 출력 재생 확인.
+- 진행 중: feat/worker-text-quality 미커밋·사용자 검토 대기. 동일 자료 3건 모두 6발언+중재 완료. 최종 대상 검사0건·원문/스냅샷 해시 일치·diff 공백 확인. 총30요청/$1.1040456/미확정0/이번상한$5, 실행 종료.
+- 다음: 원래 bull-and-bear/docs/evaluations/text-quality-source-20261108 검토. 원자료 ai-worker/data/text-quality-source-20261108 및 postcheck.json. 1번 근거 없는 '분기 영업이익100조'와 중재자 승인, 절대변동성→상대수익 확률 추론, 문장 반복은 잔존 과제.
+- 막힘·결정 필요: 18공개발언 PER 미사용으로 PER 분석력 입증 아님. 제한적 검사이며 모든 중첩 분석/의미 오류 검증 아님. 백테스트/배포/계약/봉인/커밋/푸시/전체 Spring·브라우저 검증 없음. 이전 변경·동시 작업 보존.
+
+## 2026-11-07 · Codex · ai-worker · 부호·과거미래 구분 v6/v6.1
+- 한 것: return_grounding의 고정자료해석·제한적문장 검사를 그래프발언/중재에 연결, prompts의 과거3일/미래3일·부호·차이표현 보완, audit에 검사소스해시 추가. 이전 실제오류·정상/인용/조건부·문장경계·반려후공개 회귀 추가. 동일3자료 생성 후 3번 표기문제로 해당토론 재생성했다.
+- 진행 중: 최종3건 완료·사용자검토 대기. 확장87 passed(10.78초), 근거해석 참조보완 후 최종관련49 passed(7.25초). 최종 본문/요약/근거해석/중재이유 대상검사0건·원문/해시 확인. 총4생성42요청/$1.4751056/미확정0/이번상한$5, 실행종료.
+- 다음: 원래 bull-and-bear/docs/evaluations/text-quality-grounding-20261107 검토. 1·2번 v6 최종검사 사후적용, 최종3번 v6.1. 원자료 data/text-quality-grounding-20261107과 data/text-quality-grounding-retry-20261107, 장부 전자공유. 교체원문도 보존.
+- 막힘·결정 필요: 일반의미검증 아님. 인용·정정·복합부호 문장 누락가능, 날짜표현·PER·지속성추론 잔존문제 README 명시. 배포/계약/봉인/커밋/푸시/전체Spring브라우저검증 없음. 기존미커밋 변경 보존.
+
+## 2026-11-07 · Codex · ai-worker, web · 한 문단 발언 v5와 실제3토론
+- 한 것: 사용자 요청으로 argument를 독립 발언으로 생성하고 내부claim 복사/역할선언 반복을 피하도록 v5 지침 적용. StatementBubble·CLI·검토 renderer는 본문만 표시하며 웹 펼침 버튼 제거, 빈본문 과거기록 요약대체와 상단 판정기준 안내 유지. 기존3스냅샷으로 실제3건 모두6발언+중재 완료.
+- 진행 중: feat/worker-text-quality 미커밋. 회귀45 passed(7.95초), 웹build/lint, React 서버렌더, 원문18발언 일치·claim 미표시·스냅샷해시 확인. 이번31요청/$1.1629683, 기존장부 합계61요청/$2.1573788/미확정0(상한$5). 실행 종료.
+- 다음: 원래 bull-and-bear/docs/evaluations/text-quality-single-20261107 대화록 사용자 검토. 2번 상대수익부호·3번 과거3일/미래7일 혼동 등은 별도 품질 과제. 원자료 ai-worker/data/text-quality-single-20261107, 장부는 이전 text-quality-three-20261107 것을 공유.
+- 막힘·결정 필요: 표시중복은 제거했으나 추론 오류 잔존, 원문 보존. 존재하지 않는 test_cli.py 지정 호출은 미실행 후 실제파일로 회귀 완료. 브라우저시각/Spring전체 검증·계약변경·서비스배포·커밋·푸시 없음. npm 설치는 lockfile 기준이며 dependency 변경 없음. 기존 작업 트리 변경 보존.
+
+## 2026-11-07 · Codex · ai-worker · 텍스트 품질 프롬프트와 실제3토론
+- 한 것: 사용자 채택 예시를 참고해 prompts.TEXT_QUALITY_RULES와 중재자 문체 지침을 추가하고 policy를 langgraph-text-quality-v4로 변경했다. scripts/worker-text-quality-pilot.py로 별도 영속 비용장부·감사기록을 남기며 저장된 삼성전자3시점의 실제 토론을 생성했다. 고정6발언·중재3건 모두 완료.
+- 진행 중: feat/worker-text-quality 미커밋. 관련78 tests passed(12.35초). 30요청·기록비용$0.9944105·미확정0·총상한$5. 원자료 ai-worker/data/text-quality-three-20261107, 사용자용 대화록/검토 메모는 원래 bull-and-bear/docs/evaluations/text-quality-three-20261107에 저장했다.
+- 다음: 사용자 검토 반영 후 기간 표현·PER 비교 기준·변동성/임계값의 방향 추론·필수문구 반복을 새 정책으로 비교한다. 기존 프롬프트 대조군은 미실행이므로 개선율을 주장하지 않는다.
+- 막힘·결정 필요: 실제 출력에 논리·표현 문제 잔존, 원문 보존. 한종목3시점이며 기준일 이후 수집 뉴스가 포함돼 백테스트가 아니다. 기존 PR작업 트리·실행 서비스·API계약·판정봉인 변경 없음. 배포·커밋·푸시 없음. session-brief 기존CRLF 오류를 git/문서 조회로 보완했다.
+
 
 ## 2026-11-05 · Codex · Worker PR #42 제출
 - 한 것: 사용자 요청으로 feat/worker-structured-interpretations를 원격에 푸시하고 develop 대상 PR #42(https://github.com/ricky00-dev/bull-and-bear/pull/42)를 생성했다. 최신 origin/develop(4ee6f32)을 병합하고 WORKLOG 충돌은 양측 기록을 모두 보존해 해결했다.

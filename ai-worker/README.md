@@ -112,7 +112,7 @@ DART에 시장 구분이 없는 추가 종목은 `market: null`이며, 전체 ET
 토론 허용 기준은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다 (`server/market.py`의 `block_reasons`). `UNIVERSE`의 대형주 30종목은 검색 정렬과 CLI 기본 목록으로만 쓴다.
 
 운영 HTTP와 Claude CLI는 **Haiku·Sonnet만 허용**한다. 기본 역할은 토론자
-`claude-haiku-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
+`claude-sonnet-5-5`, 중재자 `claude-sonnet-5-5`로 기존 운영 compose와 일치한다.
 `BULLBEAR_MODEL`은 공통 재정의, `BULLBEAR_DEBATER_MODEL`·`BULLBEAR_MODERATOR_MODEL`은
 역할별 재정의다. 기존 Opus 설정은 호출 전에 거부한다. 서버 측 자동 모델 대체는 사용하지 않는다.
 모델 ID가 계정에서 실제 사용 가능한지는 별도 확인해야 하며, 위 기본값만으로 접근을 보장하지 않는다.

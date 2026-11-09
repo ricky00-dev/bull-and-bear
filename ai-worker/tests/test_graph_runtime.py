@@ -20,6 +20,76 @@ def snapshot():
     return build_snapshot(FakeSource(), '000000', '가짜전자', now=NOW)
 
 
+def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path):
+    class WrongFirst(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            assert 'return_context' in json.loads(conv.messages[0]['content'])
+            if self.count == 1:
+                raw['argument'] = '상대수익은 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
+            return raw
+    llm = WrongFirst(snapshot)
+    run = runtime(snapshot, tmp_path, bull=llm)
+    run.run()
+    events = EventLog.read(run.log.path)
+    assert any(e['type'] == 'statement_rejected' and
+               any(i['code'] == 'relative_return_sign' for i in e['issues']) for e in events)
+    accepted = [e for e in events if e['type'] == 'statement_accepted']
+    assert len(accepted) == 6
+    assert all('더 올랐습니다' not in e['statement']['argument'] for e in accepted)
+
+
+def test_moderator_return_sign_failure_is_rewritten(snapshot, tmp_path):
+    class WrongModerator(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            assert 'return_context' in json.loads(conv.messages[0]['content'])
+            if self.count == 1:
+                raw['forecast']['reasoning'] = '7거래일 코스피 대비 상대수익 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
+            return raw
+    run = runtime(snapshot, tmp_path, moderator=WrongModerator(snapshot))
+    result = run.run()
+    assert '더 올랐습니다' not in result['verdict']['reasoning']
+    assert any(e['type'] == 'moderator_rejected' and
+               any(i['code'] == 'relative_return_sign' for i in e.get('issues', []))
+               for e in EventLog.read(run.log.path))
+
+
+@pytest.mark.parametrize('bad_text,expected_code', [
+    ('발표 다음 날 장중 급락했다는 기사입니다 [E1].', 'news_relative_date'),
+    ('PER은 8.46배로 낮은 편이라 회복 여지가 있습니다 [E1].', 'per_without_comparison'),
+])
+def test_source_wording_is_corrected_before_publication(snapshot, tmp_path, bad_text, expected_code):
+    class WrongFirst(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            assert 'source_context' in json.loads(conv.messages[0]['content'])
+            if self.count == 1:
+                raw['argument'] = bad_text
+            return raw
+    run = runtime(snapshot, tmp_path, bull=WrongFirst(snapshot))
+    run.run()
+    events = EventLog.read(run.log.path)
+    assert any(e['type'] == 'statement_rejected' and
+               any(i['code'] == expected_code for i in e['issues']) for e in events)
+    assert all(e['statement']['argument'] != bad_text for e in events if e['type'] == 'statement_accepted')
+
+
+def test_moderator_per_is_corrected_before_publication(snapshot, tmp_path):
+    class WrongFirst(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            assert 'source_context' in json.loads(conv.messages[0]['content'])
+            if self.count == 1:
+                raw['forecast']['reasoning'] = '7거래일 코스피 대비 PER 8.46배로 낮은 편이라 반등을 예상합니다 [E1].'
+            return raw
+    run = runtime(snapshot, tmp_path, moderator=WrongFirst(snapshot))
+    run.run()
+    assert any(e['type'] == 'moderator_rejected' and
+               any(i['code'] == 'per_without_comparison' for i in e.get('issues', []))
+               for e in EventLog.read(run.log.path))
+
+
 def runtime(snapshot, tmp_path, *, actions=(), max_extra=1, emit=None, bull=None, moderator=None):
     return GraphRuntime(snapshot, debate_id='graph-test',
         bull=bull or GraphLLM(snapshot), bear=GraphLLM(snapshot),

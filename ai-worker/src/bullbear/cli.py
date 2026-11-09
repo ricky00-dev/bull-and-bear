@@ -71,7 +71,7 @@ def _printer(event: str, payload: dict) -> None:
         st, ver = payload["statement"], payload["verification"]
         mark = "검증 통과" if payload["verified"] else "검증 실패"
         print(f"({mark}, 시도 {payload['attempts']}회)")
-        print(f"주장: {st.claim}\n{st.argument}")
+        print(st.argument or st.claim)
         for e in st.evidence:
             print(f"  {e.ref} {e.source_id} = {e.value}  — {e.interpretation}")
         for i in ver.issues:

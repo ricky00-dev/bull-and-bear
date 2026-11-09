@@ -78,7 +78,7 @@ def load_settings() -> Settings:
         rag_s3_endpoint=os.getenv("BULLBEAR_RAG_S3_ENDPOINT") or None,
         rag_context_backend=os.getenv("BULLBEAR_RAG_CONTEXT_BACKEND", "sqlite").strip().lower(),
         rag_postgres_dsn=os.getenv("BULLBEAR_RAG_POSTGRES_DSN") or None,
-        debater_model=os.getenv("BULLBEAR_DEBATER_MODEL") or os.getenv("BULLBEAR_MODEL", "claude-haiku-5-5"),
+        debater_model=os.getenv("BULLBEAR_DEBATER_MODEL") or os.getenv("BULLBEAR_MODEL", "claude-sonnet-5-5"),
         moderator_model=os.getenv("BULLBEAR_MODERATOR_MODEL") or os.getenv("BULLBEAR_MODEL", "claude-sonnet-5-5"),
         worker_budget_usd=os.getenv("BULLBEAR_WORKER_BUDGET_USD") or None,
         worker_budget_id=os.getenv("BULLBEAR_WORKER_BUDGET_ID") or None,

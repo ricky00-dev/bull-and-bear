@@ -22,13 +22,14 @@ log = logging.getLogger(__name__)
 
 
 class LiveRunner:
-    def __init__(self, settings, *, budget=None):
+    def __init__(self, settings, *, budget=None, review_statements=False):
         self.settings = settings
         self.clients = []
         self.audit = None
         self.background_context = None
         self.budget = budget
         self.budget_scopes = set()
+        self.review_statements = review_statements
 
     def new_client(self, model, scope):
         if self.budget is not None:
@@ -63,15 +64,20 @@ class LiveRunner:
         def client(role, model_role):
             with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
                 llm = self.new_client(models[model_role], f'{debate_id}:{role}')
+                if role.startswith('reviewer_'):
+                    llm.max_output_tokens = 4096
                 self.clients.append(llm)
-                return AuditedLLM(llm, self.audit, model_role) if self.audit else llm
+                audit_role = 'statement_reviewer' if role.startswith('reviewer_') else model_role
+                return AuditedLLM(llm, self.audit, audit_role) if self.audit else llm
 
         return GraphRuntime(snapshot, debate_id=debate_id,
             bull=client('bull', 'debater'), bear=client('bear', 'debater'),
             moderator=client('moderator', 'moderator'),
             log=EventLog(settings.debate_dir / f'{debate_id}.jsonl'), emit=emit,
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
-            moderator_effort=settings.moderator_effort, background_context=self.background_context).run()
+            moderator_effort=settings.moderator_effort, background_context=self.background_context,
+            statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
+                if self.review_statements else None).run()
 
     def close(self):
         for client in self.clients:

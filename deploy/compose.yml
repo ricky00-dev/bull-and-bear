@@ -53,8 +53,8 @@ services:
     restart: unless-stopped
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      # 토론자는 Haiku, 최종 판정은 Sonnet. 자동 모델 대체는 사용하지 않는다.
-      BULLBEAR_DEBATER_MODEL: ${DEBATER_MODEL:-claude-haiku-5-5}
+      # 토론자와 최종 판정 모두 Sonnet. 자동 모델 대체는 사용하지 않는다.
+      BULLBEAR_DEBATER_MODEL: ${DEBATER_MODEL:-claude-sonnet-5-5}
       BULLBEAR_MODERATOR_MODEL: ${MODERATOR_MODEL:-claude-sonnet-5-5}
       OPENDART_API_KEY: ${DART_API_KEY:-}
       KRX_API_KEY: ${KRX_API_KEY:-}
