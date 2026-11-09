@@ -47,6 +47,8 @@ export interface Evidence {
   source_id: string
   value: number | null
   interpretation: string
+  /** 새 엔진(계약 v0.9~)이 붙이는 스냅샷 원본 사본. 예전 토론에는 없다 */
+  observation?: { label?: string | null } | null
 }
 
 export interface Statement {

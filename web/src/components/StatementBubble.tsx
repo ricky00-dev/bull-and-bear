@@ -37,9 +37,9 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
             const full = !picked && selected.length >= MAX_EVIDENCE_PICKS
             return <div key={e.ref} className="flex items-stretch gap-2">
               <button type="button" onClick={() => onChip(e)} className={`flex min-h-touch min-w-0 flex-1 items-center justify-between gap-2 rounded-control border px-3 py-2 text-left text-[13px] font-medium ${tone.chip}`}>
-                <span>{chipText(e.source_id, e.value)}</span><Icon d={ICONS.chevron} size={14} className="shrink-0" />
+                <span>{chipText(e.source_id, e.value, e.observation?.label)}</span><Icon d={ICONS.chevron} size={14} className="shrink-0" />
               </button>
-              {onPick && <button type="button" aria-label={`${chipText(e.source_id, e.value)} ${picked ? '선택 해제' : '판정 근거로 담기'}`} aria-pressed={picked} disabled={full} onClick={() => onPick(e.source_id)}
+              {onPick && <button type="button" aria-label={`${chipText(e.source_id, e.value, e.observation?.label)} ${picked ? '선택 해제' : '판정 근거로 담기'}`} aria-pressed={picked} disabled={full} onClick={() => onPick(e.source_id)}
                 className={`flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-control border px-2 text-xs font-bold ${picked ? 'border-ink bg-ink text-white' : 'pressable border-line bg-white text-sub disabled:opacity-40'}`}>
                 {picked ? <><Icon d={ICONS.check} size={16} /><span className="sr-only">담음</span></> : '담기'}
               </button>}

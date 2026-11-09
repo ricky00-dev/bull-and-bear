@@ -37,7 +37,7 @@ export function JudgePage() {
     const seen = new Map<string, string>()
     for (const s of stream.statements) {
       for (const e of s.statement.evidence) {
-        if (!seen.has(e.source_id)) seen.set(e.source_id, chipText(e.source_id, e.value))
+        if (!seen.has(e.source_id)) seen.set(e.source_id, chipText(e.source_id, e.value, e.observation?.label))
       }
     }
     return [...seen.entries()]
