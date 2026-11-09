@@ -1,4 +1,4 @@
-import { bigWon, pct, won } from './format'
+import { bigWon, pct, pctPoint, won } from './format'
 
 /**
  * 근거 ID(스냅샷 Fact ID) → 입문자용 이름·설명·값 표기.
@@ -40,12 +40,33 @@ const ENTRIES: Record<string, Entry> = {
   'VAL.ROE_TTM': { label: 'ROE', desc: '자본으로 1년 동안 얼마나 이익을 냈는지예요. 높을수록 돈을 잘 버는 회사예요.', format: plainPct },
   'VAL.DEBT_RATIO': { label: '부채비율', desc: '부채를 자본으로 나눈 값이에요. 높을수록 빚에 기대는 정도가 커요.', format: plainPct },
   'VAL.OP_MARGIN_TTM': { label: '영업이익률', desc: '매출에서 본업으로 남긴 이익의 비율이에요.', format: plainPct },
+  'VAL.REVENUE_TTM': { label: '매출(최근 4분기)', desc: '최근 4개 분기 매출을 더한 금액이에요. 1년치 장사 규모예요.', format: bigWon },
+  'VAL.OPERATING_INCOME_TTM': { label: '영업이익(최근 4분기)', desc: '최근 4개 분기 영업이익을 더한 금액이에요. 본업으로 1년 동안 번 돈이에요.', format: bigWon },
+  'VAL.NET_INCOME_TTM': { label: '순이익(최근 4분기)', desc: '최근 4개 분기 순이익을 더한 금액이에요. PER·ROE를 계산할 때 쓰여요.', format: bigWon },
+  'VAL.SHARES': { label: '발행주식수', desc: '회사가 발행한 보통주 수예요. 주가에 곱하면 시가총액이 돼요.', format: (v) => `${Math.round(v).toLocaleString('ko-KR')}주` },
+  // 새 엔진(#44)의 코스피 비교 근거. 3·7·21거래일
+  ...periodEntries(),
+}
+
+function periodEntries(): Record<string, Entry> {
+  const out: Record<string, Entry> = {}
+  for (const n of [3, 7, 21]) {
+    out[`PX.RET_${n}D`] = { label: `${n}거래일 수익률`, desc: `최근 ${n}거래일 동안 이 종목 주가가 얼마나 움직였는지예요.`, format: signedPct }
+    out[`MKT.KOSPI_RET_${n}D`] = { label: `코스피 ${n}거래일 수익률`, desc: `같은 ${n}거래일 동안 코스피 지수가 얼마나 움직였는지예요. 시장 전체 흐름이에요.`, format: signedPct }
+    out[`PX.EXCESS_KOSPI_${n}D`] = {
+      label: `코스피 대비 ${n}거래일`,
+      desc: `같은 ${n}거래일 동안 이 종목 수익률에서 코스피 수익률을 뺀 값이에요. +면 시장보다 잘했고, −면 시장보다 못했어요. 채점도 이 기준(코스피 대비)으로 해요.`,
+      format: pctPoint,
+    }
+  }
+  return out
 }
 
 const PREFIX: Record<string, { label: string; desc: string }> = {
   FIN: { label: '재무제표', desc: 'DART 정기보고서의 재무 수치예요.' },
   VAL: { label: '밸류에이션', desc: '주가와 재무 수치로 계산한 지표예요.' },
   NEWS: { label: '뉴스', desc: '스냅샷 시점까지 나온 기사예요. 기사 속 전망은 사실이 아니라 의견이에요.' },
+  MKT: { label: '시장', desc: '코스피 같은 시장 전체 지표예요.' },
   DISC: { label: '공시', desc: '회사가 DART에 제출한 공식 보고서예요.' },
 }
 
@@ -62,10 +83,16 @@ export function formatValue(sourceId: string, value: number | null): string {
   return sourceId.startsWith('FIN.') ? bigWon(value) : value.toLocaleString('ko-KR')
 }
 
-/** 칩에 쓰는 짧은 문구: "120일 이동평균 대비 −21.59%" */
-export function chipText(sourceId: string, value: number | null): string {
+/**
+ * 칩에 쓰는 짧은 문구: "120일 이동평균 대비 −21.59%".
+ * 뉴스·공시처럼 값이 없는 근거는 제목(새 엔진의 observation.label)을 붙인다: "뉴스 · 외국인 순매도 이어져"
+ */
+export function chipText(sourceId: string, value: number | null, title?: string | null): string {
   const v = formatValue(sourceId, value)
-  return v ? `${describe(sourceId).label} ${v}` : describe(sourceId).label
+  const { label } = describe(sourceId)
+  if (v) return `${label} ${v}`
+  const t = title?.trim()
+  return t && t !== label ? `${label} · ${t.length > 28 ? `${t.slice(0, 27)}…` : t}` : label
 }
 
 /**
