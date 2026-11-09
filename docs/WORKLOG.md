@@ -16,6 +16,11 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-09 · Claude(PM) · api, docs
+- 한 것: 토론자도 Sonnet으로(사용자 결정). 로컬 `ai-worker/.env`의 토론자 Haiku를 Sonnet으로 바꾸고 워커 재시작. 코드 기본값·배포 설정은 이미 Sonnet(#44). ROADMAP·ARCHITECTURE·experiment의 "토론자 Haiku" 문구 갱신, ROADMAP의 "$0.77(전 역할 Sonnet)" 오기 정정(실제는 토론자 Haiku). Spring 추정 비용 0.6 → 2.0
+- 진행 중: 없음
+- 다음: jangwonii — 캐시 켜기(비용 장부가 `cache_control`을 막고 있음). 캐시가 켜지면 추정 비용 다시 낮춤
+- 막힘·결정 필요: 추정 $2.0에 맞춰 사용자 토론 하루 상한 기본값 $3 → $6(하루 약 3건). 전시 당일에는 `BUDGET_USER_DAILY_USD`로 더 올림
 ## 2026-11-09 · Codex · api · SSE 재생 중 완료 시 마지막 발언 누락 수정
 - 한 것: 구독 등록을 Subscriber 잠금 안으로 옮겨 라이브 publish가 초기 재생을 앞지르지 않게 했다. 완료/실패 상태 확인 후 마지막 전송 seq 이후의 저장 이벤트를 재조회해 전송한 뒤 연결을 닫는다. 판정 봉인과 seq 중복 제거는 유지한다.
 - 검증: StreamCompletionRaceTest4개 및 HttpWorkerClientTest 통과. 수정 jar의 격리 브라우저 확인·Spring 연결pytest5개·DB복구7개 통과. 실제 API 재시작 후 저장 토론SSE20회/재연결4회/새로고침5회 및 요약6개·펼침/접기·판정 봉인 확인.
