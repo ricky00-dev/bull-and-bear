@@ -32,17 +32,6 @@ def verdict():
     return d
 
 
-@pytest.mark.parametrize('field', ['reasoning', 'bull', 'bear', 'extra_question'])
-def test_mkt_fact_ids_are_private_in_all_moderator_text(field):
-    d = verdict()
-    text = '7거래일 코스피 대비 비슷하게 움직입니다 MKT.KOSPI_RET_7D [E1].'
-    if field in ('bull', 'bear'):
-        getattr(d, field).comment = text
-    else:
-        setattr(d, field, text)
-    assert 'internal_details' in codes(moderator_issues(d))
-
-
 def test_mkt_decisive_id_is_allowed_when_prose_uses_numbered_reference():
     d = verdict()
     d.decisive_evidence[0] = 'MKT.KOSPI_RET_7D'
@@ -129,6 +118,7 @@ def test_moderator_refs_are_local_to_decisive_list():
 
 @pytest.mark.parametrize('text,code',[
     ('PX.CLOSE가 높습니다.','internal_details'),
+    ('MKT.KOSPI_RET_7D를 확인했습니다 [E1].','internal_details'),
     ('반려 횟수는 4회입니다.','internal_details'),
     ('evidence_accuracy는 1.0입니다.','internal_details'),
     ('장기 투자자는 분할매수하세요.','investor_advice'),

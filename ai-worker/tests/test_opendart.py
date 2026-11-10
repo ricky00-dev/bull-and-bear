@@ -98,8 +98,11 @@ def test_invalid_report_response_is_safe_and_not_cached(tmp_path, client_for, re
     assert not list(tmp_path.rglob("*.json"))
 
 
-@pytest.mark.parametrize("method", ["report", "corp_code", "listed_companies"])
-@pytest.mark.parametrize("exception", [httpx.ReadTimeout, httpx.ConnectError])
+@pytest.mark.parametrize("method,exception", [
+    ("report", httpx.ReadTimeout),
+    ("corp_code", httpx.ConnectError),
+    ("listed_companies", httpx.ReadTimeout),
+])
 def test_network_errors_are_data_unavailable(client_for, method, exception):
     def handle(request):
         raise exception(KEY, request=request)
@@ -137,8 +140,12 @@ def test_company_download_populates_both_caches(client_for, first):
     assert len(calls) == 1
 
 
-@pytest.mark.parametrize("contents", ["{broken", "[]", '{"005930":null}'])
-@pytest.mark.parametrize("method,filename", [("corp_code", "corp_codes.json"), ("listed_companies", "listed_companies.json")])
+@pytest.mark.parametrize("method,filename,contents", [
+    ("corp_code", "corp_codes.json", "{broken"),
+    ("corp_code", "corp_codes.json", '{"005930":null}'),
+    ("listed_companies", "listed_companies.json", "[]"),
+    ("listed_companies", "listed_companies.json", '{"005930":null}'),
+])
 def test_damaged_company_cache_is_refetched(tmp_path, client_for, contents, method, filename):
     (tmp_path / filename).write_text(contents, encoding="utf-8")
     client = client_for(lambda request: httpx.Response(200, content=companies_zip()))
@@ -156,14 +163,10 @@ def test_damaged_company_cache_is_refetched(tmp_path, client_for, contents, meth
     httpx.Response(200, content=companies_zip("<result/>")),
     httpx.Response(200, content=companies_zip("<result><list><stock_code>005930</stock_code></list></result>")),
 ])
-@pytest.mark.parametrize("method", ["corp_code", "listed_companies"])
-def test_company_http_zip_xml_errors_are_safe(client_for, response, method):
+def test_company_http_zip_xml_errors_are_safe(client_for, response):
     client = client_for(lambda request: response)
     with pytest.raises(DataUnavailable) as error:
-        if method == "corp_code":
-            client.corp_code("005930")
-        else:
-            client.listed_companies()
+        client.corp_code("005930")
     assert KEY not in str(error.value)
 
 

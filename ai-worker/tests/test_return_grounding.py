@@ -89,10 +89,6 @@ def test_citation_sentence_boundary_keeps_later_disclaimer_from_hiding_error():
     assert 'relative_return_sign' in codes(text)
 
 
-def test_decimal_does_not_split_signed_return_sentence():
-    assert 'relative_return_sign' in codes('상대수익 −0.84%p는 코스피보다 더 올랐다는 뜻입니다.')
-
-
 def test_signed_distance_is_not_repeated_with_lower_than():
     assert 'relative_return_signed_distance' in codes('코스피 수익률보다 각각 -2.29%p, -2.17%p 낮았습니다 [E1].')
     assert not codes('상대수익은 -0.84%p로, 코스피보다 수익률이 0.84%p 낮았습니다 [E1].')

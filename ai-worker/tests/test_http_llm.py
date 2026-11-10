@@ -37,16 +37,6 @@ def test_provider_schema_adaptation_preserves_original_validation_and_property_n
     assert result['$defs']['items']['minItems'] == 1
 
 
-def test_request_uses_supported_schema():
-    calls = []
-    def stream(**kwargs):
-        calls.append(kwargs)
-        return Stream('claude-sonnet-5-5')
-    llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
-    llm.structured(Conversation('system'), schema=STATEMENT_SCHEMA, effort='medium')
-    assert 'maxItems' not in calls[0]['output_config']['format']['schema']['properties']['evidence']
-
-
 def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():
     calls = []
     models = iter(['claude-haiku-5-5-20261001', 'claude-haiku-5-5-20261002', 'claude-haiku-5-5-20261001'])
@@ -78,8 +68,10 @@ def test_sonnet_cannot_enable_unrestricted_server_fallback():
         calls.append(kwargs)
         return Stream('claude-sonnet-5-5')
     llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
-    llm.structured(Conversation('system'), schema={}, effort='medium')
-    assert 'fallbacks' not in calls[0] and 'betas' not in calls[0]
+    llm.structured(Conversation('system'), schema=STATEMENT_SCHEMA, effort='medium')
+    request, = calls
+    assert 'fallbacks' not in request and 'betas' not in request
+    assert 'maxItems' not in request['output_config']['format']['schema']['properties']['evidence']
 
 
 def test_unexpected_response_family_stops_and_preserves_incurred_usage():

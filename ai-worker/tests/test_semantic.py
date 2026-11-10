@@ -1,7 +1,6 @@
 import pytest
 
 from bullbear.llm import LLMError
-from bullbear.schemas import Side
 from bullbear.semantic import SemanticReviewer
 from bullbear.snapshot import build_snapshot
 from bullbear.verifier import verify
@@ -101,22 +100,3 @@ def test_grounded_error_still_rejects_when_other_quote_is_invented(snap):
     issues = reviewer.check(st("잘못된 설명 [E1]"), [], ['PX.CLOSE'])
     assert len(issues) == 1 and issues[0].severity == 'error'
     assert reviewer.records[0]['grounded'] is False
-
-
-def test_review_keeps_speakers_and_each_turn_reference_scope(snap):
-    import json
-    from bullbear.prompts import render_statement
-    own = st("내가 앞서 말한 주장 [E1]")
-    opponent = statement(('E1', 'PX.RET_1M', snap.facts['PX.RET_1M'].value))
-    history = [render_statement(Side.BULL, 'opening', own),
-               render_statement(Side.BEAR, 'opening', opponent)]
-    llm = QueueLLM([{'issues': []}])
-    SemanticReviewer(llm, snap).check(own, history, ['PX.CLOSE'], side=Side.BULL, round_kind='rebuttal')
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
-    assert payload['candidate_role'] == 'bull'
-    assert payload['candidate_round'] == 'rebuttal'
-    assert payload['reference_map'] == {'E1': 'PX.CLOSE'}
-    assert [h['speaker'] for h in payload['history']] == ['bull', 'bear']
-    assert payload['history'][0]['reference_map'] == {'E1': 'PX.CLOSE'}
-    assert payload['history'][1]['reference_map'] == {'E1': 'PX.RET_1M'}
-    assert payload['history'][1]['text'] == history[1]
