@@ -5,8 +5,8 @@ import { EvidenceSheet } from './EvidenceSheet'
 import { Card, Icon } from './ui'
 import { ICONS } from './icons'
 
-export function EvidenceComparison({ mine, decisive, turns, asOf, debateId, memo }: {
-  mine: string[]; decisive: string[]; turns: DebateTurn[]; asOf?: string | null; debateId: string; memo?: string | null
+export function EvidenceComparison({ mine, decisive, turns, asOf, memo }: {
+  mine: string[]; decisive: string[]; turns: DebateTurn[]; asOf?: string | null; memo?: string | null
 }) {
   const [sourceId, setSourceId] = useState<string | null>(null)
   const shared = [...new Set(mine)].filter(id => decisive.includes(id))
@@ -27,6 +27,6 @@ export function EvidenceComparison({ mine, decisive, turns, asOf, debateId, memo
       </div>
       {memo && <div className="rounded-panel bg-surface-2 p-4"><h3 className="mb-2 text-[13px] font-bold">그때 남긴 내 메모</h3><p className="whitespace-pre-wrap text-sm leading-relaxed">{memo}</p></div>}
     </Card>
-    {sourceId && <EvidenceSheet sourceId={sourceId} evidence={citations[0]?.evidence} citations={citations} debateId={debateId} asOf={asOf} onClose={() => setSourceId(null)} />}
+    {sourceId && <EvidenceSheet sourceId={sourceId} evidence={citations[0]?.evidence} citations={citations} asOf={asOf} onClose={() => setSourceId(null)} />}
   </>
 }

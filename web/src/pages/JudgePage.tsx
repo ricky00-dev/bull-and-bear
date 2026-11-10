@@ -185,7 +185,7 @@ export function JudgePage() {
         </PrimaryButton>
         <p className="text-center text-xs text-sub">제출하면 바꿀 수 없어요</p>
       </BottomBar>
-      {sourceId && <EvidenceSheet sourceId={sourceId} evidence={evidenceCitations(stream.statements, sourceId)[0]?.evidence} citations={evidenceCitations(stream.statements, sourceId)} asOf={debate.data?.tradeDate} debateId={id} selected={picks} onPick={togglePick} onClose={() => setSourceId(null)} />}
+      {sourceId && <EvidenceSheet sourceId={sourceId} evidence={evidenceCitations(stream.statements, sourceId)[0]?.evidence} citations={evidenceCitations(stream.statements, sourceId)} asOf={debate.data?.tradeDate} selected={picks} onPick={togglePick} onClose={() => setSourceId(null)} />}
     </Screen>
   )
 }

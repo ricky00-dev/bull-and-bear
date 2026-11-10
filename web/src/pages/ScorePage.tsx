@@ -52,7 +52,7 @@ export function ScorePage() {
           <h2 className="text-2xl font-bold tracking-tight">내 판정을 돌아보세요</h2>
         </div>
         <JudgmentComparison mine={j.decision} moderator={j.moderatorDecision} scores={j.scores} holdBand={holdBand} />
-        <EvidenceComparison mine={q.data.evidencePicks} decisive={decisiveEvidence} turns={stream.statements} asOf={j.tradeDate} debateId={j.debateId} memo={memo} />
+        <EvidenceComparison mine={q.data.evidencePicks} decisive={decisiveEvidence} turns={stream.statements} asOf={j.tradeDate} memo={memo} />
 
         <Card className="flex flex-col gap-2.5">
           <h3 className="text-sm font-extrabold">판정 뒤 주가는 이렇게 움직였어요</h3>

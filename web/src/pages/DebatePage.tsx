@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { EvidenceSheet } from '../components/EvidenceSheet'
 import { DebatePreparation } from '../components/DebatePreparation'
-import { RagPanel } from '../components/RagPanel'
 import { StatementBubble } from '../components/StatementBubble'
 import { BottomBar, Icon, PrimaryButton, Screen, TopBar } from '../components/ui'
 import { ICONS } from '../components/icons'
@@ -85,7 +84,6 @@ export function DebatePage() {
           <h2 className="text-lg font-bold">같은 자료, 두 가지 해석</h2>
           <p className="text-[13px] leading-relaxed text-sub">같은 라운드의 매수·매도 주장을 비교해 보세요. 설득력 있는 근거는 {MAX_EVIDENCE_PICKS}개까지 담아 판정할 때 다시 볼 수 있어요.</p>
         </div>
-        {d && <RagPanel key={id} debateId={id} stockName={d.stockName} asOf={asOf} />}
         {stream.extraQuestion && (
           <div className="flex items-start gap-3 rounded-panel bg-mod-soft px-4 py-3 text-sm text-mod-ink">
             <Avatar who="owl" size={36} />
@@ -131,7 +129,7 @@ export function DebatePage() {
         )}
       </BottomBar>
 
-      {sheet && <EvidenceSheet evidence={sheet} citations={evidenceCitations(stream.statements, sheet.source_id)} debateId={id} selected={picks} onPick={toggle} asOf={asOf} onClose={() => setSheet(null)} />}
+      {sheet && <EvidenceSheet evidence={sheet} citations={evidenceCitations(stream.statements, sheet.source_id)} selected={picks} onPick={toggle} asOf={asOf} onClose={() => setSheet(null)} />}
     </Screen>
   )
 }
