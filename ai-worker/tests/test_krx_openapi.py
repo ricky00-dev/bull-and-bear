@@ -129,3 +129,10 @@ def test_default_routes_use_krx_dart_and_naver_news(tmp_path):
     assert isinstance(market.source, KrxOpenApiSource)
     assert isinstance(market.news, NaverNewsSource)
     assert market.index_loader.__name__ == "_source_index"
+
+
+def test_kospi_tickers_use_latest_published_day(tmp_path, monkeypatch):
+    # 10/16(금)은 아직 안 올라왔고 10/15 목록을 쓴다
+    transport(monkeypatch, lambda day: {"OutBlock_1": [] if day == "20261016" else [row("005930", day), row("000660", day)]})
+    source = KrxOpenApiSource("test-key", None, tmp_path)
+    assert source.kospi_tickers(date(2026, 10, 16)) == {"005930", "000660"}

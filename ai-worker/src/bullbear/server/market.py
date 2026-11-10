@@ -15,6 +15,7 @@ from ..data.universe import UNIVERSE
 from ..snapshot import KST, PRICE_LOOKBACK_DAYS, build_snapshot, confirmed_date
 from .errors import ApiError
 
+KOSPI_ONLY = '코스피 종목만 토론합니다'
 CHOSEONG = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'
 
 
@@ -23,13 +24,15 @@ def initial(text):
 
 
 def block_reasons(ticker, name, market):
-    """토론 대상은 국내 보통주 전체다. 우선주·ETF·스팩만 막는다.
+    """토론 대상은 코스피 보통주다 (11/9 결정). 코스닥·우선주·ETF·스팩은 막는다.
 
     UNIVERSE(대형주 30종목)는 검색 정렬과 CLI 기본 목록일 뿐 허용 기준이 아니다.
     보통주 코드는 끝자리가 0이고, 우선주는 5·7·9·K 등으로 끝난다.
     """
     if market == 'ETF' or ticker == '069500':
         return ['ETF는 토론하지 않습니다']
+    if market == 'KOSDAQ':
+        return [KOSPI_ONLY]
     if not ticker.endswith('0'):
         return ['우선주는 토론하지 않습니다']
     if '스팩' in name:
@@ -89,6 +92,7 @@ class Market:
         self.quote_wait_seconds = quote_wait_seconds
         self.quote_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='market-quote')
         self.quote_jobs = {}
+        self.kospi = {}
         self.closed = False
 
     def close(self):
@@ -110,12 +114,35 @@ class Market:
                     self.catalog.setdefault(ticker, (name, None))
             self.catalog_loaded = True
 
+    def kospi_tickers(self, cutoff):
+        """코스피 종목코드 집합. 공급자가 목록을 못 주면(가짜 공급자 등) None이고 거르지 않는다."""
+        loader = getattr(self.source, 'kospi_tickers', None)
+        if loader is None:
+            return None
+        with self.lock:
+            if cutoff in self.kospi:
+                return self.kospi[cutoff]
+        try:
+            tickers = loader(cutoff)
+        except DataUnavailable:
+            return None
+        with self.lock:
+            self.kospi = {cutoff: tickers}
+        return tickers
+
+    def outside_kospi(self, ticker, cutoff):
+        kospi = self.kospi_tickers(cutoff)
+        return kospi is not None and ticker not in kospi
+
     def quote(self, ticker):
         if ticker not in self.catalog:
             self.load_catalog()
         if ticker not in self.catalog:
             raise ApiError(404, 'NOT_FOUND', '종목을 찾을 수 없습니다')
         cutoff = confirmed_date(self.now())
+        if self.outside_kospi(ticker, cutoff):
+            # 코스닥 등은 시세를 받지 않는다 (KRX 키도 코스피만 승인)
+            raise ApiError(422, 'NOT_ELIGIBLE', '토론할 수 없는 종목입니다', reasons=[KOSPI_ONLY])
         key = (ticker, cutoff)
         with self.lock:
             if self.closed:
@@ -152,6 +179,8 @@ class Market:
         if len(bars) < 2:
             raise DataUnavailable('확정 종가가 2거래일 이상 필요합니다')
         name, market = self.catalog[ticker]
+        if market is None and self.kospi_tickers(cutoff) is not None:
+            market = 'KOSPI'  # outside_kospi를 통과했으면 코스피
         reasons = block_reasons(ticker, name, market)
         quote = Quote(ticker, name, market, bars, reasons)
         with self.lock:
@@ -163,9 +192,17 @@ class Market:
         q = query.strip().casefold()
         matches = [(ticker, info) for ticker, info in self.catalog.items()
                    if q in info[0].casefold() or ticker.startswith(q) or q in initial(info[0]).casefold()]
-        matches.sort(key=lambda item: (item[0] not in UNIVERSE, item[0]))
+        cutoff = confirmed_date(self.now())
+        kospi = self.kospi_tickers(cutoff)
+        # 대형주 30종목 → 나머지 코스피 → 코스피 밖 순서
+        matches.sort(key=lambda item: (item[0] not in UNIVERSE, kospi is not None and item[0] not in kospi, item[0]))
         def item(match):
             ticker, (name, market) = match
+            if kospi is not None and ticker not in kospi:
+                return dict(ticker=ticker, name=name, market=market, featured=False,
+                            close=0, change_pct=0, eligible=False, block_reason=KOSPI_ONLY)
+            if kospi is not None and market is None:
+                market = 'KOSPI'
             try:
                 quote = self.quote(ticker)
                 detail = quote.detail()

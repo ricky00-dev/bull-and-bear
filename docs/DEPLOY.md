@@ -13,6 +13,20 @@ LLM 호출이 병목이지 서버가 병목이 아니다 (`docs/ARCHITECTURE.md`
 - 웹과 API가 같은 출처라 CORS·쿠키 문제가 없다. Caddy가 HTTPS 인증서를 자동으로 받고 갱신한다.
 - SSE(토론 스트림)는 Caddy가 버퍼링 없이 흘려보낸다 (로컬에서 확인함).
 
+## 지금 운영 중인 서버 (2026-11-10)
+
+| 항목 | 값 |
+|---|---|
+| 주소 | https://54-253-242-203.sslip.io (전시장 화면 `/exhibit`) |
+| 서버 | EC2 t3.small, Ubuntu 26.04, 디스크 20GB, 스왑 2GB, 시간대 KST |
+| 리전 | **시드니(ap-southeast-2)**. AWS 무료 플랜은 처음 배정된 리전 하나만 쓸 수 있어 서울을 못 고름. 한국에서 요청당 0.1~0.15초 더 걸리지만 토론(수십 초)에 비하면 작음. KRX·DART·Anthropic 모두 시드니에서 정상 응답 확인 |
+| 계정 | 무료 플랜(카드 미등록, 크레딧 안에서만 동작). 서울로 옮기려면 유료 플랜 전환 필요 |
+| 접속 | `ssh -i ~/.ssh/bullbear.pem ubuntu@54.253.242.203` (키는 조성빈 맥에만. 보안 그룹 SSH는 등록한 IP만 허용) |
+| 워커 | 가짜 워커(`WORKER_MODE=fake`). 실제 워커는 엔진 확정 뒤 |
+| 백업 | cron 매일 04:00 `deploy/backup.sh` |
+
+서버에는 GitHub 권한을 주지 않았다. 코드는 맥에서 올린다 (아래 "업데이트").
+
 ## 서버 고르기
 
 | 항목 | 권장 | 이유 |
@@ -63,7 +77,10 @@ docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
 ## 업데이트
 
 ```bash
-cd ~/bull-and-bear && git pull
+# 맥에서: develop 최신 코드를 서버에 덮어쓴다 (deploy/.env는 git에 없으니 그대로 남는다)
+git fetch && git archive origin/develop | ssh -i ~/.ssh/bullbear.pem ubuntu@54.253.242.203 'tar xf - -C ~/bull-and-bear'
+# 서버에서
+cd ~/bull-and-bear
 docker compose -f deploy/compose.yml --env-file deploy/.env --profile worker up -d --build
 docker image prune -f   # 옛 이미지 정리 (디스크 20GB가 빌드마다 줄어든다)
 ```
