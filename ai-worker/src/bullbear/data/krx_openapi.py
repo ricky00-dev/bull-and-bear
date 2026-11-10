@@ -127,6 +127,14 @@ class KrxOpenApiSource(PykrxDartSource):
             raise ValueError("Non-finite value")
         return number
 
+    def kospi_tickers(self, end):
+        """기준일 이전 가장 최근 거래일의 코스피 종목코드. 토론 대상(코스피 보통주) 판정에 쓴다."""
+        for day in reversed(list(self._days(end - timedelta(days=10), end))):
+            rows = self._day("sto/stk_bydd_trd", day)
+            if rows:
+                return {r["ISU_CD"] for r in rows if r.get("ISU_CD")}
+        raise DataUnavailable("KRX 코스피 종목 목록을 찾을 수 없습니다")
+
     def _stock_endpoint(self, ticker, end):
         key = (ticker, end)
         with self._lock:
