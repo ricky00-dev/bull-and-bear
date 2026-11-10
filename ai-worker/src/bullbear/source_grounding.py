@@ -20,7 +20,7 @@ def source_context(snapshot):
                      'publication_date_kst': published.date().isoformat() if published else None,
                      'event_date': None,
                      'event_date_status': 'not_separately_structured_do_not_infer_from_publication',
-                     'available_scope': 'title_and_summary'})
+                     'available_scope': 'title_and_summary' if fact.note else 'title'})
     per = snapshot.facts.get('VAL.PER_TTM')
     return {'price_date': str(snapshot.as_of), 'articles': news,
             'per': None if per is None else {

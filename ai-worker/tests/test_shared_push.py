@@ -17,7 +17,7 @@ from bullbear.graph_runtime import GraphRuntime
 from bullbear.shared_context import build_shared_push
 from bullbear.snapshot import KST, Snapshot, build_snapshot
 from bullbear.server.store import Store
-from bullbear.tools import SnapshotTools
+from bullbear.tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
 from .prompt_helpers import initial_payload
 from .fakes import AS_OF, NOW, FakeNews, FakeSource
@@ -167,9 +167,21 @@ class HeadlineSource(FakeNews):
 def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path):
     snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW, index_loader=index_loader,
                           news=HeadlineSource(), market_news_limit=1)
-    bull, bear, moderator = (GraphLLM(snap) for _ in range(3))
+    market_fact = next(fact for fact in snap.by_category("news") if fact.news_scope == "market")
+
+    class NewsDebater(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            if self.count == 1:
+                raw["argument"] = "시황 기사 요약을 근거로 보되 전망은 여전히 불확실해요 [E1]."
+                raw["evidence"][0].update(source_id=market_fact.id, value=None)
+            return raw
+
+    bull = NewsDebater(snap)
+    bear, moderator, reviewer = (GraphLLM(snap) for _ in range(3))
     events = []
     run = GraphRuntime(snap, debate_id="shared-push", bull=bull, bear=bear, moderator=moderator,
+                       statement_reviewers={"bull": reviewer},
                        log=EventLog(tmp_path / "events.jsonl"), emit=lambda name, data: events.append((name, data)))
     assert run.run()["verdict"]["decisive_evidence"] == ["PX.CLOSE"]
     assert all(name != "tool_call" for name, _ in events)
@@ -204,12 +216,12 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
     assert tuple(int.from_bytes(png[i:i + 4], "big") for i in (16, 20)) == (840, 560)
     assert all(len(conv.messages) == 3 for side in (bull, bear) for conv, _ in side.calls[1:])
-    market, = push["market_news_titles"]
-    stock, = push["stock_news_titles"]
+    market, = push["market_news"]
+    stock, = push["stock_news"]
     assert market["publisher"] == "example.com" and market["title"].startswith("한국은행")
     assert stock["title"].startswith("가짜전자")
-    assert set(stock) == set(market) == {"source_id", "title", "publisher", "published_at", "url"}
-    assert "PRIVATE_MARKET_SNIPPET" not in json.dumps(push)
+    assert set(stock) == set(market) == {"source_id", "title", "publisher", "published_at", "summary", "event_id"}
+    assert market["summary"] == "PRIVATE_MARKET_SNIPPET"
     assert snap.facts[market["source_id"]].event_id.startswith("EVT.")
     assert all(a["source_id"] in snap.facts for a in (stock, market))
     assert push["financial_data"]["report_basis"] == "consolidated"
@@ -217,7 +229,35 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
     assert "FIN.2026H1.REVENUE_YOY" in {f["source_id"] for f in push["financial_data"]["metrics"]}
     mod = initial_payload(moderator.calls[0][0])
     assert mod["snapshot_id"] == snap.snapshot_id and mod["facts"]["PX.CLOSE"]["value"] == 399
+    assert mod["facts"][market_fact.id]["note"] == market_fact.note
     assert "shared_push" not in mod and "stock_ohlcv" not in mod
+    assert initial_payload(reviewer.calls[0][0])["facts"][market_fact.id]["note"] == market_fact.note
+    for client in (bull, bear, moderator, reviewer):
+        for conv, _ in client.calls:
+            assert all(fact.url not in json.dumps(initial_payload(conv)) for fact in snap.by_category("news"))
+    opening = next(payload["statement"] for name, payload in events
+                   if name == "statement_accepted" and payload["round"] == "opening" and payload["side"] == "bull")
+    assert opening.evidence[0].observation.url == market_fact.url
+
+
+def test_get_new_url_only_returns_the_requested_snapshot_news_link():
+    snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW, news=HeadlineSource())
+    market = next(fact for fact in snap.by_category("news") if fact.news_scope == "market")
+    definitions = {tool["name"]: tool for tool in DEBATE_TOOL_DEFINITIONS}
+    assert "get_news" not in definitions
+    assert definitions["get_new_url"]["input_schema"]["required"] == ["source_id"]
+    tools = SnapshotTools(snap)
+    assert json.loads(tools("get_new_url", {"source_id": market.id})) == {
+        "source_id": market.id, "url": market.url,
+    }
+    for arguments in ({}, {"source_id": "NEWS.missing"}, {"source_id": "PX.CLOSE"},
+                      {"source_id": market.id, "url": "https://example.com/untrusted"}):
+        with pytest.raises(ValueError):
+            tools("get_new_url", arguments)
+    market.url = None
+    assert json.loads(tools("get_new_url", {"source_id": market.id})) == {
+        "source_id": market.id, "note": "저장된 원문 URL이 없습니다",
+    }
 
 
 @pytest.mark.parametrize("availability", ["matching", "revised", "failed"])

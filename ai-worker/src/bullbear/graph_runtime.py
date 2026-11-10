@@ -19,7 +19,7 @@ from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_S
 from .semantic import concept_issues
 from .return_grounding import return_context, return_issues
 from .source_grounding import source_context, source_issues
-from .shared_context import build_shared_push
+from .shared_context import build_shared_push, fact_for_model
 from .statement_review import review_statement
 from .tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 from .verifier import verify, Issue, VerificationResult
@@ -215,7 +215,7 @@ class GraphRuntime:
         self.emit('moderator_started', {'engine': 'langgraph'})
         transcript = self.transcript(state)
         conv = Conversation.from_snapshot(MEDIATOR_SYSTEM, {
-                'facts': {key: {**fact.model_dump(mode='json', exclude_none=True), 'value': fact.value}
+                'facts': {key: {**fact_for_model(fact, exclude_none=True), 'value': fact.value}
                           for key, fact in self.snapshot.facts.items()},
                 'snapshot_id': self.snapshot.snapshot_id,
                 'information_cutoff': self.snapshot.information_cutoff.isoformat(),

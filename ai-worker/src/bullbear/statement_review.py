@@ -9,6 +9,7 @@ from . import prompts
 from .llm import Conversation, LLMError
 from .interpretations import history_records, prose
 from .schemas import Side, Statement, STRUCTURED_STATEMENT_SCHEMA
+from .shared_context import fact_for_model
 
 
 class Concern(BaseModel):
@@ -106,7 +107,7 @@ def review_statement(llm, statement, snapshot, transcript, *, effort, side=None,
         for evidence in record.get('evidence', []):
             if isinstance(evidence, dict):
                 keys.add(evidence.get('source_id'))
-    facts = {key: snapshot.facts[key].model_dump(mode='json') for key in keys if key in snapshot.facts}
+    facts = {key: fact_for_model(snapshot.facts[key]) for key in keys if key in snapshot.facts}
     assigned_outlook = {Side.BULL: 'BUY', Side.BEAR: 'SELL'}.get(side)
     payload = {'review_instructions': REVIEW_INSTRUCTIONS,
                'statement_output_instructions': prompts.DEBATER_OUTPUT_INSTRUCTIONS,

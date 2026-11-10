@@ -8,6 +8,7 @@ from .llm import Conversation, LLMError
 from .prompts import JUDGMENT_POLICY
 from .presentation import argument_quote_spans
 from .history import history_entry, reference_map as history_reference_map, contains_quote
+from .shared_context import fact_for_model
 from .verifier import Issue
 
 
@@ -179,7 +180,7 @@ class SemanticReviewer:
                        and contains_quote(history_prose[index], span["quote"])]
             argument_quotes.append({**span, "source_matches": matches})
         # Existence and citation correctness are separate checks.
-        facts = {key: fact.model_dump(mode="json") for key, fact in self.snapshot.facts.items()}
+        facts = {key: fact_for_model(fact) for key, fact in self.snapshot.facts.items()}
         system = SINGLE_REVIEW_SYSTEM if self.single_mode else SYSTEM
         conversation = Conversation.from_snapshot(system, {
             "facts": facts,

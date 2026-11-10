@@ -19,7 +19,6 @@ TOOL_CATEGORIES: dict[str, Category] = {
     "get_financials": "financials",
     "get_valuation": "valuation",
     "get_disclosures": "disclosure",
-    "get_news": "news",
 }
 
 TOOL_DEFINITIONS = [
@@ -44,9 +43,14 @@ TOOL_DEFINITIONS = [
         "input_schema": _NO_INPUT,
     },
     {
-        "name": "get_news",
-        "description": "최근 7일 시황·종목 뉴스의 제목, 요약, 발행 시각을 조회한다. 본문은 없다.",
-        "input_schema": _NO_INPUT,
+        "name": "get_new_url",
+        "description": "출처 주소가 필요할 때 제공된 뉴스 Fact ID 하나의 원문 URL을 조회한다. 스냅샷에 저장된 주소만 반환하며 링크를 열지 않는다.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"source_id": {"type": "string", "description": "제공된 뉴스 Fact의 source_id"}},
+            "required": ["source_id"],
+            "additionalProperties": False,
+        },
     },
 ]
 
@@ -81,6 +85,8 @@ class SnapshotTools:
     def __call__(self, name: str, _input: dict) -> str:
         if name == "get_daily_chart":
             return self._daily_chart(_input)
+        if name == "get_new_url":
+            return self._news_url(_input)
         category = TOOL_CATEGORIES.get(name)
         if category is None:
             raise ValueError(f"알 수 없는 도구: {name}")
@@ -112,6 +118,16 @@ class SnapshotTools:
             for f in facts
         ]
         return json.dumps({"snapshot_id": self.snapshot.snapshot_id, "items": items}, ensure_ascii=False)
+
+    def _news_url(self, arguments: dict) -> str:
+        source_id = arguments.get("source_id")
+        if set(arguments) != {"source_id"} or not isinstance(source_id, str):
+            raise ValueError("source_id에 제공된 뉴스 Fact ID 하나를 입력하세요")
+        fact = self.snapshot.facts.get(source_id)
+        if fact is None or fact.category != "news":
+            raise ValueError("스냅샷에 해당 뉴스 Fact가 없습니다")
+        address = {"url": fact.url} if fact.url else {"note": "저장된 원문 URL이 없습니다"}
+        return json.dumps({"source_id": fact.id, **address}, ensure_ascii=False)
 
     def _daily_chart(self, arguments: dict) -> str:
         try:

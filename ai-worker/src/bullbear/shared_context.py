@@ -23,6 +23,29 @@ def _observation(fact: Fact) -> dict:
     }
 
 
+def fact_for_model(fact: Fact, *, exclude_none: bool = False) -> dict:
+    data = fact.model_dump(mode="json", exclude_none=exclude_none)
+    if fact.category == "news":
+        data.pop("url", None)
+        if fact.source.startswith(("https://", "http://")) or fact.source == fact.url:
+            data["source"] = fact.publisher or "news"
+    return data
+
+
+def build_news_context(snapshot: Snapshot) -> dict:
+    news = {"market": [], "company": []}
+    for fact in snapshot.by_category("news"):
+        news[fact.news_scope or "company"].append({
+            "source_id": fact.id,
+            "title": fact.label,
+            "publisher": fact.publisher,
+            "published_at": fact.published_at.isoformat() if fact.published_at else None,
+            **({"summary": fact.note} if fact.note else {}),
+            **({"event_id": fact.event_id} if fact.event_id else {}),
+        })
+    return {"market_news": news["market"], "stock_news": news["company"]}
+
+
 def weekly_ohlcv(snapshot: Snapshot) -> list[dict]:
     start = chart_window_start(snapshot.as_of)
     bars = sorted((bar for bar in snapshot.series.stock_ohlcv if start <= bar.date <= snapshot.as_of),
@@ -47,15 +70,6 @@ def build_shared_push(snapshot: Snapshot) -> dict:
     latest_financials = [f for f in financials if latest is not None and f.as_of == latest.as_of
                          and f.report_period == latest.report_period and f.report_basis == latest.report_basis
                          and (f.source == latest.source or f.source == "derived")]
-    news_titles = {"market": [], "company": []}
-    for fact in snapshot.by_category("news"):
-        news_titles[fact.news_scope or "company"].append({
-            "source_id": fact.id,
-            "title": fact.label,
-            "publisher": fact.publisher,
-            "published_at": fact.published_at.isoformat() if fact.published_at else None,
-            "url": fact.url,
-        })
     return {
         "snapshot_id": snapshot.snapshot_id,
         "instrument": {"ticker": snapshot.ticker, "name": snapshot.name, "as_of": str(snapshot.as_of)},
@@ -70,8 +84,7 @@ def build_shared_push(snapshot: Snapshot) -> dict:
             "metrics": [_observation(facts[key]) for key in PRICE_IDS if key in facts],
         },
         "market_data": [_observation(f) for f in snapshot.by_category("macro")],
-        "market_news_titles": news_titles["market"],
-        "stock_news_titles": news_titles["company"],
+        **build_news_context(snapshot),
         "financial_data": {
             "report_period": latest.report_period if latest else None,
             "report_basis": latest.report_basis if latest else None,
