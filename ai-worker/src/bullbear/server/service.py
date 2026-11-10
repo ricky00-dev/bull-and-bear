@@ -74,6 +74,7 @@ class LiveRunner:
             log=EventLog(settings.debate_dir / f'{debate_id}.jsonl'), emit=emit,
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
             moderator_effort=settings.moderator_effort,
+            include_chart_image=self.budget is None,
             statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
                 if self.review_statements else None).run()
 
@@ -193,7 +194,8 @@ class Service:
                              efforts={'debater': self.settings.debater_effort,
                                       'moderator': self.settings.moderator_effort},
                              secrets=(self.settings.dart_api_key, self.settings.krx_api_key,
-                                      self.settings.naver_client_id, self.settings.naver_client_secret))
+                                      self.settings.naver_client_id, self.settings.naver_client_secret,
+                                      self.settings.fred_api_key, self.settings.ecos_api_key))
             with audit.stage('snapshot'):
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
                 self.store.save_snapshot(debate_id, snapshot)

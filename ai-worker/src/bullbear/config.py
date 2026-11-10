@@ -22,6 +22,11 @@ class Settings:
     worker_budget_usd: str | None = None
     worker_budget_id: str | None = None
     review_statements: bool = True
+    fred_api_key: str | None = field(default=None, repr=False)
+    ecos_api_key: str | None = field(default=None, repr=False)
+    vix_enabled: bool = False
+    market_news_limit: int = 8
+    stock_news_limit: int = 30
 
     @property
     def snapshot_dir(self) -> Path:
@@ -51,5 +56,17 @@ def load_settings() -> Settings:
         moderator_model=os.getenv("BULLBEAR_MODERATOR_MODEL") or os.getenv("BULLBEAR_MODEL", "claude-sonnet-5-5"),
         worker_budget_usd=os.getenv("BULLBEAR_WORKER_BUDGET_USD") or None,
         worker_budget_id=os.getenv("BULLBEAR_WORKER_BUDGET_ID") or None,
+        fred_api_key=os.getenv("FRED_API_KEY") or None,
+        ecos_api_key=os.getenv("ECOS_API_KEY") or None,
+        vix_enabled=os.getenv("BULLBEAR_VIX_ENABLED", "false").strip().lower() == "true",
+        market_news_limit=_news_limit("BULLBEAR_MARKET_NEWS_LIMIT", 8),
+        stock_news_limit=_news_limit("BULLBEAR_STOCK_NEWS_LIMIT", 30),
         review_statements=os.getenv("BULLBEAR_REVIEW_STATEMENTS", "true").strip().lower() == "true",
     )
+
+
+def _news_limit(name: str, default: int) -> int:
+    value = int(os.getenv(name, str(default)))
+    if not 0 <= value <= 30:
+        raise ValueError(f"{name} must be between 0 and 30")
+    return value

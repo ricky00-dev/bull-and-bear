@@ -79,7 +79,7 @@ def build_messages(
         "subject": {"name": snapshot.name, "ticker": snapshot.ticker},
         "snapshot_id": snapshot.snapshot_id,
         "price_as_of": snapshot.as_of.isoformat(),
-        "information_cutoff": snapshot.created_at.isoformat(),
+        "information_cutoff": snapshot.information_cutoff.isoformat(),
         "history": visible,
     }
     return [{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]

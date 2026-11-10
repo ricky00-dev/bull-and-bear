@@ -1,13 +1,15 @@
 """에이전트용 데이터 조회 도구.
 
 도구는 스냅샷에 묶여 있다. 모델은 스냅샷 ID를 고를 수 없고, 토론 시작 시 고정된
-스냅샷의 데이터만 받는다. 모든 결과 항목에는 근거로 인용할 id가 붙는다.
+스냅샷의 데이터만 받는다. 근거 Fact에는 인용할 id가 붙는다.
 """
 
 from __future__ import annotations
 
 import json
+from datetime import date
 
+from .chart_data import chart_averages, csv_rows
 from .snapshot import Category, Snapshot
 
 _NO_INPUT = {"type": "object", "properties": {}, "required": [], "additionalProperties": False}
@@ -43,8 +45,31 @@ TOOL_DEFINITIONS = [
     },
     {
         "name": "get_news",
-        "description": "최근 7일 종목 관련 뉴스의 제목, 요약, 발행 시각을 조회한다. 본문은 없다.",
+        "description": "최근 7일 시황·종목 뉴스의 제목, 요약, 발행 시각을 조회한다. 본문은 없다.",
         "input_schema": _NO_INPUT,
+    },
+]
+
+
+_DAILY_CHART_MAX_DAYS = 14
+DEBATE_TOOL_DEFINITIONS = [
+    *TOOL_DEFINITIONS,
+    {
+        "name": "get_daily_chart",
+        "description": (
+            "스냅샷에 보관된 지정 구간의 일봉 OHLCV, 일별 MA7/11/25/200, 코스피 종가를 CSV로 조회한다. "
+            "시작일·종료일을 포함해 최대 14달력일이며 종료일은 종목 기준일을 넘을 수 없다. "
+            "하루만 조회할 때는 두 날짜를 같게 입력한다. 반환된 일별 행은 차트 자료다."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "description": "시작일 (YYYY-MM-DD)"},
+                "end_date": {"type": "string", "description": "종료일 (YYYY-MM-DD)"},
+            },
+            "required": ["start_date", "end_date"],
+            "additionalProperties": False,
+        },
     },
 ]
 
@@ -54,6 +79,8 @@ class SnapshotTools:
         self.snapshot = snapshot
 
     def __call__(self, name: str, _input: dict) -> str:
+        if name == "get_daily_chart":
+            return self._daily_chart(_input)
         category = TOOL_CATEGORIES.get(name)
         if category is None:
             raise ValueError(f"알 수 없는 도구: {name}")
@@ -73,9 +100,44 @@ class SnapshotTools:
                     "published_at": f.published_at.isoformat() if f.published_at else None,
                     "inputs": f.inputs or None,
                     "note": f.note or None,
+                    "report_period": f.report_period,
+                    "report_basis": f.report_basis,
+                    "scope": f.news_scope,
+                    "publisher": f.publisher,
+                    "event_id": f.event_id,
+                    "url": f.url,
                 }.items()
                 if v is not None or k == "value"
             }
             for f in facts
         ]
         return json.dumps({"snapshot_id": self.snapshot.snapshot_id, "items": items}, ensure_ascii=False)
+
+    def _daily_chart(self, arguments: dict) -> str:
+        try:
+            if set(arguments) != {"start_date", "end_date"}:
+                raise ValueError
+            start, end = (date.fromisoformat(arguments[key]) for key in ("start_date", "end_date"))
+            if start.isoformat() != arguments["start_date"] or end.isoformat() != arguments["end_date"]:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise ValueError("start_date와 end_date는 YYYY-MM-DD 날짜여야 합니다") from None
+        if start > end or (end - start).days >= _DAILY_CHART_MAX_DAYS:
+            raise ValueError("시작일부터 종료일까지 1~14달력일을 선택하세요")
+        if end > self.snapshot.as_of:
+            raise ValueError("종료일이 스냅샷 기준일 이후입니다")
+
+        series = self.snapshot.series
+        averages = chart_averages(self.snapshot)
+        kospi = {p.date: p.close for p in series.kospi_close}
+        columns = ("date", "open", "high", "low", "close", "volume",
+                   *(key.removeprefix("PX.").lower() for key in averages), "kospi_close")
+        rows = ((bar.date.isoformat(), bar.open, bar.high, bar.low, bar.close, bar.volume,
+                 *(points.get(bar.date) for points in averages.values()), kospi.get(bar.date))
+                for bar in series.stock_ohlcv if start <= bar.date <= end)
+        return json.dumps({
+            "snapshot_id": self.snapshot.snapshot_id, "price_basis": series.price_basis,
+            "coverage_start": min((bar.date.isoformat() for bar in series.stock_ohlcv), default=None),
+            "coverage_end": max((bar.date.isoformat() for bar in series.stock_ohlcv), default=None),
+            "daily_ohlcv_csv": csv_rows(columns, rows),
+        }, ensure_ascii=False)

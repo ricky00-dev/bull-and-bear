@@ -97,7 +97,7 @@ def test_benchmark_comparison_uses_identical_dates_and_unrounded_returns():
         calls.append((start, end))
         return benchmark(code, start, end)
     snap = build_snapshot(FakeSource(), '005930', '삼성전자', now=NOW, index_loader=loader)
-    assert calls == [(AS_OF - timedelta(days=21), AS_OF)]
+    assert calls == [(date(2026, 8, 10), AS_OF)]
     for n in (3, 7, 21):
         stock_ret = (399 / (399 - n) - 1) * 100
         index_ret = (1399 / (1399 - n) - 1) * 100

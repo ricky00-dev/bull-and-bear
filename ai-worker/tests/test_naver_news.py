@@ -125,3 +125,26 @@ def test_malformed_provider_response_is_safe_data_unavailable(make_source, respo
 def test_empty_items_is_a_successful_search(make_source):
     source = make_source(lambda request: httpx.Response(200, json={"items": []}))
     assert source.search("005930", "삼성전자", START, END) == []
+
+
+def test_market_news_uses_bounded_topic_search_and_original_publisher(make_source):
+    queries = []
+    relevant = {
+        "한국 증시": "코스피 마감 시황",
+        "한국은행 통화정책": "한국은행 금통위 발표",
+        "원달러 환율": "원달러 환율 움직임",
+        "한국 경제 산업": "국내 수출 경기 전망",
+    }
+
+    def handle(request):
+        query = request.url.params["query"]
+        queries.append(query)
+        return httpx.Response(200, json={"items": [
+            item(relevant[query], f"https://www.example.com/news/{len(queries)}"),
+            item("연예계 소식", "https://example.com/entertainment"),
+        ]})
+
+    articles = make_source(handle).search_market(START, END)
+    assert queries == list(relevant)
+    assert [article.title for article in articles] == list(relevant.values())
+    assert {article.publisher for article in articles} == {"example.com"}

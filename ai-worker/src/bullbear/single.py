@@ -53,7 +53,7 @@ class SingleAnalyst:
         snap = self.snapshot
         conv = Conversation(SYSTEM, [{'role': 'user', 'content': json.dumps({
             'ticker': snap.ticker, 'name': snap.name, 'price_as_of': str(snap.as_of),
-            'decision_at': snap.created_at.isoformat(), 'warnings': snap.warnings,
+            'decision_at': snap.decision_at.isoformat(), 'warnings': snap.warnings,
             'task': '도구로 자료를 조회하고 중립적으로 판정하세요.',
         }, ensure_ascii=False)}])
         for attempt in range(1, 4):

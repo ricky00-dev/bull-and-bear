@@ -10,6 +10,7 @@ import threading
 from pydantic import ValidationError
 
 from . import prompts
+from .chart_image import daily_chart_image
 from .graph import Analysis, Mediation, build_debate_graph
 from .interpretations import analysis_issues, bind_statement, history_records
 from .llm import Conversation, LLMError
@@ -19,8 +20,9 @@ from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_S
 from .semantic import concept_issues
 from .return_grounding import return_context, return_issues
 from .source_grounding import source_context, source_issues
+from .shared_context import build_shared_push
 from .statement_review import review_statement
-from .tools import SnapshotTools, TOOL_DEFINITIONS
+from .tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 from .verifier import verify, Issue, VerificationResult
 
 
@@ -69,9 +71,11 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 statement_reviewers=None):
+                 statement_reviewers=None, include_chart_image=True):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
+        self.shared_push = build_shared_push(snapshot)
+        self.chart_image = daily_chart_image(snapshot) if include_chart_image else None
         self.emit_hook = emit or (lambda *_: None)
         if not 0 <= max_extra_rounds <= 3:
             raise ValueError("max_extra_rounds must be between 0 and 3")
@@ -110,12 +114,15 @@ class GraphRuntime:
                    'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
                    'ticker': self.snapshot.ticker, 'name': self.snapshot.name, 'price_as_of': str(self.snapshot.as_of),
                    'history': transcript,
+                   'shared_push': self.shared_push,
                    'return_context': return_context(self.snapshot),
                    'source_context': source_context(self.snapshot),
                    'research_results': state.get('research_results', []),
-                   'decision_at': self.snapshot.created_at.isoformat()}
-        conv = Conversation(prompts.debater_system(side),
-            [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}])
+                   'decision_at': self.snapshot.decision_at.isoformat()}
+        messages = [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}]
+        if stage == 'opening' and self.chart_image is not None:
+            messages.append({'role': 'user', 'content': [self.chart_image]})
+        conv = Conversation(prompts.debater_system(side), messages)
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
                                    'debate_flow': 'fixed_three_rounds'})
         calls = []
@@ -126,7 +133,7 @@ class GraphRuntime:
             return tools(name, arguments)
         for attempt in range(1, 4):
             raw = llm.structured(conv, schema=STRUCTURED_STATEMENT_SCHEMA, effort=self.debater_effort,
-                                 tools=TOOL_DEFINITIONS, tool_handler=tool)
+                                 tools=DEBATE_TOOL_DEFINITIONS, tool_handler=tool)
             try:
                 statement = Statement.model_validate(raw)
             except ValidationError:
@@ -198,16 +205,20 @@ class GraphRuntime:
                 'task': '양측의 입론·반박·최종변론 6개를 검토하고 종목에 대한 독립적인 의견을 작성하세요.',
                 'output_instructions': MEDIATOR_OUTPUT_INSTRUCTIONS,
                 'history': transcript,
-                'facts': {key: fact.model_dump(mode='json') for key, fact in self.snapshot.facts.items()},
+                'facts': {key: {**fact.model_dump(mode='json', exclude_none=True), 'value': fact.value}
+                          for key, fact in self.snapshot.facts.items()},
+                'snapshot_id': self.snapshot.snapshot_id,
+                'information_cutoff': self.snapshot.information_cutoff.isoformat(),
+                'data_status': self.snapshot.data_status, 'warnings': self.snapshot.warnings,
                 'return_context': return_context(self.snapshot),
                 'source_context': source_context(self.snapshot),
                 'research_results': state.get('research_results', []),
                 'remaining_actions': 0,
                 'price_as_of': str(self.snapshot.as_of),
-                'decision_at': self.snapshot.created_at.isoformat()}, ensure_ascii=False)}])
+                'decision_at': self.snapshot.decision_at.isoformat()}, ensure_ascii=False)}])
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
-                tools=TOOL_DEFINITIONS, tool_handler=SnapshotTools(self.snapshot))
+                tools=DEBATE_TOOL_DEFINITIONS, tool_handler=SnapshotTools(self.snapshot))
             try:
                 decision = Mediation.model_validate(raw)
                 if decision.action not in ('ACCEPT', 'ABSTAIN'):
