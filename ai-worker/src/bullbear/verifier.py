@@ -79,7 +79,7 @@ def verify(statement: Statement, snapshot: Snapshot) -> VerificationResult:
         if fact is None:
             issues.append(Issue(
                 severity="error", code="unknown_source", ref=ev.ref,
-                message=f"{ev.ref}: source_id '{ev.source_id}'는 스냅샷에 없습니다. 도구가 돌려준 id만 쓰세요",
+                message=f"{ev.ref}: source_id '{ev.source_id}'는 스냅샷에 없습니다. 공통 입력 또는 도구에 있는 Fact ID를 쓰세요",
             ))
             continue
         if not values_match(ev.value, fact):

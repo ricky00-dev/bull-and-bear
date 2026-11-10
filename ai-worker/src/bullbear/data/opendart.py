@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import json
+import math
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
@@ -142,12 +143,13 @@ class OpenDartClient:
 
 
 def parse_amount(raw: str | None) -> float | None:
-    if raw is None:
+    if not isinstance(raw, str):
         return None
     raw = raw.replace(",", "").strip()
     if raw in ("", "-"):
         return None
     try:
-        return float(raw)
+        value = float(raw)
+        return value if math.isfinite(value) else None
     except ValueError:
         return None

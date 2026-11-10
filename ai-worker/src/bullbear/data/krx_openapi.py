@@ -23,6 +23,7 @@ BASE = "https://data-dbg.krx.co.kr/svc/apis"
 
 class KrxOpenApiSource(PykrxDartSource):
     name = "krx-openapi+opendart"
+    price_basis = "unadjusted"
     warnings = ["KRX 일봉은 수정주가가 아닙니다. 액면분할 등 기업행사에 따른 수익률·지표 보정은 미구현입니다."]
 
     def __init__(self, krx_api_key, dart_api_key, cache_dir):

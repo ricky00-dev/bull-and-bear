@@ -48,7 +48,7 @@ def review_statement(llm, statement, snapshot, transcript, *, effort):
     facts = {key: snapshot.facts[key].model_dump(mode='json') for key in keys if key in snapshot.facts}
     payload = {'review_instructions': REVIEW_INSTRUCTIONS, 'statement': statement.model_dump(mode='json'), 'history': transcript,
                'facts': facts, 'price_as_of': str(snapshot.as_of),
-               'decision_at': snapshot.created_at.isoformat()}
+               'decision_at': snapshot.decision_at.isoformat()}
     conv = Conversation(REVIEW_SYSTEM, [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}])
     texts = prose(payload['statement'])
     for attempt in range(2):

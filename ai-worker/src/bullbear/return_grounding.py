@@ -19,7 +19,7 @@ def return_context(snapshot):
                        f'{abs(fact.value):g}%p {direction}. 미래 실현값이 아님.',
         })
     return {'price_date_T0': str(snapshot.as_of),
-            'information_cutoff': snapshot.created_at.isoformat(),
+            'information_cutoff': snapshot.information_cutoff.isoformat(),
             'observations': observations,
             'rules': ['음수는 상대 부진, 양수는 상대 우위. 양쪽 절대수익의 상승/하락 여부는 별도 자료가 필요함.',
                       '기준일에 끝나는 과거 수익률은 미래 구간의 중간 관찰이 아님. 21거래일을 3주로 환산하지 않음.',

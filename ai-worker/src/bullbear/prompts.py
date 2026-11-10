@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .schemas import RoundKind, Side, Statement
 
-POLICY_VERSION = "langgraph-snapshot-only-v14"
+POLICY_VERSION = "langgraph-chart-csv-v17"
 JUDGMENT_POLICY = """
 공통 자료 해석 원칙:
 - PER = 주가/EPS = 시가총액/순이익. 현재 PER 8.46배라는 수치만으로 낮다/싸다/저평가/가격 부담이 작다고 평가하지 않는다.
@@ -45,7 +45,8 @@ _DEBATER = """당신은 투자 교육 토론의 {stance} 측 토론자다. 자�
 DEBATER_OUTPUT_INSTRUCTIONS = """
 - claim은 한 문단의 두 문장 요약이다. 핵심 주장과 이유, 중요한 반박·조건·한계를 담고 본문에 없는 내용을 추가하거나 확신을 높이지 않는다.
 - argument는 제목 없이 한 문단·최대 3문장이다. 요약을 복사하지 않는다. 반박은 상대 논점과 인정할 부분, 반박 이유와 전망 경로, 미해결 쟁점 순서로 설명한다.
-- 서로 다른 근거를 최대 3개 인용한다. 본문 [E1]은 이 발언의 evidence.ref "E1"에 대응한다. source_id와 value는 도구 결과의 id와 value를 그대로 쓰며, 뉴스·공시의 value는 null이다. 글의 %·배 수치는 근거와 일치시킨다.
+- 서로 다른 근거를 최대 3개 인용한다. 본문 [E1]은 이 발언의 evidence.ref "E1"에 대응한다. source_id와 value는 공통 입력의 source_id·value 또는 도구 결과의 id·value를 그대로 쓴다. 공통 입력의 Fact는 도구 재조회 없이 인용할 수 있다. 제목 목록의 기사·공시의 value는 null이다. 글의 %·배 수치는 근거와 일치시킨다.
+- 공통 차트의 주봉 CSV는 마지막 거래일까지만 집계한다. 입론에 이미지가 있으면 시각적 맥락으로 참고하고 정확한 값은 CSV나 Fact로 확인한다. 특정 날짜의 일봉·거래량·이평이 필요하면 get_daily_chart로 필요한 날짜만 조회한다. 차트에서 수치를 근거로 인용할 때는 실제 Fact ID를 사용한다. 미확인 시황값은 추정하지 않으며 STALE 값은 해당 관측일의 자료로만 사용한다.
 - 기사·공시는 제목과 제공된 요약 범위에서 인용한다. 전망은 출처에 귀속하고 같은 사건의 기사를 독립 근거로 세지 않는다.
 - 근거의 interpretation은 짧고 쉬운 한 문장으로 쓴다. 20일 변동성은 연율화 지표로 설명한다. 절댓값 1조 원 이상 금액은 글에서 조 원으로 쓰고 evidence.value는 원 단위를 유지한다.
 - analysis.outlook은 assigned_outlook을 유지한다. 각 evidence.ref의 interpretations에 전망 방향, 미래 가정(assumptions), 자료·추론의 한계(limitations)를 구분한다. 관측값과 해석 ID는 워커가 붙인다.

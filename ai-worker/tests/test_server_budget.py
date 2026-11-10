@@ -12,6 +12,10 @@ from .test_anthropic_budget import fake_client, request
 
 
 def test_http_budget_denial_precedes_provider_and_reports_zero_known_usage(setup, monkeypatch):
+    def unexpected_image(_):
+        pytest.fail("text-only worker budget must not render a chart image")
+
+    monkeypatch.setattr('bullbear.graph_runtime.daily_chart_image', unexpected_image)
     settings, market = setup
     settings = replace(settings, worker_budget_usd='0.01', worker_budget_id='test-budget')
     calls, clients = [], []
