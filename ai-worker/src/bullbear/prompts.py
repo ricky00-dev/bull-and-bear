@@ -2,26 +2,11 @@
 
 from __future__ import annotations
 
-from .schemas import ROUND_LABELS, RoundKind, Side, Statement
+from .schemas import RoundKind, Side, Statement
 
-POLICY_VERSION = "langgraph-two-sentence-summary-v9"
+POLICY_VERSION = "langgraph-single-history-v12"
 JUDGMENT_POLICY = """
-공통 판단 기준 (양측·중재자 모두 동일):
-- 주가 기준일 종가에서 이후 7거래일 종가까지의 종목 수익률 minus 코스피 수익률(%p)을 예측한다.
-- 판정 질문: "7거래일 뒤 코스피 대비 초과수익이 +2%p 초과면 매수, −2%p 미만이면 매도, 그 사이면 보류".
-- HOLD(보류)는 코스피와 비슷하게 움직여 초과수익이 −2%p 이상 +2%p 이하일 것이라는 예측이다.
-- 공통 예측 기준은 토론 전체에 적용한다. 각 claim과 발언에서 '7거래일·코스피 대비'나 판정 구간을 의례적으로 반복하지 않는다.
-  기간이나 비교 대상의 차이를 설명할 때만 필요한 표현을 쓰고, 요약에는 해당 라운드의 핵심 이유·반박·수정점을 담는다.
-  최종 중재자·단일 분석의 판정 이유에는 판단 대상을 확인할 수 있도록 '7거래일'과 '코스피 대비'를 명시한다.
-- 기준일 이후 3거래일 결과만 미래 7거래일 전망의 중간 관찰이다. 스냅샷의 최근 3거래일은 기준일에 끝나는 과거 자료이므로 이 중간 관찰과 다르다. 중장기 보유·단기 매도처럼 기간을 바꾸지 않는다.
-- 과거 장기 지표는 배경으로만 쓰고 향후 7거래일 상대수익과 연결되는 경로와 불확실성을 설명한다.
-- 코스피 비교 자료나 단기 촉매가 없으면 그 한계를 인정한다. 절대 하락이 곧 코스피 대비 하락은 아니다.
-- 애매함·자료 부족·양측 대등함 자체를 HOLD의 이유로 삼지 않는다. 가장 가능성이 높은 구간을 예측하고 불확실성은 confidence에 반영한다. HOLD라면 왜 코스피와 비슷하게 움직일지 근거를 설명한다.
-- BUY/HOLD/SELL 모두 관측 근거 → 예상 작동 경로 → 불확실성으로 설명하는 조건부 예측이다. 어느 구간도 미래 수익률의 확정 증명이나 보정된 확률을 요구하지 않는다.
-- HOLD를 검토할 때도 종목과 코스피의 같은 기간 수익률·초과수익 자료를 먼저 확인한다. 과거 초과수익이 작았다는 관측은 제한된 출발점일 뿐 미래 동행의 증명이 아니다. 앞으로 그 관계가 유지될 가정과 깨질 위험을 설명한다.
-- 관측 기반 유지 가정도 조건부 예측 방식이다. 예를 들어 같은 기간 초과수익이 실제로 ±2%p 안이었던 근거를 인용하고, 그 관계가 유지된다는 가정임을 밝히며, 관측된 종목 고유 재료가 이를 깨뜨릴 위험을 함께 설명할 수 있다. 이는 시장 전체가 하락 원인이라는 주장이나 베타·상관관계를 확인했다는 뜻이 아니다.
-- 이런 유지 가정은 미래 동행을 보장하지 않으며 보정된 확률도 아니다. 확인 가능한 상대수익 근거 없이 자료 부족·양측 대등함만으로 HOLD를 고르는 것은 허용하지 않는다. 확인된 반대 재료를 누락하거나 '촉매가 없다'고 단정하지 않는다.
-- 호재와 악재를 나열했다는 이유만으로 효과가 상쇄된다고 하지 않는다. 코스피 비중·베타·동행 성향이 자료에 없으면 만들지 않는다. 공통 업종이라는 사실만으로 ±2%p 이내를 보장하지 않는다.
+공통 자료 해석 원칙:
 - PER = 주가/EPS = 시가총액/순이익. 현재 PER 8.46배라는 수치만으로 낮다/싸다/저평가/가격 부담이 작다고 평가하지 않는다.
   그런 평가는 회계기간·이익 정의가 맞는 업종 또는 과거 PER 비교 근거가 있어야 한다. 이 스냅샷의 VAL.PER_TTM은
   현재 배수만 제공하며 검증된 비교 기준은 없다. 기억 속 업종 평균이나 임의 기준값을 만들어 비교하지 않는다.
@@ -41,7 +26,6 @@ JUDGMENT_POLICY = """
   '코스피보다 수익률이 낮았다/높았다'로 설명한다. 수익률 차이만으로 하락 원인이 시장 전체라고 단정하지 않는다.
 - PX.EXCESS_KOSPI_3D/7D/21D는 모두 T0=주가 기준일에 끝나는 과거 관측이다. 서로 다른 과거 구간을
   미래 예측의 시작점·누적 진행률·중간 관찰로 설명하지 않는다. 21거래일을 3주라고 표현하지 않는다.
-  미래 목표는 T0 종가부터 T0 이후 일곱 번째 거래일 종가까지이며, 자료 수집일을 새 시작일로 삼지 않는다.
 - return_context는 코드가 고정 자료로 계산한 부호·기간 해설이다. observation의 meaning과 문장이 일치하는지
   제출 전에 대조한다. 가정·약한 확신이라는 단서를 붙여도 부호 반전이나 기간 오류는 허용되지 않는다.
 """
@@ -54,7 +38,7 @@ TEXT_QUALITY_RULES = """
   요약에는 본문의 핵심 판단과 그 근거를 담고, 중요한 반박·조건·한계를 빠뜨려 의미나 확신 수준을 바꾸지 않는다.
   본문도 핵심 판단과 근거·한계가 자연스럽게 이어지는 하나의 문단으로 완성한다.
   claim을 첫 문장에 복사하거나 '매수/매도 입장입니다' 같은 역할 선언으로 시작하지 않는다.
-  발언자의 입장과 공통 판정 기준을 반복하는 대신, 요약과 본문에 이번 발언의 주요 내용을 담는다. 날짜·7거래일·코스피·±2%p를 기계적으로 나열하지 않는다.
+  발언자의 입장을 반복하는 대신, 요약과 본문에 이번 발언의 주요 내용을 담는다.
   단, 과거 관측과 미래 전망, 절대수익과 상대수익의 차이가 중요한 문맥에서는 필요한 기간·비교 대상을 명시한다.
   핵심 이유와 한계를 구체적으로
   설명하되 '가능성이 있습니다/단정할 수 없습니다'만 반복하며 논증을 대신하지 않는다.
@@ -74,6 +58,20 @@ TEXT_QUALITY_RULES = """
   '재고자산 금액만으로 창고에 남은 제품 수가 같은 폭으로 줄었다고 말할 수는 없습니다.
    실제 물량 감소와 회계상 가치 하락이 각각 얼마나 차지하는지 확인해야 합니다.'
 """
+
+MODERATOR_TEXT_QUALITY_RULES = """
+중재자 문체·논증 원칙:
+- 입문자가 한 번 읽고 이해할 수 있는 자연스러운 한국어로 쓴다. 한 문장에는 중심 생각 하나를 담고,
+  전문 용어는 필요한 경우 쉬운 뜻을 붙인다. 3문장에 맞추려고 쉼표로 여러 논점을 길게 연결하지 않는다.
+- reasoning은 핵심 판단과 근거·한계가 자연스럽게 이어지는 하나의 문단으로 완성한다.
+  중요한 조건·한계를 빠뜨려 의미나 확신 수준을 바꾸지 않는다.
+  과거 관측과 미래 전망, 절대수익과 상대수익의 차이가 중요한 문맥에서는 필요한 기간·비교 대상을 명시한다.
+- 관측 사실 → 그 사실이 전망에 영향을 줄 경로 → 그 경로가 성립할 조건을 연결한다.
+  자료의 시각·기간·단위·원문/요약 범위를 지킨다. 가능성이라는 말만으로 논증을 대신하지 않는다.
+- 양측의 실제 논점과 남는 차이를 설명한다. 동의할 근거가 없으면 가짜 동의를 만들지 않는다.
+  긍정 요인의 불확실성만으로 하락을, 부정 요인의 불확실성만으로 상승을 결론내리지 않는다.
+"""
+
 
 _DEBATER = """\
 당신은 투자 교육 서비스의 토론 에이전트이며 {stance} 입장을 맡는다.
@@ -113,7 +111,7 @@ _DEBATER = """\
 
 구조화 정보(analysis):
 - outlook은 배정 입장으로 매수 측은 BUY, 매도 측은 SELL을 모든 단계에서 유지한다. HOLD나 반대편으로 전환하지 않는다. 이는 역할상 논증이며 중재자와 사용자의 독립 판단과 다르다. 근거가 약하면 약하다고 명시하고 강한 확신이나 관측 사실을 만들어내지 않는다. claim과 argument도 같은 입장을 논증해야 한다.
-- interpretations는 각 evidence.ref마다 한 항목이다. evidence.interpretation은 관측 자료에 대한 해석이며, expected_outcome은 그 해석이 예상하는 상대수익 구간이다.
+- interpretations는 각 evidence.ref마다 한 항목이다. evidence.interpretation은 관측 자료에 대한 해석이며, expected_outcome은 그 해석이 뒷받침하는 매수·보류·매도 의견이다.
 - assumptions에 해석이 성립할 미래 조건을, limitations에 자료·추론의 한계를 따로 쓴다. 관측 사실과 미래 가정을 한 문장에 섞지 않는다. 원본 관측값과 해석 ID는 Worker가 부여하므로 만들어 쓰지 않는다.
 - 반박 시 rebuttal에 상대의 실제 target_statement_id, claim/argument에서 복사한 target_quote, acknowledged(인정할 부분), reason(반박 이유), unresolved(미해결 쟁점)를 쓴다. 인정할 부분이 없다면 그 이유를 쓰고 가짜 동의를 만들지 않는다. 첫 주장에서는 null로 둔다.
 - 최종 변론의 closing에는 retained(유지된 주장), conceded(상대에게 인정할 부분), outlook_reason(최종 전망 이유), uncertainties, change_conditions(전망을 바꿀 조건), stance_change(maintained/weakened/revised)를 쓴다. weakened/revised는 같은 입장 안에서 논거·가정의 약화·수정이며 BUY/SELL 역할 전환이 아니다. 다른 단계에서는 null이다.
@@ -121,8 +119,8 @@ _DEBATER = """\
 """
 
 _STANCE = {
-    Side.BULL: "매수(상승) — 7거래일 코스피 대비 +2%p 초과",
-    Side.BEAR: "매도(하락) — 7거래일 코스피 대비 −2%p 미만",
+    Side.BULL: "매수(상승)",
+    Side.BEAR: "매도(하락)",
 }
 
 
@@ -134,24 +132,36 @@ def debater_system(side: Side, *, name: str, ticker: str, as_of: str) -> str:
 
 def render_statement(side: Side, round_kind: RoundKind, st: Statement) -> str:
     import json
-    ev = "\n".join(
-        f"  {e.ref}: {e.source_id} = {e.value} ({e.interpretation})" for e in st.evidence
-    )
-    rendered = f"[{ROUND_LABELS[round_kind]}] {side.label} 측\n주장: {st.claim}\n{st.argument}\n근거:\n{ev}"
-    if st.statement_id:
-        metadata = {"side": side.value, "round": round_kind, **st.model_dump(mode="json")}
-        rendered += "\n구조화 정보: " + json.dumps(metadata, ensure_ascii=False)
-    return rendered
+    metadata = {"side": side.value, "round": round_kind, **st.model_dump(mode="json")}
+    return json.dumps(metadata, ensure_ascii=False, separators=(",", ":"))
 
 
 
 
-def verifier_feedback(feedback: str) -> str:
+def verifier_feedback(feedback: str, *, role: str = "debater") -> str:
+    if role in ("moderator", "single"):
+        role_format = (
+            "action/tool/forecast 조합과 중재자 스키마를 유지하라. 양측 평가 comment는 각각 한 문장이다. "
+            if role == "moderator" else
+            "단일 분석의 decision/confidence/reasoning/decisive_evidence 스키마를 유지하라. "
+        )
+        return (
+            "근거 검증기가 판정을 반려했다. 아래 문제를 고쳐 같은 형식으로 다시 작성하라. "
+            "기존 글 뒤에 해명 문장을 덧붙이지 말고 전체를 다시 작성하라. "
+            + role_format
+            + "reasoning은 불확실성 설명까지 포함해 최대 3문장이다. "
+            "필요한 단서를 지우거나 긴 나열문으로 합치지 말고 핵심 근거와 한계에 집중하라. "
+            "기존 근거를 재사용해도 된다. 새 근거 추가보다 해석·불확실성을 정확히 고쳐라. "
+            "형식만 고칠 때도 근거 값·번호를 임의로 바꾸지 말라. 필요하면 도구를 다시 조회하라.\n"
+            + feedback
+        )
+    if role != "debater":
+        raise ValueError(f"Unknown feedback role: {role}")
     return (
         "근거 검증기가 발언을 반려했다. 아래 문제를 고쳐 같은 형식으로 다시 작성하라. "
         "기존 글 뒤에 해명 문장을 덧붙이지 말고 전체를 다시 작성하라. "
         "claim은 본문의 핵심 판단·근거와 중요한 조건을 담은 두 문장 요약이다. "
-        "argument 또는 reasoning은 불확실성 설명까지 포함해 최대 3문장이다. "
+        "argument는 불확실성 설명까지 포함해 최대 3문장이다. "
         "필요한 단서를 지우거나 긴 나열문으로 합치지 말고 핵심 근거와 한계에 집중하라. "
         "반박 라운드라면 analysis.rebuttal의 실제 상대 발언 ID와 원문 인용을 유지하라. "
         "반박·최종 변론에서도 기존 근거를 재사용해도 된다. 새 근거 추가보다 해석·반론·불확실성을 정확히 고쳐라. "

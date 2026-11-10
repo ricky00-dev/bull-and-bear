@@ -187,7 +187,6 @@ class ScriptedLLM:
 
 @pytest.mark.parametrize('bad', [
     {'confidence': 2}, {'decisive_evidence': ['UNKNOWN']},
-    {'reasoning': '장기 상승을 예상합니다 [E1].'},
     {'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [E2].'},
     {'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [K1].'},
 ])

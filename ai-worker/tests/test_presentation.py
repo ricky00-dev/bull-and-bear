@@ -138,10 +138,9 @@ def test_moderator_hides_internal_detail_and_advice(text,code):
     assert code in codes(moderator_issues(d))
 
 
-def test_hold_not_uncertainty_fallback():
-    d=verdict();d.reasoning='7거래일 코스피 대비 방향이 애매해 보류합니다 [E1][E2].'
-    assert 'hold_prediction' in codes(moderator_issues(d))
-    assert '7거래일 뒤 코스피 대비 초과수익이 +2%p 초과면 매수, −2%p 미만이면 매도, 그 사이면 보류' in prompts.JUDGMENT_POLICY
+def test_hold_does_not_require_a_benchmark_return_interval():
+    d=verdict();d.reasoning='자료만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1][E2].'
+    assert not moderator_issues(d)
 
 
 def test_volatility_is_annualized_sample_sd():

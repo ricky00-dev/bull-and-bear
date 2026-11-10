@@ -1,24 +1,16 @@
 """Structured interpretation validation and immutable public identities."""
-import json
+from .history import structured_record
 
 from .presentation import error, knowledge_leakage_issues, money_issues
 from .schemas import Side
 from .semantic import concept_issues
 
-MARKER = "\n구조화 정보: "
-
-
 def history_records(transcript):
     records = []
     for entry in transcript:
-        if MARKER not in entry:
-            continue  # Legacy transcripts have no stable interpretation IDs.
-        try:
-            record = json.loads(entry.rsplit(MARKER, 1)[1])
-            if isinstance(record, dict):
-                records.append(record)
-        except (ValueError, TypeError):
-            continue
+        record = structured_record(entry)
+        if record is not None:
+            records.append(record)
     return records
 
 
