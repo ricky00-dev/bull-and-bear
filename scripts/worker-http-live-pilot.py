@@ -217,7 +217,7 @@ def run(args):
             super().__init__(model, client=Client(ledger))
 
     service_module.LLM = PilotLLM
-    settings = replace(settings, data_dir=directory.resolve(), rag_enabled=False, rag_shadow_enabled=False)
+    settings = replace(settings, data_dir=directory.resolve())
     token = secrets.token_urlsafe(32)
     app = create_app(settings=settings, token=token, max_running=1)
     sock = socket.socket()
@@ -226,7 +226,7 @@ def run(args):
     server = uvicorn.Server(uvicorn.Config(app, log_level='warning', access_log=False))
     thread = threading.Thread(target=server.run, kwargs={'sockets': [sock]}, daemon=True)
     thread.start()
-    report = dict(ticker=args.ticker, models=models, rag=False, max_extra_rounds=args.max_extra_rounds,
+    report = dict(ticker=args.ticker, models=models, max_extra_rounds=args.max_extra_rounds,
                   sdk_retries=0, request_timeout_seconds=180, output_limit=16000,
                   provenance=provenance(), runs=[])
     try:

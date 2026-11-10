@@ -40,7 +40,7 @@ foreach ($name in @('JAVA_HOME','PYTHONPATH','BULLBEAR_TEST_API_URL','BULLBEAR_T
     $oldEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 $result = @{run_directory=$run; postgres_port=$pgport; worker_port=$workerport; api_port=$apiport;
-            rag=$true; market_and_model='synthetic_fixture'; scoring_clock='simulated'; status='running'}
+            market_and_model='synthetic_fixture'; scoring_clock='simulated'; status='running'}
 try {
     $env:JAVA_HOME = $JavaHome
     if (-not $SkipBuild) {
@@ -54,7 +54,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Postgres initialization failed' }
     $processes.postgres = Start-Process (Join-Path $PostgresBin 'postgres.exe') -ArgumentList @('-D', ('"'+$pgdata+'"'), '-h', '127.0.0.1', '-p', $pgport) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'postgres.out.log') -RedirectStandardError (Join-Path $run 'postgres.err.log')
     $env:PYTHONPATH = Join-Path $repo 'ai-worker/src'
-    $processes.worker = Start-Process $Python -WorkingDirectory (Join-Path $repo 'ai-worker') -ArgumentList @('-m','tests.http_fixture','--rag','--uncertain-usage','--port',$workerport,'--data',('"'+(Join-Path $run 'worker')+'"'),'--clock-file',('"'+$clock+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'worker.out.log') -RedirectStandardError (Join-Path $run 'worker.err.log')
+    $processes.worker = Start-Process $Python -WorkingDirectory (Join-Path $repo 'ai-worker') -ArgumentList @('-m','tests.http_fixture','--uncertain-usage','--port',$workerport,'--data',('"'+(Join-Path $run 'worker')+'"'),'--clock-file',('"'+$clock+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'worker.out.log') -RedirectStandardError (Join-Path $run 'worker.err.log')
     Wait-Url "http://127.0.0.1:$workerport/health" $processes.worker
     $jar = Get-ChildItem (Join-Path $repo 'api/build/libs/*.jar') | Where-Object Name -NotLike '*-plain.jar' | Select-Object -First 1
     if (-not $jar) { throw 'Spring bootJar is missing' }

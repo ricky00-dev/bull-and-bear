@@ -7,7 +7,6 @@ from bullbear.preflight import inspect_settings
 def configured(monkeypatch):
     monkeypatch.setattr('bullbear.config.load_dotenv', lambda: None)
     for key in ('BULLBEAR_MODEL', 'BULLBEAR_DEBATER_MODEL', 'BULLBEAR_MODERATOR_MODEL',
-                'BULLBEAR_RAG_ENABLED', 'BULLBEAR_RAG_GENERATION_ID', 'BULLBEAR_RAG_PROFILE',
                 'BULLBEAR_WORKER_BUDGET_USD', 'BULLBEAR_WORKER_BUDGET_ID'):
         monkeypatch.delenv(key, raising=False)
     for key in ('ANTHROPIC_API_KEY', 'KRX_API_KEY', 'OPENDART_API_KEY',
@@ -36,14 +35,13 @@ def test_old_opus_override_and_missing_key_block_readiness(monkeypatch):
                                      'missing_ANTHROPIC_API_KEY'}
 
 
-def test_role_overrides_and_rag_generation_requirement(monkeypatch):
+def test_role_overrides(monkeypatch):
     configured(monkeypatch)
     monkeypatch.setenv('BULLBEAR_DEBATER_MODEL', 'claude-sonnet-5-5')
     monkeypatch.setenv('BULLBEAR_MODERATOR_MODEL', 'claude-haiku-5-5')
-    monkeypatch.setenv('BULLBEAR_RAG_ENABLED', 'true')
     report = inspect_settings(load_settings())
     assert report['models']['moderator'] == 'claude-haiku-5-5'
-    assert 'missing_rag_generation' in report['errors']
+    assert report['configuration_ready']
     assert report['network_calls'] == 0
 
 

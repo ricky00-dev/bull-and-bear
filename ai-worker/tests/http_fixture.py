@@ -19,29 +19,21 @@ from bullbear.server.market import Market
 from bullbear.server.service import LiveRunner
 from bullbear.llm import Conversation
 from types import SimpleNamespace
-from .fakes import NOW, FakeNews, FakeSource, ScriptedModerator, statement
+from .fakes import NOW, FakeNews, FakeSource
 from .graph_fakes import GraphLLM
 
 
 class TestRunner:
     __test__ = False
-    background_context = None
 
-    def __init__(self, settings, *, gate=None, invalid=False, extra=False, require_context=False):
+    def __init__(self, settings, *, gate=None, invalid=False, extra=False):
         self.settings, self.gate, self.invalid, self.extra = settings, gate, invalid, extra
-        self.require_context = require_context
 
     def usage(self):
         return {'calls': [{'model': 'test-model', 'input_tokens': 100, 'output_tokens': 20,
                            'cache_read_input_tokens': 10, 'cache_creation_input_tokens': 5}]}
 
     def run(self, snapshot, debate_id, max_extra_rounds, emit):
-        if self.require_context:
-            assert self.background_context is not None
-            assert self.background_context.payload['status'] == 'completed'
-            assert 'PRIVATE_RAG_BACKGROUND' in self.background_context.rendered
-        if self.background_context is not None:
-            emit('token', {'text': self.background_context.rendered})
         if self.gate:
             if not self.gate.wait(10):
                 raise TimeoutError('test gate')
@@ -53,7 +45,7 @@ class TestRunner:
             bear=GraphLLM(snapshot, invalid=self.invalid),
             moderator=GraphLLM(snapshot, actions=['CHALLENGE_BULL', 'ACCEPT'] if self.extra else []),
             log=EventLog(self.settings.debate_dir / f'{debate_id}.jsonl'),
-            max_extra_rounds=max_extra_rounds, emit=emit, background_context=self.background_context).run()
+            max_extra_rounds=max_extra_rounds, emit=emit).run()
 
     def close(self):
         pass
@@ -108,51 +100,21 @@ class ScoringSource(FakeSource):
         return rows
 
 
-def prepare_rag(settings):
-    """Synthetic background with an explicitly simulated historical publication clock."""
-    from bullbear.rag import AnnotationInput, ChunkInput, RagStore
-    from bullbear.rag.index import GenerationIndex
-    from .test_rag_ingest import document, batch
-    observed = NOW - timedelta(days=1)
-    with RagStore(settings.data_dir / 'rag') as store:
-        doc = document('PRIVATE_RAG_BACKGROUND volatility 변동성은 방향을 보장하지 않는다.',
-                       observed=observed, published_at=observed-timedelta(hours=1),
-                       kind='knowledge', source_item_id='http-integration-rag')
-        store.import_collection(batch([doc], 'http-integration-rag'))
-        chunk = ChunkInput(revision_id=doc.revision_id, ordinal=0, text=doc.text,
-                           source_locator='paragraph:1', chunker_version='integration-v1')
-        store.add_chunk(chunk)
-        store.annotate(AnnotationInput(chunk_id=chunk.chunk_id, horizons=('common', 'short'),
-                                      markets=('KR',), review_status='approved', created_at=observed,
-                                      reviewed_at=observed, tagging_policy_version='integration-fixture-v1'))
-        class FixtureClock(datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return observed.astimezone(tz)
-        with patch('bullbear.rag.index.datetime', FixtureClock):
-            generation = GenerationIndex(store).publish(observed)
-    return replace(settings, rag_enabled=True, rag_generation_id=generation)
-
-
 def main():
     import uvicorn
     p = argparse.ArgumentParser()
     p.add_argument('--port', type=int, default=18000)
     p.add_argument('--data', type=Path, required=True)
-    p.add_argument('--rag', action='store_true')
     p.add_argument('--uncertain-usage', action='store_true', help='test-only failure/crash tickers')
     p.add_argument('--clock-file', type=Path, help='test-only explicit simulated market clock')
     args = p.parse_args()
-    settings = replace(load_settings(), data_dir=args.data, rag_enabled=False)
-    if args.rag:
-        settings = prepare_rag(settings)
+    settings = replace(load_settings(), data_dir=args.data)
     def now():
         return datetime.fromisoformat(args.clock_file.read_text(encoding='utf-8').strip()) if args.clock_file else NOW
     market = fixture_market(settings, now=now, source=ScoringSource())
     if args.uncertain_usage:
         market.catalog.update({'035420': ('실패 fixture', 'KOSPI'), '035720': ('재시작 fixture', 'KOSPI')})
     def runner():
-        # Choose by snapshot inside a wrapper so normal fixture tickers keep RAG coverage.
         class RoutedRunner(UncertainUsageRunner):
             def run_single(self, snapshot, debate_id, emit):
                 return TestRunner(settings).run_single(snapshot, debate_id, emit)
@@ -160,12 +122,10 @@ def main():
             def run(self, snapshot, debate_id, max_extra_rounds, emit):
                 if snapshot.ticker in ('035420', '035720'):
                     return super().run(snapshot, debate_id, max_extra_rounds, emit)
-                normal = TestRunner(settings, require_context=args.rag)
-                normal.background_context = self.background_context
-                return normal.run(snapshot, debate_id, max_extra_rounds, emit)
+                return TestRunner(settings).run(snapshot, debate_id, max_extra_rounds, emit)
             def usage(self):
                 return TestRunner(settings).usage()
-        return RoutedRunner(settings) if args.uncertain_usage else TestRunner(settings, require_context=args.rag)
+        return RoutedRunner(settings) if args.uncertain_usage else TestRunner(settings)
     app = create_app(settings=settings, market=market,
                      runner_factory=runner, token='integration-test-token')
     try:

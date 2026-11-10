@@ -9,14 +9,6 @@ def error(code, message):
     return Issue(severity="error", code=code, message=message)
 
 
-def knowledge_leakage_issues(text):
-    # Knowledge has no public citation contract. These prefixes identify only
-    # private archive/context objects; ordinary concepts and [E#] stay valid.
-    if re.search(r"\[K(?:\d+|\.[^\]\s]+)\]|(?<![A-Za-z0-9_])(?:KCTX|K|C|R|A)\.[A-Za-z0-9_-]+", text):
-        return [error("private_knowledge_reference", "배경지식·원문·문단의 내부 ID와 K 인용을 공개 문장에서 빼세요. 공개 근거는 스냅샷 Fact의 [E#]만 사용하세요.")]
-    return []
-
-
 def sentence_count(text):
     text = re.sub(r"\[E\d+\]", "", text).strip()
     # Do not split decimals; citations may occur after the full stop.
@@ -48,7 +40,6 @@ def statement_issues(statement, round_kind, used):
         issues.append(error("evidence_limit", "서로 다른 근거를 최대 3개만 쓰세요."))
     text = "\n".join([statement.claim, statement.argument, *(e.interpretation for e in statement.evidence)])
     issues += money_issues(text)
-    issues += knowledge_leakage_issues(text)
     return issues
 
 
@@ -93,4 +84,4 @@ def verdict_issues(decision, *, comments=(), extra_question=None):
     used = {int(n) for n in re.findall(r"\[E(\d+)\]", text)}
     if not 1 <= len(ids) <= 3 or len(ids) != len(set(ids)) or used != set(range(1, len(ids) + 1)):
         issues.append(error("verdict_refs", "서로 다른 decisive_evidence 1~3개와 글의 [E1]~[En]을 순서대로 일치시키세요."))
-    return issues + money_issues(text) + knowledge_leakage_issues(text)
+    return issues + money_issues(text)

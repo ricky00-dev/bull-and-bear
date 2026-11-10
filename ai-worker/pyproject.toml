@@ -12,7 +12,6 @@ dependencies = [
     "fastapi>=0.162.0",
     "httpx>=0.28.1",
     "langgraph>=1,<2",
-    "openai>=3.40.0",
     "pandas>=3.0.6",
     "pydantic>=2.14.1",
     "pykrx>=1.0.51",
@@ -23,11 +22,6 @@ dependencies = [
 
 [project.scripts]
 bullbear = "bullbear.cli:main"
-
-[project.optional-dependencies]
-rag-postgres = ["psycopg[binary]>=3.2,<4", "alembic>=1.13,<2"]
-
-rag-s3 = ["boto3>=1.35.76,<2"]
 
 [build-system]
 requires = ["uv_build>=0.13.3,<0.14.0"]
