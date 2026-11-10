@@ -1,7 +1,7 @@
 """Structured interpretation validation and immutable public identities."""
 from .history import structured_record
 
-from .presentation import error, knowledge_leakage_issues, money_issues
+from .presentation import error, money_issues
 from .schemas import Side
 from .semantic import concept_issues
 
@@ -33,7 +33,7 @@ def analysis_issues(candidate, *, transcript, side=None, round_kind=None):
     if analysis is None:
         return [error("missing_analysis", "analysis의 구조화된 해석·쟁점 정보를 작성하세요.")]
     text = "\n".join(prose(analysis.model_dump(mode="json")))
-    issues = knowledge_leakage_issues(text) + money_issues(text) + concept_issues(text)
+    issues = money_issues(text) + concept_issues(text)
     if any(not item.strip() for item in prose(analysis.model_dump(mode="json"))):
         issues.append(error("empty_analysis", "구조화된 설명에 빈 문장 대신 내용 또는 미확인 이유를 쓰세요."))
     records = history_records(transcript)

@@ -86,11 +86,6 @@ def provenance() -> dict:
             "semantic_review": canonical_hash(semantic.Review.model_json_schema()),
         },
     }
-    result["rag_source_hashes"] = {
-        name: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        for name in ("context.py", "retrieval.py", "embeddings.py", "vectors.py", "index.py", "replay.py", "context_repository.py", "archive_repository.py", "objects.py", "store.py", "schemas.py")
-        if (path := Path(__file__).with_name("rag") / name).is_file()
-    }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
         for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py', 'history.py')
@@ -148,7 +143,6 @@ class RunAudit:
         self._secrets = tuple(value for key in SECRET_ENV_NAMES if (value := os.getenv(key))) + tuple(
             value for value in secrets if value)
         self._redacted = False
-        self._context_attached = False
         self.data = {
             "schema_version": "worker-run-audit-v1", "run_id": run_id,
             "status": "running", "started_at": self._now(), "finished_at": None,
@@ -222,6 +216,12 @@ class RunAudit:
                              decision_at=snapshot.created_at.isoformat(),
                              snapshot=payload, snapshot_warning_details_omitted=omitted,
                              snapshot_payload_hash=canonical_hash(snapshot.model_dump(mode="json")))
+            self.data["run_fingerprint"] = canonical_hash({
+                "snapshot_id": self.data["snapshot_id"],
+                "snapshot_payload_hash": self.data["snapshot_payload_hash"],
+                "decision_at": self.data["decision_at"],
+                "config": self.data["config"], "provenance": self.data["provenance"],
+            })
             self._write()
 
     def attach_runner(self, runner):
@@ -229,38 +229,6 @@ class RunAudit:
             self.data["runner"] = {"type": type(runner).__name__,
                                    "llm_call_observation": getattr(runner, "audit", None) is self}
             self._write()
-
-    def attach_context(self, context, *, retrieval_config=None):
-        """Persist one frozen private input; retries cannot replace its contents."""
-        with self._lock:
-            if self.data["snapshot_id"] is None:
-                raise ValueError("snapshot must be attached before knowledge context")
-            if context is not None:
-                if context.snapshot_id != self.data["snapshot_id"]:
-                    raise ValueError("knowledge context snapshot mismatch")
-                payload = json.loads(context.payload_json)
-                if datetime.fromisoformat(payload["decision_at"]) != datetime.fromisoformat(self.data["decision_at"]):
-                    raise ValueError("knowledge context decision time mismatch")
-                record = {"context_id": context.context_id, "payload": payload,
-                          "canonical_payload": context.payload_json}
-            else:
-                record = {"context_id": None, "payload": None, "canonical_payload": None}
-            record["retrieval_config"] = dict(retrieval_config or {})
-            if self._context_attached:
-                if self.data["knowledge_context"] != record:
-                    raise ValueError("knowledge context is already frozen")
-                return
-            self.data["knowledge_context"] = record
-            self.data["run_fingerprint"] = canonical_hash({
-                "snapshot_id": self.data["snapshot_id"],
-                "snapshot_payload_hash": self.data["snapshot_payload_hash"],
-                "decision_at": self.data["decision_at"],
-                "context_id": record["context_id"],
-                "retrieval_config": record["retrieval_config"],
-                "config": self.data["config"], "provenance": self.data["provenance"],
-            })
-            self._write()
-            self._context_attached = True
 
     @contextmanager
     def stage(self, name):

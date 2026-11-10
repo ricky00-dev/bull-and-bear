@@ -23,7 +23,7 @@ cd api
 
 ## API (브라우저용)
 
-주요 경로 요약이다. 퀴즈·피드·차트·RAG 조회의 전체 요청 필드는 각 Controller와 웹 `src/lib/api.ts`를 함께 확인한다.
+주요 경로 요약이다. 퀴즈·피드·차트의 전체 요청 필드는 각 Controller와 웹 `src/lib/api.ts`를 함께 확인한다.
 
 인증은 `Authorization: Bearer <token>`. 첫 접속 때 게스트 토큰을 받는다.
 브라우저 `EventSource`는 헤더를 못 붙이므로 `/stream`만 `?access_token=` 쿼리도 받는다.

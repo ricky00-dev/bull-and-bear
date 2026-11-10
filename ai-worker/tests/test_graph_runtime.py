@@ -79,11 +79,11 @@ def test_final_forecast_accepts_reasoning_without_scoring_target(snapshot, tmp_p
 def test_agent_and_reviewer_systems_do_not_impose_application_scoring():
     from bullbear import prompts
     from bullbear.graph_runtime import MEDIATOR_SYSTEM
-    from bullbear.semantic import SYSTEM as REVIEW_SYSTEM, BACKGROUND_RULES
+    from bullbear.semantic import SYSTEM as REVIEW_SYSTEM
     from bullbear.single import SYSTEM as SINGLE_SYSTEM
     from bullbear.statement_review import REVIEW_SYSTEM as STATEMENT_REVIEW_SYSTEM
 
-    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM, BACKGROUND_RULES]
+    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM]
     systems += [prompts.debater_system(side) for side in Side]
     for system in systems:
         assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
@@ -230,7 +230,7 @@ def test_extra_round_requests_rejected_and_logged_privately(snapshot, tmp_path):
     assert not any(e[0] in ('moderator_rejected', 'extra_round_requested') for e in public)
 
 
-@pytest.mark.parametrize('problem', ['value', 'source', 'analysis', 'private', 'role'])
+@pytest.mark.parametrize('problem', ['value', 'source', 'analysis', 'role'])
 def test_invalid_statements_never_publish_and_retry_is_bounded(snapshot, tmp_path, problem):
     class Invalid(GraphLLM):
         def structured(self, conv, **kwargs):
@@ -239,8 +239,7 @@ def test_invalid_statements_never_publish_and_retry_is_bounded(snapshot, tmp_pat
                 if problem == 'value': raw['evidence'][0]['value'] = 999
                 elif problem == 'source': raw['evidence'][0]['source_id'] = 'INVENTED'
                 elif problem == 'analysis': raw['analysis'] = None
-                elif problem == 'role': raw['analysis']['outlook'] = 'HOLD'
-                else: raw['analysis']['interpretations'][0]['assumptions'] = ['K.private']
+                else: raw['analysis']['outlook'] = 'HOLD'
             return raw
     bull = Invalid(snapshot)
     run = runtime(snapshot, tmp_path, bull=bull)
@@ -322,25 +321,6 @@ def test_mediation_schema_has_closed_objects_and_valid_references():
         elif isinstance(item, list):
             for child in item: check(child)
     check(schema)
-
-
-def test_frozen_rag_context_reaches_graph_generators_as_data_once(snapshot, tmp_path):
-    from .test_rag_agents import context_for
-    context = context_for(snapshot)
-    clients = [GraphLLM(snapshot) for _ in range(3)]
-    events = []
-    result = GraphRuntime(snapshot, debate_id='context', bull=clients[0], bear=clients[1], moderator=clients[2],
-        log=EventLog(tmp_path/'context.jsonl'), background_context=context,
-        emit=lambda kind, data: events.append((kind, data))).run()
-    assert result['graph_status'] == 'accepted'
-    for client in clients:
-        assert len(client.calls) == (1 if client is clients[2] else 3)
-        for conv, _ in client.calls:
-            assert 'RAG_UNIQUE_DEFINITION' not in conv.system
-            payload = json.loads(conv.messages[0]['content'])
-            assert payload['background'] == context.rendered
-            assert payload['background'].count('RAG_UNIQUE_DEFINITION') == 1
-    assert 'RAG_UNIQUE_DEFINITION' not in str(events)
 
 
 @pytest.mark.parametrize('action,expected', [('ACCEPT', 'completed'), ('ABSTAIN', 'failed'), ('ERROR', 'failed'), ('INVALID', 'failed')])

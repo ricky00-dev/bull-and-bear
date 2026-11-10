@@ -17,7 +17,6 @@ from .presentation import statement_issues, moderator_issues
 from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_SCHEMA,
                       STRUCTURED_MODERATOR_SCHEMA)
 from .semantic import concept_issues
-from .rag.context import render_background
 from .return_grounding import return_context, return_issues
 from .source_grounding import source_context, source_issues
 from .statement_review import review_statement
@@ -70,7 +69,7 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 background_context=None, statement_reviewers=None):
+                 statement_reviewers=None):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.emit_hook = emit or (lambda *_: None)
@@ -84,9 +83,6 @@ class GraphRuntime:
         # reviewer reservations exhausting a shared pilot budget unnecessarily.
         self.review_lock = threading.Lock()
         self.attempts = {side.value: [] for side in Side}
-        if background_context is not None and background_context.snapshot_id != snapshot.snapshot_id:
-            raise ValueError('Background context does not match the frozen snapshot')
-        self.background = render_background(background_context)
 
     def emit(self, event, payload):
         # Parallel initial nodes must not interleave event sequence assignment.
@@ -117,7 +113,7 @@ class GraphRuntime:
                    'return_context': return_context(self.snapshot),
                    'source_context': source_context(self.snapshot),
                    'research_results': state.get('research_results', []),
-                   'decision_at': self.snapshot.created_at.isoformat(), 'background': self.background or None}
+                   'decision_at': self.snapshot.created_at.isoformat()}
         conv = Conversation(prompts.debater_system(side),
             [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}])
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
@@ -208,8 +204,7 @@ class GraphRuntime:
                 'research_results': state.get('research_results', []),
                 'remaining_actions': 0,
                 'price_as_of': str(self.snapshot.as_of),
-                'decision_at': self.snapshot.created_at.isoformat(),
-                'background': self.background or None}, ensure_ascii=False)}])
+                'decision_at': self.snapshot.created_at.isoformat()}, ensure_ascii=False)}])
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
                 tools=TOOL_DEFINITIONS, tool_handler=SnapshotTools(self.snapshot))

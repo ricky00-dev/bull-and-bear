@@ -13,7 +13,7 @@ from bullbear.llm import LLMError
 from bullbear.server import service as service_module
 from bullbear.server.store import Store
 from bullbear.single import SingleAnalyst, SINGLE_VERDICT_SCHEMA
-from .http_fixture import TestRunner, prepare_rag
+from .http_fixture import TestRunner
 from .test_server import setup, app_for, start, completed, parse_sse, AUTH
 
 
@@ -42,7 +42,7 @@ def seed(app, settings, market, *, suffix=''):
     store = app.state.service.store
     row, _ = store.create('seed' + suffix, 'seed' + suffix, snapshot.ticker, str(snapshot.as_of), 2,
                           snapshot_id=snapshot.snapshot_id)
-    store.save_snapshot(row['id'], snapshot, binding_factory=app.state.service.capture_generation)
+    store.save_snapshot(row['id'], snapshot)
     store.emit(row['id'], 'debate_completed', {})
     return snapshot, row['id']
 
@@ -188,7 +188,6 @@ class ScriptedLLM:
 @pytest.mark.parametrize('bad', [
     {'confidence': 2}, {'decisive_evidence': ['UNKNOWN']},
     {'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [E2].'},
-    {'reasoning': '7거래일 코스피 대비 비슷한 움직임을 예상합니다 [K1].'},
 ])
 def test_single_rejects_invalid_verdict_before_semantic_review(setup, bad):
     settings, market = setup
@@ -250,19 +249,3 @@ def test_single_semantic_rejection_requires_regeneration(setup):
     assert result.decision.value == 'HOLD' and len(llm.calls) == 4
     assert len(analyst.reviewer.records) == 2
     assert '검수 반려 테스트' in llm.calls[2][0].messages[-1]['content']
-
-
-def test_single_rag_is_private_and_shared_with_reviewer(setup, monkeypatch):
-    settings, market = setup
-    settings = prepare_rag(settings)
-    llm = ScriptedLLM([verdict(), {'issues': []}])
-    monkeypatch.setattr(service_module, 'LLM', lambda model: llm)
-    app = app_for((settings, market), runner_factory=lambda: service_module.LiveRunner(settings))
-    with TestClient(app) as c:
-        snapshot, _ = seed(app, settings, market)
-        response = start(c, mode='single', snapshot_id=snapshot.snapshot_id).json()
-        result = completed(c, response['debate_id'])
-        assert result['status'] == 'completed'
-        assert all('PRIVATE_RAG_BACKGROUND' in call[0].system for call in llm.calls)
-        events = c.get('/debates/' + response['debate_id'] + '/events', headers=AUTH).text
-        assert 'PRIVATE_RAG_BACKGROUND' not in events
