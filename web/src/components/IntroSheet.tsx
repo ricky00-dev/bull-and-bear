@@ -42,7 +42,7 @@ export function IntroSheet({ onClose }: { onClose?: () => void }) {
         <ol className="flex flex-col gap-3.5">
           {STEPS.map(([title, desc], i) => (
             <li key={title} className="flex gap-3">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-extrabold text-white">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-extrabold text-ink">
                 {i + 1}
               </span>
               <span className="flex flex-col gap-0.5">
@@ -52,13 +52,13 @@ export function IntroSheet({ onClose }: { onClose?: () => void }) {
             </li>
           ))}
         </ol>
-        <p className="rounded-xl bg-ground px-3.5 py-3 text-xs leading-relaxed text-sub">
+        <p className="rounded-xl bg-surface-2 px-3.5 py-3 text-xs leading-relaxed text-sub">
           <b className="text-ink">교육용 모의 서비스예요.</b> AI 토론·판정과 채점 결과는 투자 권유나 종목 추천이 아니에요.
           실제 투자 판단과 그 결과의 책임은 본인에게 있어요.
         </p>
         <div className="pb-4">
           <PrimaryButton onClick={close}>{onClose ? '확인했어요' : '토론부터 살펴보기'}</PrimaryButton>
-          {!onClose && <button type="button" onClick={() => {close();navigate('/quiz')}} className="pressable mt-2 min-h-touch w-full rounded-control border border-line text-sm font-bold">과거 퀴즈로 먼저 연습하기</button>}
+          {!onClose && <button type="button" onClick={() => {close();navigate('/quiz')}} className="pressable mt-2 min-h-touch w-full rounded-control bg-surface-2 text-sm font-bold">과거 퀴즈로 먼저 연습하기</button>}
         </div>
     </ModalSheet>
   )

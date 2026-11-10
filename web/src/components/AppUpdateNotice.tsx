@@ -21,8 +21,8 @@ export function AppUpdateNotice() {
     try { await updateServiceWorker(true) } catch { setError(true) } finally { setBusy(false) }
   }
   if (!needRefresh) return null
-  return <aside aria-label="앱 업데이트" className="mx-auto flex max-w-[960px] flex-wrap items-center justify-between gap-2 bg-white px-5 py-3 text-sm" role="status">
+  return <aside aria-label="앱 업데이트" className="mx-auto flex max-w-[960px] flex-wrap items-center justify-between gap-2 bg-surface px-5 py-3 text-sm" role="status">
     <span>{error ? '업데이트하지 못했어요. 다시 시도해 주세요.' : '새 버전이 준비됐어요.'}</span>
-    <button type="button" disabled={busy} onClick={update} className="pressable min-h-touch rounded-control border border-line px-3 font-bold disabled:opacity-50">{busy ? '업데이트 중…' : '새 화면으로 업데이트'}</button>
+    <button type="button" disabled={busy} onClick={update} className="pressable min-h-touch rounded-control bg-surface-2 px-3 font-bold disabled:opacity-50">{busy ? '업데이트 중…' : '새 화면으로 업데이트'}</button>
   </aside>
 }

@@ -142,7 +142,7 @@ function Tab({ to, on, children }: { to: string; on: boolean; children: ReactNod
       to={to}
       replace
       aria-current={on ? 'page' : undefined}
-      className={`flex min-h-10 items-center rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-ink text-white' : 'border border-line bg-white text-sub'}`}
+      className={`flex min-h-10 items-center rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-point text-on-point' : 'bg-surface-2 text-sub'}`}
     >
       {children}
     </Link>

@@ -32,7 +32,7 @@ export function TopBar({ title, sub, back }: { title: string; sub?: string; back
 /** 화면 아래 고정 행동 영역. 홈 바 영역은 비운다. */
 export function BottomBar({ children }: { children: ReactNode }) {
   return (
-    <div className="action-bar pb-safe sticky bottom-0 z-10 flex flex-col gap-2 border-t border-line bg-white px-5 pt-3">
+    <div className="action-bar pb-safe sticky bottom-0 z-10 flex flex-col gap-2 glass-bar px-5 pt-3">
       {children}
     </div>
   )
@@ -53,8 +53,8 @@ export function PrimaryButton({
   const style = disabled
     ? 'bg-line text-sub'
     : variant === 'solid'
-      ? 'bg-ink text-white hover:bg-black active:bg-black'
-      : 'pressable border-[1.5px] border-ink bg-white text-ink'
+      ? 'bg-point text-on-point hover:brightness-110 active:brightness-95'
+      : 'pressable bg-surface-2 text-ink'
   return (
     <button type="button" disabled={disabled} onClick={onClick} className={`${base} ${style}`}>
       {children}
@@ -63,7 +63,7 @@ export function PrimaryButton({
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-panel border border-line bg-white p-4 ${className}`}>{children}</section>
+  return <section className={`rounded-panel bg-surface p-4 ${className}`}>{children}</section>
 }
 
 export function Icon({ d, size = 20, stroke = 2, className = '' }: { d: string; size?: number; stroke?: number; className?: string }) {
@@ -95,7 +95,7 @@ export function ErrorNotice({ message, onRetry }: { message: string; onRetry?: (
     <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       <p className="text-[15px] font-bold">{message}</p>
       {onRetry && (
-        <button type="button" onClick={onRetry} className="min-h-11 rounded-xl border border-line bg-white px-4 text-sm">
+        <button type="button" onClick={onRetry} className="min-h-11 rounded-xl bg-surface px-4 text-sm">
           다시 시도
         </button>
       )}
@@ -153,9 +153,9 @@ export function ModalSheet({ label, onClose, children }: { label: string; onClos
         <div
           data-sheet-content
           tabIndex={-1}
-          className="sheet-content pb-safe animate-rise relative mx-auto flex max-h-full w-full max-w-[480px] flex-col gap-4 overflow-y-auto rounded-t-sheet md:rounded-sheet bg-white px-5 pt-3 focus:outline-none"
+          className="sheet-content pb-safe animate-rise relative mx-auto flex max-h-full w-full max-w-[480px] flex-col gap-4 overflow-y-auto rounded-t-sheet md:rounded-sheet bg-surface px-5 pt-3 focus:outline-none"
         >
-          <div className="sticky top-0 z-10 flex min-h-touch shrink-0 items-center justify-center bg-white"><div aria-hidden="true" className="h-1 w-10 rounded-full bg-line" /><button type="button" onClick={onClose} aria-label="창 닫기" className="pressable absolute right-0 flex size-touch items-center justify-center rounded-control text-sub"><Icon d="M6 6l12 12M6 18L18 6" size={20} /></button></div>
+          <div className="sticky top-0 z-10 flex min-h-touch shrink-0 items-center justify-center bg-surface"><div aria-hidden="true" className="h-1 w-10 rounded-full bg-line" /><button type="button" onClick={onClose} aria-label="창 닫기" className="pressable absolute right-0 flex size-touch items-center justify-center rounded-control text-sub"><Icon d="M6 6l12 12M6 18L18 6" size={20} /></button></div>
           {children}
         </div>
       </div>

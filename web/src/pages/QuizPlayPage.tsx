@@ -14,7 +14,7 @@ import { DECISION_LABEL } from '../lib/types'
 const DECISION_COLOR: Record<Decision, string> = { BUY: 'text-up-ink', HOLD: 'text-ink', SELL: 'text-down-ink' }
 const CHOICES: { key: Decision; on: string }[] = [
   { key: 'BUY', on: 'bg-up text-white' },
-  { key: 'HOLD', on: 'bg-ink text-white' },
+  { key: 'HOLD', on: 'bg-surface-2 text-ink point-ring' },
   { key: 'SELL', on: 'bg-down text-white' },
 ]
 
@@ -243,10 +243,10 @@ function Summary({ round }: { round: QuizRound }) {
         <p className="text-[13px] leading-relaxed text-sub">
           단기 주가는 전문가도 맞히기 어려워요. 결과보다 어떤 근거가 실제로 맞았는지 돌아보는 게 진짜 연습이에요.
         </p>
-        <Link to="/quiz/ranking" className="text-center text-sm font-bold text-down underline-offset-2 hover:underline">
+        <Link to="/quiz/ranking" className="text-center text-sm font-bold text-point underline-offset-2 hover:underline">
           오늘의 랭킹에서 내 순위 보기
         </Link>
-        <Link to="/" className="text-center text-sm font-bold text-down underline-offset-2 hover:underline">
+        <Link to="/" className="text-center text-sm font-bold text-point underline-offset-2 hover:underline">
           오늘 토론을 실제로 판정해 보기
         </Link>
         <p className="text-center text-[11px] leading-relaxed text-sub">교육용 모의 퀴즈예요. AI 판정은 투자 권유가 아니에요.</p>

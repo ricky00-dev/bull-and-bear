@@ -25,7 +25,7 @@ export function MyPage() {
         {me.data ? (
           <Card className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-full bg-ground">
+              <span className="flex size-11 items-center justify-center rounded-full bg-surface-2">
                 <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" size={22} />
               </span>
               <div className="flex flex-col">
@@ -57,7 +57,7 @@ export function MyPage() {
           ) : quiz.data.answered === 0 ? (
             <div className="flex items-center justify-between">
               <p className="text-[13px] text-sub">아직 퀴즈를 풀지 않았어요</p>
-              <Link to="/quiz" className="text-[13px] font-bold text-down">
+              <Link to="/quiz" className="text-[13px] font-bold text-point">
                 풀어 보기
               </Link>
             </div>
@@ -83,7 +83,7 @@ export function MyPage() {
           )}
         </Card>
 
-        <ul className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
+        <ul className="flex flex-col overflow-hidden rounded-2xl bg-surface">
           <MenuItem to="/quiz/ranking" title="퀴즈 랭킹" sub="닉네임을 정하고 다른 사람과 겨뤄 보기" />
           <MenuItem to="/report" title="AI 성적표" sub="토론 AI와 혼자 판단한 AI, 누가 더 맞혔을까" />
           <MenuItem to="/glossary" title="용어 사전" sub={`PER, 이동평균선 같은 투자 용어 ${TERMS.length}개`} />
@@ -157,14 +157,14 @@ function DeleteMyData() {
       </p>
       {del.isError && <p className="text-[13px] font-bold text-up-ink">지우지 못했어요. 잠시 후 다시 시도해 주세요.</p>}
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setAsking(false)} className="min-h-12 rounded-xl border border-line bg-white text-[15px] font-bold">
+        <button type="button" onClick={() => setAsking(false)} className="min-h-12 rounded-xl bg-surface text-[15px] font-bold">
           취소
         </button>
         <button
           type="button"
           disabled={del.isPending}
           onClick={() => del.mutate()}
-          className="min-h-12 rounded-xl bg-up-ink text-[15px] font-bold text-white disabled:opacity-50"
+          className="min-h-12 rounded-xl bg-up text-[15px] font-bold text-white disabled:opacity-50"
         >
           {del.isPending ? '지우는 중…' : '모두 삭제'}
         </button>

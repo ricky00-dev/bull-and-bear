@@ -63,7 +63,7 @@ export function ScorePage() {
           <h3 className="text-base font-bold">고른 근거와 이후 주가 방향</h3>
           <p className="text-[13px] leading-relaxed text-sub">근거를 인용한 쪽과 이후 주가 방향을 비교해요. 개별 근거가 주가를 움직였다는 뜻은 아니에요.</p>
           <PickResults picks={pickResults} horizon={pickHorizon} userHit={pickScore?.userHit ?? null} />
-          <Link to={`/debates/${j.debateId}`} className="pressable flex min-h-touch items-center justify-center rounded-control border border-line text-sm font-bold">토론 다시 보기</Link>
+          <Link to={`/debates/${j.debateId}`} className="pressable flex min-h-touch items-center justify-center rounded-control bg-surface-2 text-sm font-bold">토론 다시 보기</Link>
         </Card>
 
         <p className="text-[11px] leading-relaxed text-sub">
@@ -78,11 +78,11 @@ export function ScorePage() {
 const SIDE_LABEL = { bull: '매수 측', bear: '매도 측' } as const
 
 const OUTCOME: Record<PickOutcome, { text: string; cls: string }> = {
-  RIGHT: { text: '같은 방향', cls: 'bg-ok text-white' },
+  RIGHT: { text: '같은 방향', cls: 'bg-ok text-ground' },
   WRONG: { text: '반대 방향', cls: 'bg-line text-sub' },
-  FLAT: { text: '판가름 안 남', cls: 'bg-ground text-sub' },
-  PENDING: { text: '채점 전', cls: 'bg-ground text-sub' },
-  UNKNOWN: { text: '-', cls: 'bg-ground text-sub' },
+  FLAT: { text: '판가름 안 남', cls: 'bg-surface-2 text-sub' },
+  PENDING: { text: '채점 전', cls: 'bg-surface-2 text-sub' },
+  UNKNOWN: { text: '-', cls: 'bg-surface-2 text-sub' },
 }
 
 /**
@@ -105,7 +105,7 @@ function PickResults({ picks, horizon, userHit }: { picks: PickResult[]; horizon
       {picks.length === 0 && <span className="text-[13px] text-sub">고른 근거가 없어요</span>}
       <ul className="flex flex-col gap-1.5">
         {picks.map((p) => (
-          <li key={p.sourceId} className="flex items-center justify-between gap-2 rounded-xl bg-ground px-3 py-2.5">
+          <li key={p.sourceId} className="flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
             <span className="flex min-w-0 flex-col">
               <span className="text-[13px] font-bold">{describe(p.sourceId).label}</span>
               <span className="text-[11px] text-sub">
@@ -126,7 +126,7 @@ function PickResults({ picks, horizon, userHit }: { picks: PickResult[]; horizon
         </p>
       )}
       {userHit === true && graded.length > 0 && right === 0 && (
-        <p className="rounded-xl bg-ground px-3 py-2.5 text-[13px] leading-relaxed">
+        <p className="rounded-xl bg-surface-2 px-3 py-2.5 text-[13px] leading-relaxed">
           판정은 맞았지만 고른 근거는 반대쪽이었어요. 고른 근거와 최종 결정이 어떻게 연결됐는지 돌아보세요.
         </p>
       )}

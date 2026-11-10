@@ -1,39 +1,47 @@
 @import "tailwindcss";
 
-/* 목업과 같은 토큰. 상승·매수 = 빨강, 하락·매도 = 파랑 (국내 증시 관례) */
+/* docs/DESIGN.md B-7: 다크 그래파이트 + 포인트 앰버 하나. 층은 명도로만(ground → surface → surface-2).
+   시세 등락·매수/매도 편 색은 국내 관례(상승 빨강, 하락 파랑)를 그대로 쓴다 */
 @theme {
   --font-sans: "Noto Sans KR", system-ui, sans-serif;
 
-  --color-ground: #f5f6f8;
-  --color-ink: #111318;
-  --color-sub: #4e5562;
-  --color-faint: #687180;
-  --color-line: #e6e8ec;
-  --color-line-soft: #f0f1f4;
+  --color-ground: #0b0c0e;
+  --color-surface: #16171a;
+  --color-surface-2: #202125;
+  --color-ink: #f2f2f3;
+  --color-sub: #a2a5ac;
+  --color-faint: #6b6f77;
+  --color-line: #26282c;
+  --color-line-soft: #202125;
 
-  --color-up: #d92d20;
-  --color-up-ink: #b42318;
-  --color-up-soft: #fef3f2;
-  --color-up-line: #f3d2cf;
+  --color-point: #ff8a3d;
+  --color-on-point: #1b1006;
+  --color-point-soft: rgb(255 138 61 / 13%);
 
-  --color-down: #2b6fe0;
-  --color-down-ink: #1d4fb0;
-  --color-down-soft: #f0f5fe;
-  --color-down-line: #cfddf7;
+  --color-up: #e5383b;
+  --color-up-ink: #ff6b6e;
+  --color-up-soft: rgb(229 56 59 / 14%);
+  --color-up-line: rgb(229 56 59 / 40%);
 
-  --color-mod: #465564;
-  --color-mod-ink: #293744;
-  --color-mod-soft: #eef2f5;
-  --color-mod-line: #d7e0e7;
+  --color-down: #2f6feb;
+  --color-down-ink: #7aa7ff;
+  --color-down-soft: rgb(47 111 235 / 16%);
+  --color-down-line: rgb(47 111 235 / 45%);
 
-  --radius-control: 8px;
-  --radius-panel: 12px;
+  --color-mod: #a9b3bd;
+  --color-mod-ink: #d0d7de;
+  --color-mod-soft: #1d2126;
+  --color-mod-line: #30363d;
+
+  --radius-chip: 10px;
+  --radius-control: 12px;
+  --radius-panel: 18px;
   --radius-sheet: 24px;
   --spacing-touch: 44px;
 
-  --color-ok: #067647;
-  --color-ok-soft: #dcfae6;
-  --color-warn: #b54708;
+  --color-ok: #3ccf86;
+  --color-ok-soft: rgb(60 207 134 / 14%);
+  --color-warn: #ffb547;
 
   --animate-pulse-dot: pulse-dot 1.2s infinite;
   --animate-rise: rise 0.35s ease-out;
@@ -53,8 +61,10 @@
   html, body, #root {
     height: 100%;
   }
+  :root { color-scheme: dark; }
   body {
     margin: 0;
+    font-weight: 500;
     background: var(--color-ground);
     color: var(--color-ink);
     font-variant-numeric: tabular-nums;
@@ -80,7 +90,7 @@
 }
 
 .modal-sheet::backdrop {
-  background: rgb(17 19 24 / 45%);
+  background: rgb(0 0 0 / 62%);
 }
 
 .sheet-content { max-height: 90dvh; overscroll-behavior: contain; }
@@ -94,7 +104,7 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 @media (hover: hover) {
-  .pressable:hover:not(:disabled) { background-color: var(--color-line-soft); }
+  .pressable:hover:not(:disabled) { background-color: var(--color-surface-2); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -106,6 +116,19 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 /* 노치·홈 바 영역 비우기 (PWA, Capacitor 앱) */
+/* 고정 하단 바·탭 바: 선 대신 반투명 + 흐림 + 위쪽 1px 밝은 가장자리 */
+@utility glass-bar {
+  background-color: rgb(11 12 14 / 78%);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+/* 선택 상태만 허용하는 안쪽 앰버 선 + 은은한 발광 */
+@utility point-ring {
+  box-shadow: inset 0 0 0 1px rgb(255 138 61 / 50%), 0 0 18px rgb(255 138 61 / 12%);
+}
+
 @utility pt-safe {
   padding-top: max(env(safe-area-inset-top), 0px);
 }

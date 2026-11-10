@@ -5,7 +5,7 @@ import type { ScoreView } from '../lib/types'
 export function ScoreChip({ s, who = 'user' }: { s: ScoreView; who?: 'user' | 'moderator' }) {
   if (s.status === 'PENDING') {
     return (
-      <span className="rounded-md bg-ground px-2 py-1 text-[11px] font-bold text-sub">
+      <span className="rounded-md bg-surface-2 px-2 py-1 text-[11px] font-bold text-sub">
         {s.horizonDays}일 · {dueLabel(s.scheduledDate)}
       </span>
     )
@@ -35,7 +35,7 @@ export function BandBar({ excess, band }: { excess: number; band: number }) {
         aria-label={`초과수익 ${pctPoint(excess)}`}
       >
         <span className="absolute inset-y-0 left-0 rounded-l-lg bg-down-soft" style={{ width: `${lo}%` }} />
-        <span className="absolute inset-y-0 bg-ground" style={{ left: `${lo}%`, width: `${hi-lo}%` }} />
+        <span className="absolute inset-y-0 bg-surface-2" style={{ left: `${lo}%`, width: `${hi-lo}%` }} />
         <span className="absolute inset-y-0 right-0 rounded-r-lg bg-up-soft" style={{ width: `${100-hi}%` }} />
         <span className="absolute -bottom-1 -top-1 w-[3px] -translate-x-1/2 rounded-sm bg-ink" style={{ left: `${pos(excess)}%` }} />
       </div>

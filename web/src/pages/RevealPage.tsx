@@ -1,3 +1,4 @@
+import { Avatar } from '../components/Characters'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -60,9 +61,12 @@ export function RevealPage() {
           </>
         ) : (
           <>
-            <div className="flex flex-col gap-1">
-              <p className="text-[13px] font-bold text-mod">AI 판정 공개</p>
-              <h2 className="text-2xl font-extrabold tracking-tight">{r.agrees ? 'AI와 같은 판정이에요' : 'AI와 판정이 엇갈렸어요'}</h2>
+            <div className="flex items-center gap-3">
+              <Avatar who="owl" size={44} />
+              <div className="flex flex-col gap-1">
+                <p className="text-[13px] font-bold text-mod">AI 중재자 판정 공개</p>
+                <h2 className="text-2xl font-extrabold tracking-tight">{r.agrees ? 'AI와 같은 판정이에요' : 'AI와 판정이 엇갈렸어요'}</h2>
+              </div>
             </div>
 
             <JudgmentComparison mine={r.mine.decision} moderator={r.verdict.decision} scores={schedule} holdBand={detail.data?.holdBand} loading={detail.isLoading} error={detail.isError} onRetry={() => detail.refetch()} />
@@ -72,13 +76,13 @@ export function RevealPage() {
             <Crowd crowd={r.crowd} />
 
             <Card className="flex flex-col gap-2.5">
-              <h3 className="text-sm font-extrabold">중재자가 이렇게 본 이유</h3>
+              <h3 className="flex items-center gap-2 text-sm font-extrabold"><Avatar who="owl" size={34} />중재자가 이렇게 본 이유</h3>
               <p className="text-[15px] leading-relaxed">
                 <VerdictText text={r.verdict.reasoning} decisive={r.verdict.decisive_evidence} debateId={id} asOf={d?.tradeDate} turns={stream.statements} />
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {r.verdict.decisive_evidence.map((id) => (
-                  <span key={id} className="rounded-lg bg-ground px-2.5 py-1.5 text-xs font-bold">
+                  <span key={id} className="rounded-chip bg-surface-2 px-2.5 py-1.5 text-xs font-bold">
                     결정적 · {describe(id).label}
                   </span>
                 ))}
@@ -106,7 +110,7 @@ export function RevealPage() {
               ))}
             </Card>
 
-            <Link to={`/me/judgments/${r.mine.id}`} className="pressable flex min-h-touch items-center justify-between rounded-control border border-line bg-white px-4 py-3 text-sm font-bold">
+            <Link to={`/me/judgments/${r.mine.id}`} className="pressable flex min-h-touch items-center justify-between rounded-control bg-surface px-4 py-3 text-sm font-bold">
               내 판정에서 채점 결과 보기 <Icon d={ICONS.chevron} size={16} />
             </Link>
 
@@ -151,10 +155,10 @@ function Crowd({ crowd }: { crowd: { buy: number; hold: number; sell: number; to
 
 function SignupCard() {
   return (
-    <section className="flex flex-col gap-3 rounded-[18px] bg-ink p-4.5 text-white">
+    <section className="flex flex-col gap-3 rounded-panel bg-surface-2 p-4.5 text-ink">
       <div className="flex flex-col gap-1">
         <h3 className="text-[17px] font-extrabold">채점 결과를 놓치지 마세요</h3>
-        <p className="text-[13px] leading-relaxed text-[#c9cdd6]">
+        <p className="text-[13px] leading-relaxed text-sub">
           지금은 게스트라 이 기기에만 기록이 남아요. 카카오로 시작하면 이 판정이 그대로 이어지고, 다른 기기에서도 채점 결과를 볼 수 있어요.
         </p>
       </div>

@@ -37,7 +37,7 @@ export function QuizHomePage() {
         <Card className="flex flex-col gap-4">
           {STEPS.map((s, i) => (
             <div key={s.title} className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink text-[13px] font-extrabold text-white">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-[13px] font-extrabold text-ink">
                 {i + 1}
               </span>
               <div className="flex flex-col gap-0.5">
@@ -47,12 +47,12 @@ export function QuizHomePage() {
             </div>
           ))}
         </Card>
-        <Link to="/quiz/ranking" className="flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3.5">
+        <Link to="/quiz/ranking" className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3.5">
           <span className="flex flex-col gap-0.5">
             <span className="text-[15px] font-extrabold">오늘의 랭킹</span>
             <span className="text-xs text-sub">오늘 온 사람들 중 몇 등일까요</span>
           </span>
-          <span className="text-[13px] font-bold text-down">보기</span>
+          <span className="text-[13px] font-bold text-point">보기</span>
         </Link>
         <p className="text-[11px] leading-relaxed text-sub">
           문제는 결과와 상관없이 무작위로 골라요. AI가 맞힌 문제도, 틀린 문제도 섞여 있어요. 퀴즈 기록은 내 판정 통계에 들어가지 않아요. 교육용 모의 퀴즈이며 AI 판정은 투자 권유가 아니에요.
