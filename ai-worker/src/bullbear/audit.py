@@ -24,7 +24,7 @@ from .snapshot import KST
 
 SECRET_ENV_NAMES = (
     "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENDART_API_KEY", "KRX_API_KEY",
-    "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET", "WORKER_TOKEN",
+    "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET", "FRED_API_KEY", "ECOS_API_KEY", "WORKER_TOKEN",
 )
 USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens",
               "cache_creation_input_tokens", "requests")
@@ -68,7 +68,7 @@ def selected_models(settings) -> dict:
 
 
 def provenance() -> dict:
-    from . import graph, graph_runtime
+    from . import graph, graph_runtime, shared_context
     # Hash source files as well as schemas: template rendering and reviewer
     # policy changes must be distinguishable without storing prompt text.
     result = {
@@ -78,7 +78,7 @@ def provenance() -> dict:
         "prompt_source_hashes": {
             module.__name__.rsplit(".", 1)[-1]: "sha256:" + hashlib.sha256(
                 Path(module.__file__).read_bytes()).hexdigest()
-            for module in (prompts, semantic, graph, graph_runtime)
+            for module in (prompts, semantic, graph, graph_runtime, shared_context)
         },
         "schema_hashes": {
             "statement": canonical_hash(schemas.STRUCTURED_STATEMENT_SCHEMA),
@@ -213,7 +213,7 @@ class RunAudit:
             payload["warnings"] = warnings
             self._redacted |= omitted
             self.data.update(snapshot_id=snapshot.snapshot_id,
-                             decision_at=snapshot.created_at.isoformat(),
+                             decision_at=snapshot.decision_at.isoformat(),
                              snapshot=payload, snapshot_warning_details_omitted=omitted,
                              snapshot_payload_hash=canonical_hash(snapshot.model_dump(mode="json")))
             self.data["run_fingerprint"] = canonical_hash({

@@ -60,11 +60,12 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert manifest['status'] == 'success'
         assert manifest['snapshot'] == snap
         assert manifest['snapshot_id'] == snap['snapshot_id']
-        assert manifest['decision_at'] == snap['created_at']
+        assert manifest['decision_at'] == snap['time_context']['decision_at']
+        assert snap['created_at'] != manifest['decision_at']
         assert manifest['snapshot_payload_hash'] == canonical_hash(snap)
         assert manifest['provenance']['code'] == {'revision': 'a' * 40, 'dirty': False}
         assert set(manifest['provenance']['schema_hashes']) == {'statement', 'moderator', 'semantic_review'}
-        assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime'}
+        assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime', 'shared_context'}
         assert manifest['usage'] == result['usage']
         assert manifest['runner']['llm_call_observation'] is False
         assert {s['name'] for s in manifest['stages']} == {'snapshot', 'runner_initialization', 'debate'}

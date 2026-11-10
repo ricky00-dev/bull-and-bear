@@ -19,13 +19,13 @@ from .events import EventLog
 from .schemas import ROUND_LABELS, Decision, Side
 from .snapshot import Snapshot
 
-_UNIT = {"KRW": "원", "KRW/share": "원", "%": "%", "x": "배", "shares": "주", "count": "", "text": ""}
+_UNIT = {"KRW": "원", "KRW/share": "원", "%": "%", "x": "배", "shares": "주", "count": "", "text": "", "index_points": "포인트", "USD/bbl": "달러/배럴"}
 
 
 def _fmt(value: float | None, unit: str) -> str:
     if value is None:
         return "-"
-    if unit in ("%", "x"):
+    if unit in ("%", "x", "index_points", "USD/bbl"):
         return f"{value:,.2f}{_UNIT[unit]}"
     if unit == "KRW" and abs(value) >= 1e8:
         return f"{value / 1e8:,.0f}억원"
@@ -36,7 +36,10 @@ def _make_snapshot(settings: Settings, query: str) -> Snapshot:
     from .server.market import Market
     ticker, name = resolve(query)
     market = Market(settings)
-    return market.snapshot(market.quote(ticker))
+    try:
+        return market.snapshot(market.quote(ticker))
+    finally:
+        market.close()
 
 
 def cmd_universe(_args, _settings: Settings) -> None:
@@ -47,7 +50,7 @@ def cmd_universe(_args, _settings: Settings) -> None:
 def cmd_snapshot(args, settings: Settings) -> None:
     snap = _make_snapshot(settings, args.ticker)
     print(f"{snap.name}({snap.ticker})  스냅샷 {snap.snapshot_id}  기준일 {snap.as_of}  공급자 {snap.provider}")
-    for category in ("price", "financials", "valuation", "disclosure", "news"):
+    for category in ("price", "financials", "valuation", "disclosure", "news", "macro"):
         facts = snap.by_category(category)
         print(f"\n[{category}] {len(facts)}개")
         for f in facts:

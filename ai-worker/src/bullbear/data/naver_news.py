@@ -14,6 +14,8 @@ import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 
+from urllib.parse import urlsplit
+
 import httpx
 
 from .base import DataUnavailable, NewsArticle, NewsSource
@@ -21,6 +23,12 @@ from .base import DataUnavailable, NewsArticle, NewsSource
 API_URL = "https://naverapihub.apigw.ntruss.com/search/v1/news"
 PAGE_SIZE = 100
 MAX_PAGES = 3
+MARKET_TOPICS = (
+    ("한국 증시", ("코스피", "코스닥", "증시", "주식시장")),
+    ("한국은행 통화정책", ("한국은행", "금통위", "기준금리", "통화정책")),
+    ("원달러 환율", ("환율", "원달러", "원·달러", "달러원")),
+    ("한국 경제 산업", ("수출", "물가", "성장률", "산업생산", "무역", "고용", "경기")),
+)
 
 # 이름이 짧거나 흔한 단어라 검색어를 보강해야 하는 종목
 QUERY_OVERRIDES = {
@@ -54,10 +62,22 @@ class NaverNewsSource(NewsSource):
         )
 
     def search(self, ticker: str, name: str, start: datetime, end: datetime) -> list[NewsArticle]:
-        query = QUERY_OVERRIDES.get(ticker, name)
+        return filter_articles(self._search(QUERY_OVERRIDES.get(ticker, name), start), name, start, end)
+
+    def search_market(self, start: datetime, end: datetime) -> list[NewsArticle]:
+        articles = []
+        for query, aliases in MARKET_TOPICS:
+            items = filter_articles(self._search(query, start, max_pages=1), None, start, end)
+            articles.extend(a for a in items if any(alias in a.title for alias in aliases))
+        return articles
+
+    def close(self):
+        self._http.close()
+
+    def _search(self, query, start, *, max_pages=MAX_PAGES):
         raw: list[dict] = []
         try:
-            for page in range(MAX_PAGES):
+            for page in range(max_pages):
                 resp = self._http.get(API_URL, params={"query": query, "display": PAGE_SIZE,
                                                        "start": page * PAGE_SIZE + 1, "sort": "date", "format": "json"})
                 if resp.status_code != 200:
@@ -68,7 +88,7 @@ class NaverNewsSource(NewsSource):
                 raw.extend(items)
                 if len(items) < PAGE_SIZE or _published_at(items[-1]["pubDate"]) < start:
                     break
-            return filter_articles(raw, name, start, end)
+            return raw
         except httpx.HTTPError:
             # Provider exceptions can include request details; only expose a safe summary.
             raise DataUnavailable("네이버 API HUB 뉴스 요청에 실패했습니다") from None
@@ -98,7 +118,7 @@ def _validate_items(items) -> None:
         _published_at(item["pubDate"])
 
 
-def filter_articles(items: list[dict], name: str, start: datetime, end: datetime) -> list[NewsArticle]:
+def filter_articles(items: list[dict], name: str | None, start: datetime, end: datetime) -> list[NewsArticle]:
     seen_urls: set[str] = set()
     seen_titles: set[str] = set()
     out = []
@@ -107,7 +127,7 @@ def filter_articles(items: list[dict], name: str, start: datetime, end: datetime
         if not (start <= published <= end):
             continue
         title = clean(item["title"])
-        if name not in title:
+        if name is not None and name not in title:
             continue
         url = item.get("originallink") or item["link"]
         key = _title_key(title)
@@ -121,6 +141,20 @@ def filter_articles(items: list[dict], name: str, start: datetime, end: datetime
             title=title,
             summary=clean(item.get("description", "")),
             url=url,
+            publisher=_publisher(item.get("originallink")),
         ))
     out.sort(key=lambda a: a.published_at, reverse=True)
     return out
+
+
+def _publisher(original_url):
+    # The API has no publisher-name field. Preserve the original host only.
+    if not isinstance(original_url, str):
+        return None
+    try:
+        host = urlsplit(original_url).hostname
+    except ValueError:
+        return None
+    if host is None or host == "naver.com" or host.endswith(".naver.com"):
+        return None
+    return host.removeprefix("www.")

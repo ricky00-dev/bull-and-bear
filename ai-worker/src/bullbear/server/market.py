@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from ..data.base import DataUnavailable
+from ..data.macro import MacroSource
 from ..data.naver_news import NaverNewsSource
 from ..data.krx_openapi import KrxOpenApiSource
 from ..data.universe import UNIVERSE
@@ -70,14 +71,21 @@ class FrozenPrices:
 
 class Market:
     def __init__(self, settings, *, source=None, news=None, catalog=None, index_loader=None, now=None,
-                 quote_wait_seconds=1.0):
+                 quote_wait_seconds=1.0, macro=None):
         self.settings = settings
         self.source = source or KrxOpenApiSource(settings.krx_api_key, settings.dart_api_key, settings.cache_dir)
         self.now = now or (lambda: datetime.now(KST))
         self.news = news
-        if source is None:
+        self.macro = macro
+        self._owns_macro = source is None and macro is None and bool(settings.fred_api_key or settings.ecos_api_key)
+        if self._owns_macro:
+            self.macro = MacroSource(settings.fred_api_key, settings.ecos_api_key, settings.cache_dir,
+                                     vix_enabled=settings.vix_enabled)
+        self._owns_news = False
+        if source is None and news is None:
             try:
                 self.news = NaverNewsSource(settings.naver_client_id, settings.naver_client_secret)
+                self._owns_news = True
             except DataUnavailable:
                 pass
         # The approved debate universe is explicit. Other securities remain searchable but blocked.
@@ -102,6 +110,10 @@ class Market:
         if close_source is not None:
             close_source()
         self.quote_pool.shutdown(wait=True, cancel_futures=True)
+        if self._owns_news:
+            self.news.close()
+        if self._owns_macro:
+            self.macro.close()
 
     def load_catalog(self):
         # OpenDART has company names/codes but no market classification; do not invent it.
@@ -218,8 +230,9 @@ class Market:
 
     def snapshot(self, quote):
         snap = build_snapshot(FrozenPrices(self.source, quote.bars), quote.ticker, quote.name,
-                              news=self.news, now=self.now(), index_loader=self.index_loader)
-        snap.warnings.extend(getattr(self.source, 'warnings', []))
+                              news=self.news, now=self.now(), index_loader=self.index_loader, macro=self.macro,
+                              market_news_limit=self.settings.market_news_limit,
+                              stock_news_limit=self.settings.stock_news_limit)
         snap.save(self.settings.snapshot_dir)
         return snap
 

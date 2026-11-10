@@ -191,6 +191,8 @@ class SemanticReviewer:
             "selected_source_ids": sorted(set(source_ids)),
             "verification_stats": stats,
             "price_as_of": str(self.snapshot.as_of), "snapshot_created_at": str(self.snapshot.created_at),
+            "decision_at": self.snapshot.decision_at.isoformat(),
+            "information_cutoff": self.snapshot.information_cutoff.isoformat(),
             "warnings": self.snapshot.warnings,
         }, ensure_ascii=False)}])
         def strings(value):
