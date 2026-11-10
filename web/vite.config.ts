@@ -22,7 +22,12 @@ export default defineConfig({
         background_color: '#F5F6F8',
         display: 'standalone',
         start_url: '/',
-        icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          // 꽉 찬 그림이라 원형으로 잘리면 바깥 뿔 끝·귀만 잘리고 두 얼굴은 안전 영역 안에 남는다
+          { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
     }),
   ],
