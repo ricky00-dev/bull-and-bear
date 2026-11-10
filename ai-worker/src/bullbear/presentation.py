@@ -2,6 +2,7 @@
 import re
 
 from .verifier import Issue
+from .history import history_entry, reference_map, contains_quote
 
 
 def error(code, message):
@@ -31,8 +32,7 @@ def money_issues(text):
 
 
 def used_sources(transcript, snapshot):
-    # render_statement's evidence lines, not arbitrary mentions in prose.
-    ids = set(re.findall(r"^\s+E\d+: (\S+) =", "\n".join(transcript), re.M))
+    ids = {source for entry in transcript for source in reference_map(history_entry(entry)).values()}
     return ids & snapshot.facts.keys()
 
 
@@ -60,14 +60,13 @@ def argument_quote_spans(argument):
 
 def rebuttal_target_issues(statement, side, round_kind, transcript):
     """Check an attributed quotation against the other speaker, not model memory."""
-    other = "매도" if side.value == "bull" else "매수"
-    opponent_texts = [entry.partition("\n")[2].split("\n근거:\n", 1)[0]
-                      for entry in transcript
-                      if re.match(rf"^\[[^\]]+\] {other} 측\n", entry)]
+    other = "bear" if side.value == "bull" else "bull"
+    opponents = [record for entry in transcript
+                 if (record := history_entry(entry)).get('side') == other]
     quotes = [span["quote"] for span in argument_quote_spans(statement.argument)]
     if round_kind == "rebuttal" and not quotes:
         return [error("rebuttal_target", "반박 본문은 상대의 “원문 일부”로 시작하고, 상대 주장·본문의 6자 이상 문구를 그대로 인용하세요. 내 발언이나 검증 피드백은 상대 주장이 아닙니다.")]
-    if any(len(q.strip()) < 6 or not any(q in text for text in opponent_texts) for q in quotes):
+    if any(len(q.strip()) < 6 or not any(contains_quote(record, q) for record in opponents) for q in quotes):
         return [error("rebuttal_target", "인용한 상대 문구가 반대편의 실제 주장·본문에 없습니다. 해당 발언을 다시 읽고 6자 이상 원문을 그대로 복사하세요.")]
     return []
 
@@ -94,6 +93,4 @@ def verdict_issues(decision, *, comments=(), extra_question=None):
     used = {int(n) for n in re.findall(r"\[E(\d+)\]", text)}
     if not 1 <= len(ids) <= 3 or len(ids) != len(set(ids)) or used != set(range(1, len(ids) + 1)):
         issues.append(error("verdict_refs", "서로 다른 decisive_evidence 1~3개와 글의 [E1]~[En]을 순서대로 일치시키세요."))
-    if decision.decision.value == "HOLD" and not re.search(r"비슷|유사|±2|[−-]2", decision.reasoning):
-        issues.append(error("hold_prediction", "보류는 애매함이 아닌 코스피와 비슷하게 움직일 것이라는 구간 예측으로 설명하세요."))
     return issues + money_issues(text) + knowledge_leakage_issues(text)

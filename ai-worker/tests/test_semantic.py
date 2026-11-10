@@ -2,7 +2,7 @@ import pytest
 
 from bullbear.llm import LLMError
 from bullbear.schemas import Side
-from bullbear.semantic import SemanticReviewer, horizon_issues
+from bullbear.semantic import SemanticReviewer
 from bullbear.snapshot import build_snapshot
 from bullbear.verifier import verify
 from .fakes import FakeSource, NOW, statement, ScriptedModerator

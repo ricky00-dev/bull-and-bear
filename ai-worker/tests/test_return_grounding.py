@@ -27,6 +27,8 @@ def test_context_sign_and_distinct_time_axes(value, word):
     assert row['lookback_trading_days'] == 21
     assert context['information_cutoff'].startswith('2026-11-02')
     assert row['time_scope'] == 'historical_ending_on_price_date'
+    assert 'forecast_window' not in context
+    assert not any('미래 7거래일' in rule for rule in context['rules'])
 
 
 @pytest.mark.parametrize('text,value', [

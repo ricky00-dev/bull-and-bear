@@ -62,21 +62,32 @@ def test_shared_horizon_need_not_be_repeated_in_each_utterance(snapshot, tmp_pat
     assert all('코스피 대비' not in e['statement']['argument'] for e in accepted)
 
 
-def test_final_forecast_still_requires_an_explicit_horizon(snapshot, tmp_path):
-    class MissingFirst(GraphLLM):
+def test_final_forecast_accepts_reasoning_without_scoring_target(snapshot, tmp_path):
+    class UnscoredForecast(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            if self.count == 1:
-                raw['forecast']['reasoning'] = '비슷한 흐름을 가정하지만 관계의 지속은 불확실합니다 [E1].'
+            raw['forecast']['reasoning'] = '관측된 가격만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1].'
             return raw
-    moderator = MissingFirst(snapshot)
+    moderator = UnscoredForecast(snapshot)
     run = runtime(snapshot, tmp_path, moderator=moderator)
     result = run.run()
-    assert moderator.count == 2
-    assert '7거래일 코스피 대비' in result['verdict']['reasoning']
-    assert any(e['type'] == 'moderator_rejected' and
-               any(i['code'] == 'horizon_mismatch' for i in e.get('issues', []))
-               for e in EventLog.read(run.log.path))
+    assert moderator.count == 1
+    assert result['verdict']['reasoning'] == '관측된 가격만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1].'
+    assert not any(e['type'] == 'moderator_rejected' for e in EventLog.read(run.log.path))
+
+
+def test_agent_and_reviewer_systems_do_not_impose_application_scoring(snapshot):
+    from bullbear import prompts
+    from bullbear.graph_runtime import MEDIATOR_SYSTEM
+    from bullbear.semantic import SYSTEM as REVIEW_SYSTEM, BACKGROUND_RULES
+    from bullbear.single import SYSTEM as SINGLE_SYSTEM
+    from bullbear.statement_review import REVIEW_SYSTEM as STATEMENT_REVIEW_SYSTEM
+
+    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM, BACKGROUND_RULES]
+    systems += [prompts.debater_system(side, name=snapshot.name, ticker=snapshot.ticker,
+                                     as_of=str(snapshot.as_of)) for side in Side]
+    for system in systems:
+        assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
 
 
 def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path):
