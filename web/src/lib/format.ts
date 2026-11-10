@@ -3,7 +3,7 @@ export const won = (n: number) => `${Math.round(n).toLocaleString('ko-KR')}원`
 export const pct = (n: number, signed = true) => `${signed && n > 0 ? '+' : ''}${n.toFixed(2)}%`
 
 /** 상승 빨강, 하락 파랑 */
-export const changeColor = (n: number) => (n > 0 ? 'text-up' : n < 0 ? 'text-down-ink' : 'text-sub')
+export const changeColor = (n: number) => (n > 0 ? 'text-up-ink' : n < 0 ? 'text-down-ink' : 'text-sub')
 
 /** %p (초과수익) */
 export const pctPoint = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(2)}%p`

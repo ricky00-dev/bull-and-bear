@@ -35,13 +35,13 @@ export function RankingPage() {
         {r && r.top.length === 0 && (
           <Card className="flex flex-col items-center gap-2 py-8 text-center">
             <p className="text-[17px] font-extrabold">{all ? '아직 아무도 퀴즈를 풀지 않았어요' : '오늘 첫 번째 도전자가 되어 보세요'}</p>
-            <Link to="/quiz" className="text-sm font-bold text-down">
+            <Link to="/quiz" className="text-sm font-bold text-point">
               퀴즈 풀러 가기
             </Link>
           </Card>
         )}
         {r && r.top.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-line bg-white">
+          <div className="overflow-hidden rounded-2xl bg-surface">
             <ol>
               {r.top.map((e, i) => (
                 <Row key={i} e={e} />
@@ -55,7 +55,7 @@ export function RankingPage() {
           </div>
         )}
         {r && !r.mine && r.top.length > 0 && (
-          <Link to="/quiz" className="text-center text-sm font-bold text-down">
+          <Link to="/quiz" className="text-center text-sm font-bold text-point">
             퀴즈를 풀면 나도 랭킹에 올라가요
           </Link>
         )}
@@ -109,7 +109,7 @@ function NicknameCard() {
 
   if (!editing) {
     return (
-      <div className="flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3">
+      <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
         <span className="flex flex-col">
           <span className="text-xs text-sub">랭킹에 보일 내 이름</span>
           <span className="text-[15px] font-extrabold">{current ?? `게스트 #${me.data.userId.slice(0, 4)}`}</span>
@@ -121,7 +121,7 @@ function NicknameCard() {
             save.reset()
             setEditing(true)
           }}
-          className="min-h-10 rounded-xl bg-ground px-3.5 text-[13px] font-bold"
+          className="min-h-10 rounded-xl bg-surface-2 px-3.5 text-[13px] font-bold"
         >
           {current ? '바꾸기' : '닉네임 정하기'}
         </button>
@@ -130,7 +130,7 @@ function NicknameCard() {
   }
   return (
     <form
-      className="flex flex-col gap-2 rounded-2xl border border-ink bg-white p-4"
+      className="flex flex-col gap-2 rounded-panel bg-surface p-4 point-ring"
       onSubmit={(e) => {
         e.preventDefault()
         save.mutate()
@@ -146,9 +146,9 @@ function NicknameCard() {
           value={name}
           maxLength={10}
           onChange={(e) => setName(e.target.value)}
-          className="min-h-11 min-w-0 flex-1 rounded-xl border border-line px-3 text-[15px] outline-none focus:border-ink"
+          className="min-h-11 min-w-0 flex-1 rounded-xl bg-surface-2 px-3 text-[15px] outline-none focus:ring-1 focus:ring-point"
         />
-        <button type="submit" disabled={save.isPending} className="min-h-11 rounded-xl bg-ink px-4 text-[14px] font-bold text-white disabled:opacity-50">
+        <button type="submit" disabled={save.isPending} className="min-h-11 rounded-xl bg-point px-4 text-[14px] font-bold text-on-point disabled:opacity-50">
           저장
         </button>
         <button type="button" onClick={() => setEditing(false)} className="min-h-11 rounded-xl px-2 text-[14px] text-sub">
@@ -170,7 +170,7 @@ function Toggle({ on, onClick, children }: { on: boolean; onClick: () => void; c
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      className={`min-h-10 rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-ink text-white' : 'border border-line bg-white text-sub'}`}
+      className={`min-h-10 rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-point text-on-point' : 'bg-surface-2 text-sub'}`}
     >
       {children}
     </button>

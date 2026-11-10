@@ -1,3 +1,4 @@
+import { Avatar, DebateStage } from '../components/Characters'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -60,6 +61,8 @@ export function DebatePage() {
   }, [stream.statements.length, sheet, debate.data?.status])
 
   const d = debate.data
+  // 무대에는 다음에 말할 쪽을 세운다. 같은 라운드는 매수 → 매도 순으로 보여 주므로 마지막이 매수면 곰 차례
+  const stageSide: 'bull' | 'bear' = stream.statements.at(-1)?.side === 'bull' ? 'bear' : 'bull'
   const asOf = d?.tradeDate ?? stream.asOf
   const sub = asOf ? `스냅샷 ${asOf.slice(5).replace('-', '/')} 종가 기준 · 데이터 고정됨` : '데이터를 고정하는 중'
 
@@ -69,13 +72,14 @@ export function DebatePage() {
 
       <div className="sticky top-[var(--topbar-height)] z-10 flex flex-col gap-2.5 bg-ground px-5 pb-2.5">
         <RoundProgress statements={stream.statements} current={stream.currentRound} done={done} />
-        <div className="flex min-h-9 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13px]" aria-live="polite">
+        <div className="flex min-h-9 items-center gap-2 rounded-xl bg-surface px-3 text-[13px]" aria-live="polite">
           <span className={`size-2 shrink-0 rounded-full ${done ? 'bg-ok' : stream.phase === 'failed' ? 'bg-faint' : 'animate-pulse-dot bg-up'}`} />
           <span className="py-2 leading-relaxed">{stream.phase === 'failed' ? stream.error : stream.activity}</span>
         </div>
       </div>
 
       <main className="flex flex-1 flex-col gap-3.5 px-4 pb-4 pt-1">
+        {!done && stream.phase !== 'failed' && <DebateStage side={stageSide} caption={`${stageSide === 'bull' ? '매수' : '매도'} AI 발언 중`} />}
         <DebatePreparation state={{...stream,asOf:asOf ?? null}} onReconnect={stream.reconnect} />
         <div className="flex flex-col gap-1 py-3">
           <h2 className="text-lg font-bold">같은 자료, 두 가지 해석</h2>
@@ -83,9 +87,9 @@ export function DebatePage() {
         </div>
         {d && <RagPanel key={id} debateId={id} stockName={d.stockName} asOf={asOf} />}
         {stream.extraQuestion && (
-          <div className="rounded-2xl border border-mod-line bg-mod-soft px-4 py-3 text-sm text-mod-ink">
-            <span className="font-bold">중재자의 추가 질문 · </span>
-            {stream.extraQuestion}
+          <div className="flex items-start gap-3 rounded-panel bg-mod-soft px-4 py-3 text-sm text-mod-ink">
+            <Avatar who="owl" size={36} />
+            <p className="leading-relaxed"><span className="font-bold">중재자의 추가 질문 · </span>{stream.extraQuestion}</p>
           </div>
         )}
         {pairStatements(stream.statements).map(pair => (

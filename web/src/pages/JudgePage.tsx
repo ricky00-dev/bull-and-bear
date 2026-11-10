@@ -1,3 +1,4 @@
+import { Avatar } from '../components/Characters'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -12,10 +13,10 @@ import { evidenceCitations, MAX_EVIDENCE_PICKS } from '../lib/evidence'
 import { EvidenceSheet } from '../components/EvidenceSheet'
 import { useJudgmentDraft } from '../lib/useJudgmentDraft'
 
-const OPTIONS: { key: Decision; label: string; sub: string; icon: string; on: string; soft: string }[] = [
-  { key: 'BUY', label: '매수', sub: '코스피보다 더 오를 것 같아요', icon: ICONS.up, on: 'border-up bg-up-soft', soft: 'bg-up text-white' },
-  { key: 'HOLD', label: '보류', sub: '코스피와 비슷하게 움직일 것 같아요', icon: ICONS.flat, on: 'border-ink bg-ground', soft: 'bg-ink text-white' },
-  { key: 'SELL', label: '매도', sub: '코스피보다 더 내릴 것 같아요', icon: ICONS.down, on: 'border-down bg-down-soft', soft: 'bg-down text-white' },
+const OPTIONS: { key: Decision; label: string; sub: string; icon: string; tone: string }[] = [
+  { key: 'BUY', label: '매수', sub: '코스피보다 더 오를 것 같아요', icon: ICONS.up, tone: 'text-up-ink' },
+  { key: 'HOLD', label: '보류', sub: '코스피와 비슷하게 움직일 것 같아요', icon: ICONS.flat, tone: '' },
+  { key: 'SELL', label: '매도', sub: '코스피보다 더 내릴 것 같아요', icon: ICONS.down, tone: 'text-down-ink' },
 ]
 const MAX_PICKS = MAX_EVIDENCE_PICKS
 
@@ -71,7 +72,7 @@ export function JudgePage() {
           <p className="text-sm leading-relaxed text-sub">
             코스피보다 2%p 넘게 오르면 매수, 2%p 넘게 내리면 매도, 그 사이면 보류가 맞아요.
           </p>
-          <p className="mt-1 rounded-xl bg-ground px-3.5 py-2.5 text-[13px] leading-relaxed">
+          <p className="mt-1 rounded-chip bg-surface px-3.5 py-2.5 text-[13px] leading-relaxed">
             <span className="font-bold">판정 팁 · </span>
             누가 말을 잘했는지보다 <b>어느 쪽 근거가 더 탄탄했는지</b> 떠올려 보세요. 상대의 반박에 제대로 답했는지도 중요해요.
           </p>
@@ -87,15 +88,20 @@ export function JudgePage() {
                 type="button"
                 aria-pressed={on}
                 onClick={() => form.update({decision:o.key})}
-                className={`flex min-h-18 items-center gap-3.5 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors ${on ? o.on : 'border-line bg-white'}`}
+                className={`flex min-h-18 items-center gap-3.5 rounded-panel px-3.5 py-3 text-left transition-colors ${on ? 'bg-point-soft point-ring' : 'pressable bg-surface'}`}
               >
-                <span className={`flex size-10 items-center justify-center rounded-xl ${on ? o.soft : 'bg-ground text-sub'}`}>
-                  <Icon d={o.icon} size={22} stroke={2.4} />
-                </span>
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-[17px] font-extrabold">{o.label}</span>
+                {o.key === 'HOLD' ? (
+                  <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${on ? 'bg-point text-on-point' : 'bg-surface-2 text-sub'}`}>
+                    <Icon d={o.icon} size={22} stroke={2.4} />
+                  </span>
+                ) : (
+                  <Avatar who={o.key === 'BUY' ? 'bull' : 'bear'} size={40} />
+                )}
+                <span className="flex flex-1 flex-col gap-0.5">
+                  <span className={`text-[17px] font-extrabold ${o.tone}`}>{o.label}</span>
                   <span className="text-[13px] text-sub">{o.sub}</span>
                 </span>
+                {on && <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-point text-on-point"><Icon d={ICONS.check} size={14} stroke={3} /></span>}
               </button>
             )
           })}
@@ -116,7 +122,7 @@ export function JudgePage() {
             step={10}
             value={confidence}
             onChange={(e) => form.update({confidence:Number(e.target.value)})}
-            className="h-8 w-full accent-ink"
+            className="h-8 w-full accent-point"
           />
           <div className="flex justify-between text-[11px] text-sub">
             <span>반반이에요</span>
@@ -139,11 +145,11 @@ export function JudgePage() {
                   aria-pressed={on}
                   disabled={!on && picks.length >= MAX_PICKS}
                   onClick={() => togglePick(sourceId)}
-                  className={`min-h-touch min-w-0 flex-1 rounded-control border px-3 py-2 text-left text-[13px] font-bold transition-colors ${on ? 'border-ink bg-ink text-white' : 'pressable border-line bg-white disabled:text-faint'}`}
+                  className={`min-h-touch min-w-0 flex-1 rounded-chip px-3 py-2 text-left text-[13px] font-bold transition-colors ${on ? 'bg-point-soft point-ring' : 'pressable bg-surface disabled:text-faint'}`}
                 >
                   {text}
                 </button>
-                <button type="button" aria-label={`${text} 근거 확인`} onClick={() => setSourceId(sourceId)} className="pressable min-h-touch shrink-0 rounded-control border border-line px-3 text-[13px]">확인</button>
+                <button type="button" aria-label={`${text} 근거 확인`} onClick={() => setSourceId(sourceId)} className="pressable min-h-touch shrink-0 rounded-control bg-surface-2 px-3 text-[13px]">확인</button>
                 </div>
               )
             })}
@@ -163,7 +169,7 @@ export function JudgePage() {
             onChange={(e) => form.update({memo:e.target.value})}
             aria-describedby="memo-hint"
             placeholder="나중에 복기할 때 보여드려요"
-            className="min-h-28 resize-y scroll-mt-24 rounded-control border border-line bg-white px-3.5 py-3 text-base leading-relaxed outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+            className="min-h-28 resize-y scroll-mt-24 rounded-control bg-surface px-3.5 py-3 text-base leading-relaxed outline-none focus:ring-1 focus:ring-point"
           />
           <div id="memo-hint" className="flex justify-between gap-3 text-xs text-sub"><span>{form.hasDraft ? form.saved ? '판정과 메모를 이 탭에 임시 보관했어요.' : '임시 저장을 사용할 수 없어요. 화면을 나가기 전에 입력을 확인해 주세요.' : '입력 내용은 이 탭에만 임시 보관해요.'}</span><span className="shrink-0">{memo.length}/200</span></div>
         </div>

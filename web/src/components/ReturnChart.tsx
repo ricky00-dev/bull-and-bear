@@ -79,7 +79,7 @@ export function ReturnChart({ chart }: { chart: Chart }) {
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Legend swatch="h-0.5 w-4 bg-ink" label="이 종목" />
           <Legend swatch="h-0.5 w-4 bg-faint" label="코스피" />
-          {!hidden && <Legend swatch="h-2.5 w-4 rounded-sm bg-[#eef0f3]" label={`보류 구간 (코스피 ±${band}%p)`} />}
+          {!hidden && <Legend swatch="h-2.5 w-4 rounded-sm bg-surface-2" label={`보류 구간 (코스피 ±${band}%p)`} />}
         </span>
         {hidden ? (
           <span>판정일 종가를 0%로 놓고 그 전 한 달을 그렸어요. 오른쪽 빈칸이 맞혀야 할 7거래일이에요.</span>

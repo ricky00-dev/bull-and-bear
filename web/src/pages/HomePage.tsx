@@ -1,3 +1,4 @@
+import { HeroPair } from '../components/Characters'
 import { useQuery } from '@tanstack/react-query'
 import { useDeferredValue, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -82,16 +83,17 @@ export function HomePage() {
       </header>
 
       <div className="flex flex-col gap-3 px-5 pb-5 pt-3 md:max-w-[560px]">
+        <HeroPair />
         <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
           어떤 종목을
           <br />
           판정해 볼까요?
         </h1>
         <p className="text-sm leading-relaxed text-sub">
-          <b className="text-up">매수</b>와 <b className="text-down">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
+          <b className="text-up-ink">매수</b>와 <b className="text-down-ink">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
         </p>
         <label
-          className={`flex min-h-14 items-center gap-2 rounded-control border bg-white pl-4 pr-1.5 transition-colors focus-within:border-ink focus-within:ring-1 focus-within:ring-ink ${query ? 'border-ink' : 'border-line'}`}
+          className={`flex min-h-14 items-center gap-2 rounded-control bg-surface pl-4 pr-1.5 transition-colors focus-within:ring-1 focus-within:ring-point ${query ? 'point-ring' : ''}`}
         >
           <Icon d={ICONS.search} className="text-sub" />
           <span className="sr-only">종목 검색</span>
@@ -124,10 +126,10 @@ export function HomePage() {
               {pending && nextScore && (
                 <Link
                   to={`/me/judgments/${pending.judgmentId}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-white"
+                  className="flex items-center justify-between gap-3 rounded-panel bg-point-soft p-4 text-ink point-ring"
                 >
                   <span className="flex flex-col gap-1">
-                    <span className="text-xs text-[#c9cdd6]">진행 중인 내 판정</span>
+                    <span className="text-xs text-sub">진행 중인 내 판정</span>
                     <span className="text-[15px] font-bold">
                       {pending.stockName} · {DECISION_LABEL[pending.decision]} · {nextScore.horizonDays}거래일 {dueLabel(nextScore.scheduledDate)}
                     </span>
@@ -138,7 +140,7 @@ export function HomePage() {
               <TodayFeed />
               {suggestions.length > 0 && <section className="flex flex-col gap-3">
                 <h2 className="text-base font-bold">종목을 골라 시작하기</h2>
-                <ul className="overflow-hidden rounded-panel border border-line bg-white">
+                <ul className="overflow-hidden rounded-panel bg-surface">
                   {suggestions.map((s) => (
                     <li key={s.ticker} className="border-b border-line-soft last:border-0">
                       <Link
@@ -163,7 +165,7 @@ export function HomePage() {
             </div>
             <div className="flex min-w-0 flex-col gap-6">
               <TodayTerm />
-              <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel border border-line bg-white p-4 transition-colors">
+              <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel bg-surface p-4 transition-colors">
                 <span className="text-sm font-bold">결과를 아는 과거 종목으로 연습하기</span>
                 <Icon d={ICONS.chevron} size={18} className="shrink-0 text-sub" />
               </Link>
@@ -180,13 +182,13 @@ export function HomePage() {
               {search.fetchStatus === 'paused' ? '연결을 기다리고 있어요' : search.isFetching || query.trim() !== deferred ? '찾는 중…' : search.isError ? '검색을 완료하지 못했어요' : `토론할 수 있는 종목 ${eligibleCount}개 · 우선주·ETF 제외`}
             </p>
             {(search.isError || search.fetchStatus === 'paused') && (
-              <div role="alert" className="flex flex-col items-start gap-2 rounded-panel border border-line bg-white p-4">
+              <div role="alert" className="flex flex-col items-start gap-2 rounded-panel bg-surface p-4">
                 <p className="text-sm">{search.fetchStatus === 'paused' ? '네트워크 연결을 확인해 주세요. 연결되면 검색을 다시 시작해요.' : '종목을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.'}</p>
-                {search.fetchStatus !== 'paused' && <button type="button" onClick={() => search.refetch()} className="pressable min-h-touch rounded-control border border-line px-4 text-sm font-bold">다시 시도</button>}
+                {search.fetchStatus !== 'paused' && <button type="button" onClick={() => search.refetch()} className="pressable min-h-touch rounded-control bg-surface-2 px-4 text-sm font-bold">다시 시도</button>}
               </div>
             )}
             {items.length > 0 && (
-              <ul className="overflow-hidden rounded-2xl border border-line bg-white">
+              <ul className="overflow-hidden rounded-2xl bg-surface">
                 {items.map((s) => (
                   <li key={s.ticker} className="border-b border-line-soft last:border-0">
                     {s.eligible ? (
@@ -200,7 +202,7 @@ export function HomePage() {
                         <Price close={s.close} change={s.changePct} />
                       </button>
                     ) : (
-                      <div className="flex min-h-16 items-center gap-3 bg-[#fafafb] px-4 py-2.5">
+                      <div className="flex min-h-16 items-center gap-3 bg-surface-2 px-4 py-2.5">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-[15px] text-sub">{s.name}</span>
                           <span className="text-xs text-sub">
@@ -239,7 +241,7 @@ function ChipRow({ title, items, onPick }: { title: string; items: string[]; onP
             key={name}
             type="button"
             onClick={() => onPick(name)}
-            className="pressable min-h-touch rounded-control border border-line bg-white px-3.5 text-sm transition-colors"
+            className="pressable min-h-touch rounded-control bg-surface px-3.5 text-sm transition-colors"
           >
             {name}
           </button>

@@ -36,7 +36,7 @@ export function MyJudgmentsPage() {
           <div className="flex flex-col items-center gap-3 py-16 text-center">
             <p className="text-[17px] font-extrabold">아직 판정한 종목이 없어요</p>
             <p className="text-sm text-sub">AI 토론을 보고 첫 판정을 내려 보세요</p>
-            <Link to="/" className="mt-2 flex min-h-12 items-center rounded-xl bg-ink px-5 text-[15px] font-bold text-white">
+            <Link to="/" className="mt-2 flex min-h-12 items-center rounded-xl bg-point px-5 text-[15px] font-bold text-on-point">
               종목 찾기
             </Link>
           </div>
@@ -46,7 +46,7 @@ export function MyJudgmentsPage() {
           <ul className="flex flex-col gap-2.5 md:grid md:grid-cols-2">
             {items.map((j) => (
               <li key={j.judgmentId}>
-                <Link to={`/me/judgments/${j.judgmentId}`} className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-4">
+                <Link to={`/me/judgments/${j.judgmentId}`} className="flex flex-col gap-2.5 rounded-2xl bg-surface p-4">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[16px] font-extrabold">{j.stockName}</span>
                     <span className="text-xs text-sub">{monthDay(j.tradeDate)} 판정</span>

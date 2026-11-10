@@ -23,9 +23,9 @@ export function JudgmentComparison({ mine, moderator, scores, holdBand, loading 
     <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-bold">나 · AI · 실제 결과</h2>
-        <div className="flex rounded-control bg-ground p-1" aria-label="비교할 기간">
+        <div className="flex rounded-control bg-surface-2 p-1" aria-label="비교할 기간">
           {[3, 7].map(n => <button key={n} type="button" aria-pressed={days === n} onClick={() => setHorizon(n)}
-            className={`min-h-touch rounded-md px-3 text-sm ${days === n ? 'bg-ink font-bold text-white' : 'pressable text-sub'}`}>{n}거래일</button>)}
+            className={`min-h-touch rounded-md px-3 text-sm ${days === n ? 'bg-point font-bold text-on-point' : 'pressable text-sub'}`}>{n}거래일</button>)}
         </div>
       </div>
       <div className="grid grid-cols-3 divide-x divide-line">

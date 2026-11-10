@@ -20,14 +20,14 @@ export function GlossaryPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="용어 찾기 (예: PER, 이동평균)"
           aria-label="용어 찾기"
-          className="min-h-12 rounded-xl border border-line bg-white px-4 text-[15px] outline-none focus:border-ink"
+          className="min-h-12 rounded-xl bg-surface px-4 text-[15px] outline-none focus:ring-1 focus:ring-point"
         />
         {items.length === 0 ? (
           <p className="py-10 text-center text-sm text-sub">찾는 용어가 없어요</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {items.map((t) => (
-              <li key={t.label} className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-4">
+              <li key={t.label} className="flex flex-col gap-1 rounded-2xl bg-surface p-4">
                 <p className="text-[15px] font-extrabold">{t.label}</p>
                 <p className="text-sm leading-relaxed text-sub">{t.desc}</p>
               </li>

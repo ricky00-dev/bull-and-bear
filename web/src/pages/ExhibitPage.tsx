@@ -32,13 +32,16 @@ export function ExhibitPage() {
             먼저 판정해 보세요
           </h1>
           <p className="text-[clamp(15px,1.3vw,24px)] leading-relaxed text-sub">
-            <b className="text-up">매수</b> AI와 <b className="text-down">매도</b> AI의 근거를 읽고 내가 먼저 판정해요.
+            <b className="text-up-ink">매수</b> AI와 <b className="text-down-ink">매도</b> AI의 근거를 읽고 내가 먼저 판정해요.
             <br />
             실제 주가로 나와 AI를 함께 채점해요.
           </p>
         </div>
-        <div className="flex items-center gap-[2vw] rounded-panel bg-white p-[2vw]">
-          <QRCodeSVG value={ENTRY_URL} size={512} marginSize={0} level="M" className="h-auto w-[min(16vw,32vh)] shrink-0" />
+        <div className="flex items-center gap-[2vw] rounded-panel bg-surface p-[2vw]">
+          {/* QR은 카메라가 읽도록 흰 바탕 + 여백(quiet zone)을 둔다 */}
+          <div className="shrink-0 rounded-control bg-white p-[1vw]">
+            <QRCodeSVG value={ENTRY_URL} size={512} marginSize={0} level="M" className="block h-auto w-[min(16vw,32vh)]" />
+          </div>
           <div className="flex flex-col gap-[0.8vw]">
             <p className="text-[clamp(18px,1.8vw,34px)] font-extrabold leading-snug">
               폰 카메라로
@@ -53,7 +56,7 @@ export function ExhibitPage() {
       </section>
 
       <section className="flex min-w-0 flex-1 flex-col gap-[2vw]">
-        <div className="flex flex-1 flex-col gap-[1vw] rounded-panel bg-white p-[2vw]">
+        <div className="flex flex-1 flex-col gap-[1vw] rounded-panel bg-surface p-[2vw]">
           <div className="flex items-baseline justify-between">
             <h2 className="text-[clamp(18px,1.7vw,32px)] font-extrabold">오늘의 퀴즈 랭킹</h2>
             {ranking.data && <span className="text-[clamp(13px,1.1vw,20px)] text-sub">{ranking.data.players}명 도전</span>}
@@ -68,7 +71,7 @@ export function ExhibitPage() {
           </ol>
         </div>
 
-        <div className="flex flex-col gap-[1vw] rounded-panel bg-white p-[2vw]">
+        <div className="flex flex-col gap-[1vw] rounded-panel bg-surface p-[2vw]">
           <div className="flex items-baseline justify-between">
             <h2 className="text-[clamp(18px,1.7vw,32px)] font-extrabold">오늘의 토론</h2>
             {debates.length > 0 && <span className="text-[clamp(13px,1.1vw,20px)] text-sub">판정 {judged}건</span>}
@@ -76,7 +79,7 @@ export function ExhibitPage() {
           {debates.length === 0 && <p className="text-[clamp(14px,1.2vw,22px)] text-sub">오늘 토론을 준비하고 있어요</p>}
           <ul className="grid grid-cols-2 gap-[0.8vw] xl:grid-cols-3">
             {debates.slice(0, 6).map((d) => (
-              <li key={d.debateId} className="flex items-baseline justify-between gap-2 rounded-control bg-ground px-[1.2vw] py-[0.9vw]">
+              <li key={d.debateId} className="flex items-baseline justify-between gap-2 rounded-control bg-surface-2 px-[1.2vw] py-[0.9vw]">
                 <span className="truncate text-[clamp(14px,1.2vw,22px)] font-bold">{d.stockName}</span>
                 <span className="shrink-0 text-[clamp(12px,1vw,18px)] text-sub">{d.judged}명</span>
               </li>

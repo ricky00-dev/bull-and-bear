@@ -199,7 +199,7 @@ function Visitors({ v }: { v: { n: number; userHits: number; aiHits: number } })
 
 function Limits({ r }: { r: Report }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-ground px-1 text-[11px] leading-relaxed text-sub">
+    <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-1 text-[11px] leading-relaxed text-sub">
       <p>⚠ 표본이 적어 10%p 안팎의 차이는 우연일 수 있어요. 같은 날 종목들은 시장 흐름을 같이 타요.</p>
       <p>
         {r.official
@@ -217,7 +217,7 @@ function Toggle({ on, onClick, children }: { on: boolean; onClick: () => void; c
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      className={`min-h-10 rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-ink text-white' : 'border border-line bg-white text-sub'}`}
+      className={`min-h-10 rounded-xl px-3.5 text-[13px] font-bold ${on ? 'bg-point text-on-point' : 'bg-surface-2 text-sub'}`}
     >
       {children}
     </button>

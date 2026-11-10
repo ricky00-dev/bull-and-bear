@@ -18,8 +18,8 @@ export default defineConfig({
         short_name: '불앤베어',
         description: 'AI 토론을 보고 먼저 판정하는 모의투자 학습',
         lang: 'ko',
-        theme_color: '#F5F6F8',
-        background_color: '#F5F6F8',
+        theme_color: '#0B0C0E',
+        background_color: '#0B0C0E',
         display: 'standalone',
         start_url: '/',
         icons: [

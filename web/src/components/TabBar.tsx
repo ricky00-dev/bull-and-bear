@@ -11,7 +11,7 @@ const TABS = [
 /** 하단 탭. 넓은 화면(md 이상)에서는 숨기고 SideNav가 대신한다 */
 export function TabBar() {
   return (
-    <nav aria-label="주 메뉴" className="pb-safe sticky bottom-0 z-10 grid grid-cols-4 border-t border-line bg-white px-2 pt-1.5 md:hidden">
+    <nav aria-label="주 메뉴" className="pb-safe sticky bottom-0 z-10 grid grid-cols-4 glass-bar px-2 pt-1.5 md:hidden">
       {TABS.map((t) => (
         <NavLink
           key={t.to}
@@ -34,7 +34,7 @@ export function SideNav() {
   return (
     <nav
       aria-label="주 메뉴"
-      className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-1 border-r border-line bg-white px-3 py-6 md:flex lg:w-64"
+      className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-1 bg-surface px-3 py-6 md:flex lg:w-64"
     >
       <NavLink to="/" className="mb-5 px-3">
         <Logo />
@@ -45,7 +45,7 @@ export function SideNav() {
           to={t.to}
           end
           className={({ isActive }) =>
-            `flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-bold ${isActive ? 'bg-ground text-ink' : 'text-sub hover:bg-ground'}`
+            `flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-bold ${isActive ? 'bg-surface-2 text-ink' : 'text-sub hover:bg-surface-2'}`
           }
         >
           <Icon d={t.icon} size={22} />
