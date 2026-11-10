@@ -1,5 +1,4 @@
 """Isolated model review, not proof of logical or financial correctness."""
-import json
 import re
 from typing import Literal
 
@@ -9,6 +8,7 @@ from .llm import Conversation, LLMError
 from .prompts import JUDGMENT_POLICY
 from .presentation import argument_quote_spans
 from .history import history_entry, reference_map as history_reference_map, contains_quote
+from .shared_context import fact_for_model
 from .verifier import Issue
 
 
@@ -180,21 +180,23 @@ class SemanticReviewer:
                        and contains_quote(history_prose[index], span["quote"])]
             argument_quotes.append({**span, "source_matches": matches})
         # Existence and citation correctness are separate checks.
-        facts = {key: fact.model_dump(mode="json") for key, fact in self.snapshot.facts.items()}
+        facts = {key: fact_for_model(fact) for key, fact in self.snapshot.facts.items()}
         system = SINGLE_REVIEW_SYSTEM if self.single_mode else SYSTEM
-        conversation = Conversation(system, [{"role": "user", "content": json.dumps({
-            "candidate": payload, "candidate_role": "single" if self.single_mode else side.value if side is not None else
-                ("moderator" if "decisive_evidence" in payload else None),
-            "candidate_round": round_kind, "reference_map": reference_map,
-            "argument_quotes": argument_quotes,
-            "history": history_turns, "facts": facts,
-            "selected_source_ids": sorted(set(source_ids)),
-            "verification_stats": stats,
+        conversation = Conversation.from_snapshot(system, {
+            "facts": facts,
             "price_as_of": str(self.snapshot.as_of), "snapshot_created_at": str(self.snapshot.created_at),
             "decision_at": self.snapshot.decision_at.isoformat(),
             "information_cutoff": self.snapshot.information_cutoff.isoformat(),
             "warnings": self.snapshot.warnings,
-        }, ensure_ascii=False)}])
+        }, {
+            "candidate": payload, "candidate_role": "single" if self.single_mode else side.value if side is not None else
+                ("moderator" if "decisive_evidence" in payload else None),
+            "candidate_round": round_kind, "reference_map": reference_map,
+            "argument_quotes": argument_quotes,
+            "history": history_turns,
+            "selected_source_ids": sorted(set(source_ids)),
+            "verification_stats": stats,
+        })
         def strings(value):
             if isinstance(value, str):
                 return [value]

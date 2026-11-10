@@ -10,6 +10,7 @@ from bullbear.graph_runtime import GraphRuntime, GraphStopped, MEDIATION_SCHEMA
 from bullbear.llm import LLMError, anthropic_schema
 from bullbear.schemas import Side
 from bullbear.snapshot import build_snapshot
+from .prompt_helpers import initial_payload
 from .fakes import NOW, FakeSource
 from .graph_fakes import GraphLLM
 from .test_server import setup, app_for, start, completed, AUTH, parse_sse
@@ -93,7 +94,7 @@ def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path)
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'return_context' in json.loads(conv.messages[0]['content'])
+            assert 'return_context' in initial_payload(conv)
             if self.count == 1:
                 raw['argument'] = '상대수익은 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
             return raw
@@ -112,7 +113,7 @@ def test_moderator_return_sign_failure_is_rewritten(snapshot, tmp_path):
     class WrongModerator(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'return_context' in json.loads(conv.messages[0]['content'])
+            assert 'return_context' in initial_payload(conv)
             if self.count == 1:
                 raw['forecast']['reasoning'] = '7거래일 코스피 대비 상대수익 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
             return raw
@@ -130,7 +131,7 @@ def test_source_wording_is_corrected_before_publication(snapshot, tmp_path):
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'source_context' in json.loads(conv.messages[0]['content'])
+            assert 'source_context' in initial_payload(conv)
             if self.count == 1:
                 raw['argument'] = bad_text
             return raw
@@ -146,7 +147,7 @@ def test_moderator_per_is_corrected_before_publication(snapshot, tmp_path):
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'source_context' in json.loads(conv.messages[0]['content'])
+            assert 'source_context' in initial_payload(conv)
             if self.count == 1:
                 raw['forecast']['reasoning'] = '7거래일 코스피 대비 PER 8.46배로 낮은 편이라 반등을 예상합니다 [E1].'
             return raw
@@ -201,11 +202,11 @@ def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
     ordered = sorted(accepted, key=lambda e: (rounds.index(e['round']), e['side'] == 'bear'))
     expected = [dict(side=e['side'], round=e['round'], **e['statement']) for e in ordered]
     for client in (run.bull, run.bear):
-        calls = [json.loads(c.messages[0]['content']) for c, schema in client.calls if 'claim' in schema['properties']]
+        calls = [initial_payload(c) for c, schema in client.calls if 'claim' in schema['properties']]
         assert [c['round'] for c in calls] == rounds
         for call, count in zip(calls, (0, 2, 4), strict=True):
             assert [json.loads(entry) for entry in call['history']] == expected[:count]
-    moderator_call, = [json.loads(c.messages[0]['content']) for c, schema in run.moderator.calls
+    moderator_call, = [initial_payload(c) for c, schema in run.moderator.calls
                        if 'forecast' in schema['properties']]
     assert [json.loads(entry) for entry in moderator_call['history']] == expected
 
@@ -261,10 +262,10 @@ def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, 
             return raw
     class Reviewing(GraphLLM):
         def structured(self, conv, **kwargs):
-            payload = json.loads(conv.messages[0]['content'])
+            payload = initial_payload(conv)
             assert len(payload['history']) == 6
             assert payload['facts']['PX.CLOSE']['value'] == 399
-            assert '기관 매수가 이미 발생했다' in conv.messages[0]['content']
+            assert '기관 매수가 이미 발생했다' in conv.messages[1]['content']
             raw = super().structured(conv, **kwargs)
             for review in raw['forecast']['analysis']['statement_reviews']:
                 if ':bull:' in review['statement_id']:
@@ -426,7 +427,7 @@ def test_progress_distinguishes_partial_fixed_rounds_from_legacy_graph():
 def test_rebuttal_failure_preserves_openings_without_calling_moderator(snapshot, tmp_path):
     class FailedRebuttal(GraphLLM):
         def structured(self, conv, **kwargs):
-            if 'claim' in kwargs['schema']['properties'] and json.loads(conv.messages[0]['content'])['round']=='rebuttal':
+            if 'claim' in kwargs['schema']['properties'] and initial_payload(conv)['round']=='rebuttal':
                 raise LLMError('rebuttal failed')
             return super().structured(conv, **kwargs)
     run = runtime(snapshot, tmp_path, bull=FailedRebuttal(snapshot))

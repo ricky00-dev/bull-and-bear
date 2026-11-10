@@ -45,6 +45,14 @@ def test_role_overrides(monkeypatch):
     assert report['network_calls'] == 0
 
 
+def test_model_without_trailing_system_support_blocks_readiness(monkeypatch):
+    configured(monkeypatch)
+    monkeypatch.setenv('BULLBEAR_MODERATOR_MODEL', 'claude-sonnet-4-6')
+    report = inspect_settings(load_settings())
+    assert not report['configuration_ready']
+    assert report['errors'] == ['moderator_model_missing_trailing_system_support']
+
+
 def test_budget_configuration_check_is_read_only_and_needs_both_fields(monkeypatch, tmp_path):
     configured(monkeypatch)
     monkeypatch.setenv('BULLBEAR_DATA_DIR', str(tmp_path/'no-data'))

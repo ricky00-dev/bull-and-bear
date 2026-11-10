@@ -4,12 +4,22 @@ import sqlite3
 
 import pytest
 
-from bullbear.anthropic_budget import BudgetDenied, BudgetUsageError, WorkerSpendLedger, read_summary, usage_cost
+from bullbear.anthropic_budget import (
+    BudgetDenied, BudgetUsageError, LEGACY_PRICE_HASH, PRICE_HASH,
+    WorkerSpendLedger, read_summary, usage_cost,
+)
 
 
 def request(**changes):
     return {'model': 'claude-sonnet-5-5', 'max_tokens': 16000, 'messages': [], 'system': 'test',
             'service_tier': 'standard_only', 'inference_geo': 'global', **changes}
+
+
+def cached_request(**control):
+    return request(messages=[{'role': 'user', 'content': [
+        {'type': 'text', 'text': 'shared snapshot',
+         'cache_control': {'type': 'ephemeral', **control}},
+    ]}])
 
 
 def response(model='claude-sonnet-5-5', **usage):
@@ -59,6 +69,53 @@ def test_concurrent_reservations_cannot_overcommit(tmp_path):
     assert ledger(tmp_path).summary()['accounted_upper_usd'] == 2.16
 
 
+def test_cache_miss_and_hit_settle_separately_and_survive_restart(tmp_path):
+    spend = ledger(tmp_path)
+    cold = spend.reserve(cached_request(ttl='5m'), scope='bull')
+    assert spend.summary()['accounted_upper_usd'] == 2.66
+    # A second cold parallel request must still reserve writes, not assume a hit.
+    with pytest.raises(BudgetDenied):
+        spend.reserve(cached_request(), scope='bear-before-cache-ready')
+    spend.settle(cold, response(cache_creation_input_tokens=1000, cache_creation={
+        'ephemeral_5m_input_tokens': 1000, 'ephemeral_1h_input_tokens': 0,
+    }))
+    warm = spend.reserve(cached_request(), scope='bear')
+    spend.settle(warm, response(cache_read_input_tokens=1000))
+    reopened = ledger(tmp_path)
+    assert reopened.cost_for_scopes({'bull'}) == .0029
+    assert reopened.cost_for_scopes({'bear'}) == .0005
+    assert reopened.summary()['known_cost_usd'] == .0034
+    assert reopened.summary()['unconfirmed_requests'] == 0
+
+
+def test_legacy_policy_migration_preserves_spend_reservations_and_halt(tmp_path):
+    spend = ledger(tmp_path, '5')
+    done = spend.reserve(request(), scope='settled')
+    spend.settle(done, response())
+    unknown = spend.reserve(request(), scope='unknown')
+    spend.reserve(request(), scope='interrupted')
+    spend.unknown(unknown, 'TimeoutError')
+    with spend._db() as db:
+        db.execute('UPDATE authorization SET price_hash=?', (LEGACY_PRICE_HASH,))
+        requests_before = db.execute('SELECT * FROM requests ORDER BY id').fetchall()
+    before = spend.summary()
+    reopened = ledger(tmp_path, '5')
+    assert reopened.summary() == {**before, 'price_hash': PRICE_HASH}
+    with reopened._db() as db:
+        assert db.execute('SELECT * FROM requests ORDER BY id').fetchall() == requests_before
+    with pytest.raises(BudgetDenied):
+        reopened.reserve(cached_request(), scope='still-halted')
+
+
+def test_unknown_policy_hash_cannot_be_migrated(tmp_path):
+    spend = ledger(tmp_path)
+    with spend._db() as db:
+        db.execute("UPDATE authorization SET price_hash='unrecognized-policy'")
+    with pytest.raises(BudgetDenied, match='cannot be reset'):
+        ledger(tmp_path)
+    assert read_summary(tmp_path/'budget.sqlite3')['price_hash'] == 'unrecognized-policy'
+
+
 def test_unknown_and_interrupted_calls_cannot_be_released_by_restart(tmp_path):
     first = ledger(tmp_path)
     ident = first.reserve(request(), scope='before-crash')
@@ -85,13 +142,26 @@ def test_changed_authorization_cannot_reset_existing_ledger(tmp_path, name, limi
     {'model': 'claude-opus-5-5'}, {'max_tokens': 16001}, {'max_tokens': True},
     {'service_tier': 'auto'}, {'inference_geo': 'us'}, {'speed': 'fast'},
     {'tools': [{'type': 'web_search_20250305', 'name': 'web_search'}]},
-    {'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': 'a', 'cache_control': {'type': 'ephemeral'}}]}]},
+    {'cache_control': {'type': 'ephemeral'}},  # Automatic caching is outside this explicit-prefix policy.
     {'messages': [{'role': 'user', 'content': [{'type': 'image', 'source': {}}]}]},
 ])
 def test_unbudgeted_options_are_rejected_without_reservation(tmp_path, changes):
     spend = ledger(tmp_path)
     with pytest.raises(BudgetDenied):
         spend.reserve({**request(), **changes}, scope='rejected')
+    assert spend.summary()['requests'] == 0
+
+
+@pytest.mark.parametrize('control', [
+    None, {}, 'ephemeral', {'type': 'persistent'}, {'type': 'ephemeral', 'ttl': '1h'},
+    {'type': 'ephemeral', 'ttl': None}, {'type': 'ephemeral', 'scope': 'global'},
+])
+def test_unbudgeted_cache_options_are_rejected_before_reservation(tmp_path, control):
+    payload = cached_request()
+    payload['messages'][0]['content'][0]['cache_control'] = control
+    spend = ledger(tmp_path)
+    with pytest.raises(BudgetDenied):
+        spend.reserve(payload, scope='invalid-cache')
     assert spend.summary()['requests'] == 0
 
 
@@ -107,6 +177,32 @@ def test_unpriced_usage_halts_and_retains_reservation(tmp_path, changes):
         spend.settle(ident, response(**changes))
     report = spend.summary()
     assert report['halted'] and report['reserved_unconfirmed_usd'] == 2.16
+
+
+@pytest.mark.parametrize('creation', [
+    None, {}, {'ephemeral_5m_input_tokens': 9},
+    {'ephemeral_5m_input_tokens': 10, 'ephemeral_1h_input_tokens': 1},
+    {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 10},
+    {'ephemeral_5m_input_tokens': True}, {'ephemeral_5m_input_tokens': -1},
+    {'ephemeral_5m_input_tokens': 10, 'unknown_duration_input_tokens': 0},
+])
+def test_unpriced_cache_usage_retains_full_write_reservation(tmp_path, creation):
+    spend = ledger(tmp_path)
+    ident = spend.reserve(cached_request(), scope='invalid-cache-usage')
+    with pytest.raises(BudgetUsageError):
+        spend.settle(ident, response(cache_creation_input_tokens=10, cache_creation=creation))
+    report = spend.summary()
+    assert report['halted'] and report['reserved_unconfirmed_usd'] == 2.66
+
+
+def test_context_limit_includes_written_cache_tokens(tmp_path):
+    spend = ledger(tmp_path)
+    ident = spend.reserve(cached_request(), scope='over-context')
+    with pytest.raises(BudgetUsageError, match='exceeded'):
+        spend.settle(ident, response(input_tokens=1_000_000, cache_creation_input_tokens=1,
+            cache_creation={'ephemeral_5m_input_tokens': 1, 'ephemeral_1h_input_tokens': 0}))
+    report = spend.summary()
+    assert report['halted'] and report['known_cost_usd'] == 2.0002025
 
 
 def test_output_overrun_records_actual_and_halts(tmp_path):
@@ -133,6 +229,10 @@ def test_haiku_long_context_price_uses_cached_tokens_in_threshold():
     assert usage_cost('claude-haiku-5-5', {'input_tokens': 100000, 'output_tokens': 10}) == 10005000
     assert usage_cost('claude-haiku-5-5', {'input_tokens': 100000, 'output_tokens': 10,
                                         'cache_read_input_tokens': 1}) == 50025050
+    assert usage_cost('claude-haiku-5-5', {'input_tokens': 99999, 'output_tokens': 10,
+        'cache_creation_input_tokens': 1, 'cache_creation': {'ephemeral_5m_input_tokens': 1}}) == 10005025
+    assert usage_cost('claude-haiku-5-5', {'input_tokens': 100000, 'output_tokens': 10,
+        'cache_creation_input_tokens': 1, 'cache_creation': {'ephemeral_5m_input_tokens': 1}}) == 50025625
 
 
 def test_schema_property_named_type_is_not_a_media_block(tmp_path):

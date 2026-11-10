@@ -1,9 +1,9 @@
 """Deterministic providers for the real LangGraph runtime, never production fallbacks."""
-import json
 from types import SimpleNamespace
 
 from bullbear.interpretations import history_records
 from bullbear.schemas import Side, Decision
+from .prompt_helpers import initial_payload
 from .fakes import statement
 from .learning_fixtures import with_analysis, moderator_analysis
 
@@ -23,7 +23,10 @@ class GraphLLM:
         self.count += 1
         self.calls.append((conv, schema))
         if 'issues' in schema['properties']:
-            return {'issues': []}
+            result = {'issues': []}
+            if 'revised_statement' in schema['properties']:
+                result['revised_statement'] = None
+            return result
         if 'forecast' in schema['properties']:
             action = next(self.actions, 'ACCEPT')
             score = dict(relevance=3, materiality=3, rebuttal=3, risk_awareness=3, comment='자료와 한계를 살폈다.')
@@ -31,7 +34,7 @@ class GraphLLM:
                 reasoning='7거래일 코스피 대비 비슷한 흐름을 예상하지만 관계의 지속은 불확실하다 [E1].',
                 decisive_evidence=['PX.CLOSE'], bull=score, bear=score,
                 analysis=moderator_analysis().model_dump(mode='json'))
-            records = history_records(json.loads(conv.messages[0]['content'])['history'])
+            records = history_records(initial_payload(conv)['history'])
             forecast['analysis']['statement_reviews'] = [dict(statement_id=r['statement_id'],
                 assessment='uncertain', reason='미래 조건은 미확인', source_ids=['PX.CLOSE']) for r in records]
             return dict(action=action, reason='중요한 가정을 재검토하세요.',
@@ -43,7 +46,7 @@ class GraphLLM:
         direction = '강세' if side == Side.BULL else '약세'
         candidate.claim = f'7거래일 코스피 대비 {direction}를 주장한다'
         candidate.argument = '관측된 가격을 배경으로 비슷한 흐름을 가정하지만 불확실하다 [E1].'
-        payload = json.loads(conv.messages[0]['content'])
+        payload = initial_payload(conv)
         history = payload.get('history', [])
         if payload.get('round') == 'rebuttal':
             from bullbear.schemas import Rebuttal

@@ -139,7 +139,17 @@ class Snapshot(BaseModel):
     def save(self, directory: Path) -> Path:
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{self.snapshot_id}.json"
-        path.write_text(self.model_dump_json(indent=2), encoding="utf-8")
+        # Omit only fields that reload as None when absent. Required nullable values stay.
+        nullable_metadata = [name for name, field in Fact.model_fields.items() if field.default is None]
+        exclude = {
+            "facts": {
+                fact_id: {name for name in nullable_metadata if getattr(fact, name) is None}
+                for fact_id, fact in self.facts.items()
+            }
+        }
+        if self.time_context is None:
+            exclude["time_context"] = True
+        path.write_text(self.model_dump_json(indent=2, exclude=exclude), encoding="utf-8")
         return path
 
     @classmethod

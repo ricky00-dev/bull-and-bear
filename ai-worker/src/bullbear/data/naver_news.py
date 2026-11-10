@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import html
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 
 from urllib.parse import urlsplit
@@ -23,6 +23,7 @@ from .base import DataUnavailable, NewsArticle, NewsSource
 API_URL = "https://naverapihub.apigw.ntruss.com/search/v1/news"
 PAGE_SIZE = 100
 MAX_PAGES = 3
+_KST = timezone(timedelta(hours=9))
 MARKET_TOPICS = (
     ("한국 증시", ("코스피", "코스닥", "증시", "주식시장")),
     ("한국은행 통화정책", ("한국은행", "금통위", "기준금리", "통화정책")),
@@ -62,7 +63,14 @@ class NaverNewsSource(NewsSource):
         )
 
     def search(self, ticker: str, name: str, start: datetime, end: datetime) -> list[NewsArticle]:
-        return filter_articles(self._search(QUERY_OVERRIDES.get(ticker, name), start), name, start, end)
+        query = QUERY_OVERRIDES.get(ticker, name)
+        items = self._search(query, start)
+        if items and all(_published_at(item["pubDate"]) > end for item in items):
+            # The API has no publication-date filter. Find candidates near the price cutoff.
+            day = end.astimezone(_KST).date()
+            dated_query = f"{query} {day.month}월 {day.day}일"
+            items = self._search(dated_query, start, max_pages=1, sort="sim")
+        return filter_articles(items, name, start, end)
 
     def search_market(self, start: datetime, end: datetime) -> list[NewsArticle]:
         articles = []
@@ -74,19 +82,19 @@ class NaverNewsSource(NewsSource):
     def close(self):
         self._http.close()
 
-    def _search(self, query, start, *, max_pages=MAX_PAGES):
+    def _search(self, query, start, *, max_pages=MAX_PAGES, sort="date"):
         raw: list[dict] = []
         try:
             for page in range(max_pages):
                 resp = self._http.get(API_URL, params={"query": query, "display": PAGE_SIZE,
-                                                       "start": page * PAGE_SIZE + 1, "sort": "date", "format": "json"})
+                                                       "start": page * PAGE_SIZE + 1, "sort": sort, "format": "json"})
                 if resp.status_code != 200:
                     raise DataUnavailable(f"네이버 API HUB 뉴스 오류 HTTP {resp.status_code}")
                 body = resp.json()
                 items = body.get("items") if isinstance(body, dict) else None
                 _validate_items(items)
                 raw.extend(items)
-                if len(items) < PAGE_SIZE or _published_at(items[-1]["pubDate"]) < start:
+                if len(items) < PAGE_SIZE or (sort == "date" and _published_at(items[-1]["pubDate"]) < start):
                     break
             return raw
         except httpx.HTTPError:

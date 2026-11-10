@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from bullbear.data.base import DataUnavailable
-from bullbear.data.naver_news import NaverNewsSource, filter_articles
+from bullbear.data.naver_news import PAGE_SIZE, NaverNewsSource, filter_articles
 from bullbear.snapshot import KST
 
 START = datetime(2026, 10, 10, tzinfo=KST)
@@ -58,6 +58,7 @@ def test_hub_endpoint_headers_and_json_query(monkeypatch):
     source._http = httpx.Client(transport=httpx.MockTransport(handle), headers=headers)
     try:
         assert len(source.search("005930", "삼성전자", START, END)) == 1
+        assert len(calls) == 1
         assert str(calls[0].url).startswith("https://naverapihub.apigw.ntruss.com/search/v1/news?")
         assert calls[0].url.params["format"] == "json"
         assert calls[0].headers["X-NCP-APIGW-API-KEY-ID"] == "test-id"
@@ -125,6 +126,26 @@ def test_malformed_provider_response_is_safe_data_unavailable(make_source, respo
 def test_empty_items_is_a_successful_search(make_source):
     source = make_source(lambda request: httpx.Response(200, json={"items": []}))
     assert source.search("005930", "삼성전자", START, END) == []
+
+
+def test_stock_search_uses_price_date_if_latest_pages_miss_cutoff(make_source):
+    start = datetime(2026, 11, 2, 15, 30, tzinfo=KST)
+    end = datetime(2026, 11, 9, 15, 30, tzinfo=KST)
+    calls = []
+    future = item("삼성전자 마감 이후 기사", "future", pub="Mon, 09 Nov 2026 16:00:00 +0900")
+    eligible = item("삼성전자 장중 기사", "eligible", pub="Mon, 09 Nov 2026 14:00:00 +0900")
+
+    def handle(request):
+        params = request.url.params
+        calls.append((params["query"], params["sort"], int(params["start"])))
+        items = [future] * PAGE_SIZE if params["sort"] == "date" else [future, eligible]
+        return httpx.Response(200, json={"items": items})
+
+    articles = make_source(handle).search("005930", "삼성전자", start, end)
+    assert calls == [("삼성전자", "date", i * PAGE_SIZE + 1) for i in range(3)] + [
+        ("삼성전자 11월 9일", "sim", 1),
+    ]
+    assert [article.url for article in articles] == ["eligible"]
 
 
 def test_market_news_uses_bounded_topic_search_and_original_publisher(make_source):

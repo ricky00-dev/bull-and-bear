@@ -2,14 +2,17 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import json
 from typing import Literal
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
+from . import prompts
 from .llm import Conversation, LLM, LLMError, ToolHandler
 from .schemas import STATEMENT_SCHEMA, Side, Statement, Decision, SideScore, ModeratorAnalysis
+from .shared_context import build_news_context
 from .snapshot import Snapshot
 from .tools import TOOL_CATEGORIES, TOOL_DEFINITIONS, SnapshotTools
 from .verifier import verify
@@ -80,12 +83,13 @@ def build_debate_graph(
                 return {side.value: [*state.get(side.value, []), analysis]}
             snapshot = state["snapshot"]
             history = state.get(side.value, [])
-            task = f"{snapshot.name} ({snapshot.ticker}), 기준일 {snapshot.as_of}"
+            news = json.dumps(build_news_context(snapshot), ensure_ascii=False)
+            task = f"{snapshot.name} ({snapshot.ticker}), 기준일 {snapshot.as_of}\n뉴스: {news}"
             if history:
                 previous = history[-1].statement.model_dump_json()
                 task += f"\n이전 분석: {previous}\n재검토 요청: {state['decisions'][-1].reason}"
             conversation = Conversation(
-                system=f"{side.label} 측에서 가설과 반증을 조사하고 조회한 근거 ID를 인용하세요.",
+                system=f"{side.label} 측에서 가설과 반증을 조사하고 제공된 근거 ID를 인용하세요.\n" + prompts.NEWS_LOOKUP_RULES,
                 messages=[{"role": "user", "content": task}],
             )
             calls = []
