@@ -17,6 +17,8 @@ spring:
 
 server:
   port: 8080
+  # Caddy가 HTTPS를 받아 http로 넘긴다. X-Forwarded-Proto를 믿어야 브라우저의 https 출처를 같은 출처로 보고 CORS 403을 내지 않는다
+  forward-headers-strategy: native
 
 bullbear:
   cors:

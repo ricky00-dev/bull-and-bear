@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-10 · Claude(PM) · api
+- 한 것: 배포 사이트에서 브라우저 게스트 입장이 403(Invalid CORS request)으로 막히던 문제 수정. Caddy가 HTTPS를 받아 Spring에 http로 넘겨서 `https://` 출처를 다른 출처로 판단했음. `server.forward-headers-strategy: native`로 X-Forwarded-Proto를 믿게 함. 로컬 운영 확인은 http(:80)라 안 보였음
+- 진행 중: 없음
+- 다음: 서버 재배포 후 브라우저로 게스트 입장·카카오 로그인 확인
+- 막힘·결정 필요: 없음
+
 ## 2026-11-10 · Claude(PM) · deploy, docs
 - 한 것: 첫 배포. AWS 무료 플랜이라 시드니 리전 EC2(t3.small, 탄력적 IP 54.253.242.203)에 가짜 워커로 올림 → https://54-253-242-203.sslip.io (Caddy 자동 HTTPS, http→https). `/healthz` db UP·worker FAKE. 카카오 앱 등록(클라이언트 시크릿 사용, 동의항목 없음) 후 로컬 실로그인 확인, 서버에도 키 반영. 백업 cron 04:00. DEPLOY.md에 운영 서버 정보와 맥에서 코드 올리는 업데이트 방법 추가. #54 develop 병합(WORKLOG 충돌만, 워커 666 통과)
 - 진행 중: 없음
