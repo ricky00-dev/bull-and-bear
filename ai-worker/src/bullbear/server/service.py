@@ -12,7 +12,6 @@ from ..data.base import DataUnavailable
 from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
 from ..llm import LLM, LLMError
-from ..rag.context import execution_policy
 from ..single import SingleAnalyst
 from ..snapshot import Snapshot
 from .errors import ApiError
@@ -26,7 +25,6 @@ class LiveRunner:
         self.settings = settings
         self.clients = []
         self.audit = None
-        self.background_context = None
         self.budget = budget
         self.budget_scopes = set()
         self.review_statements = settings.review_statements if review_statements is None else review_statements
@@ -75,7 +73,7 @@ class LiveRunner:
             moderator=client('moderator', 'moderator'),
             log=EventLog(settings.debate_dir / f'{debate_id}.jsonl'), emit=emit,
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
-            moderator_effort=settings.moderator_effort, background_context=self.background_context,
+            moderator_effort=settings.moderator_effort,
             statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
                 if self.review_statements else None).run()
 
@@ -90,8 +88,7 @@ class LiveRunner:
             self.clients.append(llm)
             wrapped = AuditedLLM(llm, self.audit, 'moderator') if self.audit else llm
         emit('moderator_started', {})
-        verdict = SingleAnalyst(wrapped, snapshot, effort=self.settings.moderator_effort,
-                                background_context=self.background_context).evaluate(
+        verdict = SingleAnalyst(wrapped, snapshot, effort=self.settings.moderator_effort).evaluate(
             EventLog(self.settings.debate_dir / f'{debate_id}.jsonl'))
         return {'debate_id': debate_id, 'verdict': {**verdict.model_dump(mode='json'), 'scores': None}, 'stats': None}
 
@@ -119,69 +116,10 @@ class Service:
             raise
         self.runner_factory = runner_factory or (lambda: LiveRunner(settings, budget=self.budget))
         self.pool = ThreadPoolExecutor(max_workers=max_running, thread_name_prefix='debate')
-        self.selection_policy = None
-        if settings.rag_enabled and settings.rag_selection_policy:
-            from ..rag.selection import SelectionPolicy
-            self.selection_policy = SelectionPolicy.model_validate_json(settings.rag_selection_policy.read_text(encoding='utf-8'))
-        self.shadow = None
-        if settings.rag_shadow_enabled and settings.rag_enabled:
-            from ..rag.shadow import ShadowRunner
-            self.shadow = ShadowRunner(settings)
 
     def close(self):
         self.pool.shutdown(wait=True)
-        if self.shadow is not None:
-            self.shadow.close()
         self.store.close()
-
-    def capture_generation(self, snapshot):
-        from ..rag.binding import capture_binding, unavailable_binding
-        from ..rag.archive_repository import configured_archive
-        generation = self.settings.rag_generation_id
-        if self.settings.rag_enabled:
-            try:
-                with configured_archive(self.settings) as archive:
-                    return capture_binding(archive, snapshot, generation)
-            except Exception:
-                # Preserve the original snapshot and persist a closed route. The
-                # retrieval stage records failure before any model is initialized.
-                log.warning('snapshot publication binding unavailable')
-        return unavailable_binding(snapshot, generation)
-
-    def rag_lookup(self, body):
-        """Read a frozen snapshot; never collect data, start a runner or submit shadow."""
-        if not self.settings.rag_enabled:
-            raise ApiError(503, 'RAG_DISABLED', 'RAG 조회가 비활성 상태입니다')
-        from ..rag.evidence import parse_request
-        from ..rag.retrieval import Retriever
-        from ..rag.selection import SelectionPolicy
-        from ..rag.archive_repository import configured_archive
-        from ..rag.context_repository import configured_repository
-        snapshot = Snapshot.model_validate(self.store.snapshot(body.snapshot_id))
-        request = parse_request(body.model_dump(exclude={'snapshot_id'}))
-        binding = (self.store.generation_binding(snapshot.snapshot_id) or {'state': 'unbound'}) if request.mode == 'documents' else None
-        with configured_archive(self.settings) as archive:
-            context = Retriever(archive, context_repository=configured_repository(self.settings),
-                selection_policy=self.selection_policy or SelectionPolicy()).retrieve(snapshot,
-                    generation_id=binding.get('generation_id', '') if binding else '', request=request,
-                    generation_binding=binding)
-        payload = context.payload
-        if payload['status'] not in {'completed', 'empty'}:
-            raise ApiError(503, 'RETRIEVAL_UNAVAILABLE', '검색을 완료하지 못했습니다')
-        evidence = payload['evidence']
-        response = {'snapshot_id': snapshot.snapshot_id, 'context_id': context.context_id,
-                'ticker': snapshot.ticker, 'snapshot_as_of': snapshot.as_of.isoformat(),
-                'mode': evidence['mode'], 'answerability': payload['answerability'],
-                'reasons': evidence['reasons'] or ([payload['abstention_reason']]
-                    if payload.get('abstention_reason') else []),
-                }
-        if request.mode == 'facts':
-            response['facts'] = evidence['facts']
-        else:
-            response['documents'] = [{k: item[k] for k in ('chunk_id', 'text', 'horizons', 'applicability', 'limitations')}
-                                     for item in payload['items']]
-            response['answer_scope'] = 'retrieved_documents_not_verified_numeric_answer'
-        return response
 
     def create(self, body):
         identity = {'ticker': body.ticker, 'max_extra_rounds': body.max_extra_rounds}
@@ -258,7 +196,7 @@ class Service:
                                       self.settings.naver_client_id, self.settings.naver_client_secret))
             with audit.stage('snapshot'):
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
-                self.store.save_snapshot(debate_id, snapshot, binding_factory=self.capture_generation)
+                self.store.save_snapshot(debate_id, snapshot)
                 # A content-addressed ID may already exist with an earlier
                 # observation cutoff. Both modes must use the stored object.
                 snapshot = Snapshot.model_validate(self.store.snapshot(snapshot.snapshot_id))
@@ -266,53 +204,10 @@ class Service:
             self.store.emit(debate_id, 'snapshot_created', dict(snapshot_id=snapshot.snapshot_id,
                             ticker=snapshot.ticker, name=snapshot.name, as_of=snapshot.as_of,
                             close=snapshot.facts['PX.CLOSE'].value, warnings=snapshot.warnings))
-            background_context = None
-            retrieval_config = {'enabled': self.settings.rag_enabled,
-                                'context_backend': self.settings.rag_context_backend,
-                                'archive_backend': self.settings.rag_archive_backend,
-                                'object_backend': self.settings.rag_object_backend,
-                                'generation_id': self.settings.rag_generation_id,
-                                'profile': self.settings.rag_profile}
-            if self.settings.rag_enabled:
-                with audit.stage('knowledge_context'):
-                    binding = self.store.generation_binding(snapshot.snapshot_id) or {'state': 'unbound'}
-                    generation = binding.get('generation_id', '')
-                    retrieval_config['generation_id'] = generation
-                    if not generation:
-                        raise ValueError('snapshot has no pinned generation')
-                    if self.settings.rag_profile != 'knowledge-short-v1':
-                        raise ValueError('unsupported RAG profile')
-                    from ..rag.retrieval import Retriever
-                    from ..rag.context_repository import configured_repository
-                    from ..rag.archive_repository import configured_archive
-                    with configured_archive(self.settings) as rag_store:
-                        repository = configured_repository(self.settings)
-                        retriever = (Retriever(rag_store) if repository is None and self.selection_policy is None else
-                                     Retriever(rag_store, context_repository=repository, selection_policy=self.selection_policy))
-                        background_context = retriever.retrieve(
-                            snapshot, generation_id=generation, generation_binding=binding)
-            if self.selection_policy:
-                retrieval_config['selection_policy_id'] = self.selection_policy.policy_id
-            policy = execution_policy(background_context)
-            retrieval_config['execution'] = policy
-            # Keep the failed/empty retrieval evidence even when no background is
-            # passed to the model. Persistence failure must prevent paid calls.
-            audit.attach_context(background_context, retrieval_config=retrieval_config)
-            if policy['action'] == 'abort':
-                raise RuntimeError('knowledge retrieval did not complete')
-            if self.shadow is not None:
-                try:
-                    self.shadow.submit(debate_id, snapshot, background_context, generation)
-                except Exception:
-                    log.warning('shadow submission failed')
-            if policy['action'] != 'use_context':
-                background_context = None
             with audit.stage('runner_initialization'):
                 runner = self.runner_factory()
                 if isinstance(runner, LiveRunner):
                     runner.audit = audit
-                if hasattr(runner, 'background_context'):
-                    runner.background_context = background_context
                 audit.attach_runner(runner)
 
             def emit(event, payload):

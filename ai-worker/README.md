@@ -14,12 +14,12 @@ HTTP·CLI 토론은 `LiveRunner → GraphRuntime → build_debate_graph`를 실�
 양측 첫 주장 → 양측 상호 반박 → 양측 최종 정리 → 중재자 순서다. 각 단계의 양측은 독립 클라이언트로 병렬 실행한다.
 해석 ID·관측 Fact 사본·가정/한계·반박 연결·중재자 쟁점 분석을 유지한다. 새 근거는 필수가 아니다.
 기존 순차 엔진(`agents.py`, `debate.py`)과 전용 선공/paired benchmark·OpenAI 비교 어댑터·오프라인
-실험 진단 도구는 삭제했다. 단일 분석 모드, RAG, 감사·비용 제한, 공용 검증기는 유지한다.
+실험 진단 도구는 삭제했다. 단일 분석 모드와 감사·비용 제한, 공용 검증기는 유지한다.
 
 구현 완료와 실제 운용 준비는 구분한다. [최신 현황·실측·남은 순서](../docs/evaluations/worker-goal-readiness-20261102.md)에서
 실모델 검증, fixture 통합, 배포 상태를 확인한다.
 
-구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성·토론 처리·RAG 다이어그램을 참고한다.
+구조부터 보려면 [기능 아키텍처](#기능-아키텍처)의 전체 구성과 토론 처리 다이어그램을 참고한다.
 
 ### LangGraph 실행 엔진
 
@@ -128,12 +128,8 @@ uv run python -m bullbear.preflight --env-file /absolute/path/to/.env
 
 키 값은 출력하지 않고 존재 여부만 표시한다. 필수 설정 누락·Opus 등 비허용 모델·개발 기본 토큰은
 종료 코드 2로 알린다. 선택한 환경 파일은 해당 프로세스에서만 기존 환경값보다 우선한다.
-이 점검은 네트워크를 사용하지 않으며 키 인증·모델 접근·RAG 원문 무결성·운영 준비 완료를 보증하지 않는다.
+이 점검은 네트워크를 사용하지 않으며 키 인증·모델 접근·운영 준비 완료를 보증하지 않는다.
 이전 OpenAI 비교 실행 도구는 삭제했다. 과거 실험 문서·기록은 당시 구현의 이력이며 현재 실행 명령으로 사용할 수 없다.
-
-RAG는 기본 비활성이다. 활성화 시 명시적 세대가 필요하며 검색 결과 없음과 명시적 시간 초과만
-배경 없이 진행한다. 무결성·시점·감사 저장 오류는 모델 호출 전에 중단한다. 대체 진행 사유는
-비공개 감사에 저장하고 공개 HTTP/SSE 계약에는 추가하지 않는다.
 
 ## HTTP 통합 검증
 
@@ -182,12 +178,6 @@ uv run pytest tests/test_spring_integration.py -q
 이벤트 저장·전달을 워커가 맡는다. 사용자 계정·판정 저장·중재자 판정 봉인·3/7거래일 채점은 Spring의 책임이다.
 그림은 구현 구조이며 실제 Claude 호출·운영 검증 완료를 뜻하지 않는다.
 
-Mermaid가 표시되지 않는 뷰어에서는 렌더링된 PNG를 열 수 있다:
-[전체 구성](docs/images/architecture-overview.png) ·
-[토론 처리 흐름](docs/images/architecture-debate-flow.png) ·
-[RAG 흐름](docs/images/architecture-rag-flow.png).
-PNG는 현재 Mermaid 원본의 스냅샷이므로 다이어그램 수정 시 함께 다시 렌더링한다.
-
 ### 전체 구성과 책임 경계
 
 ```mermaid
@@ -202,7 +192,6 @@ flowchart TB
         Snapshot["Snapshot<br/>시점과 ID가 고정된 시장 Fact"]
         Engine["LiveRunner / GraphRuntime<br/>병렬 분석 → 검증 → 그래프 중재"]
         Single["LiveRunner / SingleAnalyst<br/>중립 판정 → 검증<br/>중재자와 같은 모델"]
-        RAG["선택적 RAG<br/>고정된 비공개 배경지식<br/>기본 비활성"]
         Store[("HTTP SQLite<br/>요청 · 상태 · 스냅샷 · 전달 이벤트")]
         Audit[("비공개 실행 기록<br/>JSONL · 감사 manifest · 사용량")]
 
@@ -216,9 +205,6 @@ flowchart TB
         Single -->|"판정 · 사용량 · scores/stats=null"| Service
         Single --> Audit
         Snapshot -->|"공개 근거의 원본"| Engine
-        Snapshot -.->|"검색 질의 · 기준 시각"| RAG
-        RAG -.->|"해석용 배경 · 근거 ID로 사용 금지"| Engine
-        RAG -.->|"같은 검색·검증 정책"| Single
         Service <--> Store
         Engine -->|"검증 통과 발언 · 최종 결과 · 사용량"| Service
         Store -->|"저장된 이벤트 재생"| HTTP
@@ -237,14 +223,14 @@ flowchart TB
   **Spring이 사용자 판정 전까지 이를 숨겨야 한다.** 워커 SQLite는 Spring PostgreSQL을 대체하지 않는다.
 - 토론 작업 풀은 기본 2개, 시세 준비 작업 풀도 별도 2개다. 실행 중 토론 수와 시세 준비 대기열을 각각 제한한다.
 - LLM의 도구는 `SnapshotTools`로 고정된 Fact를 조회한다. 토론 중 도구가 외부 시세·뉴스를 새로 수집하지 않는다.
-- SSE는 검증을 통과한 발언을 전달한다. LLM 원시 토큰, 반려된 후보 본문, 비공개 RAG 원문은 전달하지 않는다.
+- SSE는 검증을 통과한 발언을 전달한다. LLM 원시 토큰, 반려된 후보 본문은 전달하지 않는다.
   진행 상태와 반려 알림은 별도 이벤트이며, 최종 중재자 판정은 Spring까지만 전달한다.
 
 ### 토론 한 건의 처리 흐름
 
 ```mermaid
 flowchart TD
-    Request["POST /debates 또는 CLI"] --> Snapshot["고정 스냅샷 · 선택적 RAG"]
+    Request["POST /debates 또는 CLI"] --> Snapshot["고정 스냅샷"]
     Snapshot --> Opening["양측 첫 주장 · 병렬 생성과 검증"]
     Opening --> Rebuttal["양측 반박 · 상대 첫 주장 읽기"]
     Rebuttal --> Closing["양측 최종 정리 · 상대 반박 읽기"]
@@ -257,26 +243,6 @@ flowchart TD
 모델 재작성은 각 발언·중재 응답당 최대 3회이며, 그래프의 추가 실행 횟수와 별도로 제한한다.
 단일 분석(`mode=single`)은 기존 중립 분석 경로를 유지한다.
 
-### RAG: 공개 시장 근거와 비공개 배경지식 분리
-
-```mermaid
-flowchart LR
-    Knowledge["지식·연구 원문"] --> Ingest["수집 · 버전 보존<br/>문단 분할 · 검수 주석"]
-    Ingest --> Index[("RagStore / GenerationIndex<br/>고정 세대 · SQLite FTS5")]
-    Facts["시장 스냅샷<br/>Fact · 판단 시각"] --> Query["질의 생성<br/>개념 · 한글 별칭 정규화"]
-    Query --> Retrieve["BM25 검색<br/>검수 · 시점 · 시장 · 종목 · 유효 기간 필터"]
-    Index --> Retrieve
-    Retrieve --> Fixed["KnowledgeContext<br/>선정/제외 기록 · 불변 저장 · 재생"]
-    Fixed --> Policy{"HTTP 실패 정책"}
-    Policy -->|"정상"| Background["토론자 · 중재자 · 의미 검토에<br/>같은 배경 주입"]
-    Policy -->|"결과 없음 · 명시적 시간 초과"| Without["RAG 없이 진행<br/>대체 사유 비공개 감사"]
-    Policy -->|"무결성·시점 위반 등"| Stop["모델 호출 전 중단"]
-```
-
-RAG는 **기본 꺼짐**이며 활성화하려면 명시적인 검색 세대가 필요하다. 검색·감사 저장 실패도 모델 호출 전에 중단한다.
-지식은 개념·조건·한계를 해석하는 배경이고, 공개 `evidence.source_id`는 스냅샷 Fact만 가리킨다.
-삭제된 paired benchmark의 과거 정책은 실험 문서에 남아 있으며 현재 실행 경로와 구별한다.
-
 ### 코드와 저장소 대응
 
 | 기능 | 주요 모듈 | 역할 |
@@ -288,15 +254,14 @@ RAG는 **기본 꺼짐**이며 활성화하려면 명시적인 검색 세대가 
 | 고정 근거 | `snapshot.py`, `tools.py` | Fact·파생 지표 고정, 스냅샷 조회 도구 |
 | 토론·모델 | `graph.py`, `graph_runtime.py`, `prompts.py`, `llm.py` | 병렬 분석, 선택 재검토, 그래프 중재, Claude 호출 |
 | 검증 | `verifier.py`, `presentation.py`, `semantic.py` | 수치/ID·표현·인용 규칙, LLM 의미 검토 |
-| RAG | `rag/ingest.py`, `store.py`, `index.py`, `retrieval.py`, `context.py`, `replay.py` | 수집·검수 이력, 검색, 배경 저장·재생 (`rag/` 하위 파일) |
 | 전달 상태 | `server/store.py` | `data/http/worker.sqlite3`: 요청·토론 상태·스냅샷·SSE 이벤트 |
 | HTTP 비용 장부 | `anthropic_budget.py` | 선택적 `data/http/provider-budget.sqlite3`: 요청별 최대 비용 예약·정산·미확정 보존 |
 | 비공개 기록 | `events.py`, `audit.py` | `data/debates/*.jsonl`, `data/audits/<run_id>/manifest.json`: 시도·검증·사용량·실행 출처 |
-| 실행·예산 | `cli.py`, `budget.py`, `anthropic_budget.py` | CLI, 운영 및 RAG 평가의 공유 예산 원장 |
+| CLI | `cli.py` | 종목·스냅샷 조회, 토론 실행, 이벤트 재생 |
 | 비용 없는 점검 | `preflight.py` | 운영 설정 검사 |
 
-표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다. RAG 저장은 `data/rag/` 아래 별도 원문·색인·컨텍스트로 관리한다.
-`budget.py`는 RAG 평가와 운영 비용 장부가 공유하므로 기존 benchmark 삭제 후에도 유지한다. HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
+표의 `data/`는 기본 `BULLBEAR_DATA_DIR` 기준이다.
+HTTP의 선택적 `anthropic_budget.py` 장부와 Spring의 추정 입장 제한은
 [운영 안내](../docs/WORKER-OPERATIONS.md)에서 적용 범위를 구분한다.
 CLI는 토론 엔진을 직접 호출하며 HTTP 요청 관리·SSE 경로를 거치지 않는다.
 
@@ -322,8 +287,6 @@ KRX_API_KEY=
 OPENDART_API_KEY=
 NAVER_CLIENT_ID=
 NAVER_CLIENT_SECRET=
-# RAG 임베딩용. HTTP·CLI 토론은 ANTHROPIC_API_KEY 사용.
-OPENAI_API_KEY=
 ```
 
 - 네이버 키는 **NAVER API HUB**에서 `NAVER 검색 > 뉴스`를 선택한 Application의 인증 정보다.
@@ -345,7 +308,7 @@ OPENAI_API_KEY=
 
 ## 모델의 판단과 개념·논리 검토
 
-- `langgraph-focused-system-v13`은 토론자·중재자·공개 전 검토자의 시스템에 역할, 논증·검토 원칙, 근거와 안전 규칙을 둔다. 종목·라운드·출력 지시와 선택적 RAG 배경지식은 해당 사용자 메시지에 넣고, 고정 예시와 반복 문구를 줄였다. 출력 스키마와 검증 절차는 유지한다.
+- `langgraph-snapshot-only-v14`는 토론과 단일 분석에 고정 스냅샷과 스냅샷 조회 도구를 사용한다. 토론자와 중재자는 역할·근거 규칙을 시스템 메시지로 받고, 종목·라운드·출력 지시는 사용자 메시지로 받는다.
 - `langgraph-single-history-v12`: 토론자는 매수·매도 논거를 제시하고 중재자·단일 분석가는
   종목에 대한 BUY/HOLD/SELL 의견을 낸다. 모델 지시와 재작성 조건에서 고정된 7거래일·코스피 ±2%p 기준을 제거했다.
   Spring의 사후 채점 계산은 별개다. 새 의견은 해당 수익률 구간을 직접 예측하도록 생성한 이전 결과와 구분해야 한다.

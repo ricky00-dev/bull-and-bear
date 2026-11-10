@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-10 · Codex · ai-worker, api, docs · RAG 제거 PR
+- 한 것: 워커의 배경지식 주입, 검색·임베딩·저장·CLI·HTTP 경로와 전용 배포 구성을 제거했다. Spring의 조회 경로·워커 클라이언트·DTO를 제거하고 공동 계약 v0.9 초안에 폐기 범위를 기록했다. 토론·단일 분석은 기존 스냅샷으로 실행한다.
+- 검증: 최신 develop의 격리 사본에서 잠금 파일 기준 오프라인 설치, 워커·실험 실행기 423개 통과, Spring 통합 5개 건너뜀. 웹 경로 diff 없음, `git diff --check` 통과.
+- 진행 중: chore/remove-rag 브랜치로 develop 대상 PR을 올린다. 배포 전이다.
+- 다음: 양쪽 담당자는 PR에서 워커 API 계약 변경을 검토한다.
+- 막힘·결정 필요: 로컬 Java 런타임이 없어 Spring Gradle 테스트는 CI에서 확인해야 한다. 웹은 사용자 요청에 따라 그대로 두었으므로 변경 배포 후 기존 자료 검색·저장 수치 조회는 실패한다.
+
 ## 2026-11-10 · Claude(PM) · api
 - 한 것: 배포 사이트에서 브라우저 게스트 입장이 403(Invalid CORS request)으로 막히던 문제 수정. Caddy가 HTTPS를 받아 Spring에 http로 넘겨서 `https://` 출처를 다른 출처로 판단했음. `server.forward-headers-strategy: native`로 X-Forwarded-Proto를 믿게 함. 로컬 운영 확인은 http(:80)라 안 보였음
 - 진행 중: 없음

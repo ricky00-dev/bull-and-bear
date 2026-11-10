@@ -46,7 +46,6 @@ def test_search_debate_sse_seal_reveal_and_scoring_reservation(ticker):
         assert 'debate_sealed' in stream.text
         assert 'debate_completed' not in stream.text and 'decisive_evidence' not in stream.text
         assert 'PRIVATE' not in stream.text
-        assert 'KCTX.' not in stream.text and 'PRIVATE_BACKGROUND_DATA' not in stream.text
         judgment = c.post(f'/api/debates/{debate_id}/judgment', json={
             'decision': 'HOLD', 'confidence': 50, 'evidencePicks': ['PX.CLOSE'], 'memo': 'HTTP integration'})
         judgment.raise_for_status()
