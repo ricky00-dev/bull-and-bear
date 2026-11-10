@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
+import logoMark from '../assets/logo-mark.png'
 
 /** 상세 흐름은 읽기 폭을 유지하고, 홈은 넓은 화면에서 두 열을 사용한다. */
 export function Screen({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
@@ -172,13 +173,11 @@ export function BottomSheet({ label, onClose, children }: { label: string; onClo
   )
 }
 
-/** 불앤베어 로고: 오르는 소(왼쪽)와 내리는 곰(오른쪽) 선. 홈 머리와 왼쪽 메뉴가 같이 쓴다 */
+/** 불앤베어 로고: 앱 아이콘과 같은 그림(이마를 맞댄 황소와 곰). 홈 머리·왼쪽 메뉴·전시 화면이 같이 쓴다 */
 export function Logo() {
   return (
     <span className="flex items-center gap-2">
-      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4" />
-      </svg>
+      <img src={logoMark} alt="" width={28} height={28} className="size-7 rounded-[7px]" />
       <span className="text-lg font-extrabold tracking-tight">불앤베어</span>
     </span>
   )
