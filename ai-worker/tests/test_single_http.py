@@ -13,6 +13,7 @@ from bullbear.llm import LLMError
 from bullbear.server import service as service_module
 from bullbear.server.store import Store
 from bullbear.single import SingleAnalyst, SINGLE_VERDICT_SCHEMA
+from .prompt_helpers import initial_payload
 from .http_fixture import TestRunner
 from .test_server import setup, app_for, start, completed, parse_sse, AUTH
 
@@ -216,7 +217,7 @@ def test_live_runner_single_uses_only_moderator_and_records_audit(setup, monkeyp
         assert result['status'] == 'completed'
         assert models == ['claude-sonnet-5-5']
         assert len(llm.calls) == 2
-        review = json.loads(llm.calls[1][0].messages[0]['content'])
+        review = initial_payload(llm.calls[1][0])
         assert review['history'] == [] and review['verification_stats'] is None
         assert review['reference_map'] == {'E1': 'PX.CLOSE'}
         manifest = json.loads((settings.data_dir / 'audits' / response['debate_id'] / 'manifest.json').read_text())

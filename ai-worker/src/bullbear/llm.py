@@ -68,6 +68,12 @@ class LLMRequestBlocked(LLMError):
     pass
 
 
+def validate_snapshot_model(model: str) -> None:
+    # Only families documented to support system messages inside ``messages``.
+    if not re.fullmatch(r'claude-(?:haiku|sonnet)-5-5(?:-\d{8})?', model):
+        raise LLMRequestBlocked('Snapshot-first prompts require Claude Haiku 5.5 or Sonnet 5.5')
+
+
 @dataclass
 class Usage:
     input_tokens: int = 0
@@ -90,6 +96,29 @@ class Conversation:
 
     system: str
     messages: list[dict] = field(default_factory=list)
+    system_in_messages: bool = False
+
+    @classmethod
+    def from_snapshot(cls, system: str, snapshot_context: dict, request_context: dict,
+                      *, images: list[dict] | None = None) -> Conversation:
+        """Cache frozen data before request-specific instructions and the role.
+
+        Keep the system message in its original position on tool calls and retries;
+        moving it again would change the prefix and the meaning of past turns.
+        ``system`` also remains available to audit consumers as the role text.
+        """
+        messages = [
+            {'role': 'user', 'content': [{
+                'type': 'text',
+                'text': json.dumps(snapshot_context, ensure_ascii=False, sort_keys=True, separators=(',', ':')),
+                'cache_control': {'type': 'ephemeral', 'ttl': '5m'},
+            }]},
+            {'role': 'user', 'content': json.dumps(request_context, ensure_ascii=False)},
+        ]
+        if images:
+            messages.append({'role': 'user', 'content': deepcopy(images)})
+        messages.append({'role': 'system', 'content': system})
+        return cls(system, messages, system_in_messages=True)
 
 
 class LLM:
@@ -131,12 +160,15 @@ class LLM:
         on_event: EventHook | None = None,
     ) -> dict:
         """도구를 쓰게 한 뒤 schema에 맞는 JSON 하나를 받아 dict로 돌려준다."""
+        if conv.system_in_messages:
+            validate_snapshot_model(self.model)
         on_event = on_event or (lambda *_: None)
         tools = [{**t, "strict": True, "eager_input_streaming": True} for t in tools or []]
         json_retries = 0
 
         for _ in range(self.max_tool_turns):
-            parameters = dict(model=self.model, max_tokens=self.max_output_tokens, system=conv.system,
+            parameters = dict(model=self.model, max_tokens=self.max_output_tokens,
+                system=anthropic.omit if conv.system_in_messages else conv.system,
                 messages=conv.messages, tools=tools or anthropic.omit,
                 output_config={"effort": effort, "format": {"type": "json_schema", "schema": anthropic_schema(schema)}})
             reservation = None

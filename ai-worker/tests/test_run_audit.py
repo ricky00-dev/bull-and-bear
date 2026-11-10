@@ -111,21 +111,21 @@ def test_runner_factory_failure_keeps_snapshot_and_safe_error(setup):
 
 def test_partial_client_construction_failure_closes_first_client_and_preserves_plan(setup, monkeypatch):
     settings, _ = setup
-    monkeypatch.setenv('BULLBEAR_DEBATER_MODEL', 'selected-debater')
-    monkeypatch.setenv('BULLBEAR_MODERATOR_MODEL', 'selected-moderator')
+    monkeypatch.setenv('BULLBEAR_DEBATER_MODEL', 'claude-sonnet-5-5')
+    monkeypatch.setenv('BULLBEAR_MODERATOR_MODEL', 'claude-haiku-5-5')
     closed = []
     def llm(model):
         path = next((settings.data_dir / 'audits').glob('*/manifest.json'))
         before = json.loads(path.read_text(encoding='utf-8'))
         assert before['snapshot_id'] and before['decision_at']
-        assert before['config']['selected_models']['moderator'] == 'selected-moderator'
-        if model == 'selected-moderator':
+        assert before['config']['selected_models']['moderator'] == 'claude-haiku-5-5'
+        if model == 'claude-haiku-5-5':
             raise RuntimeError('ANTHROPIC_API_KEY=private-constructor')
         return NS(client=NS(close=lambda: closed.append(model)), usage_payload=lambda: {'calls': []})
     monkeypatch.setattr(service_module, 'LLM', llm)
     result, manifest = run_once(setup, lambda: service_module.LiveRunner(settings))
     assert result['status'] == 'failed' and result['error']['code'] == 'LLM_ERROR'
-    assert closed == ['selected-debater', 'selected-debater']
+    assert closed == ['claude-sonnet-5-5', 'claude-sonnet-5-5']
     assert manifest['status'] == 'failure' and manifest['usage'] == {'calls': []}
     assert next(s for s in manifest['stages'] if s['name'] == 'moderator_client_initialization')['status'] == 'failed'
     assert 'private-constructor' not in json.dumps(manifest)

@@ -1,8 +1,9 @@
 """Optional durable budget for standard, text-only Anthropic worker requests.
 
 One authorization per database, shared across roles/runs and process restarts.
-Reserve the full context window at the highest tier; never rely on a prompt
-token estimate. Unknown responses retain their reservation and halt dispatch.
+Reserve the full context window at the highest tier, including 5-minute cache
+writes when requested; never rely on a prompt token estimate. Unknown responses
+retain their reservation and halt dispatch.
 """
 from __future__ import annotations
 
@@ -22,13 +23,19 @@ from .llm import LLMError, LLMRequestBlocked
 NANO = 1_000_000_000
 PRICE_SOURCE = 'https://platform.claude.com/docs/en/about-claude/pricing'
 POLICY = {
-    'version': 'anthropic-worker-standard-2026-11-02-v1',
+    'version': 'anthropic-worker-standard-2026-11-10-v2',
     'context': 1_000_000, 'max_output': 16000, 'haiku_threshold': 100000,
     'rates_nano': {'claude-haiku-5-5': [[100, 500, 10], [500, 2500, 50]],
                    'claude-sonnet-5-5': [[2000, 10000, 100], [2000, 10000, 100]]},
-    'cache_writes': False, 'hosted_tools': False, 'source': PRICE_SOURCE,
+    'cache_writes': {'ttl': '5m', 'multiplier': [5, 4]},
+    'hosted_tools': False, 'source': PRICE_SOURCE,
 }
 PRICE_HASH = hashlib.sha256(json.dumps(POLICY, sort_keys=True).encode()).hexdigest()
+# Only this known predecessor can migrate. Its prices and limits are unchanged;
+# existing request reservations and settled costs must never be recalculated.
+LEGACY_PRICE_HASH = hashlib.sha256(json.dumps({
+    **POLICY, 'version': 'anthropic-worker-standard-2026-11-02-v1', 'cache_writes': False,
+}, sort_keys=True).encode()).hexdigest()
 
 
 class BudgetDenied(LLMRequestBlocked):
@@ -45,17 +52,31 @@ def _now():
 
 
 def _check_content(value):
+    """Validate supported content and count explicit 5-minute cache markers."""
     if hasattr(value, 'model_dump'):
         value = value.model_dump(mode='json')
+    markers = 0
     if isinstance(value, dict):
         kind = value.get('type')
-        if 'cache_control' in value or (isinstance(kind, str) and kind in {'image', 'document', 'audio', 'video'}):
-            raise BudgetDenied('Only uncached text inputs are budgeted')
+        if isinstance(kind, str) and kind in {'image', 'document', 'audio', 'video'}:
+            raise BudgetDenied('Only text inputs are budgeted')
+        if 'cache_control' in value:
+            control = value['cache_control']
+            if (not isinstance(control, dict) or set(control) - {'type', 'ttl'}
+                    or control.get('type') != 'ephemeral' or control.get('ttl', '5m') != '5m'):
+                raise BudgetDenied('Only ephemeral 5-minute cache writes are budgeted')
+            markers += 1
         for child in value.values():
-            _check_content(child)
+            markers += _check_content(child)
     elif isinstance(value, (list, tuple)):
         for child in value:
-            _check_content(child)
+            markers += _check_content(child)
+    return markers
+
+
+def _cache_write_rate(input_rate):
+    numerator, denominator = POLICY['cache_writes']['multiplier']
+    return input_rate * numerator // denominator
 
 
 def reservation(request):
@@ -73,8 +94,13 @@ def reservation(request):
     tool_list = request.get('tools')
     if isinstance(tool_list, list) and any(t.get('type', 'custom') != 'custom' for t in tool_list):
         raise BudgetDenied('Hosted tools are not budgeted')
-    _check_content(request)
+    markers = _check_content(request)
+    if markers > 4:
+        raise BudgetDenied('At most four explicit cache breakpoints are supported')
     input_rate, output_rate, _ = POLICY['rates_nano'][model][1]
+    if markers:
+        # A cold cache can write the entire prefix. Never reserve at the read rate.
+        input_rate = _cache_write_rate(input_rate)
     return POLICY['context'] * input_rate + output * output_rate
 
 
@@ -83,14 +109,22 @@ def usage_cost(model, data):
         raise BudgetUsageError('Unpriced provider model')
     i, o = data.get('input_tokens'), data.get('output_tokens')
     read, write = data.get('cache_read_input_tokens', 0), data.get('cache_creation_input_tokens', 0)
-    if any(type(n) is not int or n < 0 for n in (i, o, read, write)) or write:
-        raise BudgetUsageError('Invalid usage or unexpected cache write')
+    if any(type(n) is not int or n < 0 for n in (i, o, read, write)):
+        raise BudgetUsageError('Invalid token usage')
+    creation = data.get('cache_creation')
+    if creation is not None or write:
+        if not isinstance(creation, dict) or set(creation) - {'ephemeral_5m_input_tokens', 'ephemeral_1h_input_tokens'}:
+            raise BudgetUsageError('Missing or unpriced cache creation duration')
+        five_min, one_hour = creation.get('ephemeral_5m_input_tokens', 0), creation.get('ephemeral_1h_input_tokens', 0)
+        if (any(type(n) is not int or n < 0 for n in (five_min, one_hour))
+                or one_hour or five_min != write):
+            raise BudgetUsageError('Invalid or unpriced cache creation usage')
     if data.get('service_tier') not in (None, 'standard') or data.get('inference_geo') not in (None, 'global'):
         raise BudgetUsageError('Unpriced provider service tier or region')
     if data.get('speed') not in (None, 'standard') or data.get('server_tool_use'):
         raise BudgetUsageError('Unpriced speed or hosted tool use')
-    rates = POLICY['rates_nano'][model][int(i + read > POLICY['haiku_threshold'])]
-    return i * rates[0] + o * rates[1] + read * rates[2]
+    rates = POLICY['rates_nano'][model][int(i + read + write > POLICY['haiku_threshold'])]
+    return i * rates[0] + o * rates[1] + read * rates[2] + write * _cache_write_rate(rates[0])
 
 
 class WorkerSpendLedger:
@@ -114,8 +148,11 @@ class WorkerSpendLedger:
             db.execute('INSERT OR IGNORE INTO authorization(id,name,limit_nano,price_hash) VALUES (1,?,?,?)',
                        (authorization_id, self.limit, PRICE_HASH))
             existing = db.execute('SELECT name,limit_nano,price_hash FROM authorization WHERE id=1').fetchone()
-            if tuple(existing) != (authorization_id, self.limit, PRICE_HASH):
+            if (existing[:2] != (authorization_id, self.limit)
+                    or existing[2] not in (PRICE_HASH, LEGACY_PRICE_HASH)):
                 raise BudgetDenied('Existing worker authorization or pricing cannot be reset by configuration')
+            if existing[2] == LEGACY_PRICE_HASH:
+                db.execute('UPDATE authorization SET price_hash=? WHERE id=1', (PRICE_HASH,))
 
     @contextmanager
     def _db(self):
@@ -181,7 +218,8 @@ class WorkerSpendLedger:
                 raise BudgetUsageError('Unknown or already settled request')
             violated = (message.model != row[0] or actual > row[2]
                         or data['output_tokens'] > row[3]
-                        or data['input_tokens'] + data.get('cache_read_input_tokens', 0) > POLICY['context'])
+                        or (data['input_tokens'] + data.get('cache_read_input_tokens', 0)
+                            + data.get('cache_creation_input_tokens', 0)) > POLICY['context'])
             db.execute('UPDATE requests SET status=?,actual_nano=?,usage_json=?,finished_at=? WHERE id=?',
                        ('violation' if violated else 'settled', actual, json.dumps(data), _now(), ident))
             if violated:

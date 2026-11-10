@@ -1,8 +1,6 @@
 """HTTP condition B: a neutral analyst with no debate history or side scores."""
 from __future__ import annotations
 
-import json
-
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from . import prompts
@@ -51,11 +49,12 @@ class SingleAnalyst:
 
     def evaluate(self, log):
         snap = self.snapshot
-        conv = Conversation(SYSTEM, [{'role': 'user', 'content': json.dumps({
+        conv = Conversation.from_snapshot(SYSTEM, {
             'ticker': snap.ticker, 'name': snap.name, 'price_as_of': str(snap.as_of),
             'decision_at': snap.decision_at.isoformat(), 'warnings': snap.warnings,
+        }, {
             'task': '도구로 자료를 조회하고 중립적으로 판정하세요.',
-        }, ensure_ascii=False)}])
+        })
         for attempt in range(1, 4):
             raw = self.llm.structured(conv, schema=SINGLE_VERDICT_SCHEMA, effort=self.effort,
                                       tools=TOOL_DEFINITIONS, tool_handler=SnapshotTools(snap))

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from .audit import selected_models
 from .config import load_settings
-from .llm import validate_model
+from .llm import LLMRequestBlocked, validate_model, validate_snapshot_model
 from .budget import amount_nano
 from .anthropic_budget import POLICY
 import re
@@ -24,6 +24,9 @@ def inspect_settings(settings) -> dict:
         try:
             validate_model(model)
             safe_models[role] = model
+            validate_snapshot_model(model)
+        except LLMRequestBlocked:
+            errors.append(f'{role}_model_missing_trailing_system_support')
         except ValueError:
             safe_models[role] = None
             errors.append(f'{role}_model_not_allowed')

@@ -11,7 +11,7 @@ from ..audit import AuditedLLM, RunAudit, selected_models
 from ..data.base import DataUnavailable
 from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
-from ..llm import LLM, LLMError
+from ..llm import LLM, LLMError, validate_snapshot_model
 from ..single import SingleAnalyst
 from ..snapshot import Snapshot
 from .errors import ApiError
@@ -30,6 +30,7 @@ class LiveRunner:
         self.review_statements = settings.review_statements if review_statements is None else review_statements
 
     def new_client(self, model, scope):
+        validate_snapshot_model(model)
         if self.budget is not None:
             self.budget_scopes.add(scope)
             return LLM(model, budget=self.budget, budget_scope=scope)
@@ -63,7 +64,8 @@ class LiveRunner:
             with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
                 llm = self.new_client(models[model_role], f'{debate_id}:{role}')
                 if role.startswith('reviewer_'):
-                    llm.max_output_tokens = 4096
+                    # A review may include a complete corrected statement.
+                    llm.max_output_tokens = 8192
                 self.clients.append(llm)
                 audit_role = 'statement_reviewer' if role.startswith('reviewer_') else model_role
                 return AuditedLLM(llm, self.audit, audit_role) if self.audit else llm

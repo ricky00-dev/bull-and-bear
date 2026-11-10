@@ -4,7 +4,6 @@ The graph owns scheduling. This module owns model I/O, bounded validation and
 publication; the graph joins both speakers after each of three fixed rounds.
 """
 from copy import deepcopy
-import json
 import threading
 
 from pydantic import ValidationError
@@ -41,16 +40,16 @@ def mediation_schema():
 
 
 MEDIATION_SCHEMA = mediation_schema()
-MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립적인 최종 중재자다. 양측은 배정된 입장을 논증하므로 그 결론을 독립적인 예측 투표로 세지 않는다.
+MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립적인 최종 중재자 부엉이다. 양측은 배정된 입장을 논증하므로 그 결론을 독립적인 예측 투표로 세지 않는다.
 공통 사실, 해석 차이, 반박으로 유지되거나 약해진 논거를 정리한다. 어느 논거가 자료로 더 잘 뒷받침되는지와 결론을 바꿀 불확실성을 설명한다.
 발언을 원자료와 대조해 사실·가정 혼동, 근거 없는 인과, 상대 주장 왜곡, 역할 이탈을 살핀다. 문체나 확신의 정도로 근거를 평가하지 않는다.
 자료 ID와 인용값 검사가 출처 정확성·인과·예측의 보증은 아니다. 같은 자료·모델에 근거한 합의도 독립 검증으로 취급하지 않는다.
-""" + prompts.DEBATE_RULES
+""" + prompts.DEBATE_RULES + prompts.SNAPSHOT_LOOKUP_RULES
 
 MEDIATOR_OUTPUT_INSTRUCTIONS = """
 - 추가 라운드나 조사 요청 없이 전망을 제출할 수 있으면 ACCEPT, 불가능하면 ABSTAIN을 선택한다. tool은 null이며 ACCEPT일 때만 forecast를 작성한다. ABSTAIN을 HOLD로 바꾸지 않는다.
 - forecast.decision은 종목에 대한 BUY/HOLD/SELL 의견이며 confidence는 보정되지 않은 자기평가다.
-- reasoning은 근거와 한계를 담은 한 문단·최대 3문장이다. 실제 Fact ID 1~3개를 decisive_evidence에 넣고 배열 순서대로 [E1]부터 인용한다.
+- reasoning은 판정에 가장 큰 영향을 준 근거부터 짚고 한계를 설명한다. 한 문단·최대 3문장으로 쓰고, 실제 Fact ID 1~3개를 decisive_evidence에 넣어 배열 순서대로 [E1]부터 인용한다.
 - 양측은 relevance/materiality/rebuttal/risk_awareness를 각각 1~5로 평가하고 comment는 한 문장씩 쓴다.
 - analysis에 공통 사실, 쟁점, 이견, 미검증 사항, 전망 근거와 한계를 구분한다. key_interpretation_ids에는 이력의 실제 해석 ID만 넣는다.
 - statement_reviews에는 6개 발언 ID를 각각 한 번씩 넣는다. assessment는 no_issue_found/concern/uncertain 중 하나, reason에는 판단 이유, source_ids에는 대조한 Fact ID를 최대 3개(없으면 []) 넣는다. no_issue_found는 오류를 발견하지 못했다는 뜻이다.
@@ -75,6 +74,12 @@ class GraphRuntime:
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.shared_push = build_shared_push(snapshot)
+        self.debater_context = {
+            'ticker': snapshot.ticker, 'name': snapshot.name, 'price_as_of': str(snapshot.as_of),
+            'shared_push': self.shared_push,
+            'return_context': return_context(snapshot), 'source_context': source_context(snapshot),
+            'decision_at': snapshot.decision_at.isoformat(),
+        }
         self.chart_image = daily_chart_image(snapshot) if include_chart_image else None
         self.emit_hook = emit or (lambda *_: None)
         if not 0 <= max_extra_rounds <= 3:
@@ -100,6 +105,32 @@ class GraphRuntime:
                                         state[side.value][index].statement)
                 for index in range(3) for side in Side if index < len(state.get(side.value, []))]
 
+    def verify_statement(self, statement, *, side, stage, transcript):
+        """Apply the same publication checks to drafts and reviewer revisions."""
+        result = verify(statement, self.snapshot)
+        # Source correctness is independent of the application's later scoring.
+        issues = list(result.issues)
+        refs = {e.ref: e.source_id for e in statement.evidence}
+        for text in (statement.claim, statement.argument):
+            issues += return_issues(text, self.snapshot, refs)
+            issues += source_issues(text, self.snapshot, refs)
+        for evidence in statement.evidence:
+            issues += return_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
+            issues += source_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
+        issues += statement_issues(statement, stage, set())
+        issues += analysis_issues(statement, transcript=transcript, side=side, round_kind=stage)
+        expected = 'BUY' if side == Side.BULL else 'SELL'
+        if statement.analysis is not None and statement.analysis.outlook != expected:
+            issues.append(Issue(severity='error', code='role_mismatch',
+                message=f'배정 입장 {expected}를 유지하세요. 지지가 약하면 가정·한계에 명시하고 사실을 만들지 마세요.'))
+        issues += concept_issues('\n'.join([statement.claim, statement.argument,
+                                          *(e.interpretation for e in statement.evidence)]))
+        # Stylistic/semantic concerns are moderator inputs, not generation gates.
+        deferred = {'argument_length', 'money_unit', 'concept_error'}
+        issues = [i.model_copy(update={'severity': 'warning'}) if i.code in deferred else i for i in issues]
+        return result.model_copy(update={'issues': issues,
+                                        'passed': not any(i.severity == 'error' for i in issues)})
+
     def analyze(self, side, state, llm):
         history = state.get(side.value, [])
         stage = ('opening', 'rebuttal', 'closing')[len(history)]
@@ -112,17 +143,10 @@ class GraphRuntime:
         }[stage]
         payload = {'task': task, 'output_instructions': prompts.DEBATER_OUTPUT_INSTRUCTIONS,
                    'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
-                   'ticker': self.snapshot.ticker, 'name': self.snapshot.name, 'price_as_of': str(self.snapshot.as_of),
                    'history': transcript,
-                   'shared_push': self.shared_push,
-                   'return_context': return_context(self.snapshot),
-                   'source_context': source_context(self.snapshot),
-                   'research_results': state.get('research_results', []),
-                   'decision_at': self.snapshot.decision_at.isoformat()}
-        messages = [{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}]
-        if stage == 'opening' and self.chart_image is not None:
-            messages.append({'role': 'user', 'content': [self.chart_image]})
-        conv = Conversation(prompts.debater_system(side), messages)
+                   'research_results': state.get('research_results', [])}
+        images = [self.chart_image] if stage == 'opening' and self.chart_image is not None else None
+        conv = Conversation.from_snapshot(prompts.debater_system(side), self.debater_context, payload, images=images)
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
                                    'debate_flow': 'fixed_three_rounds'})
         calls = []
@@ -145,42 +169,33 @@ class GraphRuntime:
                     'issues': failure.issues})
                 conv.messages.append({'role': 'user', 'content': '필수 analysis와 발언 스키마를 지켜 다시 작성하세요.'})
                 continue
-            result = verify(statement, self.snapshot)
-            # Source correctness is independent of the application's later scoring.
-            issues = list(result.issues)
-            refs = {e.ref: e.source_id for e in statement.evidence}
-            for text in (statement.claim, statement.argument):
-                issues += return_issues(text, self.snapshot, refs)
-                issues += source_issues(text, self.snapshot, refs)
-            for evidence in statement.evidence:
-                issues += return_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
-                issues += source_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
-            issues += statement_issues(statement, stage, set())
-            issues += analysis_issues(statement, transcript=transcript, side=side, round_kind=stage)
-            expected = 'BUY' if side == Side.BULL else 'SELL'
-            if statement.analysis is not None and statement.analysis.outlook != expected:
-                issues.append(Issue(severity='error', code='role_mismatch',
-                    message=f'배정 입장 {expected}를 유지하세요. 지지가 약하면 가정·한계에 명시하고 사실을 만들지 마세요.'))
-            issues += concept_issues('\n'.join([statement.claim, statement.argument,
-                                              *(e.interpretation for e in statement.evidence)]))
-            # Stylistic/semantic concerns are moderator inputs, not generation gates.
-            deferred = {'argument_length', 'money_unit', 'concept_error'}
-            issues = [i.model_copy(update={'severity': 'warning'}) if i.code in deferred else i for i in issues]
-            result = result.model_copy(update={'issues': issues,
-                                               'passed': not any(i.severity == 'error' for i in issues)})
+            result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript)
             if result.passed and side.value in self.statement_reviewers:
                 with self.review_lock:
                     review = review_statement(self.statement_reviewers[side.value], statement,
-                        self.snapshot, transcript, effort=self.moderator_effort)
+                        self.snapshot, transcript, effort=self.moderator_effort,
+                        side=side, round_kind=stage,
+                        validate=lambda candidate: self.verify_statement(candidate,
+                            side=side, stage=stage, transcript=transcript))
+                original_verification = result
+                if review.issues:
+                    original_verification = result.model_copy(update={'passed': False,
+                        'issues': result.issues + [Issue(severity='error', code='statement_review_' + i.kind,
+                            message=f'문제 구절: {i.quote}\n근거 대조: {i.reason}\n수정 방향: {i.instruction}')
+                            for i in review.issues]})
                 # Private audit only: unpublished text/reviews never enter the public event stream.
                 with self.lock:
                     self.log.append('statement_reviewed', side=side, round=stage, attempt=attempt,
-                                    statement=statement, review=review)
-                if review.issues:
-                    issues += [Issue(severity='error', code='statement_review_' + i.kind,
-                        message=f'문제 구절: {i.quote}\n근거 대조: {i.reason}\n수정 방향: {i.instruction}')
-                        for i in review.issues]
-                    result = result.model_copy(update={'issues': issues, 'passed': False})
+                                    statement=statement, review=review,
+                                    original_verification=original_verification)
+                    if review.issues:
+                        # Editing must not count a flawed first draft as a first-try pass.
+                        self.attempts[side.value].append((len(history), original_verification))
+                if review.revised_statement is not None:
+                    statement = review.revised_statement
+                    result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript)
+                    if not result.passed:
+                        raise LLMError('Reviewer revision failed publication checks')
             with self.lock:
                 self.attempts[side.value].append((len(history), result))
                 self.log.append('statement_attempt', side=side, round=stage, attempt=attempt,
@@ -191,20 +206,15 @@ class GraphRuntime:
                 self.emit('statement_accepted', {'side': side, 'round': stage, 'attempts': attempt,
                     'verified': True, 'verification_scope': 'source_values_and_structure', 'statement': statement, 'verification': result, 'engine': 'langgraph'})
                 return Analysis(statement, tuple(calls))
-            public_issues = [i.model_copy(update={'message': '공개 전 근거 검토에서 수정이 필요합니다.'})
-                             if i.code.startswith('statement_review_') else i for i in issues]
-            self.emit('statement_rejected', {'side': side, 'round': stage, 'attempt': attempt, 'issues': public_issues})
+            self.emit('statement_rejected', {'side': side, 'round': stage, 'attempt': attempt,
+                                            'issues': result.issues})
             conv.messages.append({'role': 'user', 'content': prompts.verifier_feedback(result.feedback())})
         raise LLMError('Graph statement failed verification after retries')
 
     def mediate(self, state):
         self.emit('moderator_started', {'engine': 'langgraph'})
         transcript = self.transcript(state)
-        conv = Conversation(MEDIATOR_SYSTEM,
-            [{'role': 'user', 'content': json.dumps({
-                'task': '양측의 입론·반박·최종변론 6개를 검토하고 종목에 대한 독립적인 의견을 작성하세요.',
-                'output_instructions': MEDIATOR_OUTPUT_INSTRUCTIONS,
-                'history': transcript,
+        conv = Conversation.from_snapshot(MEDIATOR_SYSTEM, {
                 'facts': {key: {**fact.model_dump(mode='json', exclude_none=True), 'value': fact.value}
                           for key, fact in self.snapshot.facts.items()},
                 'snapshot_id': self.snapshot.snapshot_id,
@@ -212,10 +222,13 @@ class GraphRuntime:
                 'data_status': self.snapshot.data_status, 'warnings': self.snapshot.warnings,
                 'return_context': return_context(self.snapshot),
                 'source_context': source_context(self.snapshot),
-                'research_results': state.get('research_results', []),
-                'remaining_actions': 0,
                 'price_as_of': str(self.snapshot.as_of),
-                'decision_at': self.snapshot.decision_at.isoformat()}, ensure_ascii=False)}])
+                'decision_at': self.snapshot.decision_at.isoformat()}, {
+                'task': '양측의 입론·반박·최종변론 6개를 검토하고 종목에 대한 독립적인 의견을 작성하세요.',
+                'output_instructions': MEDIATOR_OUTPUT_INSTRUCTIONS,
+                'history': transcript,
+                'research_results': state.get('research_results', []),
+                'remaining_actions': 0})
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
                 tools=DEBATE_TOOL_DEFINITIONS, tool_handler=SnapshotTools(self.snapshot))

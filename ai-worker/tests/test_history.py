@@ -8,6 +8,7 @@ from bullbear.presentation import used_sources
 from bullbear.prompts import render_statement
 from bullbear.schemas import Side
 from bullbear.semantic import SemanticReviewer
+from .prompt_helpers import initial_payload
 from .fakes import statement
 from .learning_fixtures import with_analysis
 from .test_graph_runtime import snapshot
@@ -54,7 +55,7 @@ def test_quote_ownership_and_turn_local_refs_survive_formats(snapshot, format):
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snapshot).check(candidate, entries, ['PX.CLOSE'],
                                         side=Side.BEAR, round_kind='rebuttal')
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    payload = initial_payload(llm.calls[0][0])
     assert payload['candidate_role'] == 'bear'
     assert payload['candidate_round'] == 'rebuttal'
     assert payload['reference_map'] == {'E1': 'PX.CLOSE'}

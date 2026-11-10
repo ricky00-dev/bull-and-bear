@@ -19,6 +19,7 @@ from bullbear.snapshot import KST, Snapshot, build_snapshot
 from bullbear.server.store import Store
 from bullbear.tools import SnapshotTools
 
+from .prompt_helpers import initial_payload
 from .fakes import AS_OF, NOW, FakeNews, FakeSource
 from .graph_fakes import GraphLLM
 
@@ -172,8 +173,8 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
                        log=EventLog(tmp_path / "events.jsonl"), emit=lambda name, data: events.append((name, data)))
     assert run.run()["verdict"]["decisive_evidence"] == ["PX.CLOSE"]
     assert all(name != "tool_call" for name, _ in events)
-    left = json.loads(bull.calls[0][0].messages[0]["content"])
-    right = json.loads(bear.calls[0][0].messages[0]["content"])
+    left = initial_payload(bull.calls[0][0])
+    right = initial_payload(bear.calls[0][0])
     assert left["assigned_outlook"] != right["assigned_outlook"] and left["history"] == right["history"] == []
     push = left["shared_push"]
     assert push == right["shared_push"] == build_shared_push(snap)
@@ -181,14 +182,28 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
     chart = push["chart_data"]
     assert set(chart) == {"price_basis", "weekly_ohlcv_csv", "metrics"}
     assert len(list(csv.DictReader(StringIO(chart["weekly_ohlcv_csv"])))) == 10
-    left_image, = bull.calls[0][0].messages[1]["content"]
-    right_image, = bear.calls[0][0].messages[1]["content"]
+    prefix = bull.calls[0][0].messages[0]
+    block, = prefix['content']
+    assert block['cache_control'] == {'type': 'ephemeral', 'ttl': '5m'}
+    fixed = json.loads(block['text'])
+    assert set(fixed) == {'ticker', 'name', 'price_as_of', 'shared_push',
+                          'return_context', 'source_context', 'decision_at'}
+    for client in (bull, bear):
+        assert len(client.calls) == 3
+        for conv, _ in client.calls:
+            assert conv.system_in_messages and conv.messages[0] == prefix
+            assert conv.messages[-1] == {'role': 'system', 'content': conv.system}
+            assert 'cache_control' not in conv.messages[1]
+            assert not fixed.keys() & json.loads(conv.messages[1]['content']).keys()
+    assert bull.calls[0][0].messages[-1] != bear.calls[0][0].messages[-1]
+    left_image, = bull.calls[0][0].messages[2]["content"]
+    right_image, = bear.calls[0][0].messages[2]["content"]
     assert left_image == right_image and left_image["type"] == "image"
     assert left_image["source"]["media_type"] == "image/png"
     png = b64decode(left_image["source"]["data"])
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
     assert tuple(int.from_bytes(png[i:i + 4], "big") for i in (16, 20)) == (840, 560)
-    assert all(len(conv.messages) == 1 for side in (bull, bear) for conv, _ in side.calls[1:])
+    assert all(len(conv.messages) == 3 for side in (bull, bear) for conv, _ in side.calls[1:])
     market, = push["market_news_titles"]
     stock, = push["stock_news_titles"]
     assert market["publisher"] == "example.com" and market["title"].startswith("한국은행")
@@ -200,7 +215,7 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
     assert push["financial_data"]["report_basis"] == "consolidated"
     assert push["financial_data"]["published_at"] is None
     assert "FIN.2026H1.REVENUE_YOY" in {f["source_id"] for f in push["financial_data"]["metrics"]}
-    mod = json.loads(moderator.calls[0][0].messages[0]["content"])
+    mod = initial_payload(moderator.calls[0][0])
     assert mod["snapshot_id"] == snap.snapshot_id and mod["facts"]["PX.CLOSE"]["value"] == 399
     assert "shared_push" not in mod and "stock_ohlcv" not in mod
 
@@ -282,7 +297,7 @@ def test_bull_bear_can_query_daily_chart_from_same_frozen_snapshot(tmp_path):
     class DailyChartLLM(GraphLLM):
         def structured(self, conv, *, schema, **kwargs):
             assert any(tool["name"] == "get_daily_chart" for tool in kwargs["tools"])
-            if json.loads(conv.messages[0]["content"])["round"] == "opening":
+            if initial_payload(conv)["round"] == "opening":
                 data = kwargs["tool_handler"]("get_daily_chart", {"start_date": str(day), "end_date": str(day)})
                 observed.append(json.loads(data))
             return super().structured(conv, schema=schema, **kwargs)

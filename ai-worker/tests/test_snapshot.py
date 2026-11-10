@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime
 
 import httpx
@@ -53,14 +54,17 @@ def test_snapshot_id_is_content_hash():
 
 
 def test_save_load_roundtrip(snap, tmp_path):
-    snap.save(tmp_path)
+    path = snap.save(tmp_path)
+    facts = json.loads(path.read_bytes())["facts"]
+    assert "note" not in facts["PX.CLOSE"]
+    assert facts["DISC.20261001000123"]["value"] is None
+    news = snap.by_category("news")[0]
+    assert facts[news.id]["url"] == news.url
     loaded = type(snap).load(tmp_path, snap.snapshot_id)
-    assert loaded.facts == snap.facts
+    assert loaded == snap
 
 
 def test_tools_only_return_their_category(snap):
-    import json
-
     out = json.loads(SnapshotTools(snap)("get_valuation", {}))
     assert out["snapshot_id"] == snap.snapshot_id
     assert all(item["id"].startswith("VAL.") for item in out["items"])

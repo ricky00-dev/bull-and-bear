@@ -1,5 +1,4 @@
 """Offline context/guard tests; these do not measure an LLM's semantic accuracy."""
-import json
 
 import pytest
 
@@ -11,6 +10,7 @@ from bullbear.prompts import render_statement
 from bullbear.schemas import Side
 from bullbear.single import SingleAnalyst, SingleVerdict
 from bullbear.snapshot import build_snapshot
+from .prompt_helpers import initial_payload
 from .fakes import FakeSource, NOW
 from .test_semantic import QueueLLM
 from .fakes import statement
@@ -36,7 +36,7 @@ def test_reviewer_receives_qualifiers_in_other_sentences_and_original_time_ancho
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snap).check(verdict, [], verdict.decisive_evidence)
     conv = llm.calls[0][0]
-    payload = json.loads(conv.messages[0]['content'])
+    payload = initial_payload(conv)
     assert payload['candidate']['reasoning'] == verdict.reasoning
     assert payload['candidate']['confidence'] == 0.35
     assert payload['price_as_of'] == str(snap.as_of)
@@ -101,7 +101,7 @@ def test_review_has_uncited_snapshot_facts_without_promoting_them_to_citations(s
     verdict = candidate().model_copy(update={'decisive_evidence': ['VAL.PER_TTM']})
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snap).check(verdict, [], verdict.decisive_evidence)
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    payload = initial_payload(llm.calls[0][0])
     assert payload['facts'] == {k: f.model_dump(mode='json') for k, f in snap.facts.items()}
     assert payload['reference_map'] == {'E1': 'VAL.PER_TTM'}
     assert payload['selected_source_ids'] == ['VAL.PER_TTM']
@@ -116,7 +116,7 @@ def test_review_does_not_fill_missing_benchmark_or_volatility(snap):
                                      'warnings': ['코스피 비교 자료 없음']})
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, missing).check(candidate(), [], ['PX.CLOSE'])
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    payload = initial_payload(llm.calls[0][0])
     assert 'PX.VOL_20D' not in payload['facts']
     assert not any(k.startswith('MKT.') for k in payload['facts'])
     assert payload['warnings'] == ['코스피 비교 자료 없음']
@@ -153,7 +153,7 @@ def test_rebuttal_quote_maps_to_opponent_without_changing_candidate(snap):
     history = [render_statement(Side.BULL, 'rebuttal', opponent)]
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snap).check(rebuttal, history, ['PX.CLOSE'], side=Side.BEAR, round_kind='rebuttal')
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    payload = initial_payload(llm.calls[0][0])
     assert payload['candidate'] == rebuttal.model_dump(mode='json')
     assert payload['candidate_role'] == 'bear'
     span, = payload['argument_quotes']
@@ -181,7 +181,7 @@ def test_quote_context_does_not_invent_opponent_ownership(snap, location, expect
     rebuttal = previous.model_copy(update={'argument': f'"{quote}"라는 상대 주장에 반박합니다 [E1].'})
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snap).check(rebuttal, history, ['PX.CLOSE'], side=Side.BEAR, round_kind='rebuttal')
-    payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    payload = initial_payload(llm.calls[0][0])
     assert payload['argument_quotes'][0]['source_matches'] == expected
 
 
