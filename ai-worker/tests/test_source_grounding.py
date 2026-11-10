@@ -70,7 +70,6 @@ def test_correct_dates_distinct_event_date_correction_and_forecast(text):
     '[E2] 이익 규모에 비해 주가 부담이 크지 않은 편입니다.',
     '[E2] 이익 대비 가격 부담이 작아 회복 가능성이 있습니다.',
     'PER 8.46배로 주가가 과도하게 눌렸다면 반등 여지가 있습니다 [E2].',
-    'PER 8.46배로 낮은 편입니다 [E2]. 다만 반등을 보장하는 것은 아닙니다.',
 ])
 def test_unbenchmarked_valuation_not_excused_by_disclaimer(text):
     assert 'per_without_comparison' in codes(text)

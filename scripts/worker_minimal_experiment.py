@@ -141,8 +141,7 @@ def main():
                 output_schema=None, review_before_publication=False, retry_feedback=False,
                 cache_policy="none", source_hashes=source_hashes,
                 system_characters={role: len(system) for role, system in systems.items()},
-                worker_bull_system_characters=len(debater_system(Side.BULL, name=snapshot.name,
-                    ticker=snapshot.ticker, as_of=str(snapshot.as_of))))
+                worker_bull_system_characters=len(debater_system(Side.BULL)))
     save(args.output / "plan.json", plan)
     save(args.output / "systems.json", systems)
     (args.output / "snapshot.json").write_bytes(snapshot_bytes)

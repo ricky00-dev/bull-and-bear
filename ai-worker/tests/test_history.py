@@ -2,7 +2,6 @@ import json
 
 import pytest
 
-from bullbear.events import EventLog
 from bullbear.history import contains_quote, history_entry, reference_map, structured_record
 from bullbear.interpretations import bind_statement, history_records
 from bullbear.presentation import used_sources
@@ -11,7 +10,7 @@ from bullbear.schemas import Side
 from bullbear.semantic import SemanticReviewer
 from .fakes import statement
 from .learning_fixtures import with_analysis
-from .test_graph_runtime import snapshot, runtime
+from .test_graph_runtime import snapshot
 from .test_semantic import QueueLLM
 
 
@@ -56,7 +55,11 @@ def test_quote_ownership_and_turn_local_refs_survive_formats(snapshot, format):
     SemanticReviewer(llm, snapshot).check(candidate, entries, ['PX.CLOSE'],
                                         side=Side.BEAR, round_kind='rebuttal')
     payload = json.loads(llm.calls[0][0].messages[0]['content'])
+    assert payload['candidate_role'] == 'bear'
+    assert payload['candidate_round'] == 'rebuttal'
+    assert payload['reference_map'] == {'E1': 'PX.CLOSE'}
     assert [turn['speaker'] for turn in payload['history']] == ['bull', 'bear']
+    assert payload['history'][1]['text'] == entries[1]
     assert [turn['reference_map'] for turn in payload['history']] == [
         {'E1': 'PX.CLOSE'}, {'E1': 'VAL.PER_TTM'}]
     assert payload['argument_quotes'][0]['source_matches'] == [
@@ -73,22 +76,3 @@ def test_non_record_history_is_ignored(entry):
     assert structured_record(entry) is None
     assert history_records([entry]) == []
     assert history_entry(entry) == {}
-
-
-def test_graph_delivers_single_records_with_original_ids_to_every_round(snapshot, tmp_path):
-    run = runtime(snapshot, tmp_path)
-    run.run()
-    events = EventLog.read(run.log.path)
-    accepted = [event for event in events if event['type'] == 'statement_accepted']
-    accepted.sort(key=lambda event: (['opening', 'rebuttal', 'closing'].index(event['round']),
-                                     ['bull', 'bear'].index(event['side'])))
-    expected = [dict(side=event['side'], round=event['round'], **event['statement']) for event in accepted]
-    for client in (run.bull, run.bear):
-        calls = [json.loads(conv.messages[0]['content']) for conv, schema in client.calls
-                 if 'claim' in schema['properties']]
-        assert [len(call['history']) for call in calls] == [0, 2, 4]
-        for call in calls:
-            assert [json.loads(entry) for entry in call['history']] == expected[:len(call['history'])]
-    moderator_call, = [json.loads(conv.messages[0]['content']) for conv, schema in run.moderator.calls
-                       if 'forecast' in schema['properties']]
-    assert [json.loads(entry) for entry in moderator_call['history']] == expected

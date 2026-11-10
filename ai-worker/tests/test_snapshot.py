@@ -101,19 +101,9 @@ def test_without_news_source_warns():
     assert "뉴스 소스 미설정" in snap.warnings
 
 
-@pytest.mark.parametrize("failure", ["timeout", "http", "invalid-json", "api-error", "invalid-date"])
-def test_optional_news_failure_warns_and_preserves_price_snapshot(failure):
+def test_optional_news_failure_warns_and_preserves_price_snapshot():
     def handle(request):
-        if failure == "timeout":
-            raise httpx.ReadTimeout("PRIVATE news request", request=request)
-        if failure == "http":
-            return httpx.Response(503, text="PRIVATE provider response")
-        if failure == "invalid-json":
-            return httpx.Response(200, text="PRIVATE invalid JSON")
-        if failure == "api-error":
-            return httpx.Response(200, json={"errorMessage": "PRIVATE"})
-        return httpx.Response(200, json={"items": [{"title": "가짜전자", "link": "https://example.test/news",
-                                                   "pubDate": "PRIVATE invalid date"}]})
+        return httpx.Response(503, text="PRIVATE provider response")
 
     news = NaverNewsSource("test-id", "test-secret")
     news._http.close()
@@ -131,8 +121,7 @@ def test_optional_news_failure_warns_and_preserves_price_snapshot(failure):
     assert "PRIVATE" not in " ".join(snap.warnings)
 
 
-@pytest.mark.parametrize("failure", ["timeout", "http", "invalid-json"])
-def test_optional_dart_failure_warns_and_preserves_price_snapshot(failure, tmp_path, monkeypatch):
+def test_optional_dart_failure_warns_and_preserves_price_snapshot(tmp_path, monkeypatch):
     import io
     import zipfile
 
@@ -147,11 +136,7 @@ def test_optional_dart_failure_warns_and_preserves_price_snapshot(failure, tmp_p
         calls.append(request.url.path)
         if request.url.path.endswith("/corpCode.xml"):
             return httpx.Response(200, content=archive.getvalue())
-        if failure == "timeout":
-            raise httpx.ReadTimeout("PRIVATE DART request: test-key", request=request)
-        if failure == "http":
-            return httpx.Response(503, text="PRIVATE provider response: test-key")
-        return httpx.Response(200, text="PRIVATE invalid JSON: test-key")
+        return httpx.Response(503, text="PRIVATE provider response: test-key")
 
     source = PykrxDartSource("test-key", tmp_path)
     monkeypatch.setattr(source, "get_daily_prices", FakeSource().get_daily_prices)

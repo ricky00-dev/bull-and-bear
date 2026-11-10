@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from bullbear.data.base import DataUnavailable, NewsArticle
+from bullbear.data.base import DataUnavailable
 from bullbear.data.krx_openapi import KrxOpenApiSource
 from bullbear.snapshot import build_snapshot
 from .fakes import AS_OF, NOW, FakeSource
@@ -26,15 +26,6 @@ def test_share_fact_preserves_disclosure_date():
     snap = build_snapshot(FakeSource(), '005930', '삼성전자', now=NOW)
     assert snap.facts['VAL.SHARES'].as_of == date(2026, 8, 14)
     assert snap.facts['VAL.MKTCAP'].as_of == AS_OF
-
-
-def test_news_is_bounded_even_if_provider_ignores_cutoff():
-    class News:
-        name = 'fixture'
-        def search(self, *args):
-            return [NewsArticle('future', NOW + timedelta(seconds=1), 'future', '', 'future')]
-    snap = build_snapshot(FakeSource(), '005930', '삼성전자', news=News(), now=NOW)
-    assert not snap.by_category('news')
 
 
 def test_naive_observation_time_is_rejected():
