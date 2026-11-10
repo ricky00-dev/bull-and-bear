@@ -20,7 +20,7 @@ const SUGGESTIONS = [
   { name: 'SK하이닉스', ticker: '000660', market: 'KOSPI' },
   { name: '카카오', ticker: '035720', market: 'KOSPI' },
   { name: '현대차', ticker: '005380', market: 'KOSPI' },
-  { name: '에코프로비엠', ticker: '247540', market: 'KOSDAQ' },
+  { name: 'NAVER', ticker: '035420', market: 'KOSPI' },
 ]
 
 function loadRecent(): string[] {

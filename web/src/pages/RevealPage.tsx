@@ -71,7 +71,7 @@ export function RevealPage() {
 
             <JudgmentComparison mine={r.mine.decision} moderator={r.verdict.decision} scores={schedule} holdBand={detail.data?.holdBand} loading={detail.isLoading} error={detail.isError} onRetry={() => detail.refetch()} />
             <p className="text-[13px] leading-relaxed text-sub">확신: 나 {r.mine.confidence}% / AI {Math.round(r.verdict.confidence * 100)}%. 판정의 일치와 실제 적중은 달라요.</p>
-            <EvidenceComparison mine={r.mine.evidencePicks} decisive={r.verdict.decisive_evidence} turns={stream.statements} asOf={d?.tradeDate} debateId={id} memo={r.mine.memo} />
+            <EvidenceComparison mine={r.mine.evidencePicks} decisive={r.verdict.decisive_evidence} turns={stream.statements} asOf={d?.tradeDate} memo={r.mine.memo} />
 
             <Crowd crowd={r.crowd} />
 

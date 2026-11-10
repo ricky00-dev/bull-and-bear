@@ -32,7 +32,7 @@ export function VerdictText({ text, decisive, debateId, asOf, turns = [] }: { te
       })}
       {info &&
         createPortal(
-          debateId ? <EvidenceSheet sourceId={open!} evidence={evidenceCitations(turns, open!)[0]?.evidence} citations={evidenceCitations(turns, open!)} debateId={debateId} asOf={asOf} onClose={() => setOpen(null)} /> : <BottomSheet label={`${info.label} 설명`} onClose={() => setOpen(null)}>
+          debateId ? <EvidenceSheet sourceId={open!} evidence={evidenceCitations(turns, open!)[0]?.evidence} citations={evidenceCitations(turns, open!)} asOf={asOf} onClose={() => setOpen(null)} /> : <BottomSheet label={`${info.label} 설명`} onClose={() => setOpen(null)}>
             <div className="flex flex-col gap-1">
               <p className="text-[13px] text-sub">중재자가 결정적이라 본 근거</p>
               <p className="text-2xl font-extrabold tracking-tight">{info.label}</p>
