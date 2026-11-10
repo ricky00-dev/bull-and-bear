@@ -6,7 +6,7 @@ import pytest
 from bullbear.events import EventLog
 from bullbear.llm import LLMError
 from bullbear.presentation import verdict_issues
-from bullbear.semantic import SemanticReviewer, horizon_issues
+from bullbear.semantic import SemanticReviewer
 from bullbear.prompts import render_statement
 from bullbear.schemas import Side
 from bullbear.single import SingleAnalyst, SingleVerdict
@@ -45,7 +45,7 @@ def test_reviewer_receives_qualifiers_in_other_sentences_and_original_time_ancho
     assert payload['facts']['PX.CLOSE'] == snap.facts['PX.CLOSE'].model_dump(mode='json')
     # Check the instructions delivered to the actual review boundary, not a separate prompt file.
     assert '판단 범위는 candidate 전체' in conv.system
-    assert '새 7거래일 구간을 시작하지 않는다' in conv.system
+    assert 'price_as_of는 가격 자료의 기준일' in conv.system
     assert '후자는 계속 반려한다' in conv.system
 
 
@@ -78,11 +78,22 @@ def test_three_sentence_guard_still_counts_qualifiers(suffix, expected):
     assert ('reasoning_length' in codes) == (expected == 'reasoning_length')
 
 
-def test_context_does_not_waive_reference_or_horizon_errors():
+def test_context_does_not_waive_reference_errors():
     verdict = candidate()
     broken = verdict.model_copy(update={'reasoning': verdict.reasoning.replace('[E1]', '[E2]')})
     assert 'verdict_refs' in [issue.code for issue in verdict_issues(broken)]
-    assert horizon_issues(verdict.reasoning.replace('7거래일', '17거래일'))
+
+
+def test_single_accepts_reasoning_without_horizon_benchmark_or_hold_interval(snap, tmp_path):
+    verdict = SingleVerdict(decision='HOLD', confidence=0.35, decisive_evidence=['PX.CLOSE'],
+        reasoning='관측된 가격만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1].')
+    llm = QueueLLM([verdict.model_dump(mode='json'), {'issues': []}])
+    log = EventLog(tmp_path / 'unscored-single.jsonl')
+    result = SingleAnalyst(llm, snap).evaluate(log)
+    assert result == verdict
+    assert len(llm.calls) == 2  # One generation and its ordinary source review; no rewrite.
+    attempts = EventLog.read(log.path)
+    assert len(attempts) == 1 and attempts[0]['passed']
 
 
 def test_review_has_uncited_snapshot_facts_without_promoting_them_to_citations(snap):

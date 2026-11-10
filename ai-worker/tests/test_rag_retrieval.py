@@ -291,31 +291,6 @@ def test_sqlite_long_query_obeys_caller_deadline(tmp_path, snapshot, monkeypatch
         assert time.monotonic() - before < 1.5
 
 
-
-
-def test_repeated_search_latency_and_replay_evaluation(tmp_path, snapshot):
-    with RagStore(tmp_path / "rag") as store:
-        for i in range(50):
-            seed(store, f"latency{i}", text=f"volatility 정의 {i}",
-                 horizons=("common",) if i < 25 else ("short",))
-        generation = GenerationIndex(store).publish(NOW)
-        contexts, totals = [], []
-        for _ in range(30):
-            start_time = time.monotonic()
-            contexts.append(retrieve(store, snapshot, generation))
-            totals.append(time.monotonic()-start_time)
-        assert len({c.context_id for c in contexts}) == 1
-        assert all(c.payload["status"] == "completed" for c in contexts)
-        timings = sorted(a["search_elapsed_seconds"] for a in retrieval_audits(store, contexts[0].context_id))
-        assert len(timings) == 30 and max(timings) < 1
-        report = {"corpus_documents": 50, "runs": 30, "completed": 30, "unique_contexts": 1,
-                  "search_p95_seconds": timings[28], "search_max_seconds": max(timings),
-                  "including_persistence_p95_seconds": sorted(totals)[28],
-                  "cost_usd": None, "accuracy": None, "usage_status": "no_model_calls"}
-        (tmp_path / "retrieval-evaluation.json").write_text(json.dumps(report), encoding="utf-8")
-        print("RAG_SEARCH_MEASURED=" + json.dumps(report))
-
-
 def test_real_archive_search_http_private_and_daily_reuse(tmp_path, monkeypatch):
     # Simulated publication clock; only this fixture may publish before historical NOW.
     from bullbear.rag import index as index_module

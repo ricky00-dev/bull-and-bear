@@ -20,10 +20,9 @@ def return_context(snapshot):
         })
     return {'price_date_T0': str(snapshot.as_of),
             'information_cutoff': snapshot.created_at.isoformat(),
-            'forecast_window': 'T0 종가 → T0 이후 일곱 번째 거래일 종가. 과거 3/7/21일과 별개.',
             'observations': observations,
             'rules': ['음수는 상대 부진, 양수는 상대 우위. 양쪽 절대수익의 상승/하락 여부는 별도 자료가 필요함.',
-                      '과거 3거래일은 미래 7거래일의 중간 관찰이 아님. 21거래일을 3주로 환산하지 않음.',
+                      '기준일에 끝나는 과거 수익률은 미래 구간의 중간 관찰이 아님. 21거래일을 3주로 환산하지 않음.',
                       '기준일 이후 뉴스/장중 관측은 과거 지표와 구분. 지수 비교값 없이 초과수익을 계산하지 않음.']}
 
 
@@ -64,7 +63,7 @@ def return_issues(text, snapshot, references=None):
             historical = False
         if historical and re.search(r'중간\s*관찰|중간\s*결과|이미\s*진행된\s*(?:평가|예측)', sentence):
             issues.append(Issue(severity='error', code='historical_forecast_mix',
-                message='기준일에 끝나는 과거 수익률은 기준일 이후 미래 7거래일의 중간 결과가 아닙니다. '
+                message='기준일에 끝나는 과거 수익률은 기준일 이후 미래 구간의 중간 결과가 아닙니다. '
                         '두 구간을 분리하고 과거 관측으로 명시하세요.'))
         if (re.search(r'21거래일', sentence) or any(f.id.endswith('_21D') for f in excess)) and re.search(r'(?:과거|최근)\s*3주', sentence):
             issues.append(Issue(severity='error', code='trading_day_calendar_mix',

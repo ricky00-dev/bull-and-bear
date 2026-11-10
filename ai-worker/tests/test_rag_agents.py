@@ -1,13 +1,10 @@
 """RAG prompt wiring and public citation boundaries; no predictive claims."""
-import json
-
 import pytest
 
 from bullbear.presentation import knowledge_leakage_issues, moderator_issues, statement_issues, used_sources
-from bullbear.rag.context import KnowledgeContext, render_background
+from bullbear.rag.context import KnowledgeContext
 from bullbear.rag.schemas import canonical_json
-from bullbear.schemas import Side
-from bullbear.semantic import BACKGROUND_RULES, SYSTEM, SemanticReviewer
+from bullbear.semantic import SYSTEM, SemanticReviewer
 from bullbear.snapshot import build_snapshot
 from bullbear.verifier import verify
 from .fakes import FakeSource, NOW, ScriptedModerator, statement
@@ -63,11 +60,10 @@ def test_context_copy_mutation_cannot_change_existing_agent_input(snap):
     assert "changed instruction" not in reviewer.llm.calls[0][0].system
 
 
-@pytest.mark.parametrize("constructor", [SemanticReviewer])
-def test_context_snapshot_mismatch_rejected_before_any_call(snap, constructor):
+def test_context_snapshot_mismatch_rejected_before_any_call(snap):
     llm = QueueLLM([])
     with pytest.raises(ValueError, match="does not match"):
-        constructor(llm, snap, background_context=context_for(snap, snapshot_id="different-snapshot"))
+        SemanticReviewer(llm, snap, background_context=context_for(snap, snapshot_id="different-snapshot"))
     assert llm.calls == []
 
 
@@ -79,13 +75,17 @@ def test_no_background_keeps_original_review_system(snap):
 
 @pytest.mark.parametrize("private", ["[K1]", "[K.definition]", "K.definition", "KCTX.fixture",
                                      "C.fixture", "R.fixture", "A.fixture"])
+def test_private_knowledge_id_formats_are_rejected(private):
+    assert any(i.code == "private_knowledge_reference" for i in knowledge_leakage_issues(private))
+
+
 @pytest.mark.parametrize("field", ["claim", "argument", "interpretation"])
-def test_statement_private_knowledge_ids_rejected_in_all_public_prose(private, field):
+def test_statement_private_knowledge_ids_rejected_in_all_public_prose(field):
     candidate = good_statement()
     if field == "interpretation":
-        candidate.evidence[0].interpretation += " " + private
+        candidate.evidence[0].interpretation += " [K1]"
     else:
-        setattr(candidate, field, getattr(candidate, field) + " " + private)
+        setattr(candidate, field, getattr(candidate, field) + " [K1]")
     assert any(i.code == "private_knowledge_reference" for i in statement_issues(candidate, "opening", set()))
 
 

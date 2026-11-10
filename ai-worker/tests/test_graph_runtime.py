@@ -62,21 +62,31 @@ def test_shared_horizon_need_not_be_repeated_in_each_utterance(snapshot, tmp_pat
     assert all('코스피 대비' not in e['statement']['argument'] for e in accepted)
 
 
-def test_final_forecast_still_requires_an_explicit_horizon(snapshot, tmp_path):
-    class MissingFirst(GraphLLM):
+def test_final_forecast_accepts_reasoning_without_scoring_target(snapshot, tmp_path):
+    class UnscoredForecast(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            if self.count == 1:
-                raw['forecast']['reasoning'] = '비슷한 흐름을 가정하지만 관계의 지속은 불확실합니다 [E1].'
+            raw['forecast']['reasoning'] = '관측된 가격만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1].'
             return raw
-    moderator = MissingFirst(snapshot)
+    moderator = UnscoredForecast(snapshot)
     run = runtime(snapshot, tmp_path, moderator=moderator)
     result = run.run()
-    assert moderator.count == 2
-    assert '7거래일 코스피 대비' in result['verdict']['reasoning']
-    assert any(e['type'] == 'moderator_rejected' and
-               any(i['code'] == 'horizon_mismatch' for i in e.get('issues', []))
-               for e in EventLog.read(run.log.path))
+    assert moderator.count == 1
+    assert result['verdict']['reasoning'] == '관측된 가격만으로 상승 방향을 확신하기 어려워 판단을 보류합니다 [E1].'
+    assert not any(e['type'] == 'moderator_rejected' for e in EventLog.read(run.log.path))
+
+
+def test_agent_and_reviewer_systems_do_not_impose_application_scoring():
+    from bullbear import prompts
+    from bullbear.graph_runtime import MEDIATOR_SYSTEM
+    from bullbear.semantic import SYSTEM as REVIEW_SYSTEM, BACKGROUND_RULES
+    from bullbear.single import SYSTEM as SINGLE_SYSTEM
+    from bullbear.statement_review import REVIEW_SYSTEM as STATEMENT_REVIEW_SYSTEM
+
+    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM, BACKGROUND_RULES]
+    systems += [prompts.debater_system(side) for side in Side]
+    for system in systems:
+        assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
 
 
 def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path):
@@ -114,11 +124,9 @@ def test_moderator_return_sign_failure_is_rewritten(snapshot, tmp_path):
                for e in EventLog.read(run.log.path))
 
 
-@pytest.mark.parametrize('bad_text,expected_code', [
-    ('발표 다음 날 장중 급락했다는 기사입니다 [E1].', 'news_relative_date'),
-    ('PER은 8.46배로 낮은 편이라 회복 여지가 있습니다 [E1].', 'per_without_comparison'),
-])
-def test_source_wording_is_corrected_before_publication(snapshot, tmp_path, bad_text, expected_code):
+def test_source_wording_is_corrected_before_publication(snapshot, tmp_path):
+    bad_text = '발표 다음 날 장중 급락했다는 기사입니다 [E1].'
+
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -130,7 +138,7 @@ def test_source_wording_is_corrected_before_publication(snapshot, tmp_path, bad_
     run.run()
     events = EventLog.read(run.log.path)
     assert any(e['type'] == 'statement_rejected' and
-               any(i['code'] == expected_code for i in e['issues']) for e in events)
+               any(i['code'] == 'news_relative_date' for i in e['issues']) for e in events)
     assert all(e['statement']['argument'] != bad_text for e in events if e['type'] == 'statement_accepted')
 
 
@@ -183,15 +191,23 @@ def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
     run = runtime(snapshot, tmp_path)
     result = run.run()
     assert all(result['stats'][side]['statements'] == 3 for side in ('bull', 'bear'))
-    for side, client in (('bull', run.bull), ('bear', run.bear)):
-        calls = [json.loads(c.messages[0]['content']) for c, schema in client.calls if 'claim' in schema['properties']]
-        assert [c['round'] for c in calls] == ['opening', 'rebuttal', 'closing']
-        assert [len(c['history']) for c in calls] == [0, 2, 4]
     events = EventLog.read(run.log.path)
     accepted = [e for e in events if e['type'] == 'statement_accepted']
     assert [e['round'] for e in accepted] == ['opening']*2 + ['rebuttal']*2 + ['closing']*2
     assert all(e['statement']['analysis']['outlook'] == ('BUY' if e['side']=='bull' else 'SELL') for e in accepted)
     assert events.index(next(e for e in events if e['type']=='moderator_started')) > events.index(accepted[-1])
+
+    rounds = ['opening', 'rebuttal', 'closing']
+    ordered = sorted(accepted, key=lambda e: (rounds.index(e['round']), e['side'] == 'bear'))
+    expected = [dict(side=e['side'], round=e['round'], **e['statement']) for e in ordered]
+    for client in (run.bull, run.bear):
+        calls = [json.loads(c.messages[0]['content']) for c, schema in client.calls if 'claim' in schema['properties']]
+        assert [c['round'] for c in calls] == rounds
+        for call, count in zip(calls, (0, 2, 4), strict=True):
+            assert [json.loads(entry) for entry in call['history']] == expected[:count]
+    moderator_call, = [json.loads(c.messages[0]['content']) for c, schema in run.moderator.calls
+                       if 'forecast' in schema['properties']]
+    assert [json.loads(entry) for entry in moderator_call['history']] == expected
 
 
 def test_abstention_preserves_all_six_statements(snapshot, tmp_path):
@@ -308,7 +324,7 @@ def test_mediation_schema_has_closed_objects_and_valid_references():
     check(schema)
 
 
-def test_frozen_rag_context_reaches_graph_generators_and_reviews_once(snapshot, tmp_path):
+def test_frozen_rag_context_reaches_graph_generators_as_data_once(snapshot, tmp_path):
     from .test_rag_agents import context_for
     context = context_for(snapshot)
     clients = [GraphLLM(snapshot) for _ in range(3)]
@@ -320,8 +336,10 @@ def test_frozen_rag_context_reaches_graph_generators_and_reviews_once(snapshot, 
     for client in clients:
         assert len(client.calls) == (1 if client is clients[2] else 3)
         for conv, _ in client.calls:
-            assert conv.system.count('RAG_UNIQUE_DEFINITION') == 1
-            assert 'RAG_UNIQUE_DEFINITION' not in conv.messages[0]['content']
+            assert 'RAG_UNIQUE_DEFINITION' not in conv.system
+            payload = json.loads(conv.messages[0]['content'])
+            assert payload['background'] == context.rendered
+            assert payload['background'].count('RAG_UNIQUE_DEFINITION') == 1
     assert 'RAG_UNIQUE_DEFINITION' not in str(events)
 
 

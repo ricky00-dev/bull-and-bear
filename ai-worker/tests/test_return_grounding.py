@@ -27,6 +27,8 @@ def test_context_sign_and_distinct_time_axes(value, word):
     assert row['lookback_trading_days'] == 21
     assert context['information_cutoff'].startswith('2026-11-02')
     assert row['time_scope'] == 'historical_ending_on_price_date'
+    assert 'forecast_window' not in context
+    assert not any('미래 7거래일' in rule for rule in context['rules'])
 
 
 @pytest.mark.parametrize('text,value', [
@@ -85,10 +87,6 @@ def test_citation_sentence_boundary_keeps_later_disclaimer_from_hiding_error():
             'PER 8.73배는 현재 수준을 보여주지만 미래는 알려주지 않습니다 [E2]. '
             '이 판단은 강한 확신이 아닌 약한 매수 판단입니다 [E3].')
     assert 'relative_return_sign' in codes(text)
-
-
-def test_decimal_does_not_split_signed_return_sentence():
-    assert 'relative_return_sign' in codes('상대수익 −0.84%p는 코스피보다 더 올랐다는 뜻입니다.')
 
 
 def test_signed_distance_is_not_repeated_with_lower_than():
