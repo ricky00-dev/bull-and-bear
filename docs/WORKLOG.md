@@ -16,6 +16,12 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-10 · Claude · web, docs · 앱 로고 교체, 디자인 가안·에셋
+- 한 것: 앱 로고를 이마를 맞댄 황소·곰 그림으로 교체. `web/public/`에 파비콘(64)·apple-touch-icon(180)·PWA 아이콘(192·512·maskable 512) PNG를 넣고 manifest·`index.html`을 바꿈. 화면 안 `Logo`(홈 머리·넓은 화면 왼쪽 메뉴·전시 화면)도 같은 그림(`src/assets/logo-mark.png`)으로. 쓰지 않게 된 `icon.svg` 삭제. `docs/design/`에 디자인 가안 정적 페이지 2개(화면 규칙 A~D, B안 캐릭터 B-1~B-7), 캐릭터 누끼·Omni 루프 영상, 생성 스크립트, 앱 아이콘 원본·후보를 넣음(약 15MB). 디자인 규칙 초안 `docs/DESIGN.md` 추가.
+- 진행 중: 화면 디자인은 아직 적용하지 않음(가안만). 방향은 B안(다크·명도 3단계·앰버), 캐릭터는 B-7(트레이더 룩, 넥타이로 편 구분) 후보.
+- 다음: `docs/design/README.md`의 남은 결정 3개가 정해지면 B안 토큰·공통 컴포넌트부터 적용. `web/` 담당(ricky00-dev)과 범위 맞추기.
+- 막힘·결정 필요: B-7 확정, 시세 등락 관례색 유지 여부, 영상 범위. 확인한 것: `npm run build`·`npm run lint` 통과, 로컬 개발 서버에서 로고 3곳과 파비콘·apple-touch-icon 응답 확인. 확인 못 한 것: 실기기 PWA 설치 아이콘, iOS 홈 화면. 32px 이하(브라우저 탭)에서는 두 얼굴이 한 덩어리로 보임.
+
 ## 2026-11-10 · Claude(PM) · api
 - 한 것: 배포 사이트에서 브라우저 게스트 입장이 403(Invalid CORS request)으로 막히던 문제 수정. Caddy가 HTTPS를 받아 Spring에 http로 넘겨서 `https://` 출처를 다른 출처로 판단했음. `server.forward-headers-strategy: native`로 X-Forwarded-Proto를 믿게 함. 로컬 운영 확인은 http(:80)라 안 보였음
 - 진행 중: 없음
