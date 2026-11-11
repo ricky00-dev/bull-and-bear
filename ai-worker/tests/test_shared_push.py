@@ -14,7 +14,7 @@ from bullbear.data import Disclosure, NewsArticle, PriceBar, ShareCount
 from bullbear.data.macro import MacroReading
 from bullbear.events import EventLog
 from bullbear.graph_runtime import GraphRuntime
-from bullbear.shared_context import build_shared_push
+from bullbear.shared_context import build_shared_push, weekly_ohlcv
 from bullbear.snapshot import KST, Snapshot, build_snapshot
 from bullbear.server.store import Store
 from bullbear.tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
@@ -27,6 +27,16 @@ from .graph_fakes import GraphLLM
 def index_loader(code, start, end):
     assert code == "KOSPI"
     return [(b.date, b.close + 1000) for b in FakeSource().get_daily_prices("", start, end)]
+
+
+def compact_rows(context):
+    metadata = context["fact_metadata"]
+    rows = {}
+    for row in csv.DictReader(StringIO(context["facts_csv"])):
+        inherited = {**metadata["default"], **metadata["groups"][row["meta"]]}
+        inherited["source"] = metadata["sources"][inherited["source"]]
+        rows[row["source_id"]] = {**inherited, **row}
+    return rows
 
 
 class WindowSource(FakeSource):
@@ -123,7 +133,8 @@ def test_legacy_snapshot_reads_without_v2_fields(tmp_path):
         store.close()
     assert snap.schema_version == 1 and snap.time_context is None
     assert snap.decision_at == snap.information_cutoff == NOW
-    assert list(csv.DictReader(StringIO(build_shared_push(snap)["chart_data"]["weekly_ohlcv_csv"]))) == []
+    assert weekly_ohlcv(snap) == []
+    assert "chart_data" not in build_shared_push(snap)
     assert json.loads(SnapshotTools(snap)("get_price_metrics", {}))["items"][0]["id"] == "PX.CLOSE"
 
 
@@ -164,15 +175,19 @@ class HeadlineSource(FakeNews):
         ]
 
 
-def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path):
+def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cited(tmp_path):
     snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW, index_loader=index_loader,
                           news=HeadlineSource(), market_news_limit=1)
     market_fact = next(fact for fact in snap.by_category("news") if fact.news_scope == "market")
+    market_fact.note = 'PRIVATE_MARKET_SNIPPET, "인용"\r둘째 줄\n셋째 줄'
 
     class NewsDebater(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
             if self.count == 1:
+                detail = json.loads(kwargs["tool_handler"]("get_facts", {"source_ids": [market_fact.id]}))
+                article, = csv.DictReader(StringIO(detail["facts_csv"]))
+                assert article["note"] == market_fact.note
                 raw["argument"] = "시황 기사 요약을 근거로 보되 전망은 여전히 불확실해요 [E1]."
                 raw["evidence"][0].update(source_id=market_fact.id, value=None)
             return raw
@@ -184,22 +199,21 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
                        statement_reviewers={"bull": reviewer},
                        log=EventLog(tmp_path / "events.jsonl"), emit=lambda name, data: events.append((name, data)))
     assert run.run()["verdict"]["decisive_evidence"] == ["PX.CLOSE"]
-    assert all(name != "tool_call" for name, _ in events)
+    assert [payload["tool"] for name, payload in events if name == "tool_call"] == ["get_facts"]
     left = initial_payload(bull.calls[0][0])
     right = initial_payload(bear.calls[0][0])
     assert left["assigned_outlook"] != right["assigned_outlook"] and left["history"] == right["history"] == []
     push = left["shared_push"]
     assert push == right["shared_push"] == build_shared_push(snap)
     assert push["snapshot_id"] == snap.snapshot_id
-    chart = push["chart_data"]
-    assert set(chart) == {"price_basis", "weekly_ohlcv_csv", "metrics"}
-    assert len(list(csv.DictReader(StringIO(chart["weekly_ohlcv_csv"])))) == 10
+    assert push["price_basis"] == snap.series.price_basis
+    assert "chart_data" not in push
+    assert len(weekly_ohlcv(snap)) == 10  # Original chart data remains available locally.
     prefix = bull.calls[0][0].messages[0]
     block, = prefix['content']
     assert block['cache_control'] == {'type': 'ephemeral', 'ttl': '5m'}
     fixed = json.loads(block['text'])
-    assert set(fixed) == {'ticker', 'name', 'price_as_of', 'shared_push',
-                          'return_context', 'source_context', 'decision_at'}
+    assert set(fixed) == {'shared_push'}
     for client in (bull, bear):
         assert len(client.calls) == 3
         for conv, _ in client.calls:
@@ -216,22 +230,32 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
     assert tuple(int.from_bytes(png[i:i + 4], "big") for i in (16, 20)) == (840, 560)
     assert all(len(conv.messages) == 3 for side in (bull, bear) for conv, _ in side.calls[1:])
-    market, = push["market_news"]
-    stock, = push["stock_news"]
+    market, = csv.DictReader(StringIO(push["market_news_csv"], newline=""))
+    stock, = csv.DictReader(StringIO(push["stock_news_csv"], newline=""))
     assert market["publisher"] == "example.com" and market["title"].startswith("한국은행")
     assert stock["title"].startswith("가짜전자")
-    assert set(stock) == set(market) == {"source_id", "title", "publisher", "published_at", "summary", "event_id"}
-    assert market["summary"] == "PRIVATE_MARKET_SNIPPET"
+    assert set(market) == {"source_id", "title", "publisher", "published_at", "event_id"}
+    assert set(stock) == set(market) - {"publisher"}
+    assert market_fact.note not in json.dumps(push, ensure_ascii=False)
     assert snap.facts[market["source_id"]].event_id.startswith("EVT.")
     assert all(a["source_id"] in snap.facts for a in (stock, market))
-    assert push["financial_data"]["report_basis"] == "consolidated"
-    assert push["financial_data"]["published_at"] is None
-    assert "FIN.2026H1.REVENUE_YOY" in {f["source_id"] for f in push["financial_data"]["metrics"]}
+    financials = compact_rows(push)
+    assert financials["FIN.2026H1.REVENUE_YOY"]["report_basis"] == "consolidated"
+    assert "published_at" not in financials["FIN.2026H1.REVENUE_YOY"]
     mod = initial_payload(moderator.calls[0][0])
-    assert mod["snapshot_id"] == snap.snapshot_id and mod["facts"]["PX.CLOSE"]["value"] == 399
-    assert mod["facts"][market_fact.id]["note"] == market_fact.note
+    moderator_facts = compact_rows(mod)
+    assert mod["snapshot_id"] == snap.snapshot_id and moderator_facts["PX.CLOSE"]["value"] == "399"
+    assert len(moderator_facts) < len(snap.facts)
+    for client in (bull, bear, moderator, reviewer):
+        for conv, _ in client.calls:
+            assert {'return_context', 'source_context'}.isdisjoint(initial_payload(conv))
+    assert moderator_facts[market_fact.id]["note"] == market_fact.note
+    assert moderator_facts[market_fact.id]["value"] == ""
     assert "shared_push" not in mod and "stock_ohlcv" not in mod
-    assert initial_payload(reviewer.calls[0][0])["facts"][market_fact.id]["note"] == market_fact.note
+    review_csv = initial_payload(reviewer.calls[0][0])["facts_csv"]
+    review_facts = {row["source_id"]: row for row in csv.DictReader(StringIO(review_csv, newline=""))}
+    assert review_facts[market_fact.id]["note"] == market_fact.note
+    assert {"id", "url", "inputs", "report_basis"}.isdisjoint(review_facts[market_fact.id])
     for client in (bull, bear, moderator, reviewer):
         for conv, _ in client.calls:
             assert all(fact.url not in json.dumps(initial_payload(conv)) for fact in snap.by_category("news"))
@@ -304,7 +328,8 @@ def test_dart_cash_flow_requires_same_report_and_currency(tmp_path, availability
     key = "FIN.2026H1.OPERATING_CASH_FLOW"
     if availability == "matching":
         assert snap.facts[key].value == 4200 and snap.facts[key].report_basis == "consolidated"
-        assert any(item["source_id"] == key for item in build_shared_push(snap)["financial_data"]["metrics"])
+        table = build_shared_push(snap)["facts_csv"]
+        assert any(item["source_id"] == key for item in csv.DictReader(StringIO(table)))
     else:
         assert key not in snap.facts
 
@@ -316,16 +341,16 @@ def test_weekly_push_aggregates_calendar_weeks_and_stops_at_partial_week():
 
     now = NOW - timedelta(days=2)  # Wednesday, before the fixture's last available candle.
     snap = build_snapshot(Weekdays(), "000000", "가짜전자", now=now)
-    weekly = list(csv.DictReader(StringIO(build_shared_push(snap)["chart_data"]["weekly_ohlcv_csv"])))
+    weekly = [{key: str(value) for key, value in row.items()} for row in weekly_ohlcv(snap)]
     assert len(weekly) == 10
     assert weekly[0]["week_start"] == "2026-08-10"
     assert weekly[-2] == {
         "week_start": "2026-10-05", "last_trade_date": "2026-10-09",
-        "open": "388", "high": "393", "low": "387", "close": "392", "volume": "6450",
+        "open": "388.0", "high": "393.0", "low": "387.0", "close": "392.0", "volume": "6450",
     }
     assert weekly[-1] == {
         "week_start": "2026-10-12", "last_trade_date": "2026-10-14",
-        "open": "395", "high": "398", "low": "394", "close": "397", "volume": "3888",
+        "open": "395.0", "high": "398.0", "low": "394.0", "close": "397.0", "volume": "3888",
     }
 
 
@@ -336,9 +361,10 @@ def test_bull_bear_can_query_daily_chart_from_same_frozen_snapshot(tmp_path):
 
     class DailyChartLLM(GraphLLM):
         def structured(self, conv, *, schema, **kwargs):
-            assert any(tool["name"] == "get_daily_chart" for tool in kwargs["tools"])
+            tool = next(tool for tool in kwargs["tools"] if tool["name"] == "read_snapshot")
+            assert "chart" in tool["input_schema"]["properties"]["kind"]["enum"]
             if initial_payload(conv)["round"] == "opening":
-                data = kwargs["tool_handler"]("get_daily_chart", {"start_date": str(day), "end_date": str(day)})
+                data = kwargs["tool_handler"]("read_snapshot", {"kind": "chart", "args": [str(day), str(day)]})
                 observed.append(json.loads(data))
             return super().structured(conv, schema=schema, **kwargs)
 
@@ -361,7 +387,7 @@ def test_bull_bear_can_query_daily_chart_from_same_frozen_snapshot(tmp_path):
 def test_daily_chart_rejects_future_oversize_and_invalid_ranges(start, end):
     snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
     with pytest.raises(ValueError):
-        SnapshotTools(snap)("get_daily_chart", {"start_date": start, "end_date": end})
+        SnapshotTools(snap)("read_snapshot", {"kind": "chart", "args": [start, end]})
 
 
 def test_old_snapshot_daily_range_returns_only_available_rows():
@@ -371,8 +397,7 @@ def test_old_snapshot_daily_range_returns_only_available_rows():
         "moving_averages": {key: points[-30:] for key, points in snap.series.moving_averages.items()
                             if key != "PX.MA25"},
     })})
-    chart = build_shared_push(old)["chart_data"]
-    assert 0 < len(list(csv.DictReader(StringIO(chart["weekly_ohlcv_csv"])))) < 10
+    assert 0 < len(weekly_ohlcv(old)) < 10
     items = json.loads(SnapshotTools(old)("get_daily_chart", {
         "start_date": "2026-08-10", "end_date": "2026-08-11"}))
     assert list(csv.DictReader(StringIO(items["daily_ohlcv_csv"]))) == []
@@ -409,4 +434,4 @@ def test_half_year_image_uses_126_sessions_and_ma200_needs_325_bars(monkeypatch,
     assert chart_image.daily_chart_image(snap) is not None
     assert captured == snap.series.stock_ohlcv
     assert captured[-1].date == AS_OF
-    assert len(list(csv.DictReader(StringIO(build_shared_push(snap)["chart_data"]["weekly_ohlcv_csv"])))) == 10
+    assert len(weekly_ohlcv(snap)) == 10

@@ -38,6 +38,25 @@ def test_provider_schema_adaptation_preserves_original_validation_and_property_n
     assert result['$defs']['items']['minItems'] == 1
 
 
+def test_custom_tool_constraints_are_adapted_before_provider_dispatch():
+    from bullbear.tools import DEBATE_TOOL_DEFINITIONS
+    calls = []
+    def stream(**kwargs):
+        calls.append(kwargs)
+        return Stream('claude-sonnet-5-5')
+    llm = LLM('claude-sonnet-5-5', client=NS(beta=NS(messages=NS(stream=stream))))
+    llm.structured(Conversation('role'), schema={}, effort='medium', tools=DEBATE_TOOL_DEFINITIONS)
+    tool = next(t for t in calls[0]['tools'] if t['name'] == 'read_snapshot')
+    arguments = tool['input_schema']['properties']['args']
+    assert 'maxItems' not in arguments and '8' in arguments['description']
+    assert arguments['minItems'] == 1 and arguments['items'] == {'type': 'string'}
+    assert tool['strict'] is True and tool['eager_input_streaming'] is True
+    assert tool['input_schema']['properties']['kind']['enum'] == ['facts', 'catalog', 'news', 'chart']
+    original = next(t for t in DEBATE_TOOL_DEFINITIONS if t['name'] == 'read_snapshot')
+    assert original['input_schema']['properties']['args']['maxItems'] == 8
+    assert set(t['name'] for t in calls[0]['tools']) == {'read_snapshot', 'get_new_url'}
+
+
 def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():
     calls = []
     models = iter(['claude-haiku-5-5-20261001', 'claude-haiku-5-5-20261002', 'claude-haiku-5-5-20261001'])

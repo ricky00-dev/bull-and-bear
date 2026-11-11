@@ -36,6 +36,12 @@ def test_single_json_preserves_full_statement_and_escaped_prose(snapshot):
     assert structured_record(rendered) == record
     assert history_records([rendered]) == history_records([legacy(record)])
     assert len(rendered) < len(legacy(record))
+    compact = render_statement(Side.BULL, 'opening', bound, include_observation=False)
+    compact_record, = history_records([compact])
+    assert len(compact) < len(rendered)
+    record['evidence'][0].pop('observation')
+    assert compact_record == record
+    assert bound.evidence[0].observation == snapshot.facts['PX.CLOSE']
 
 
 @pytest.mark.parametrize('format', ['json', 'legacy_json', 'legacy_text'])

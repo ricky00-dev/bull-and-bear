@@ -11,4 +11,6 @@ def initial_payload(conv):
     fixed = json.loads(block['text'])
     dynamic = json.loads(request['content'])
     assert not fixed.keys() & dynamic.keys()
-    return {**fixed, **dynamic}
+    payload = {**fixed, **dynamic}
+    codec = getattr(conv, 'context_ids', None)
+    return codec.decode_response(payload) if codec is not None else payload

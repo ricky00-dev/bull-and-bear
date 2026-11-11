@@ -97,6 +97,7 @@ class Conversation:
     system: str
     messages: list[dict] = field(default_factory=list)
     system_in_messages: bool = False
+    context_ids: Any = None  # Worker-only codec; never serialized to the provider.
 
     @classmethod
     def from_snapshot(cls, system: str, snapshot_context: dict, request_context: dict,
@@ -113,7 +114,7 @@ class Conversation:
                 'text': json.dumps(snapshot_context, ensure_ascii=False, sort_keys=True, separators=(',', ':')),
                 'cache_control': {'type': 'ephemeral', 'ttl': '5m'},
             }]},
-            {'role': 'user', 'content': json.dumps(request_context, ensure_ascii=False)},
+            {'role': 'user', 'content': json.dumps(request_context, ensure_ascii=False, separators=(',', ':'))},
         ]
         if images:
             messages.append({'role': 'user', 'content': deepcopy(images)})
@@ -163,7 +164,8 @@ class LLM:
         if conv.system_in_messages:
             validate_snapshot_model(self.model)
         on_event = on_event or (lambda *_: None)
-        tools = [{**t, "strict": True, "eager_input_streaming": True}
+        tools = [{**t, "input_schema": anthropic_schema(t["input_schema"]),
+                  "strict": True, "eager_input_streaming": True}
                  if t.get("type", "custom") == "custom" else t for t in tools or []]
         json_retries = 0
 

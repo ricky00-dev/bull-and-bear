@@ -68,13 +68,12 @@ def selected_models(settings) -> dict:
 
 
 def provenance() -> dict:
-    from . import graph, graph_runtime, shared_context
+    from . import graph, graph_runtime, shared_context, model_wire
     # Hash source files as well as schemas: template rendering and reviewer
     # policy changes must be distinguishable without storing prompt text.
     result = {
         "code": code_revision(),
         "policy_version": prompts.POLICY_VERSION,
-        "judgment_policy_hash": canonical_hash(prompts.JUDGMENT_POLICY),
         "prompt_source_hashes": {
             module.__name__.rsplit(".", 1)[-1]: "sha256:" + hashlib.sha256(
                 Path(module.__file__).read_bytes()).hexdigest()
@@ -82,13 +81,15 @@ def provenance() -> dict:
         },
         "schema_hashes": {
             "statement": canonical_hash(schemas.STRUCTURED_STATEMENT_SCHEMA),
+            **{f"statement_{stage}": canonical_hash(model_wire.statement_wire_schema(stage))
+               for stage in ('opening', 'rebuttal', 'closing')},
             "moderator": canonical_hash(graph_runtime.MEDIATION_SCHEMA),
             "semantic_review": canonical_hash(semantic.Review.model_json_schema()),
         },
     }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py', 'history.py')
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py', 'history.py', 'model_context.py', 'history_lookup.py', 'moderator_edit.py', 'tools.py', 'news_lookup.py', 'context_ids.py', 'model_wire.py')
     }
     return result
 

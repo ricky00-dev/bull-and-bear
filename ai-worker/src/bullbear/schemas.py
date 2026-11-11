@@ -206,3 +206,70 @@ def _with_analysis(schema: dict, model: type[BaseModel]) -> dict:
 
 STRUCTURED_STATEMENT_SCHEMA = _with_analysis(STATEMENT_SCHEMA, StatementAnalysis)
 STRUCTURED_MODERATOR_SCHEMA = _with_analysis(MODERATOR_SCHEMA, ModeratorAnalysis)
+
+
+def compact_schema(schema: dict) -> dict:
+    """Remove presentation metadata and definitions unreachable from the root.
+
+    Validation constraints, descriptions and required fields stay intact. The
+    returned schema is independent of the canonical/public schema constants.
+    """
+    from copy import deepcopy
+
+    result = deepcopy(schema)
+
+    def clean(node):
+        if isinstance(node, dict):
+            node.pop('title', None)
+            node.pop('default', None)
+            for key, value in node.items():
+                if key in ('properties', '$defs', 'definitions', 'patternProperties'):
+                    for child in value.values():
+                        clean(child)
+                else:
+                    clean(value)
+        elif isinstance(node, list):
+            for value in node:
+                clean(value)
+
+    def references(node):
+        if isinstance(node, dict):
+            ref = node.get('$ref', '')
+            if isinstance(ref, str) and ref.startswith('#/$defs/'):
+                yield ref.removeprefix('#/$defs/')
+            for value in node.values():
+                yield from references(value)
+        elif isinstance(node, list):
+            for value in node:
+                yield from references(value)
+
+    clean(result)
+    definitions = result.pop('$defs', {})
+    needed = set(references(result))
+    pending = list(needed)
+    while pending:
+        name = pending.pop()
+        for child in references(definitions.get(name, {})):
+            if child not in needed:
+                needed.add(child)
+                pending.append(child)
+    if needed:
+        result['$defs'] = {key: value for key, value in definitions.items() if key in needed}
+    return result
+
+
+def statement_schema(round_kind: RoundKind) -> dict:
+    """Generate only this round's analysis structures, keeping null fields."""
+    from copy import deepcopy
+
+    if round_kind not in ('opening', 'rebuttal', 'closing', 'extra'):
+        raise ValueError(f'Unknown statement round: {round_kind}')
+    result = deepcopy(STRUCTURED_STATEMENT_SCHEMA)
+    properties = result['properties']['analysis']['properties']
+    if round_kind != 'extra':
+        for field, stage, definition in (
+            ('rebuttal', 'rebuttal', 'Rebuttal'), ('closing', 'closing', 'Closing'),
+        ):
+            properties[field] = ({'$ref': f'#/$defs/{definition}'} if round_kind == stage
+                                 else {'type': 'null'})
+    return compact_schema(result)
