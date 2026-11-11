@@ -64,6 +64,11 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 `as_of`는 지금 `POST /debates`를 하면 스냅샷이 쓸 날짜(최신 종가 날짜)와 **같아야 한다**. Spring은 `(ticker, as_of)`로
 이미 있는 토론을 재사용하므로, 이 값이 틀리면 지난 데이터 토론을 보여 주거나 같은 토론을 두 번 돌린다.
 
+**백테스트 (v0.10, 선택 쿼리)**: `GET /stocks/{ticker}?as_of=2026-09-01`이면 그날(휴장일이면 그 전 마지막 거래일)
+기준으로 답한다. 응답 `as_of`는 실제로 쓸 거래일이고 **요청한 날짜보다 뒤면 안 된다**. Spring은 응답 `as_of`가
+요청보다 뒤면 워커가 기준일을 지원하지 않는 것으로 보고 백테스트 전체를 멈춘다. `eligible`도 그날 기준
+(상장 여부·코스피 여부). `sparkline`은 비워도 된다.
+
 ### `GET /stocks/{ticker}/eligibility`
 
 토론 가능 여부. 기준(시가총액, 거래대금, 종목 유형)은 워커가 판단하고 이유를 준다.
@@ -85,6 +90,9 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 - `mode` (v0.6, 선택): `"debate"`(기본) | `"single"`. 아래 "단일 모드" 참고.
 - `snapshot_id` (v0.6, 선택): 이 스냅샷으로 진행한다. 단일 모드에서는 **필수** (짝이 되는 토론과 같은 스냅샷).
   없는 스냅샷이면 `404 NOT_FOUND`.
+- `as_of` (v0.10, 선택, 백테스트): `"2026-09-01"`. Spring은 `GET /stocks/{ticker}?as_of=`가 돌려준 거래일을 그대로 보낸다.
+  스냅샷은 **이 날짜 종가까지의 데이터만** 쓴다 (시세·재무·공시 모두 그날 이후 공개분 제외). `snapshot_created.as_of`는
+  이 날짜, `close`는 그날 확정 종가. 없으면 지금처럼 최신 종가 기준. 멱등·재사용은 `(ticker, as_of)` 스냅샷 기준으로 같다.
 
 #### 단일 모드 (`mode: "single"`, 실험 조건 B)
 
@@ -244,6 +252,9 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 기존 저장 판정·가짜 워커 출력에는 번호가 없을 수 있으므로 기존 텍스트 표시도 유지할 수 있다.
 
 ## 변경 이력
+
+- v0.10 (2026-11-11): 백테스트용 선택 필드. `GET /stocks/{ticker}?as_of=`, `POST /debates`의 `as_of`.
+  보내지 않으면 기존과 똑같다. Spring 백테스트 실행기(`POST /ops/backtest`)가 쓴다. 워커 구현은 jangwonii.
 
 - v0.9 구현 초안 (2026-11-10): 워커의 RAG 실행 경로 제거에 맞춰 `POST /rag/query`, `POST /rag/search`,
   `POST /rag/facts`와 Spring의 `POST /api/debates/{id}/rag/search`, `POST /api/debates/{id}/rag/facts`를 폐기한다.

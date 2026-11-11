@@ -63,6 +63,12 @@ bullbear:
     daily-usd: 8.0
     poll-interval: 10s
 
+  backtest:
+    max-concurrent: 2
+    # 남은 크레딧(약 $200)에서 하루에 이만큼까지. 실측 비용을 보고 BACKTEST_DAILY_USD로 조정한다
+    daily-usd: ${BULLBEAR_BACKTEST_DAILY_USD:40.0}
+    poll-interval: 10s
+
   experiment:
     # 정식 운용 시작일. 그 전 전향 운용은 예비 운용 (퀴즈·시연용, 실험 집계 제외)
     start: 2026-11-11

@@ -56,7 +56,21 @@ public class DebateService {
 	 * @param requestedBy 시작한 사용자. 스케줄러가 시작하면 null
 	 */
 	public Created create(String ticker, UUID requestedBy, Debate.Origin origin) {
-		WorkerStockDetail stock = worker.stock(ticker);
+		return create(worker.stock(ticker), requestedBy, origin, null);
+	}
+
+	/**
+	 * 백테스트: 과거 기준일 토론. 같은 종목·같은 기준일이 이미 있으면 재사용한다.
+	 *
+	 * @param stock {@code worker.stock(ticker, asOf)} 결과. 워커에도 이 기준일(as_of)로 토론을 요청한다
+	 */
+	public Created createBacktest(WorkerStockDetail stock) {
+		return create(stock, null, Debate.Origin.BACKTEST, stock.asOf());
+	}
+
+	/** @param asOf 워커에 넘길 과거 기준일. 최신 종가 기준이면 null */
+	private Created create(WorkerStockDetail stock, UUID requestedBy, Debate.Origin origin, LocalDate asOf) {
+		String ticker = stock.ticker();
 		Optional<Debate> existing = findReusable(ticker, stock.asOf());
 		if (existing.isPresent()) {
 			return new Created(existing.get(), true);
@@ -77,7 +91,7 @@ public class DebateService {
 		}
 		try {
 			// 우리 토론 ID를 멱등 키로 넘겨, 재시도해도 워커에 토론이 두 번 생기지 않게 한다
-			WorkerDebateStarted started = worker.startDebate(ticker, debate.getId().toString());
+			WorkerDebateStarted started = worker.startDebate(ticker, debate.getId().toString(), asOf);
 			debate.attachWorker(started.debateId(), started.snapshotId());
 			debate = debates.save(debate);
 		} catch (ApiException e) {
@@ -95,7 +109,11 @@ public class DebateService {
 	}
 
 	public long runningScheduled() {
-		return debates.countByOriginAndStatus(Debate.Origin.SCHEDULED, Debate.Status.RUNNING);
+		return running(Debate.Origin.SCHEDULED);
+	}
+
+	public long running(Debate.Origin origin) {
+		return debates.countByOriginAndStatus(origin, Debate.Status.RUNNING);
 	}
 
 	public List<Debate> getAll(Collection<UUID> ids) {

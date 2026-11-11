@@ -267,6 +267,10 @@ uv run python -m bullbear.experiment --env-file .env --provider openai --model g
 - 조건 A: Spring 전향 운용 스케줄러 (`bullbear.forward-run`, 구현됨). 사용자도 같은 토론을 재사용한다.
 - 조건 B: **워커에 단일 모드 필요** — `POST /debates`에 `mode: "single"` (계약 v0.5 예정, jangwonii).
   Spring은 같은 스냅샷 ID로 단일 판정을 요청하고, 사용자에게는 보여 주지 않고 실험 결과 화면에만 쓴다.
+- 백테스트 (11/11~): 정식 운용 대신 과거 기준일로 표본을 만든다. Spring `BacktestService`가 종목 × 기준일마다
+  토론(origin `BACKTEST`)을 돌리고, 끝나면 3·7거래일 결과를 바로 기록한다. 단일 판정(조건 B)도 같은 스냅샷으로 받는다.
+  성적표 기본 범위(official)에 포함되고, 사용자 피드에는 안 보이며, 퀴즈 문제로 쓰인다. 실행은 `deploy/backtest.sh`.
+  기준일 이후 데이터가 섞이지 않는 건 워커 책임 (계약 v0.10 `as_of`).
 - 결과 화면 (M3): 조건별 적중률 + 기준선 + 표본 수 + 기간. 전시 모드 큰 화면에 같이 띄운다.
 
 ## 예산

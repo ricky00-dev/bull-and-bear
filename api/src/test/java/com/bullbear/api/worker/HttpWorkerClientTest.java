@@ -27,7 +27,7 @@ class HttpWorkerClientTest {
                     .body(body).build());
         });
         var worker = new BullbearProperties.Worker("http", URI.create("http://localhost:8000"), "secret", Duration.ZERO);
-        return new HttpWorkerClient(builder, new BullbearProperties(null, worker, null, null, null, null));
+        return new HttpWorkerClient(builder, new BullbearProperties(null, worker, null, null, null, null, null));
     }
 
     @Test
