@@ -2,7 +2,12 @@ import type { Chart, Debate, Decision, FeedItem, JudgmentDetail, JudgmentView, M
 import { EVIDENCE_DRAFT_PREFIX } from './evidence'
 import { JUDGMENT_DRAFT_PREFIX } from './judgmentDraft'
 
-type Me = { userId: string; guest: boolean; nickname: string | null }
+export type Me = { userId: string; guest: boolean; nickname: string | null }
+
+/** 화면·랭킹에 보일 내 이름. 닉네임이 없으면 게스트는 "게스트 #abcd", 카카오 가입자는 "회원 #abcd" (서버 랭킹과 같은 규칙) */
+export function myName(me: Me) {
+  return me.nickname ?? `${me.guest ? '게스트' : '회원'} #${me.userId.slice(0, 4)}`
+}
 
 /** 웹은 개발 서버, Capacitor 앱은 실제 서버 주소. 쿠키를 쓰지 않으므로 출처가 달라도 된다. */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'

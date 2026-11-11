@@ -8,7 +8,7 @@ import { TodayFeed } from '../components/TodayFeed'
 import { TodayTerm } from '../components/TodayTerm'
 import { Icon, Logo, Screen } from '../components/ui'
 import { ICONS } from '../components/icons'
-import { api } from '../lib/api'
+import { api, myName } from '../lib/api'
 import { changeColor, dueLabel, pct, won } from '../lib/format'
 import { isPending } from '../lib/score'
 import { DECISION_LABEL } from '../lib/types'
@@ -65,6 +65,7 @@ export function HomePage() {
 
   // 피드에 이미 있는 종목은 "종목을 골라 시작하기"에서 뺀다 (같은 종목이 두 번 보이지 않게)
   const feed = useQuery({ queryKey: ['feed'], queryFn: api.feed, staleTime: 30_000 })
+  const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const inFeed = new Set(feed.data?.items.map((i) => i.ticker))
   const suggestions = SUGGESTIONS.filter((s) => !inFeed.has(s.ticker))
 
@@ -78,7 +79,7 @@ export function HomePage() {
           <div className="md:invisible">
             <Logo />
           </div>
-          <Link to="/my" className="pressable flex min-h-touch items-center rounded-control px-3 text-sm text-sub">게스트</Link>
+          <Link to="/my" className="pressable flex min-h-touch items-center rounded-control px-3 text-sm text-sub">{me.data ? myName(me.data) : '마이'}</Link>
         </div>
       </header>
 

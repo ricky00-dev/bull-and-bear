@@ -6,7 +6,7 @@ import { KakaoButton } from '../components/KakaoButton'
 import { ICONS } from '../components/icons'
 import { TabBar } from '../components/TabBar'
 import { Card, ErrorNotice, Icon, Screen, Skeleton } from '../components/ui'
-import { api, resetSession } from '../lib/api'
+import { api, myName, resetSession } from '../lib/api'
 import { TERMS } from '../lib/glossary'
 
 /** 계정 · 퀴즈 누적 기록 · 학습 메뉴. 판정 기록과 적중률은 "내 판정" 탭에 있다. */
@@ -29,7 +29,7 @@ export function MyPage() {
                 <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" size={22} />
               </span>
               <div className="flex flex-col">
-                <p className="text-[17px] font-extrabold">{me.data.nickname ?? `게스트 #${me.data.userId.slice(0, 4)}`}</p>
+                <p className="text-[17px] font-extrabold">{myName(me.data)}</p>
                 <p className="text-xs text-sub">{me.data.guest ? '이 기기에만 기록이 남아요' : '카카오 계정'}</p>
               </div>
             </div>
