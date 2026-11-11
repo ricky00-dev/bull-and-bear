@@ -143,6 +143,8 @@ def filter_articles(items: list[dict], name: str | None, start: datetime, end: d
             continue
         seen_urls.add(url)
         seen_titles.add(key)
+        link = item.get("link")
+        alternate = link.strip() if isinstance(link, str) else ""
         out.append(NewsArticle(
             source_ref=url,
             published_at=published,
@@ -150,6 +152,7 @@ def filter_articles(items: list[dict], name: str | None, start: datetime, end: d
             summary=clean(item.get("description", "")),
             url=url,
             publisher=_publisher(item.get("originallink")),
+            alternate_url=alternate if alternate and alternate != url else None,
         ))
     out.sort(key=lambda a: a.published_at, reverse=True)
     return out

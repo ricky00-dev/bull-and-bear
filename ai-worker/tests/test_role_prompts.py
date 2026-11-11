@@ -22,7 +22,7 @@ def test_moderator_receives_own_style_and_retry_instructions(tmp_path):
             assert '중립적인 최종 중재자 부엉이' in conv.system
             assert '차분한 해요체' in conv.system
             assert prompts.SNAPSHOT_LOOKUP_RULES in conv.system
-            assert '받은 URL을 web_fetch로 조회한다' in conv.system
+            assert '기사 source_id를 article_id로 전달한다' in conv.system
             assert '본문 조회에 실패했거나' in conv.system
             assert any(tool['name'] == 'get_daily_chart' for tool in kwargs['tools'])
             assert '최대 3문장' not in conv.system

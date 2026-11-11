@@ -163,8 +163,7 @@ class LLM:
         if conv.system_in_messages:
             validate_snapshot_model(self.model)
         on_event = on_event or (lambda *_: None)
-        tools = [{**t, "strict": True, "eager_input_streaming": True}
-                 if t.get("type", "custom") == "custom" else t for t in tools or []]
+        tools = [{**t, "strict": True, "eager_input_streaming": True} for t in tools or []]
         json_retries = 0
 
         for _ in range(self.max_tool_turns):
@@ -235,16 +234,9 @@ class LLM:
                 raise LLMError("max_tokens에 도달해 응답이 잘렸습니다")
 
             conv.messages.append({"role": "assistant", "content": msg.content})
-            for block in msg.content:
-                if block.type in {"server_tool_use", "web_fetch_tool_result"}:
-                    on_event(block.type, block.model_dump(mode="json"))
-            if msg.stop_reason == "pause_turn":
-                continue
             tool_uses = [b for b in msg.content if b.type == "tool_use"]
             if not tool_uses:
-                # Server tool turns can include an explanation before the fetch.
-                last_fetch = max((i for i, b in enumerate(msg.content) if b.type == "web_fetch_tool_result"), default=-1)
-                text = "".join(b.text for b in msg.content[last_fetch + 1:] if b.type == "text")
+                text = "".join(b.text for b in msg.content if b.type == "text")
                 try:
                     return json.loads(text)
                 except json.JSONDecodeError as e:

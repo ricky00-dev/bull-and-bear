@@ -40,7 +40,9 @@ REVIEW_SYSTEM = """당신은 토론 발언의 공개 전 근거 검토자다. �
 
 REVIEW_INSTRUCTIONS = """
 - claim, argument, evidence.interpretation과 analysis를 인용 자료의 제목·note·값·기간과 대조한다. 매출/영업이익, 분기/누적, 원/조원, 발행일/사건일, 상대수익 부호와 과거/미래를 구분한다.
-- 요약이 본문에 없는 사실을 추가하거나 조건·부정·불확실성을 지웠는지 확인한다. 세부 근거 일부를 생략한 것만으로 오류로 보지 않는다.
+- 뉴스의 news_lookup_result에서 verified_full_text가 true이면 content를 읽고 인용 수치·사건 날짜·증감 방향을 대조한다.
+  실패 결과 또는 조회 결과가 없는 기사는 저장된 검색 요약(note)에서 확인되는 내용만 인용할 수 있다. 본문 확인을 주장하거나 검색 요약을 본문 인용처럼 쓰면 수정한다.
+- 요약이 발언 본문에 없는 사실을 추가하거나 조건·부정·불확실성을 지웠는지 확인한다. 세부 근거 일부를 생략한 것만으로 오류로 보지 않는다.
 - 현재 초안에서 수정이 꼭 필요한 문제만 issues에 최대 3개 넣는다. 없으면 빈 배열을 반환한다.
 - quote는 현재 발언에 있는 구절을 그대로 복사한다. kind는 스키마의 분류, source_ids는 실제로 대조한 제공 Fact ID, reason은 대조 결과, instruction은 수정 방향이다.
 - issues가 비어 있으면 revised_statement는 반드시 null이다. 문제가 있으면 revised_statement에 claim, argument, evidence, analysis를 모두 갖춘 수정 발언을 반환한다. 수정 지시만 쓰거나 원문을 그대로 복사하지 않는다.

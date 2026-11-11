@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-11 · Codex · ai-worker · Trafilatura 기사 본문 조회
+- 한 것: 신규 Sonnet 토론의 Anthropic 본문 도구를 워커 `fetch_news(article_id)`로 바꿨다. 네이버의 발행사 URL과 등록된 대체 링크를 스냅샷에 보존한다. robots.txt와 공개 IP 검증, 응답 제한, URL별 실행 내 캐시를 적용했다. 검수와 중재에 조회 결과를 전달하고, 실패 시 저장된 검색 요약으로 근거 범위를 좁힌다.
+- 검증: 워커 527개 통과, 6개 건너뜀. 건너뛴 항목 중 실제 한겨레 기사 추출 테스트는 별도 실행해 통과했다. 가짜 Sonnet으로 양측의 중복 요청 병합, 실패 후 요약 전환, 인용 검수 연동을 확인했다. `uv lock --check --offline` 통과.
+- 진행 중: `develop` 기반 `feat/worker-news-extraction` 로컬 작업 트리에 반영했다. 활성화 설정은 `BULLBEAR_NEWS_FETCH_ENABLED=true`다.
+- 다음: 운영 워커에서 언론사별 접근·추출 결과와 Sonnet의 뉴스 인용을 확인한다.
+- 막힘·결정 필요: Spring 실환경 통합 5건과 실제 Sonnet 토론은 미실행이다. 조회 시점의 공개 HTML을 쓰므로 발행 후 수정된 기사의 이전 버전은 확보할 수 없다.
+
 ## 2026-11-11 · Codex · ai-worker, docs · v24 커밋과 작업 로그 병합
 - 한 것 — Sonnet 뉴스 본문 조회와 요약문 대체를 `abcb6b9`에 커밋했다. 최신 `develop`과 겹친 작업 로그에 양쪽 기록을 모두 보존했다. 스냅샷 원본과 실행 로그는 로컬 데이터 폴더에 보관한다.
 - 진행 중 — `feat/worker-agent-tone`에서 `develop` 대상 PR을 준비했다.

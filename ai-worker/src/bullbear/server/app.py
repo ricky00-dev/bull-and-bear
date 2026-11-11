@@ -150,7 +150,9 @@ def create_app(*, settings=None, market=None, runner_factory=None, token=None, m
 
     @app.get('/snapshots/{snapshot_id}', dependencies=secured)
     def snapshot(snapshot_id: str, svc=Depends(service)):
-        return svc.store.snapshot(snapshot_id)
+        data = svc.store.snapshot(snapshot_id)
+        data.pop('news_alternate_urls', None)
+        return data
 
     @app.get('/prices/daily', dependencies=secured)
     def prices(ticker: str, from_: date = Query(alias='from'), to: date = Query(), svc=Depends(service)):

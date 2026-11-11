@@ -118,6 +118,7 @@ class NewsArticle:
     summary: str  # 검색 결과 요약. 본문 아님
     url: str
     publisher: str | None = None
+    alternate_url: str | None = None  # 검색 결과에 함께 제공된 포털 기사 링크
 
 
 class NewsSource(ABC):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from .schemas import RoundKind, Side, Statement
 from .shared_context import fact_for_model
 
-POLICY_VERSION = "langgraph-news-fetch-v24"
+POLICY_VERSION = "langgraph-worker-news-extraction-v25"
 JUDGMENT_POLICY = """
 공통 자료 해석 원칙:
 - PER = 주가/EPS = 시가총액/순이익. 현재 PER 8.46배라는 수치만으로 낮다/싸다/저평가/가격 부담이 작다고 평가하지 않는다.
@@ -47,9 +47,10 @@ NEWS_CITATION_RULES = """
 """
 
 NEWS_LOOKUP_RULES = NEWS_CITATION_RULES + """
-- web_fetch가 제공되면 뉴스 인용 전에 get_new_url에 기사 source_id를 넣고, 받은 URL을 web_fetch로 조회한다.
-  `news_lookup_results`에 이미 같은 기사의 본문 또는 조회 실패 기록이 있으면 그 결과를 사용한다.
-  get_new_url은 주소를 반환한다. 본문은 web_fetch의 결과에서 확인한다.
+- fetch_news가 제공되면 인용에 필요한 기사 source_id를 article_id로 전달한다. 턴마다 새 기사 한 건을 조회할 수 있다.
+  `news_lookup_results`에 같은 기사의 본문 또는 조회 실패 기록이 있으면 그 결과를 사용한다.
+  SUCCESS이고 verified_full_text가 true일 때 content에서 인용 대목의 숫자·날짜·증감 방향을 대조한다.
+  실패하면 검색 요약에 귀속해 인용하며, 본문을 확인했다고 말하지 않는다. 기사 Fact의 value는 null을 유지한다.
   공개 글의 출처 링크는 워커가 근거 ID로 연결한다.
 """
 

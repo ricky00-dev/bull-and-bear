@@ -340,10 +340,8 @@ KRX 종가는 기업행사 미보정이며, 연속 종가의 30% 초과 단절�
 장부가 활성화된 경우에는 기존 텍스트 제한에 따라 CSV와 Fact만 보낸다. 뉴스에는 기사 ID·제목·언론사·발행 시각과 저장된 요약문을 제공한다. NAVER가 언론사 이름을 주지 않는 경우 원문 호스트를 사용한다.
 국내 시황은 증시·통화정책·환율·경제산업 키워드로 검색해 관련 주제 수와 최신성으로 정렬한다.
 같은 링크, 정규화 제목, 발행 시각이 가깝고 제목이 매우 유사한 기사는 대표 기사만 남긴다.
-`get_new_url`에 기사 Fact의 `source_id` 하나를 넣으면 스냅샷에 저장된 원문 URL을 반환한다. 외부 페이지에 접속하지 않는다.
-신규 Sonnet 토론에서 `BULLBEAR_NEWS_WEB_FETCH_ENABLED=true`를 설정하면 `get_new_url` 결과를 Anthropic의 `web_fetch`로 열 수 있다.
-본문 조회에 실패하면 스냅샷에 저장된 요약문을 인용한다. 같은 토론에서는 조회 결과를 후속 라운드와 검수가 재사용한다.
-저장된 스냅샷을 다시 실행할 때는 그 스냅샷의 요약문을 사용한다.
+`get_new_url`은 기사 Fact의 `source_id`에 대응하는 스냅샷 URL을 반환한다. 본문 조회는 아래
+`fetch_news`를 사용한다.
 OpenDART 영업활동현금흐름은 전체 재무제표
 응답에 동일 접수번호·보고 기준의 원화 계정이 있을 때만 추가한다.
 
@@ -353,7 +351,7 @@ OpenDART 영업활동현금흐름은 전체 재무제표
 | `BULLBEAR_VIX_ENABLED` | 기본 false. Cboe VIX 사용권과 서비스 노출 범위를 확인한 뒤 true로 설정 |
 | `ECOS_API_KEY` | 한국은행 기준금리 `722Y001 / 0101000 / D` 조회. 키 생략 시 ECOS 비활성 |
 | `BULLBEAR_MARKET_NEWS_LIMIT`, `BULLBEAR_STOCK_NEWS_LIMIT` | 기본 8건·30건. 각 0~30, 0이면 해당 검색 비활성 |
-| `BULLBEAR_NEWS_WEB_FETCH_ENABLED` | 기본 false. true이면 신규 Sonnet 토론에서 기사 본문 조회 |
+| `BULLBEAR_NEWS_FETCH_ENABLED` | 기본 false. true이면 새로 수집한 스냅샷으로 진행하는 Sonnet 토론에서 워커 본문 조회 활성화. 새 변수가 없으면 기존 `BULLBEAR_NEWS_WEB_FETCH_ENABLED` 값 사용 |
 
 FRED는 한국 마감 시각보다 앞서 끝난 미국 중부 달력일을 vintage로 지정한다. `vintage_date`는 그날에
 조회 가능했던 자료라는 근거이며 정확한 공개 시각은 아니다. ECOS는 공개 시각이나 vintage가 없어, 워커가
@@ -366,6 +364,48 @@ FRED를 서비스에서 활성화할 때에는 [FRED API 이용 조건](https://
 표시 의무와 [VIX 원천 데이터 조건](https://fred.stlouisfed.org/series/VIXCLS)을 확인한다.
 [FRED 빈티지 조회](https://fred.stlouisfed.org/docs/api/fred/series_observations.html)와
 [ECOS Open API](https://ecos.bok.or.kr/api/)를 사용한다.
+
+### 워커 기사 본문 조회
+
+`fetch_news` 입력은 `{"article_id":"NEWS.1a2b3c4d"}`다. 공통 입력의 기사 `source_id`를 사용하며
+URL 인자는 받지 않는다. 예시는 다음과 같다.
+
+```json
+{
+  "article_id": "NEWS.1a2b3c4d",
+  "status": "SUCCESS",
+  "url": "https://example.com/news/123",
+  "title": "기사 제목",
+  "content": "추출한 기사 본문",
+  "extraction_method": "trafilatura",
+  "verified_full_text": true,
+  "error_code": null
+}
+```
+
+워커는 발행사 `originallink`를 우선 사용하고, 페이지가 없거나 본문을 추출할 수 없는 경우 등록된 `link`를
+한 번 확인할 수 있다. 접근 거부, robots.txt 차단, 요청 제한 응답은 저장된 검색 요약으로 대체한다.
+DNS에서 확인한 공개 주소에만 연결하며 기존 호스트 이름으로 TLS를 검증한다. 모든 리다이렉트의 URL과
+목적지 주소를 다시 검사한다. 기사 다운로드에는 robots.txt의 Allow/Disallow를 적용한다. 응답은 HTML
+2 MiB, 리다이렉트 3회, HTTP 연결·읽기 5초, 추출 본문 8,000자로 제한한다.
+워커는 수집한 HTML에서 Trafilatura로 본문을 추출한다. [Trafilatura API 문서](https://trafilatura.readthedocs.io/en/latest/corefunctions.html)
+
+실패 시 `content`는 null, `verified_full_text`는 false이며 `error_code`에 원인을 반환한다.
+
+| 상태 | 예시 |
+|---|---|
+| `FETCH_FAILED` | `ACCESS_DENIED`, `NOT_FOUND`, `TIMEOUT`, `ROBOTS_DENIED`, `LOOKUP_LIMIT` |
+| `EXTRACTION_FAILED` | `NO_ARTICLE_BODY`, `BODY_TOO_LONG` |
+| `UNSUPPORTED` | `ARTICLE_UNAVAILABLE`, `INVALID_URL`, `BLOCKED_ADDRESS`, `UNSUPPORTED_CONTENT_TYPE` |
+
+본문 검사는 짧은 페이지와 로그인·오류·구독 안내를 걸러내는 휴리스틱이다. `verified_full_text`는
+추출 텍스트가 기사 본문 검사를 통과했다는 뜻이다. 수치, 사건 날짜, 증감 방향은 인용 검토에서 해당
+본문과 대조한다. 조회에 실패하면 검색 요약에 귀속해 인용한다. 요약도 없으면 다른 근거를 사용한다.
+
+각 역할은 한 턴에 새 기사 한 건을 조회할 수 있다. 같은 토론 안에서 URL 기준으로 성공·실패를 재사용하며,
+Bull/Bear가 동시에 요청한 경우 하나의 다운로드를 공유한다. 결과는 후속 라운드, 발언 검토, 중재에 전달된다.
+원문은 토론 실행 중 메모리에만 보관한다. 재실행 및 백테스트는 저장된 검색 요약을 사용한다.
+새 스냅샷에서는 기준 시각 이전 발행 기사만 조회 대상으로 삼으며, 발행사가 이후 수정한 원문의 이전 버전은 확보할 수 없다.
 
 ## 모델의 판단과 개념·논리 검토
 
@@ -403,3 +443,9 @@ FRED를 서비스에서 활성화할 때에는 [FRED API 이용 조건](https://
 운영 인증·동시 실행·재시작·선택적 영속 비용 장부는 [워커 운영 안내](../docs/WORKER-OPERATIONS.md)를 참고한다.
 
 - 파이프라인 동작을 바꾸면 `tests/fakes.py`의 가짜 소스와 `tests/graph_fakes.py`의 가짜 모델로 테스트를 추가한다.
+
+오프라인 테스트와 별도로 공개 국내 언론사 기사 한 건을 점검할 수 있다. 네트워크와 발행사 정책에 따라 결과가 달라질 수 있다.
+
+```bash
+BULLBEAR_TEST_NEWS_URL='https://www.hani.co.kr/arti/economy/economy_general/1286819.html' uv run pytest -q tests/test_news_live.py
+```

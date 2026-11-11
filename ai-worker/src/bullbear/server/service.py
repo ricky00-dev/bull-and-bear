@@ -78,7 +78,7 @@ class LiveRunner:
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
             moderator_effort=settings.moderator_effort,
             include_chart_image=self.budget is None,
-            news_web_fetch=settings.news_web_fetch_enabled and self.live_news,
+            news_fetch_enabled=settings.news_fetch_enabled and self.live_news,
             statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
                 if self.review_statements else None).run()
 

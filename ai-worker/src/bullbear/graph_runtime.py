@@ -13,6 +13,7 @@ from .chart_image import daily_chart_image
 from .graph import Analysis, Mediation, build_debate_graph
 from .interpretations import analysis_issues, bind_statement, history_records
 from .llm import Conversation, LLMError
+from .news_extraction import ArticleExtractor
 from .news_lookup import NewsLookup
 from .presentation import statement_issues, moderator_issues
 from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_SCHEMA,
@@ -55,6 +56,7 @@ MEDIATOR_OUTPUT_INSTRUCTIONS = """
 - 양측은 relevance/materiality/rebuttal/risk_awareness를 각각 1~5로 평가하고 comment는 한 문장씩 쓴다.
 - analysis에 공통 사실, 쟁점, 이견, 미검증 사항, 전망 근거와 한계를 구분한다. key_interpretation_ids에는 이력의 실제 해석 ID만 넣는다.
 - statement_reviews에는 6개 발언 ID를 각각 한 번씩 넣는다. assessment는 no_issue_found/concern/uncertain 중 하나, reason에는 판단 이유, source_ids에는 대조한 Fact ID를 최대 3개(없으면 []) 넣는다. no_issue_found는 오류를 발견하지 못했다는 뜻이다.
+- 뉴스 근거는 news_lookup_results의 본문 또는 저장된 검색 요약과 대조한다. 수치·사건 날짜·증감 방향이 출처에 있는지 확인한다.
 - 확인되지 않은 해석을 전망의 확정 사실로 쓰지 말고 unverified/outlook_limits와 평가에 반영한다.
 """
 
@@ -72,7 +74,7 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 statement_reviewers=None, include_chart_image=True, news_web_fetch=False):
+                 statement_reviewers=None, include_chart_image=True, news_fetch_enabled=False):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.shared_push = build_shared_push(snapshot)
@@ -94,7 +96,7 @@ class GraphRuntime:
         # reviewer reservations exhausting a shared pilot budget unnecessarily.
         self.review_lock = threading.Lock()
         self.attempts = {side.value: [] for side in Side}
-        self.news_web_fetch = news_web_fetch
+        self.news_extractor = ArticleExtractor() if news_fetch_enabled else None
         self.news_results = {}
 
     def news_lookup(self, llm, stage, role):
@@ -103,16 +105,15 @@ class GraphRuntime:
             for earlier in _STAGES[:_STAGES.index(stage)]:
                 for side in Side:
                     for key, result in self.news_results.get((earlier, side.value), {}).items():
-                        if previous.get(key, {}).get('status') != 'body':
+                        if result['error_code'] != 'LOOKUP_LIMIT' and not previous.get(key, {}).get('verified_full_text'):
                             previous[key] = result
 
         def record(source_id, result):
             with self.lock:
                 self.log.append('news_fetch_result', role=role, round=stage, source_id=source_id, **result)
 
-        return NewsLookup(self.snapshot, enabled=self.news_web_fetch and
-                          getattr(llm, 'model', '').startswith('claude-sonnet-5-5'),
-                          previous=previous, record=record)
+        extractor = self.news_extractor if getattr(llm, 'model', '').startswith('claude-sonnet-5-5') else None
+        return NewsLookup(self.snapshot, extractor=extractor, previous=previous, record=record)
 
     def emit(self, event, payload):
         # Parallel initial nodes must not interleave event sequence assignment.
@@ -134,12 +135,14 @@ class GraphRuntime:
         refs = {e.ref: e.source_id for e in statement.evidence}
         if news is not None:
             issues += news.issues(refs.values())
+        news_results = news.results if news is not None else None
         for text in (statement.claim, statement.argument):
             issues += return_issues(text, self.snapshot, refs)
-            issues += source_issues(text, self.snapshot, refs)
+            issues += source_issues(text, self.snapshot, refs, news_results=news_results)
         for evidence in statement.evidence:
             issues += return_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
-            issues += source_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs)
+            issues += source_issues(f'[{evidence.ref}] ' + evidence.interpretation, self.snapshot, refs,
+                                        news_results=news_results)
         issues += statement_issues(statement, stage, set())
         issues += analysis_issues(statement, transcript=transcript, side=side, round_kind=stage)
         expected = 'BUY' if side == Side.BULL else 'SELL'
@@ -183,7 +186,7 @@ class GraphRuntime:
             return news.handle_tool(tools, name, arguments)
         for attempt in range(1, 4):
             raw = llm.structured(conv, schema=STRUCTURED_STATEMENT_SCHEMA, effort=self.debater_effort,
-                                 tools=news.tools(DEBATE_TOOL_DEFINITIONS), tool_handler=tool, on_event=news.observe)
+                                 tools=news.tools(DEBATE_TOOL_DEFINITIONS), tool_handler=tool)
             try:
                 statement = Statement.model_validate(raw)
             except ValidationError:
@@ -263,7 +266,7 @@ class GraphRuntime:
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
                 tools=news.tools(DEBATE_TOOL_DEFINITIONS),
-                tool_handler=lambda name, arguments: news.handle_tool(tools, name, arguments), on_event=news.observe)
+                tool_handler=lambda name, arguments: news.handle_tool(tools, name, arguments))
             try:
                 decision = Mediation.model_validate(raw)
                 if decision.action not in ('ACCEPT', 'ABSTAIN'):
@@ -284,7 +287,7 @@ class GraphRuntime:
                 issues += news.issues(candidate.decisive_evidence)
                 refs = {f'E{i}': key for i, key in enumerate(candidate.decisive_evidence, 1)}
                 issues += return_issues(candidate.reasoning, self.snapshot, refs)
-                issues += source_issues(candidate.reasoning, self.snapshot, refs)
+                issues += source_issues(candidate.reasoning, self.snapshot, refs, news_results=news.results)
                 issues += concept_issues('\n'.join([candidate.reasoning, candidate.bull.comment, candidate.bear.comment]))
                 issues += analysis_issues(candidate, transcript=transcript)
                 if any(key not in self.snapshot.facts for key in candidate.decisive_evidence):

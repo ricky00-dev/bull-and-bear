@@ -14,10 +14,12 @@ dependencies = [
     "langgraph>=1,<2",
     "matplotlib>=3.10,<4",
     "pandas>=3.0.6",
+    "protego>=0.4,<1",
     "pydantic>=2.14.1",
     "pykrx>=1.0.51",
     "python-dotenv>=1.2.4",
     "setuptools<81",  # pykrx imports pkg_resources
+    "trafilatura>=2,<3",
     "uvicorn[standard]>=0.54.0",
 ]
 

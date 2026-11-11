@@ -169,3 +169,13 @@ def test_market_news_uses_bounded_topic_search_and_original_publisher(make_sourc
     assert queries == list(relevant)
     assert [article.title for article in articles] == list(relevant.values())
     assert {article.publisher for article in articles} == {"example.com"}
+
+
+def test_preserves_distinct_portal_link_alongside_publisher_url():
+    original = "https://publisher.example/article"
+    portal = "https://n.news.naver.com/mnews/article/001/123"
+    row = {**item("삼성전자 뉴스", original), "link": portal}
+    article, = filter_articles([row], "삼성전자", START, END)
+    assert (article.source_ref, article.url, article.alternate_url) == (original, original, portal)
+    from_portal, = filter_articles([{**row, "originallink": ""}], "삼성전자", START, END)
+    assert from_portal.url == portal and from_portal.alternate_url is None

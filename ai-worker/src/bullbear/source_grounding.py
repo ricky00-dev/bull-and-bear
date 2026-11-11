@@ -37,14 +37,22 @@ def source_context(snapshot):
             ]}
 
 
-def source_issues(text, snapshot, references=None):
+def source_issues(text, snapshot, references=None, *, news_results=None):
     references = references or {}
+    news_results = news_results or {}
     issues = []
     for sentence in re.split(r'(?<!\d)\.(?!\d)\s*|\n+', text):
         # Inspect the author's assertions, not exact quotations being challenged.
         assertion = re.sub(r'[“「][^”」]*[”」]|"[^"]*"', '', sentence)
         cited = [snapshot.facts.get(references.get(ref, '')) for ref in re.findall(r'\[(E\d+)\]', sentence)]
         news = [f for f in cited if f is not None and f.category == 'news']
+        body_claim = re.search(
+            r'(?:기사\s*)?(?:본문|원문)\s*(?:에서\s*확인|에\s*따르면|을\s*(?:읽었|확인했))', assertion)
+        qualified = re.search(r'미확인|못했|않았|않아|수\s*없|실패', assertion)
+        if (len(news) == 1 and body_claim and not qualified
+                and not news_results.get(news[0].id, {}).get('verified_full_text')):
+            issues.append(Issue(severity='error', code='news_body_unverified',
+                message=f'{news[0].id}: 기사 본문이 확인되지 않았습니다. 저장된 요약문 범위에서 인용하세요.'))
         relative = re.search(r'발표\s*(?:당일|다음\s*날|하루\s*(?:전|뒤|후))|기준일\s*(?:다음\s*날|하루\s*(?:전|뒤|후))|(?:오늘|어제)\s*(?:기사|보도)|(?:기사|보도)\s*(?:다음\s*날|당일)', assertion)
         correction = re.search(r'표현.{0,20}(?:틀|잘못|맞지|부정확)|설명.{0,15}맞지|(?:라고|이라는).{0,20}(?:잘못|틀|맞지)|쓰지\s*않', assertion)
         if relative and not correction:

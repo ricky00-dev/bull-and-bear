@@ -124,6 +124,7 @@ class Snapshot(BaseModel):
     series: SnapshotSeries = Field(default_factory=SnapshotSeries)
     time_context: TimeContext | None = None
     data_status: dict[str, DataStatus] = Field(default_factory=dict)
+    news_alternate_urls: dict[str, str] = Field(default_factory=dict, exclude_if=lambda urls: not urls)
 
     @property
     def decision_at(self) -> datetime:
@@ -280,6 +281,7 @@ def build_snapshot(
         warnings.append(f"공시 없음: {e}")
         status["disclosures"] = "FAILED"
 
+    news_alternate_urls: dict[str, str] = {}
     status["stock_news"] = status["market_news"] = "UNSUPPORTED"
     if news is None:
         warnings.append("뉴스 소스 미설정")
@@ -290,7 +292,7 @@ def build_snapshot(
             try:
                 stock_news = select_news(news.search(ticker, name, news_start, decision_at),
                     news_start, decision_at, limit=stock_news_limit, scope="company")
-                _add(facts, news_facts(stock_news, scope="company"))
+                _add(facts, news_facts(stock_news, scope="company", alternate_urls=news_alternate_urls))
                 status["stock_news"] = "OK" if stock_news else "EMPTY"
             except DataUnavailable as e:
                 warnings.append(f"뉴스 없음: {e}")
@@ -300,7 +302,7 @@ def build_snapshot(
             try:
                 market_news = select_news(search_market(news_start, decision_at), news_start, decision_at,
                     limit=market_news_limit, scope="market", already_selected=[a for a, _ in stock_news])
-                _add(facts, news_facts(market_news, scope="market"))
+                _add(facts, news_facts(market_news, scope="market", alternate_urls=news_alternate_urls))
                 status["market_news"] = "OK" if market_news else "EMPTY"
             except DataUnavailable:
                 warnings.append("국내 시황 뉴스 조회 실패")
@@ -321,7 +323,7 @@ def build_snapshot(
     snapshot = Snapshot(snapshot_id="", ticker=ticker, name=name, as_of=as_of,
                         created_at=datetime.now(KST), provider=source.name + (f"+{news.name}" if news else ""),
                         facts=facts, warnings=warnings, schema_version=2, series=series,
-                        time_context=time_context, data_status=status)
+                        time_context=time_context, data_status=status, news_alternate_urls=news_alternate_urls)
     # Creation time is operational metadata. All reusable analysis inputs,
     # including the ordered news selection, determine the content address.
     payload = snapshot.model_dump(mode="json", exclude={"snapshot_id", "created_at"})
@@ -577,10 +579,12 @@ def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int,
 # ---- 뉴스 ----
 
 
-def news_facts(articles, *, scope) -> list[Fact]:
+def news_facts(articles, *, scope, alternate_urls: dict[str, str]) -> list[Fact]:
     out = []
     for a, event_id in articles:
         fid = f"NEWS.{hashlib.sha1(a.source_ref.encode()).hexdigest()[:8]}"
+        if a.alternate_url:
+            alternate_urls[fid] = a.alternate_url
         out.append(Fact(
             id=fid, category="news", label=a.title, value=None, unit="text",
             as_of=a.published_at.astimezone(KST).date(), published_at=a.published_at,
