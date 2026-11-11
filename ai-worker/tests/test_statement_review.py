@@ -33,11 +33,9 @@ def concern(quote, *, sources=('PX.CLOSE',)):
 
 
 def revised_review(candidate, *, quote=None, sources=('PX.CLOSE',)):
-    revised = wire_statement(candidate)
-    original = revised['argument']
-    revised['argument'] = CORRECTED
+    original = wire_statement(candidate)['argument']
     return {'issues': [concern(original if quote is None else quote, sources=sources)],
-            'revised_statement': revised}
+            'edits': [{'path': 'argument', 'value': CORRECTED}]}
 
 
 class Reviewer:
@@ -48,18 +46,18 @@ class Reviewer:
 
     def structured(self, conv, **kwargs):
         payload = initial_payload(conv)
-        assert not kwargs.get('tools')
+        assert {'read_snapshot', 'get_new_url'} <= {tool['name'] for tool in kwargs.get('tools', [])}
         assert '해당 스냅샷 도구를 호출' not in conv.system
         assert prompts.NEWS_CITATION_RULES in conv.system
-        assert 'get_daily_chart' not in payload['statement_output_instructions']
+        assert 'statement_output_instructions' not in payload
         self.calls.append(payload)
         text = payload['statement']['argument']
         if '100조' in text or self.fabricated or self.invalid_revision:
             result = revised_review(payload['statement'], quote='없는 인용' if self.fabricated else None)
             if self.invalid_revision:
-                result['revised_statement']['evidence'][0]['value'] = -1
+                result['edits'] = [{'path': 'evidence.0.value', 'value': '-1'}]
             return result
-        return {'issues': [], 'revised_statement': None}
+        return {'issues': [], 'edits': []}
 
 
 class WrongMoney(GraphLLM):
@@ -83,13 +81,15 @@ def test_reviewer_edits_bad_draft_without_regeneration_and_only_revision_is_publ
     original = next(e for e in reviews if e['review']['issues'])
     assert '100조' in original['statement']['argument']
     assert original['review']['revised_statement']['argument'] == CORRECTED
-    assert original['original_verification']['passed'] is False
-    assert result['stats']['bull']['first_try_pass_rate'] == .67
-    assert result['stats']['bull']['rejected_attempts'] == 1
-    assert result['stats']['bear']['first_try_pass_rate'] == 1.0
+    assert original.get('original_verification') is None
+    assert result['stats']['bull']['first_try_pass_rate'] is None
+    assert result['stats']['bull']['evidence_accuracy'] is None
+    assert result['stats']['bull']['rejected_attempts'] == 0
+    assert result['stats']['bear']['first_try_pass_rate'] is None
     assert result['stats']['bear']['rejected_attempts'] == 0
     accepted = [e for e in events if e['type'] == 'statement_accepted']
     assert len(accepted) == 6 and all(e['attempts'] == 1 for e in accepted)
+    assert all(e['verified'] is False and e['verification_scope'] == 'not_checked' for e in accepted)
     opening = next(e for e in accepted if e['side'] == 'bull' and e['round'] == 'opening')
     assert opening['statement']['argument'] == CORRECTED
     assert opening['statement']['statement_id'] == 'graph-test:bull:t1'
@@ -193,7 +193,7 @@ def review_candidate(snapshot):
 def test_invalid_quote_then_clean_review_recovers_once(snapshot):
     candidate = review_candidate(snapshot)
     reviewer = ReviewSequence([revised_review(candidate, quote='원문에 없는 인용'),
-                               {'issues': [], 'revised_statement': None}])
+                               {'issues': [], 'edits': []}])
     result = review_statement(reviewer, candidate, snapshot, [], effort='high')
     assert result.issues == [] and result.revised_statement is None and len(reviewer.messages) == 2
     assert reviewer.messages[0][0] == reviewer.messages[1][0]
@@ -217,35 +217,35 @@ def test_unknown_review_source_can_be_corrected_without_losing_concern(snapshot)
     assert result.revised_statement.argument == CORRECTED
 
 
-@pytest.mark.parametrize('problem', ['unrequested_edit', 'missing_revision', 'unchanged_revision',
-                                    'missing_analysis', 'wrong_role', 'unknown_source'])
+@pytest.mark.parametrize('problem', ['unrequested_edit', 'missing_edits', 'unchanged_edit',
+                                    'replace_analysis', 'wrong_role', 'unknown_source'])
 def test_invalid_review_contract_cannot_publish(snapshot, problem):
     candidate = review_candidate(snapshot)
     invalid = revised_review(candidate)
     if problem == 'unrequested_edit':
         invalid['issues'] = []
-    elif problem == 'missing_revision':
-        invalid['revised_statement'] = None
-    elif problem == 'unchanged_revision':
-        invalid['revised_statement'] = wire_statement(candidate)
-    elif problem == 'missing_analysis':
-        invalid['revised_statement']['analysis'] = None
+    elif problem == 'missing_edits':
+        invalid['edits'] = []
+    elif problem == 'unchanged_edit':
+        invalid['edits'][0]['value'] = candidate.argument
+    elif problem == 'replace_analysis':
+        invalid['edits'] = [{'path': 'analysis', 'value': 'null'}]
     elif problem == 'wrong_role':
-        invalid['revised_statement']['analysis']['outlook'] = 'SELL'
+        invalid['edits'] = [{'path': 'analysis.outlook', 'value': 'SELL'}]
     elif problem == 'unknown_source':
-        invalid['revised_statement']['evidence'][0]['source_id'] = 'UNKNOWN'
+        invalid['edits'] = [{'path': 'evidence.0.source_id', 'value': 'UNKNOWN'}]
     reviewer = ReviewSequence([invalid, invalid])
     with pytest.raises(LLMError):
         review_statement(reviewer, candidate, snapshot, [], effort='high')
     assert len(reviewer.messages) == 2
 
 
-@pytest.mark.parametrize('revision', [None, {'claim': '필수 필드가 빠진 수정본'}])
-def test_valid_concern_cannot_be_dropped_to_bypass_failed_revision(snapshot, revision):
+@pytest.mark.parametrize('edits', [None, [], [{'path': 'claim'}]])
+def test_valid_concern_cannot_be_dropped_to_bypass_failed_revision(snapshot, edits):
     candidate = review_candidate(snapshot)
     invalid = revised_review(candidate)
-    invalid['revised_statement'] = revision
-    reviewer = ReviewSequence([invalid, {'issues': [], 'revised_statement': None}])
+    invalid['edits'] = edits
+    reviewer = ReviewSequence([invalid, {'issues': [], 'edits': []}])
     with pytest.raises(LLMError):
         review_statement(reviewer, candidate, snapshot, [], effort='high')
     assert len(reviewer.messages) == 2
@@ -256,7 +256,7 @@ def test_reviewer_repairs_its_own_invalid_value_without_another_debater_call(sna
         def structured(self, conv, **kwargs):
             result = super().structured(conv, **kwargs)
             if len(self.calls) == 1:
-                result['revised_statement']['evidence'][0]['value'] = -1
+                result['edits'] = [{'path': 'evidence.0.value', 'value': '-1'}]
             return result
     bull = WrongMoney(snapshot)
     run = runtime(snapshot, tmp_path, bull=bull)
@@ -276,9 +276,10 @@ def test_reviewer_cannot_publish_broken_rebuttal_connection(snapshot, tmp_path):
             payload = initial_payload(conv)
             self.calls.append(payload)
             if payload['statement']['analysis']['rebuttal'] is None:
-                return {'issues': [], 'revised_statement': None}
+                return {'issues': [], 'edits': []}
             result = revised_review(payload['statement'])
-            result['revised_statement']['analysis']['rebuttal']['target_statement_id'] = 'fabricated-opponent'
+            result['edits'] = [{'path': 'analysis.rebuttal.target_statement_id',
+                                'value': 'fabricated-opponent'}]
             return result
     run = runtime(snapshot, tmp_path)
     reviewer = InvalidRebuttal()
