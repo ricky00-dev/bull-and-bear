@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { IntroSheet } from '../components/IntroSheet'
 import { KakaoButton } from '../components/KakaoButton'
+import { NicknameForm } from '../components/NicknameForm'
 import { ICONS } from '../components/icons'
 import { TabBar } from '../components/TabBar'
 import { Card, ErrorNotice, Icon, Screen, Skeleton } from '../components/ui'
@@ -14,6 +15,7 @@ export function MyPage() {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const quiz = useQuery({ queryKey: ['quiz', 'stats'], queryFn: api.quizStats })
   const [intro, setIntro] = useState(false)
+  const [editingName, setEditingName] = useState(false)
 
   return (
     <Screen>
@@ -28,11 +30,17 @@ export function MyPage() {
               <span className="flex size-11 items-center justify-center rounded-full bg-surface-2">
                 <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" size={22} />
               </span>
-              <div className="flex flex-col">
-                <p className="text-[17px] font-extrabold">{myName(me.data)}</p>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <p className="truncate text-[17px] font-extrabold">{myName(me.data)}</p>
                 <p className="text-xs text-sub">{me.data.guest ? '이 기기에만 기록이 남아요' : '카카오 계정'}</p>
               </div>
+              {!editingName && (
+                <button type="button" onClick={() => setEditingName(true)} className="min-h-10 shrink-0 rounded-xl bg-surface-2 px-3.5 text-[13px] font-bold">
+                  {me.data.nickname ? '이름 바꾸기' : '닉네임 정하기'}
+                </button>
+              )}
             </div>
+            {editingName && <NicknameForm initial={me.data.nickname ?? ''} onDone={() => setEditingName(false)} />}
             {me.data.guest ? (
               <>
                 <KakaoButton className="text-[15px]" />

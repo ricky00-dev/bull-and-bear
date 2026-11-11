@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { NicknameForm } from '../components/NicknameForm'
 import { Card, ErrorNotice, Screen, Skeleton, TopBar } from '../components/ui'
-import { api, ApiError, myName } from '../lib/api'
+import { api, myName } from '../lib/api'
 import type { RankEntry } from '../lib/types'
 
 /**
@@ -92,18 +93,8 @@ function Row({ e }: { e: RankEntry }) {
 
 /** 랭킹에 보일 이름. 정하지 않으면 "게스트 #abcd"(가입자는 "회원 #abcd")로 보인다 */
 function NicknameCard() {
-  const queryClient = useQueryClient()
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState('')
-  const save = useMutation({
-    mutationFn: () => api.setNickname(name),
-    onSuccess: (m) => {
-      queryClient.setQueryData(['me'], m)
-      queryClient.invalidateQueries({ queryKey: ['ranking'] })
-      setEditing(false)
-    },
-  })
   if (!me.data) return null
   const current = me.data.nickname
 
@@ -114,54 +105,13 @@ function NicknameCard() {
           <span className="text-xs text-sub">랭킹에 보일 내 이름</span>
           <span className="text-[15px] font-extrabold">{current ?? myName(me.data)}</span>
         </span>
-        <button
-          type="button"
-          onClick={() => {
-            setName(current ?? '')
-            save.reset()
-            setEditing(true)
-          }}
-          className="min-h-10 rounded-xl bg-surface-2 px-3.5 text-[13px] font-bold"
-        >
+        <button type="button" onClick={() => setEditing(true)} className="min-h-10 rounded-xl bg-surface-2 px-3.5 text-[13px] font-bold">
           {current ? '바꾸기' : '닉네임 정하기'}
         </button>
       </div>
     )
   }
-  return (
-    <form
-      className="flex flex-col gap-2 rounded-panel bg-surface p-4 point-ring"
-      onSubmit={(e) => {
-        e.preventDefault()
-        save.mutate()
-      }}
-    >
-      <label htmlFor="nick" className="text-xs text-sub">
-        한글·영문·숫자 2~10자
-      </label>
-      <div className="flex gap-2">
-        <input
-          id="nick"
-          autoFocus
-          value={name}
-          maxLength={10}
-          onChange={(e) => setName(e.target.value)}
-          className="min-h-11 min-w-0 flex-1 rounded-xl bg-surface-2 px-3 text-[15px] outline-none focus:ring-1 focus:ring-point"
-        />
-        <button type="submit" disabled={save.isPending} className="min-h-11 rounded-xl bg-point px-4 text-[14px] font-bold text-on-point disabled:opacity-50">
-          저장
-        </button>
-        <button type="button" onClick={() => setEditing(false)} className="min-h-11 rounded-xl px-2 text-[14px] text-sub">
-          취소
-        </button>
-      </div>
-      {save.error && (
-        <p className="text-[13px] font-bold text-up-ink">
-          {save.error instanceof ApiError ? save.error.message : '저장하지 못했어요'}
-        </p>
-      )}
-    </form>
-  )
+  return <NicknameForm initial={current ?? ''} onDone={() => setEditing(false)} className="rounded-panel bg-surface p-4 point-ring" />
 }
 
 function Toggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
