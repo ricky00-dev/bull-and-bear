@@ -29,7 +29,7 @@ public class QuizRanking {
 		TODAY, ALL
 	}
 
-	/** @param name 닉네임, 없으면 "게스트 #abcd" */
+	/** @param name 닉네임, 없으면 "게스트 #abcd" (카카오 가입자는 "회원 #abcd") */
 	public record Entry(int rank, String name, int hits, int answered, boolean me) {
 	}
 
@@ -37,7 +37,7 @@ public class QuizRanking {
 	public record Ranking(Scope scope, int players, List<Entry> top, Entry mine) {
 	}
 
-	private record Row(UUID userId, String nickname, int hits, int answered) {
+	private record Row(UUID userId, String nickname, boolean guest, int hits, int answered) {
 	}
 
 	private final JdbcClient jdbc;
@@ -53,18 +53,18 @@ public class QuizRanking {
 				? LocalDate.now(clock).atStartOfDay(ClockConfig.KST).toInstant()
 				: Instant.EPOCH;
 		List<Row> rows = jdbc.sql("""
-				select r.user_id, u.nickname,
+				select r.user_id, u.nickname, u.guest,
 				       count(*) filter (where q.user_hit) as hits,
 				       count(*) as answered
 				from quiz_questions q
 				join quiz_rounds r on r.id = q.round_id
 				join users u on u.id = r.user_id
 				where q.decision is not null and q.answered_at >= :since
-				group by r.user_id, u.nickname
+				group by r.user_id, u.nickname, u.guest
 				order by hits desc, answered asc, max(q.answered_at) asc
 				""")
 				.param("since", Timestamp.from(since))
-				.query((rs, i) -> new Row(rs.getObject(1, UUID.class), rs.getString(2), rs.getInt(3), rs.getInt(4)))
+				.query((rs, i) -> new Row(rs.getObject(1, UUID.class), rs.getString(2), rs.getBoolean(3), rs.getInt(4), rs.getInt(5)))
 				.list();
 
 		List<Entry> top = new ArrayList<>();
@@ -78,7 +78,7 @@ public class QuizRanking {
 			}
 			prev = r;
 			boolean me = r.userId().equals(user.getId());
-			Entry e = new Entry(rank, displayName(r.nickname(), r.userId()), r.hits(), r.answered(), me);
+			Entry e = new Entry(rank, displayName(r.nickname(), r.guest(), r.userId()), r.hits(), r.answered(), me);
 			if (i < TOP) {
 				top.add(e);
 			}
@@ -89,7 +89,10 @@ public class QuizRanking {
 		return new Ranking(scope, rows.size(), top, mine);
 	}
 
-	static String displayName(String nickname, UUID userId) {
-		return nickname != null ? nickname : "게스트 #" + userId.toString().substring(0, 4);
+	static String displayName(String nickname, boolean guest, UUID userId) {
+		if (nickname != null) {
+			return nickname;
+		}
+		return (guest ? "게스트 #" : "회원 #") + userId.toString().substring(0, 4);
 	}
 }

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { Card, ErrorNotice, Screen, Skeleton, TopBar } from '../components/ui'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, myName } from '../lib/api'
 import type { RankEntry } from '../lib/types'
 
 /**
@@ -90,7 +90,7 @@ function Row({ e }: { e: RankEntry }) {
   )
 }
 
-/** 랭킹에 보일 이름. 정하지 않으면 "게스트 #abcd"로 보인다 */
+/** 랭킹에 보일 이름. 정하지 않으면 "게스트 #abcd"(가입자는 "회원 #abcd")로 보인다 */
 function NicknameCard() {
   const queryClient = useQueryClient()
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
@@ -112,7 +112,7 @@ function NicknameCard() {
       <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
         <span className="flex flex-col">
           <span className="text-xs text-sub">랭킹에 보일 내 이름</span>
-          <span className="text-[15px] font-extrabold">{current ?? `게스트 #${me.data.userId.slice(0, 4)}`}</span>
+          <span className="text-[15px] font-extrabold">{current ?? myName(me.data)}</span>
         </span>
         <button
           type="button"
