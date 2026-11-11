@@ -36,7 +36,9 @@ import com.jayway.jsonpath.JsonPath;
  * 검색 → 토론 생성 → 중계 저장 → 판정 봉인 → 사용자 판정 → 공개.
  */
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest(properties = { "bullbear.worker.mode=fake", "bullbear.worker.fake-delay=0ms" })
+// 하루 비용 상한은 DebateQuotaTest가 본다. 여기서는 테스트 순서에 따라 앞선 토론들이 상한을 채워 요청이 거절되지 않게 넉넉히 준다
+@SpringBootTest(properties = { "bullbear.worker.mode=fake", "bullbear.worker.fake-delay=0ms",
+		"bullbear.budget.user-daily-usd=1000" })
 @AutoConfigureMockMvc
 class DebateFlowTest {
 

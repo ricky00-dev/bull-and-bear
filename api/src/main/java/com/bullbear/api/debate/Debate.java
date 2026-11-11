@@ -26,8 +26,9 @@ public class Debate {
 	}
 
 	/** USER: 사용자가 시작, SCHEDULED: 전향 운용 스케줄러. */
+	/** BACKTEST: 과거 기준일로 돌린 토론. 사용자 피드에는 안 보이고 퀴즈·AI 성적표에 쓴다 */
 	public enum Origin {
-		USER, SCHEDULED
+		USER, SCHEDULED, BACKTEST
 	}
 
 	@Id

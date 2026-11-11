@@ -13,7 +13,7 @@ import com.bullbear.api.scoring.ScoreRule;
 
 /**
  * AI 성적표: 전향 운용 토론의 실제 결과로 토론 판정(조건 A)과 단일 판정(조건 B), 기준선을 같은 규칙으로 채점한다.
- * 기본은 정식 운용(experiment.start 이후)만 센다. 예비 운용은 엔진이 달라 실험 숫자에 섞지 않는다.
+ * 기본은 정식 운용(experiment.start 이후 전향 운용 + 백테스트 전부)만 센다. 예비 운용은 엔진이 달라 실험 숫자에 섞지 않는다.
  */
 @Service
 public class ReportService {
@@ -69,7 +69,7 @@ public class ReportService {
 		var range = jdbc.sql("""
 				select min(d.trade_date), max(o.scored_trade_date), count(distinct d.ticker)
 				from debates d join debate_outcomes o on o.debate_id = d.id
-				where d.origin = 'SCHEDULED' and d.trade_date >= :since
+				where ((d.origin = 'SCHEDULED' and d.trade_date >= :since) or d.origin = 'BACKTEST')
 				""")
 				.param("since", since)
 				.query((rs, i) -> new Object[] { rs.getObject(1, LocalDate.class), rs.getObject(2, LocalDate.class),
@@ -86,7 +86,7 @@ public class ReportService {
 				join debate_outcomes o on o.debate_id = d.id and o.horizon_days = :h
 				join moderator_verdicts v on v.debate_id = d.id
 				left join single_verdicts s on s.debate_id = d.id and s.status = 'COMPLETED'
-				where d.origin = 'SCHEDULED' and d.trade_date >= :since
+				where ((d.origin = 'SCHEDULED' and d.trade_date >= :since) or d.origin = 'BACKTEST')
 				""")
 				.param("h", days).param("since", since)
 				.query((rs, i) -> new Row(rs.getBigDecimal(1), rs.getString(2), rs.getString(3)))

@@ -37,13 +37,13 @@ public class FeedController {
 	}
 
 	private static final String SQL = """
-			with latest as (select max(data_date) as d from debates where status <> 'FAILED')
+			with latest as (select max(data_date) as d from debates where status <> 'FAILED' and origin <> 'BACKTEST')
 			select d.id, d.ticker, d.stock_name, d.status, d.origin = 'SCHEDULED' as scheduled, d.data_date,
 			       d.created_at, count(j.id) as judged, coalesce(bool_or(j.user_id = :userId), false) as mine
 			from debates d
 			join latest on d.data_date = latest.d
 			left join judgments j on j.debate_id = d.id
-			where d.status <> 'FAILED'
+			where d.status <> 'FAILED' and d.origin <> 'BACKTEST'
 			group by d.id
 			order by (d.status = 'RUNNING') desc, count(j.id) desc, d.created_at desc
 			limit 30

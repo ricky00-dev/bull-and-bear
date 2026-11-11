@@ -47,15 +47,20 @@ public class HttpWorkerClient implements WorkerClient {
 	}
 
 	@Override
-	public WorkerStockDetail stock(String ticker) {
-		return call(() -> http.get().uri("/stocks/{ticker}", ticker)
-				.retrieve().bodyToMono(WorkerStockDetail.class).block(TIMEOUT));
+	public WorkerStockDetail stock(String ticker, LocalDate asOf) {
+		return call(() -> http.get().uri(b -> {
+			b.path("/stocks/{ticker}");
+			if (asOf != null) {
+				b.queryParam("as_of", asOf);
+			}
+			return b.build(ticker);
+		}).retrieve().bodyToMono(WorkerStockDetail.class).block(TIMEOUT));
 	}
 
 	@Override
-	public WorkerDebateStarted startDebate(String ticker, String requestId) {
+	public WorkerDebateStarted startDebate(String ticker, String requestId, LocalDate asOf) {
 		return call(() -> http.post().uri("/debates")
-				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, 1, null, null))
+				.bodyValue(new WorkerModels.StartDebateRequest(ticker, requestId, 1, null, null, asOf))
 				.retrieve().bodyToMono(WorkerDebateStarted.class).block(TIMEOUT));
 	}
 
