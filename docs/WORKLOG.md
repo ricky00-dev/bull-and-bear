@@ -16,6 +16,26 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-11 · Codex · ai-worker · 스냅샷 캐시 뒤에 토론 역할 지정
+- 한 것: Bull·Bear·Mediator의 공통 시스템 프롬프트에 세 역할의 지침을 모았다. 도구 정의, 공통 시스템, 스냅샷에 5분 캐시 지점을 두고 라운드 입력 뒤의 `role: system` 메시지에서 한 역할을 지정한다. 도구 호출·결과와 검증 재시도에서는 역할 지정 메시지를 같은 위치에 유지한다.
+- 검증: 워커 492개와 실험 스크립트 7개 테스트 통과, Spring 연동 5개 건너뜀. SDK 모의 전송으로 Bull·Bear의 도구 정의·공통 시스템·스냅샷 블록이 동일하고 역할 지정은 스냅샷 뒤에서 달라지는지 확인했다.
+- 진행 중: `feat/worker-prompt-cache-layout`의 별도 작업 트리에 로컬 변경으로 남겼다.
+- 다음: 실모델 검증에서 Bull·Bear의 `cache_read_input_tokens`를 비교한다.
+- 막힘·결정 필요: 운영 배포와 실제 Claude 캐시 적중률 검증은 하지 않았다. Mediator에는 전체 Fact 목록과 별도 출력 스키마·effort를 유지한다.
+
+## 2026-11-11 · Codex · ai-worker · Claude 역할 지정과 캐시 공유 조사
+- 한 것: [Messages API](https://platform.claude.com/docs/en/api/beta/messages/create)와 [중간 시스템 메시지](https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages) 문서를 확인했다. API의 `role`은 메시지 종류다. 토론 역할은 고정 시스템 프롬프트에서 정의하고, 스냅샷 뒤의 워커 메시지에서 선택하거나, 선택한 역할 지시를 그 위치의 `role: system` 메시지에 넣을 수 있다.
+- 진행 중: 역할 지정 방식은 문서와 코드 기준으로 비교했다. 요청 조립 코드 변경 없음.
+- 다음: 역할 간 스냅샷 캐시를 공유하려면 Bull·Bear의 동일한 입력으로 캐시 생성·읽기 토큰을 비교한다.
+- 막힘·결정 필요: Mediator는 스냅샷 표현, 출력 스키마, 기본 effort가 달라 공유를 가정할 수 없다. 실모델 확인은 미실시다.
+
+## 2026-11-11 · Codex · ai-worker · 토론 프롬프트 캐시 지점 분리
+- 한 것: Bull·Bear·Mediator 요청을 도구 정의 → 공통 분석 규칙 → 역할 지시 → 고정 스냅샷 → 라운드 지시·이력 순으로 조립했다. 마지막 도구, 공통 규칙, 스냅샷에 5분 캐시 지점을 뒀다. 도구 호출·결과와 검증 피드백은 같은 대화 끝에 붙인다.
+- 검증: 워커 489개와 실험 스크립트 7개 테스트 통과, Spring 연동 5개 건너뜀. 오프라인 SDK 전송 본문에서 3개 캐시 지점과 도구 호출·재시도 순서를 확인했고, 선택적 `web_fetch`와 비용 장부 경로도 검증했다.
+- 진행 중: `develop`의 `f732e1d`에서 만든 `feat/worker-prompt-cache-layout`에 적용했다.
+- 다음: 실제 Claude 사용량의 캐시 생성·읽기 토큰을 비교한 뒤 이력 캐시 지점이 필요한지 판단한다.
+- 막힘·결정 필요: 운영 배포와 실모델 호출은 하지 않았다. 스냅샷 캐시는 역할 지시를 포함하므로 Bull·Bear 간에는 별개다.
+
 ## 2026-11-11 · Codex · ai-worker, docs · v24 커밋과 작업 로그 병합
 - 한 것 — Sonnet 뉴스 본문 조회와 요약문 대체를 `abcb6b9`에 커밋했다. 최신 `develop`과 겹친 작업 로그에 양쪽 기록을 모두 보존했다. 스냅샷 원본과 실행 로그는 로컬 데이터 폴더에 보관한다.
 - 진행 중 — `feat/worker-agent-tone`에서 `develop` 대상 PR을 준비했다.

@@ -19,7 +19,7 @@ from dotenv import dotenv_values
 from bullbear.anthropic_budget import WorkerSpendLedger
 from bullbear.experiments.minimal_agents import POLICY_VERSION, build_system, run_debate
 from bullbear.llm import LLMError
-from bullbear.prompts import debater_system
+from bullbear.prompts import DEBATE_SYSTEM, debate_role_assignment
 from bullbear.schemas import Side
 from bullbear.snapshot import Snapshot
 from bullbear.tools import SnapshotTools, TOOL_DEFINITIONS
@@ -141,7 +141,7 @@ def main():
                 output_schema=None, review_before_publication=False, retry_feedback=False,
                 cache_policy="none", source_hashes=source_hashes,
                 system_characters={role: len(system) for role, system in systems.items()},
-                worker_bull_system_characters=len(debater_system(Side.BULL)))
+                worker_bull_system_characters=len(DEBATE_SYSTEM) + len(debate_role_assignment(Side.BULL.value)))
     save(args.output / "plan.json", plan)
     save(args.output / "systems.json", systems)
     (args.output / "snapshot.json").write_bytes(snapshot_bytes)

@@ -88,15 +88,17 @@ def test_unexpected_response_family_stops_and_preserves_incurred_usage():
 
 
 @pytest.mark.parametrize('model', ['claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'])
-def test_snapshot_prompt_rejects_unsupported_model_before_dispatch(model):
+@pytest.mark.parametrize('common_system', [None, 'Shared analysis rules'])
+def test_snapshot_prompt_rejects_unsupported_model_before_dispatch(model, common_system):
     llm = LLM(model, client=NS())
-    conv = Conversation.from_snapshot('role', {'facts': {}}, {'task': 'analyze'})
+    conv = Conversation.from_snapshot('role', {'facts': {}}, {'task': 'analyze'}, common_system=common_system)
     with pytest.raises(LLMRequestBlocked, match='5.5'):
         llm.structured(conv, schema={}, effort='medium')
     assert llm.requests_attempted == 0
 
 
-def test_sdk_snapshot_prefix_survives_tool_turns_retries_and_role_changes(tmp_path):
+@pytest.mark.parametrize('common_system', [None, 'Shared analysis rules'])
+def test_sdk_snapshot_prefix_survives_tool_turns_retries_and_role_changes(tmp_path, common_system):
     """Exercise actual SDK serialization/stream parsing and durable settlement, offline."""
     import anthropic
     import httpx2
@@ -132,35 +134,51 @@ def test_sdk_snapshot_prefix_survives_tool_turns_retries_and_role_changes(tmp_pa
         return httpx2.Response(200, headers={'content-type': 'text/event-stream'}, content=body)
 
     ledger = WorkerSpendLedger(tmp_path / 'cache.sqlite3', 'offline-test', '3')
-    definitions = [{'name': 'read_fact', 'description': 'Read the frozen fact',
-                    'input_schema': {'type': 'object', 'properties': {}, 'additionalProperties': False}}]
+    definitions = [{'name': name, 'description': 'Read the frozen fact',
+                    'input_schema': {'type': 'object', 'properties': {}, 'additionalProperties': False}}
+                   for name in ('read_other_fact', 'read_fact')]
     with httpx2.Client(transport=httpx2.MockTransport(handle)) as http:
         client = anthropic.Anthropic(api_key='local-test', base_url='https://example.test',
                                      http_client=http, max_retries=0)
         llm = LLM('claude-sonnet-5-5', client=client, budget=ledger)
         conv = Conversation.from_snapshot('bull persona', {'ticker': '000000', 'facts': {'PX.CLOSE': 399}},
-                                          {'round': 'opening', 'assigned_outlook': 'BUY'})
+                                          {'round': 'opening', 'assigned_outlook': 'BUY', 'history': []},
+                                          common_system=common_system)
         assert llm.structured(conv, schema={}, effort='medium', tools=definitions,
                               tool_handler=lambda *_: '{"value":399}') == {}
         conv.messages.append({'role': 'user', 'content': 'Please revise the explanation.'})
         assert llm.structured(conv, schema={}, effort='medium', tools=definitions) == {}
         # Different dictionary insertion order must not change the serialized prefix.
         bear = Conversation.from_snapshot('bear persona', {'facts': {'PX.CLOSE': 399}, 'ticker': '000000'},
-                                          {'round': 'closing', 'assigned_outlook': 'SELL'})
+                                          {'round': 'closing', 'assigned_outlook': 'SELL', 'history': ['opening']},
+                                          common_system=common_system)
         assert llm.structured(bear, schema={}, effort='medium', tools=definitions) == {}
 
     first = captured[0]
-    assert len(captured) == 4 and all('system' not in request for request in captured)
-    assert [message['role'] for message in first['messages']] == ['user', 'user', 'system']
+    assert len(captured) == 4
+    cache_control = {'type': 'ephemeral', 'ttl': '5m'}
     prefix = first['messages'][0]
-    assert prefix['content'][0]['cache_control'] == {'type': 'ephemeral', 'ttl': '5m'}
+    assert prefix['content'][0]['cache_control'] == cache_control
     assert all(request['messages'][0] == prefix for request in captured)
-    assert all(request['messages'][:3] == first['messages'] for request in captured[:3])
-    assert captured[1]['messages'][3]['content'][0]['type'] == 'tool_use'
-    assert captured[1]['messages'][4]['content'][0]['type'] == 'tool_result'
-    assert captured[2]['messages'][-1]['content'] == 'Please revise the explanation.'
+    assert [message['role'] for message in first['messages']] == ['user', 'user', 'system']
+    assert first['messages'][-1] == {'role': 'system', 'content': 'bull persona'}
     assert captured[3]['messages'][-1] == {'role': 'system', 'content': 'bear persona'}
-    assert all(sum(message['role'] == 'system' for message in request['messages']) == 1 for request in captured)
+    assert all(request['messages'][:len(first['messages'])] == first['messages'] for request in captured[:3])
+    tool_use, tool_result = captured[1]['messages'][-2:]
+    assert tool_use['content'][0]['type'] == 'tool_use'
+    assert tool_result['content'][0]['type'] == 'tool_result'
+    assert captured[2]['messages'][-1]['content'] == 'Please revise the explanation.'
+    if common_system is None:
+        assert all('system' not in request for request in captured)
+        assert all('cache_control' not in tool for request in captured for tool in request['tools'])
+    else:
+        common = {'type': 'text', 'text': common_system, 'cache_control': cache_control}
+        assert all(request['system'] == [common] for request in captured)
+        assert all(request[key] == first[key] for request in captured for key in ('tools', 'model', 'output_config'))
+        assert 'cache_control' not in first['tools'][0]
+        assert first['tools'][-1]['cache_control'] == cache_control
+        assert json.loads(captured[3]['messages'][1]['content'])['history'] == ['opening']
+    assert all('cache_control' not in tool for tool in definitions)
     assert ledger.summary()['known_cost_usd'] == pytest.approx(.0015936)
     assert not ledger.summary()['halted'] and ledger.summary()['unconfirmed_requests'] == 0
     assert llm.usage.cache_creation_input_tokens == 512 and llm.usage.cache_read_input_tokens == 1536

@@ -202,12 +202,15 @@ def test_graph_bull_bear_get_identical_push_and_cite_without_tool_calls(tmp_path
                           'return_context', 'source_context', 'decision_at'}
     for client in (bull, bear):
         assert len(client.calls) == 3
-        for conv, _ in client.calls:
-            assert conv.system_in_messages and conv.messages[0] == prefix
-            assert conv.messages[-1] == {'role': 'system', 'content': conv.system}
-            assert 'cache_control' not in conv.messages[1]
-            assert not fixed.keys() & json.loads(conv.messages[1]['content']).keys()
-    assert bull.calls[0][0].messages[-1] != bear.calls[0][0].messages[-1]
+        for round_index, (conv, _) in enumerate(client.calls):
+            assert conv.messages[0] == prefix
+            assert all(message['role'] == 'user' for message in conv.messages[:-1])
+            assert conv.messages[-1]['role'] == 'system'
+            request = json.loads(conv.messages[1]['content'])
+            assert not fixed.keys() & request.keys()
+            assert 'task' in request and len(request['history']) == 2 * round_index
+    bull_system, bear_system, mediator_system = (client.calls[0][0].system for client in (bull, bear, moderator))
+    assert bull_system == bear_system == mediator_system
     left_image, = bull.calls[0][0].messages[2]["content"]
     right_image, = bear.calls[0][0].messages[2]["content"]
     assert left_image == right_image and left_image["type"] == "image"

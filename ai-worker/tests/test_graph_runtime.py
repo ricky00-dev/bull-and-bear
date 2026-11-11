@@ -79,13 +79,11 @@ def test_final_forecast_accepts_reasoning_without_scoring_target(snapshot, tmp_p
 
 def test_agent_and_reviewer_systems_do_not_impose_application_scoring():
     from bullbear import prompts
-    from bullbear.graph_runtime import MEDIATOR_SYSTEM
     from bullbear.semantic import SYSTEM as REVIEW_SYSTEM
     from bullbear.single import SYSTEM as SINGLE_SYSTEM
     from bullbear.statement_review import REVIEW_SYSTEM as STATEMENT_REVIEW_SYSTEM
 
-    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM]
-    systems += [prompts.debater_system(side) for side in Side]
+    systems = [prompts.DEBATE_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM]
     for system in systems:
         assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
 

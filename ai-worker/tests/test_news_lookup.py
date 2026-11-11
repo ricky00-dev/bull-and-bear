@@ -77,11 +77,15 @@ def test_budgeted_sonnet_reads_body_or_falls_back_to_summary(tmp_path, success, 
     client = NS(max_retries=0, beta=NS(messages=NS(stream=stream)))
     ledger = WorkerSpendLedger(tmp_path / 'ledger.sqlite3', 'fetch-test', '3.00')
     llm = LLM(MODEL, client=client, budget=ledger)
-    conv = Conversation('role', [{'role': 'user', 'content': '기사 근거를 확인하세요.'}])
+    conv = Conversation.from_snapshot('role', {'snapshot_id': snap.snapshot_id},
+                                      {'task': '기사 근거를 확인하세요.'}, common_system='공통 분석 규칙')
     tools = SnapshotTools(snap)
     assert llm.structured(conv, schema={}, effort='medium', tools=news.tools(TOOL_DEFINITIONS),
         tool_handler=lambda name, args: news.handle_tool(tools, name, args), on_event=news.observe) == {}
-    assert requests[0]['tools'][-1] == news.tool
+    assert requests[0]['tools'][-1] == {
+        **news.tool, 'cache_control': {'type': 'ephemeral', 'ttl': '5m'},
+    }
+    assert 'cache_control' not in news.tool
     assert 'strict' not in news.tool and 'eager_input_streaming' not in news.tool
     assert 'allowed_domains' not in news.tool
     assert news.tool['url_sources']['client_tool_results']['tools'][0]['name'] == 'get_new_url'
