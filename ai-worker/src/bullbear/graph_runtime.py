@@ -47,7 +47,7 @@ MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립 중재자 부엉�
 """ + prompts.DEBATE_RULES + prompts.SNAPSHOT_LOOKUP_RULES + prompts.MODEL_HISTORY_RULES
 
 MEDIATOR_OUTPUT_INSTRUCTIONS = """
-근거가 있는 BUY/HOLD/SELL 의견을 내고 판단할 수 없으면 ABSTAIN한다. ABSTAIN은 HOLD와 다르다. confidence는 보정된 확률이 아니다.
+근거가 있는 매수·보유·매도 의견을 내고 판단할 수 없으면 판단을 유보한다(action=ABSTAIN). 판단 유보는 보유 의견과 다르다. confidence는 보정된 확률이 아니다.
 reasoning은 핵심 근거와 한계를 담은 한 문단·한국어 최대 3문장이다. 근거 ID 1~3개를 [E1]부터 순서대로 인용한다.
 각 측의 comment는 한 문장이다. 여섯 발언 ID를 각각 한 번씩 검토하고 이유와 확인한 Fact ID를 적는다.
 no_issue_found는 오류를 찾지 못했다는 뜻이며 옳음이 입증됐다는 뜻이 아니다. 미확인 해석은 한계와 평가에 반영한다.
@@ -133,6 +133,8 @@ class GraphRuntime:
                    'history': model_history(transcript, role='debater', side=side, round_kind=stage),
                    'research_results': state.get('research_results', []),
                    **referenced_fact_context(self.snapshot, transcript)}
+        if stage == 'opening':
+            payload['output_instructions'] += prompts.OPENING_NEWS_INSTRUCTIONS
         if news.results:
             payload['news_lookup_results'] = dict(news.results)
         images = [self.chart_image] if stage == 'opening' and self.chart_image is not None else None

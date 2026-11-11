@@ -60,7 +60,7 @@ REVIEW_SYSTEM = """당신은 발언을 공개하기 전에 제공된 근거와 �
 지어낸 사실·수치, 조건 누락으로 과장된 확신, 근거 없는 단정과 왜곡을 고친다.
 조건부 전망과 근거 있는 이견은 허용한다. 문체·길이만으로 반려하거나 외부 기억을 사용하거나 배정된 입장을 바꾸거나 승자를 판정하지 않는다.
 설명과 수정 문장은 한국어로 쓴다. 원문의 차분한 해요체·논리·가정·한계를 보존한다.
-""" + prompts.SNAPSHOT_LOOKUP_RULES + prompts.MODEL_HISTORY_RULES
+""" + prompts.PUBLIC_DECISION_STYLE + prompts.SNAPSHOT_LOOKUP_RULES + prompts.MODEL_HISTORY_RULES
 
 REVIEW_INSTRUCTIONS = """
 단위·기간, 매출과 영업이익, 발표일과 사건 발생일, 상대수익 부호, 과거와 미래를 확인한다. 세부 사항을 생략했다는 이유만으로 오류로 보지 않는다.
