@@ -226,9 +226,8 @@ class Service:
                     return
                 data = jsonable_encoder(payload)
                 if event == 'statement_accepted':
-                    if not data['verified']:
-                        raise LLMError('재시도 후에도 근거 검증에 실패했습니다')
-                    data['warnings'] = [i for i in data.pop('verification')['issues'] if i['severity'] == 'warning']
+                    verification = data.pop('verification', None) or {}
+                    data['warnings'] = [i for i in verification.get('issues', []) if i['severity'] == 'warning']
                 elif event == 'tool_call':
                     data = {'side': data['side'], 'tool': data.get('tool', data.get('name'))}
                 elif event not in ('turn_started', 'statement_rejected', 'extra_round_requested', 'moderator_started'):

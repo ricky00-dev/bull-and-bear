@@ -8,6 +8,11 @@ from .fakes import statement
 from .learning_fixtures import with_analysis, moderator_analysis
 
 
+def model_records(history):
+    return [entry if isinstance(entry, dict) else history_records([entry])[0]
+            for entry in history]
+
+
 class GraphLLM:
     def __init__(self, snapshot, *, actions=(), invalid=False, bad_first=False, model='test-model'):
         self.snapshot, self.actions = snapshot, iter(actions)
@@ -26,6 +31,8 @@ class GraphLLM:
             result = {'issues': []}
             if 'revised_statement' in schema['properties']:
                 result['revised_statement'] = None
+            if 'edits' in schema['properties']:
+                result['edits'] = []
             return result
         if 'forecast' in schema['properties']:
             action = next(self.actions, 'ACCEPT')
@@ -34,7 +41,7 @@ class GraphLLM:
                 reasoning='7거래일 코스피 대비 비슷한 흐름을 예상하지만 관계의 지속은 불확실하다 [E1].',
                 decisive_evidence=['PX.CLOSE'], bull=score, bear=score,
                 analysis=moderator_analysis().model_dump(mode='json'))
-            records = history_records(initial_payload(conv)['history'])
+            records = model_records(initial_payload(conv)['history'])
             forecast['analysis']['statement_reviews'] = [dict(statement_id=r['statement_id'],
                 assessment='uncertain', reason='미래 조건은 미확인', source_ids=['PX.CLOSE']) for r in records]
             return dict(action=action, reason='중요한 가정을 재검토하세요.',
@@ -51,7 +58,7 @@ class GraphLLM:
         if payload.get('round') == 'rebuttal':
             from bullbear.schemas import Rebuttal
             side = Side.BULL if '매수(상승)' in conv.system else Side.BEAR
-            target = next(r for r in history_records(history) if r['side'] != side.value)
+            target = next(r for r in model_records(history) if r['side'] != side.value)
             quote = '7거래일 코스피 대비'
             candidate.argument = f'상대의 “{quote}” 전망은 자료로 확정할 수 없다 [E1].'
             candidate.analysis.rebuttal = Rebuttal(target_statement_id=target['statement_id'],

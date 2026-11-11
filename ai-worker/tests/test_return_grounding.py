@@ -2,7 +2,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from bullbear.return_grounding import return_context, return_issues
+from bullbear.return_grounding import return_issues
 from bullbear.snapshot import Fact, Snapshot
 
 
@@ -16,19 +16,6 @@ def snapshot(value=-0.84, days=21):
 
 def codes(text, value=-0.84, days=21):
     return {i.code for i in return_issues(text, snapshot(value, days), {'E1': f'PX.EXCESS_KOSPI_{days}D'})}
-
-
-@pytest.mark.parametrize('value,word', [(-0.84, '하회'), (0.84, '상회'), (0, '동일')])
-def test_context_sign_and_distinct_time_axes(value, word):
-    context = return_context(snapshot(value))
-    row = context['observations'][0]
-    assert word in row['meaning']
-    assert row['period_ends_on'] == context['price_date_T0'] == '2026-10-30'
-    assert row['lookback_trading_days'] == 21
-    assert context['information_cutoff'].startswith('2026-11-02')
-    assert row['time_scope'] == 'historical_ending_on_price_date'
-    assert 'forecast_window' not in context
-    assert not any('미래 7거래일' in rule for rule in context['rules'])
 
 
 @pytest.mark.parametrize('text,value', [

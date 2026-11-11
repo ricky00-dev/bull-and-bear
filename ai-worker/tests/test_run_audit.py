@@ -64,7 +64,9 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert snap['created_at'] != manifest['decision_at']
         assert manifest['snapshot_payload_hash'] == canonical_hash(snap)
         assert manifest['provenance']['code'] == {'revision': 'a' * 40, 'dirty': False}
-        assert set(manifest['provenance']['schema_hashes']) == {'statement', 'moderator', 'semantic_review'}
+        assert set(manifest['provenance']['schema_hashes']) == {
+            'statement', 'statement_opening', 'statement_rebuttal', 'statement_closing',
+            'moderator', 'semantic_review'}
         assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime', 'shared_context'}
         assert manifest['usage'] == result['usage']
         assert manifest['runner']['llm_call_observation'] is False
@@ -74,7 +76,7 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert events[0][1] == 'snapshot_created' and events[-1][1] == 'debate_completed'
         assert 'audit' not in str(events) and 'PRIVATE' not in str(manifest)
         assert sum(e['type'] == 'statement_accepted' for e in manifest['events']) == 6
-        assert sum(e['type'] == 'statement_rejected' for e in manifest['events']) == 1
+        assert not any(e['type'] == 'statement_rejected' for e in manifest['events'])
         assert len(list((settings.data_dir / 'audits').iterdir())) == 1
         assert start(client).json()['debate_id'] == accepted['debate_id']
         assert len(list((settings.data_dir / 'audits').iterdir())) == 1
@@ -133,14 +135,14 @@ def test_partial_client_construction_failure_closes_first_client_and_preserves_p
 
 
 
-def test_verification_failure_preserves_rejection_metadata_usage_and_no_public_statement(setup):
+def test_unchecked_content_records_publication_and_usage_without_verification_success(setup):
     settings, _ = setup
     result, manifest = run_once(setup, lambda: TestRunner(settings, invalid=True))
-    assert result['status'] == 'failed' and result['statements'] == []
-    assert manifest['status'] == 'failure' and manifest['error_type'] == 'LLMError'
+    assert result['status'] == 'completed' and len(result['statements']) == 6
+    assert manifest['status'] == 'success'
     assert manifest['usage']['calls'][0]['input_tokens'] == 100
-    assert any(e['type'] == 'statement_rejected' for e in manifest['events'])
-    assert not any(e['type'] == 'statement_accepted' for e in manifest['events'])
+    assert not any(e['type'] == 'statement_rejected' for e in manifest['events'])
+    assert all(e['verified'] is False for e in manifest['events'] if e['type'] == 'statement_accepted')
 
 
 @pytest.mark.parametrize('invalid', [False, True])
@@ -150,12 +152,12 @@ def test_usage_collection_failure_does_not_prevent_terminal_result(setup, invali
         def usage(self):
             raise RuntimeError('private usage provider detail')
     result, manifest = run_once(setup, lambda: MissingUsage(settings, invalid=invalid))
-    assert result['status'] == ('failed' if invalid else 'completed')
-    assert manifest['status'] == ('failure' if invalid else 'success')
+    assert result['status'] == 'completed'
+    assert manifest['status'] == 'success'
     assert 'usage' not in result
     assert manifest['usage_complete'] is False
     assert manifest['usage_errors'] == [{'error_type': 'RuntimeError'}]
-    assert manifest.get('error_type') == ('LLMError' if invalid else None)
+    assert manifest.get('error_type') is None
     assert 'private usage' not in json.dumps(manifest)
 
 

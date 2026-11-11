@@ -1,29 +1,7 @@
-"""Snapshot-bound return meanings and narrow guards, not a general semantic judge."""
+"""Narrow return-wording guards applied after generation."""
 import re
 
 from .verifier import Issue
-
-
-def return_context(snapshot):
-    observations = []
-    for key, fact in snapshot.facts.items():
-        match = re.fullmatch(r'PX.EXCESS_KOSPI_(3|7|21)D', key)
-        if match is None or fact.value is None:
-            continue
-        direction = '상회' if fact.value > 0 else '하회' if fact.value < 0 else '동일'
-        observations.append({
-            'source_id': key, 'value_percentage_points': fact.value,
-            'lookback_trading_days': int(match[1]), 'period_ends_on': str(fact.as_of),
-            'time_scope': 'historical_ending_on_price_date',
-            'meaning': f'기준일에 끝나는 과거 {match[1]}거래일 동안 종목 수익률이 코스피 수익률을 '
-                       f'{abs(fact.value):g}%p {direction}. 미래 실현값이 아님.',
-        })
-    return {'price_date_T0': str(snapshot.as_of),
-            'information_cutoff': snapshot.information_cutoff.isoformat(),
-            'observations': observations,
-            'rules': ['음수는 상대 부진, 양수는 상대 우위. 양쪽 절대수익의 상승/하락 여부는 별도 자료가 필요함.',
-                      '기준일에 끝나는 과거 수익률은 미래 구간의 중간 관찰이 아님. 21거래일을 3주로 환산하지 않음.',
-                      '기준일 이후 뉴스/장중 관측은 과거 지표와 구분. 지수 비교값 없이 초과수익을 계산하지 않음.']}
 
 
 def return_issues(text, snapshot, references=None):

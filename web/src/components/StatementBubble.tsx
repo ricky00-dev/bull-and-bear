@@ -49,7 +49,7 @@ export function StatementBubble({ s, onChip, comparison = false, selected = [], 
           {s.statement.evidence.length === 0 && <p className="text-[13px] text-sub">연결된 근거가 없어요.</p>}
         </div>
       </div>
-      <p className="text-xs leading-relaxed text-sub">{s.attempts > 1 ? `${s.attempts - 1}회 수정 후 통과 · ` : ''}{s.statement.evidence.some(e => e.value !== null) ? '인용 수치 검증을 통과한 발언' : '근거 검토를 통과한 발언'} · 해석은 직접 판단해요</p>
+      <p className="text-xs leading-relaxed text-sub">{s.attempts > 1 ? `${s.attempts - 1}회 다시 작성 · ` : ''}AI의 발언이에요 · 근거와 해석은 직접 판단해요</p>
     </article>
   )
 }

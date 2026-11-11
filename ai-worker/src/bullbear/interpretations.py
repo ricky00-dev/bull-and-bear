@@ -71,5 +71,6 @@ def bind_statement(statement, snapshot, *, debate_id, turn_index):
     bound.statement_id = f"{debate_id}:t{turn_index}"
     for evidence in bound.evidence:
         evidence.interpretation_id = f"{bound.statement_id}:{evidence.ref}"
-        evidence.observation = snapshot.facts[evidence.source_id].model_copy(deep=True)
+        fact = snapshot.facts.get(evidence.source_id)
+        evidence.observation = fact.model_copy(deep=True) if fact is not None else None
     return bound

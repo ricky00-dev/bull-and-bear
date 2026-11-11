@@ -1,4 +1,6 @@
+import csv
 import json
+from io import StringIO
 from pathlib import Path
 from threading import Barrier
 
@@ -21,7 +23,7 @@ def snapshot():
     return build_snapshot(FakeSource(), '000000', '가짜전자', now=NOW)
 
 
-def test_overlong_summary_is_rewritten_before_publication(snapshot, tmp_path):
+def test_overlong_summary_does_not_trigger_code_rewriting(snapshot, tmp_path):
     class Summary(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -33,12 +35,11 @@ def test_overlong_summary_is_rewritten_before_publication(snapshot, tmp_path):
     run.run()
     events = EventLog.read(run.log.path)
     rejected = [e for e in events if e['type'] == 'statement_rejected']
-    assert len(rejected) == 1
-    assert any(i['code'] == 'claim_length' and i['severity'] == 'error' for i in rejected[0]['issues'])
+    assert not rejected
     accepted = [e for e in events if e['type'] == 'statement_accepted' and e['side'] == 'bull']
     from bullbear.presentation import sentence_count
-    assert len(accepted) == 3 and all(sentence_count(e['statement']['claim']) == 2 for e in accepted)
-    assert accepted[0]['attempts'] == 2
+    assert len(accepted) == 3 and sentence_count(accepted[0]['statement']['claim']) == 3
+    assert all(e['attempts'] == 1 for e in accepted)
 
 
 def test_shared_horizon_need_not_be_repeated_in_each_utterance(snapshot, tmp_path):
@@ -90,11 +91,11 @@ def test_agent_and_reviewer_systems_do_not_impose_application_scoring():
         assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
 
 
-def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path):
+def test_return_sign_is_not_checked_by_runtime(snapshot, tmp_path):
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'return_context' in initial_payload(conv)
+            assert 'return_context' not in initial_payload(conv)
             if self.count == 1:
                 raw['argument'] = '상대수익은 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
             return raw
@@ -102,60 +103,60 @@ def test_return_sign_failure_is_rewritten_before_publication(snapshot, tmp_path)
     run = runtime(snapshot, tmp_path, bull=llm)
     run.run()
     events = EventLog.read(run.log.path)
-    assert any(e['type'] == 'statement_rejected' and
-               any(i['code'] == 'relative_return_sign' for i in e['issues']) for e in events)
+    assert not any(e['type'] == 'statement_rejected' for e in events)
     accepted = [e for e in events if e['type'] == 'statement_accepted']
     assert len(accepted) == 6
-    assert all('더 올랐습니다' not in e['statement']['argument'] for e in accepted)
+    assert next(e for e in accepted if e['side'] == 'bull')['statement']['argument'] == (
+        '상대수익은 -0.84%p로 코스피보다 더 올랐습니다 [E1].')
+    assert llm.count == 3
 
 
-def test_moderator_return_sign_failure_is_rewritten(snapshot, tmp_path):
+def test_moderator_return_sign_does_not_trigger_regeneration(snapshot, tmp_path):
     class WrongModerator(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'return_context' in initial_payload(conv)
+            assert 'return_context' not in initial_payload(conv)
             if self.count == 1:
                 raw['forecast']['reasoning'] = '7거래일 코스피 대비 상대수익 -0.84%p로 코스피보다 더 올랐습니다 [E1].'
             return raw
     run = runtime(snapshot, tmp_path, moderator=WrongModerator(snapshot))
     result = run.run()
-    assert '더 올랐습니다' not in result['verdict']['reasoning']
-    assert any(e['type'] == 'moderator_rejected' and
-               any(i['code'] == 'relative_return_sign' for i in e.get('issues', []))
-               for e in EventLog.read(run.log.path))
+    assert '더 올랐습니다' in result['verdict']['reasoning']
+    assert run.moderator.count == 1
+    assert not any(e['type'] == 'moderator_rejected' for e in EventLog.read(run.log.path))
 
 
-def test_source_wording_is_corrected_before_publication(snapshot, tmp_path):
+def test_news_source_wording_is_not_code_corrected(snapshot, tmp_path):
     bad_text = '발표 다음 날 장중 급락했다는 기사입니다 [E1].'
 
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'source_context' in initial_payload(conv)
+            assert 'source_context' not in initial_payload(conv)
             if self.count == 1:
                 raw['argument'] = bad_text
             return raw
     run = runtime(snapshot, tmp_path, bull=WrongFirst(snapshot))
     run.run()
     events = EventLog.read(run.log.path)
-    assert any(e['type'] == 'statement_rejected' and
-               any(i['code'] == 'news_relative_date' for i in e['issues']) for e in events)
-    assert all(e['statement']['argument'] != bad_text for e in events if e['type'] == 'statement_accepted')
+    assert not any(e['type'] == 'statement_rejected' for e in events)
+    assert any(e['statement']['argument'] == bad_text for e in events if e['type'] == 'statement_accepted')
+    assert run.bull.count == 3
 
 
-def test_moderator_per_is_corrected_before_publication(snapshot, tmp_path):
+def test_moderator_per_is_not_code_corrected(snapshot, tmp_path):
     class WrongFirst(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            assert 'source_context' in initial_payload(conv)
+            assert 'source_context' not in initial_payload(conv)
             if self.count == 1:
                 raw['forecast']['reasoning'] = '7거래일 코스피 대비 PER 8.46배로 낮은 편이라 반등을 예상합니다 [E1].'
             return raw
     run = runtime(snapshot, tmp_path, moderator=WrongFirst(snapshot))
-    run.run()
-    assert any(e['type'] == 'moderator_rejected' and
-               any(i['code'] == 'per_without_comparison' for i in e.get('issues', []))
-               for e in EventLog.read(run.log.path))
+    result = run.run()
+    assert result['verdict']['reasoning'] == '7거래일 코스피 대비 PER 8.46배로 낮은 편이라 반등을 예상합니다 [E1].'
+    assert run.moderator.count == 1
+    assert not any(e['type'] == 'moderator_rejected' for e in EventLog.read(run.log.path))
 
 
 def runtime(snapshot, tmp_path, *, actions=(), max_extra=1, emit=None, bull=None, moderator=None):
@@ -190,25 +191,164 @@ def test_parallel_initial_nodes_keep_separate_clients_ids_and_events(snapshot, t
 def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
     snapshot.facts = {'PX.CLOSE': snapshot.facts['PX.CLOSE']}
     run = runtime(snapshot, tmp_path)
+    run.statement_reviewers = {side.value: GraphLLM(snapshot) for side in Side}
     result = run.run()
     assert all(result['stats'][side]['statements'] == 3 for side in ('bull', 'bear'))
+    assert all(client.count == 3 for client in run.statement_reviewers.values())
+    for stats in result['stats'].values():
+        assert stats['first_try_pass_rate'] is None
+        assert stats['evidence_accuracy'] is None
+        assert stats['rejected_attempts'] == 0
+        assert stats['final_unverified_statements'] == 3
     events = EventLog.read(run.log.path)
     accepted = [e for e in events if e['type'] == 'statement_accepted']
+    assert all(e['verified'] is False and e['verification'] is None
+               and e['verification_scope'] == 'not_checked' for e in accepted)
+    assert sum(e['type'] == 'statement_reviewed' for e in events) == 6
     assert [e['round'] for e in accepted] == ['opening']*2 + ['rebuttal']*2 + ['closing']*2
     assert all(e['statement']['analysis']['outlook'] == ('BUY' if e['side']=='bull' else 'SELL') for e in accepted)
     assert events.index(next(e for e in events if e['type']=='moderator_started')) > events.index(accepted[-1])
 
     rounds = ['opening', 'rebuttal', 'closing']
     ordered = sorted(accepted, key=lambda e: (rounds.index(e['round']), e['side'] == 'bear'))
-    expected = [dict(side=e['side'], round=e['round'], **e['statement']) for e in ordered]
-    for client in (run.bull, run.bear):
-        calls = [initial_payload(c) for c, schema in client.calls if 'claim' in schema['properties']]
+    expected = []
+    for event in ordered:
+        record = dict(side=event['side'], round=event['round'], **event['statement'])
+        assert all(e['observation']['id'] == e['source_id'] for e in record['evidence'])
+        record['evidence'] = [{key: value for key, value in item.items() if key != 'observation'}
+                              for item in record['evidence']]
+        expected.append(record)
+    by_id = {record['statement_id']: record for record in expected}
+    for client in (run.bull, run.bear, *run.statement_reviewers.values()):
+        calls = [initial_payload(conv) for conv, _ in client.calls]
         assert [c['round'] for c in calls] == rounds
         for call, count in zip(calls, (0, 2, 4), strict=True):
-            assert [json.loads(entry) for entry in call['history']] == expected[:count]
+            assert len(call['history']) <= count
+            for record in call['history']:
+                original = by_id[record['statement_id']]
+                assert record['claim'] == original['claim']
+                assert record['argument'] == original['argument']
+                assert [(e['ref'], e['source_id']) for e in record['evidence']] == [
+                    (e['ref'], e['source_id']) for e in original['evidence']]
+                assert all('observation' not in e for e in record['evidence'])
     moderator_call, = [initial_payload(c) for c, schema in run.moderator.calls
                        if 'forecast' in schema['properties']]
-    assert [json.loads(entry) for entry in moderator_call['history']] == expected
+    assert [r['statement_id'] for r in moderator_call['history']] == list(by_id)
+    assert [r['argument'] for r in moderator_call['history']] == [r['argument'] for r in expected]
+
+
+def test_reviewer_still_edits_a_draft_without_code_verifier_retries(snapshot, tmp_path, monkeypatch):
+    from bullbear import graph_runtime, verifier
+    from bullbear.news_lookup import NewsLookup
+
+    def unexpected_check(*args, **kwargs):
+        pytest.fail('The removed content verifier must not run')
+
+    monkeypatch.setattr(verifier, 'verify', unexpected_check)
+    monkeypatch.setattr(NewsLookup, 'issues', unexpected_check)
+    for name in ('verify', 'statement_issues', 'moderator_issues', 'analysis_issues',
+                 'return_issues', 'source_issues', 'concept_issues', 'repair_comments'):
+        monkeypatch.setattr(graph_runtime, name, unexpected_check, raising=False)
+
+    class Draft(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            raw['argument'] = '현재 가격은 999원이라 상승을 보장해요 [E1].'
+            raw['evidence'][0]['value'] = 999
+            return raw
+
+    class Reviewer(GraphLLM):
+        def structured(self, conv, **kwargs):
+            super().structured(conv, **kwargs)
+            candidate = initial_payload(conv)['statement']
+            return {'issues': [{'quote': candidate['argument'], 'kind': 'unsupported_fact',
+                'reason': '제공 종가는 399원이고 상승 보장은 확인되지 않았어요.',
+                'source_ids': ['PX.CLOSE'], 'instruction': '실제 값과 조건부 해석으로 수정하세요.'}],
+                'edits': [
+                    {'path': 'argument', 'value': '종가는 399원이며 미래 방향은 확정되지 않았어요 [E1].'},
+                    {'path': 'evidence.0.value', 'value': 399},
+                ]}
+
+    run = runtime(snapshot, tmp_path, bull=Draft(snapshot))
+    run.statement_reviewers = {'bull': Reviewer(snapshot), 'bear': GraphLLM(snapshot)}
+    result = run.run()
+    assert run.bull.count == 3 and run.bear.count == 3 and run.moderator.count == 1
+    assert all(client.count == 3 for client in run.statement_reviewers.values())
+    events = EventLog.read(run.log.path)
+    assert sum(event['type'] == 'statement_reviewed' for event in events) == 6
+    assert not any(event['type'] in ('statement_rejected', 'moderator_rejected') for event in events)
+    edited = [event['statement'] for event in events
+              if event['type'] == 'statement_accepted' and event['side'] == 'bull']
+    assert all(candidate['argument'] == '종가는 399원이며 미래 방향은 확정되지 않았어요 [E1].'
+               and candidate['evidence'][0]['value'] == 399 for candidate in edited)
+    assert result['stats']['bull']['evidence_accuracy'] is None
+
+
+def test_overlong_moderator_comment_does_not_call_an_editor(snapshot, tmp_path):
+    from copy import deepcopy
+
+    class Editor(GraphLLM):
+        def structured(self, conv, **kwargs):
+            payload = initial_payload(conv)
+            assert 'comments' not in payload
+            raw = deepcopy(super().structured(conv, **kwargs))
+            raw['forecast']['bull'] = dict(raw['forecast']['bull'])
+            raw['forecast']['bull']['comment'] = '자료는 인정해요. 미래 관계는 확인되지 않았어요.'
+            self.original = deepcopy(raw['forecast'])
+            return raw
+
+    moderator = Editor(snapshot)
+    run = runtime(snapshot, tmp_path, moderator=moderator)
+    result = run.run()
+    assert moderator.count == 1
+    assert sum('forecast' in s['properties'] for _, s in moderator.calls) == 1
+    assert result['verdict']['scores']['bull']['comment'] == '자료는 인정해요. 미래 관계는 확인되지 않았어요.'
+    for key in ('decision', 'confidence', 'reasoning', 'decisive_evidence', 'analysis'):
+        assert result['verdict'][key] == moderator.original[key]
+    events = EventLog.read(run.log.path)
+    assert not any(e['type'] in ('moderator_rejected', 'moderator_format_edited') for e in events)
+
+
+@pytest.mark.parametrize('comment', [
+    '수익률 99%가 확실해요.',
+    '자료를 인정해요. 위험이 있어요.',
+    '',
+    'PX.CLOSE를 판정의 근거로 삼았어요.',
+])
+def test_comment_content_does_not_trigger_code_retries(snapshot, tmp_path, comment):
+    from copy import deepcopy
+
+    class Comment(GraphLLM):
+        def structured(self, conv, **kwargs):
+            assert 'comments' not in initial_payload(conv)
+            raw = deepcopy(super().structured(conv, **kwargs))
+            raw['forecast']['bull']['comment'] = comment
+            return raw
+
+    moderator = Comment(snapshot)
+    run = runtime(snapshot, tmp_path, moderator=moderator)
+    result = run.run()
+    assert moderator.count == 1
+    assert result['verdict']['scores']['bull']['comment'] == comment
+    assert not any(e['type'] in ('moderator_rejected', 'moderator_format_edited')
+                   for e in EventLog.read(run.log.path))
+
+
+def test_unknown_verdict_source_is_preserved_without_code_gate(snapshot, tmp_path):
+    from copy import deepcopy
+
+    class InvalidVerdict(GraphLLM):
+        def structured(self, conv, **kwargs):
+            assert 'comments' not in initial_payload(conv)
+            raw = deepcopy(super().structured(conv, **kwargs))
+            raw['forecast']['bull']['comment'] = '자료를 인정해요. 불확실해요.'
+            raw['forecast']['decisive_evidence'] = ['MISSING']
+            return raw
+
+    moderator = InvalidVerdict(snapshot)
+    result = runtime(snapshot, tmp_path, moderator=moderator).run()
+    assert result['verdict']['decisive_evidence'] == ['MISSING']
+    assert moderator.count == 1
 
 
 def test_abstention_preserves_all_six_statements(snapshot, tmp_path):
@@ -232,7 +372,7 @@ def test_extra_round_requests_rejected_and_logged_privately(snapshot, tmp_path):
 
 
 @pytest.mark.parametrize('problem', ['value', 'source', 'analysis', 'role'])
-def test_invalid_statements_never_publish_and_retry_is_bounded(snapshot, tmp_path, problem):
+def test_content_issues_do_not_reject_structurally_readable_statements(snapshot, tmp_path, problem):
     class Invalid(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -244,11 +384,39 @@ def test_invalid_statements_never_publish_and_retry_is_bounded(snapshot, tmp_pat
             return raw
     bull = Invalid(snapshot)
     run = runtime(snapshot, tmp_path, bull=bull)
+    run.run()
+    events = EventLog.read(run.log.path)
+    accepted = [e for e in events if e['type'] == 'statement_accepted' and e['side'] == 'bull']
+    assert len(accepted) == 3
+    assert not any(e['type'] == 'statement_rejected' for e in events)
+    for event in accepted:
+        candidate = event['statement']
+        if problem == 'value': assert candidate['evidence'][0]['value'] == 999
+        elif problem == 'source':
+            assert candidate['evidence'][0]['source_id'] == 'INVENTED'
+            assert candidate['evidence'][0]['observation'] is None
+        elif problem == 'analysis': assert candidate['analysis'] is None
+        else: assert candidate['analysis']['outlook'] == 'HOLD'
+    assert len(bull.calls) == 3
+
+
+def test_unreadable_statement_schema_still_has_bounded_retries(snapshot, tmp_path):
+    class MissingClaim(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            raw.pop('claim')
+            return raw
+
+    bull = MissingClaim(snapshot)
+    run = runtime(snapshot, tmp_path, bull=bull)
     with pytest.raises(LLMError):
         run.run()
     events = EventLog.read(run.log.path)
-    assert not any(e['type'] == 'statement_accepted' and e['side'] == 'bull' for e in events)
     assert len(bull.calls) == 3
+    assert not any(e['type'] == 'statement_accepted' and e['side'] == 'bull' for e in events)
+    rejected = [e for e in events if e['type'] == 'statement_rejected' and e['side'] == 'bull']
+    assert len(rejected) == 3
+    assert all(e['category'] == 'schema' and e['issues'][0]['code'] == 'invalid_schema' for e in rejected)
 
 
 def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, tmp_path):
@@ -264,8 +432,12 @@ def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, 
         def structured(self, conv, **kwargs):
             payload = initial_payload(conv)
             assert len(payload['history']) == 6
-            assert payload['facts']['PX.CLOSE']['value'] == 399
-            assert '기관 매수가 이미 발생했다' in conv.messages[1]['content']
+            facts = {row['source_id']: row for row in csv.DictReader(StringIO(payload['facts_csv'], newline=''))}
+            assert facts['PX.CLOSE']['value'] == '399'
+            assert '기관 매수가 이미 발생했다' not in conv.messages[1]['content']
+            detail = json.loads(kwargs['tool_handler']('get_statement_details', {
+                'statement_id': next(r['statement_id'] for r in payload['history'] if r['side'] == 'bull')}))
+            assert detail['analysis']['interpretations'][0]['assumptions'] == ['기관 매수가 이미 발생했다']
             raw = super().structured(conv, **kwargs)
             for review in raw['forecast']['analysis']['statement_reviews']:
                 if ':bull:' in review['statement_id']:
@@ -278,11 +450,11 @@ def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, 
     events = EventLog.read(tmp_path/'graph.jsonl')
     accepted = [e for e in events if e['type']=='statement_accepted']
     assert len(accepted) == 6  # No literal quotation in the rebuttal body is necessary.
-    assert all(e['verification_scope']=='source_values_and_structure' for e in accepted)
+    assert all(e['verification_scope'] == 'not_checked' and e['verified'] is False for e in accepted)
 
 
 @pytest.mark.parametrize('problem', ['missing', 'duplicate', 'unknown_source'])
-def test_moderator_review_coverage_and_sources_are_checked(snapshot, tmp_path, problem):
+def test_moderator_review_coverage_and_sources_are_not_code_checked(snapshot, tmp_path, problem):
     class InvalidReview(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -291,12 +463,17 @@ def test_moderator_review_coverage_and_sources_are_checked(snapshot, tmp_path, p
             elif problem=='duplicate': reviews[0]['statement_id'] = reviews[1]['statement_id']
             else: reviews[0]['source_ids'] = ['INVENTED']
             return raw
-    with pytest.raises(LLMError):
-        runtime(snapshot, tmp_path, moderator=InvalidReview(snapshot)).run()
+    moderator = InvalidReview(snapshot)
+    result = runtime(snapshot, tmp_path, moderator=moderator).run()
+    reviews = result['verdict']['analysis']['statement_reviews']
+    if problem == 'missing': assert len(reviews) == 5
+    elif problem == 'duplicate': assert reviews[0]['statement_id'] == reviews[1]['statement_id']
+    else: assert reviews[0]['source_ids'] == ['INVENTED']
+    assert moderator.count == 1
 
 
 
-def test_final_forecast_rejects_nonexistent_interpretation(snapshot, tmp_path):
+def test_final_forecast_does_not_code_check_interpretation_ids(snapshot, tmp_path):
     class BadModerator(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -304,9 +481,9 @@ def test_final_forecast_rejects_nonexistent_interpretation(snapshot, tmp_path):
                 raw['forecast']['analysis']['key_interpretation_ids'] = ['missing']
             return raw
     moderator = BadModerator(snapshot)
-    with pytest.raises(LLMError):
-        runtime(snapshot, tmp_path, moderator=moderator).run()
-    assert len(moderator.calls) == 3
+    result = runtime(snapshot, tmp_path, moderator=moderator).run()
+    assert result['verdict']['analysis']['key_interpretation_ids'] == ['missing']
+    assert len(moderator.calls) == 1
 
 
 def test_mediation_schema_has_closed_objects_and_valid_references():
@@ -336,7 +513,7 @@ def test_live_http_uses_graph_and_preserves_usage_and_sealed_payload(setup, monk
                 raise LLMError('PRIVATE PROVIDER FAILURE')
             raw = super().structured(conv, **kwargs)
             if action == 'INVALID' and raw.get('forecast'):
-                raw['forecast']['analysis']['key_interpretation_ids'] = ['PRIVATE_INVALID_ID']
+                raw['forecast']['confidence'] = 'PRIVATE_INVALID_TYPE'
             return raw
     def provider(model):
         client = Provider(snap, model=model, actions=['ACCEPT' if action == 'INVALID' else action])
@@ -381,12 +558,13 @@ def test_live_http_uses_graph_and_preserves_usage_and_sealed_payload(setup, monk
         private_events = EventLog.read(settings.debate_dir / f'{ident}.jsonl')
         assert sum(event['type'] == 'statement_reviewed' for event in private_events) == 6
         assert not any(kind == 'statement_reviewed' for _, kind, _ in events)
-        assert 'PRIVATE_INVALID_ID' not in json.dumps(events)
+        assert 'PRIVATE_INVALID_TYPE' not in json.dumps(events)
         if action == 'INVALID':
             private = EventLog.read(settings.debate_dir / f'{ident}.jsonl')
             rejected = [e for e in private if e['type'] == 'moderator_rejected']
             assert len(rejected) == 3
-            assert all(e['issues'][0]['code'] == 'interpretation_target' for e in rejected)
+            assert all(e['category'] == 'schema_or_action' and e['issue_codes'] == ['invalid_mediation']
+                       for e in rejected)
     assert len(clients) == 5 and all(c.closed for c in clients)
 
 
@@ -438,7 +616,7 @@ def test_rebuttal_failure_preserves_openings_without_calling_moderator(snapshot,
     assert not run.moderator.calls
 
 
-def test_invalid_structured_opponent_is_still_rejected(snapshot, tmp_path):
+def test_structured_opponent_reference_does_not_trigger_code_rejection(snapshot, tmp_path):
     class InvalidTarget(GraphLLM):
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
@@ -446,7 +624,10 @@ def test_invalid_structured_opponent_is_still_rejected(snapshot, tmp_path):
                 raw['analysis']['rebuttal']['target_statement_id'] = 'invented-opponent'
             return raw
     run = runtime(snapshot, tmp_path, bull=InvalidTarget(snapshot))
-    with pytest.raises(LLMError): run.run()
-    assert not run.moderator.calls
-    rejected = [e for e in EventLog.read(run.log.path) if e['type']=='statement_rejected']
-    assert any(i['code']=='structured_rebuttal_target' for e in rejected for i in e['issues'])
+    run.run()
+    assert len(run.moderator.calls) == 1 and len(run.bull.calls) == 3
+    events = EventLog.read(run.log.path)
+    assert not any(e['type'] == 'statement_rejected' for e in events)
+    accepted = next(e for e in events if e['type'] == 'statement_accepted'
+                    and e['side'] == 'bull' and e['round'] == 'rebuttal')
+    assert accepted['statement']['analysis']['rebuttal']['target_statement_id'] == 'invented-opponent'

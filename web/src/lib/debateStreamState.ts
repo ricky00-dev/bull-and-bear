@@ -15,7 +15,7 @@ export interface StreamState {
   /** 지금 무슨 일이 일어나는지 한 줄 (예: "매도 측 AI가 재무제표를 확인하는 중") */
   activity: string
   currentRound: Round | null
-  /** 검증기가 반려한 마지막 이유 */
+  /** 응답 형식 처리에 실패한 마지막 이유 */
   lastRejection: string | null
   extraQuestion: string | null
   /** 스냅샷 기준일 (snapshot_created) */
@@ -70,7 +70,7 @@ export function reduceDebateStream(state: StreamState, action: Action): StreamSt
       return {
         ...s,
         lastRejection: issues[0]?.message ?? null,
-        activity: `검증기가 ${SIDE_LABEL[side!]}의 수치 오류를 잡았어요. 다시 쓰는 중`,
+        activity: `${SIDE_LABEL[side!]}의 응답 형식을 다시 작성하고 있어요`,
       }
     }
     case 'statement_accepted':
