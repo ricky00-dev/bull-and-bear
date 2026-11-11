@@ -16,6 +16,13 @@ Claude Code는 세션 시작 시 이 파일의 최근 항목이 자동으로 보
 이전 기록: [2026-11-02 이전 작업 로그](archive/WORKLOG-before-20261102.md). 최근 인계는 아래 최신 항목부터 읽습니다.
 
 ---
+## 2026-11-11 · Codex · ai-worker · 실제 기사로 fetch_news 검증
+- 한 것: 공개 한겨레 URL을 테스트 스냅샷에 등록해 실제 LangGraph 도구 호출로 조회했다. `SUCCESS`, `verified_full_text=true`, 본문 1,470자를 확인했다. Bull/Bear가 각 두 번 요청했을 때 기사와 robots.txt의 HTTP 요청은 각각 한 번이었다. 미등록 ID는 `ARTICLE_UNAVAILABLE`로 거절됐다.
+- 검증: 가짜 모델을 사용한 토론에서 발언 6개가 승인됐고 본문이 발언 검토와 중재에 전달됐다. 뉴스 추출·도구 테스트 42개 통과.
+- 진행 중: `feat/worker-news-extraction`의 구현 커밋 `631e8d6`을 검증했다.
+- 다음: 운영 환경에서 실제 Sonnet의 도구 선택과 뉴스 인용을 확인한다.
+- 막힘·결정 필요: 이번에는 실제 뉴스 HTTP 요청과 워커를 사용했다. 네이버 검색 API, 실제 Sonnet, Spring은 호출하지 않았다.
+
 ## 2026-11-11 · Codex · ai-worker · Trafilatura 기사 본문 조회
 - 한 것: 신규 Sonnet 토론의 Anthropic 본문 도구를 워커 `fetch_news(article_id)`로 바꿨다. 네이버의 발행사 URL과 등록된 대체 링크를 스냅샷에 보존한다. robots.txt와 공개 IP 검증, 응답 제한, URL별 실행 내 캐시를 적용했다. 검수와 중재에 조회 결과를 전달하고, 실패 시 저장된 검색 요약으로 근거 범위를 좁힌다.
 - 검증: 워커 527개 통과, 6개 건너뜀. 건너뛴 항목 중 실제 한겨레 기사 추출 테스트는 별도 실행해 통과했다. 가짜 Sonnet으로 양측의 중복 요청 병합, 실패 후 요약 전환, 인용 검수 연동을 확인했다. `uv lock --check --offline` 통과.
