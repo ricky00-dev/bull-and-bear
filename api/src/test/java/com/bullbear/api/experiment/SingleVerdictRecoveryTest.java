@@ -55,8 +55,8 @@ class SingleVerdictRecoveryTest {
             return streams.remove();
         }
         public List<WorkerStock> search(String q, int limit) { throw new UnsupportedOperationException(); }
-        public WorkerStockDetail stock(String ticker) { throw new UnsupportedOperationException(); }
-        public WorkerDebateStarted startDebate(String t, String r) { throw new UnsupportedOperationException(); }
+        public WorkerStockDetail stock(String ticker, LocalDate asOf) { throw new UnsupportedOperationException(); }
+        public WorkerDebateStarted startDebate(String t, String r, LocalDate asOf) { throw new UnsupportedOperationException(); }
         public List<DailyClose> dailyCloses(String t, LocalDate a, LocalDate b) { throw new UnsupportedOperationException(); }
         public List<DailyClose> indexCloses(String t, LocalDate a, LocalDate b) { throw new UnsupportedOperationException(); }
     }
@@ -85,7 +85,7 @@ class SingleVerdictRecoveryTest {
         properties = new BullbearProperties(null, null, null,
             new BullbearProperties.Budget(BigDecimal.TEN, 5, new BigDecimal("0.15"), Map.of()),
             new BullbearProperties.ForwardRun(false, List.of(), "", 1, BigDecimal.TEN, Duration.ofMinutes(5)),
-            new BullbearProperties.Experiment(LocalDate.of(2026,11,11), false, 3));
+            new BullbearProperties.Experiment(LocalDate.of(2026,11,11), false, 3), null);
         quota = SingleTestComponents.quota(jdbc, properties, clock);
         usage = SingleTestComponents.usage(properties);
         worker = new ScriptedWorker();

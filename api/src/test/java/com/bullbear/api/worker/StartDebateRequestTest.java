@@ -22,4 +22,11 @@ class StartDebateRequestTest {
 		assertThat(json.writeValueAsString(new WorkerModels.StartDebateRequest("005930", "r2", null, "single", "s1")))
 				.isEqualTo("{\"ticker\":\"005930\",\"request_id\":\"r2\",\"mode\":\"single\",\"snapshot_id\":\"s1\"}");
 	}
+
+	@Test
+	void 백테스트_요청은_기준일을_보낸다() {
+		assertThat(json.writeValueAsString(new WorkerModels.StartDebateRequest("005930", "r3", 1, null, null,
+				java.time.LocalDate.of(2026, 9, 1))))
+				.isEqualTo("{\"ticker\":\"005930\",\"request_id\":\"r3\",\"max_extra_rounds\":1,\"as_of\":\"2026-09-01\"}");
+	}
 }

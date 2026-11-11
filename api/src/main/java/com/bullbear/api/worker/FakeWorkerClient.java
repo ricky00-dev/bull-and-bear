@@ -82,22 +82,45 @@ public class FakeWorkerClient implements WorkerClient {
 	}
 
 	@Override
-	public WorkerStockDetail stock(String ticker) {
+	public WorkerStockDetail stock(String ticker, LocalDate asOf) {
 		WorkerStock s = find(ticker);
 		List<String> reasons = s.eligible() ? List.of() : List.of(s.blockReason());
+		if (asOf != null) {
+			LocalDate day = tradingDayOnOrBefore(asOf);
+			return new WorkerStockDetail(s.ticker(), s.name(), s.market(), closeOn(ticker, day).longValue(), 0, day,
+					s.eligible(), reasons, List.of());
+		}
 		List<Long> spark = ticker.equals("005930") ? SAMSUNG_60D : last60(ticker, s.close());
 		return new WorkerStockDetail(s.ticker(), s.name(), s.market(), s.close(), s.changePct(), AS_OF, s.eligible(),
 				reasons, spark);
 	}
 
+	/** 백테스트 토론은 워커 ID 끝에 기준일을 붙여 둔다. 대본이 그날 종가로 스냅샷을 만든다 */
 	@Override
-	public WorkerDebateStarted startDebate(String ticker, String requestId) {
+	public WorkerDebateStarted startDebate(String ticker, String requestId, LocalDate asOf) {
 		WorkerStock s = find(ticker);
 		if (!s.eligible()) {
 			throw new ApiException(ErrorCode.NOT_ELIGIBLE, s.blockReason());
 		}
 		String id = "fake-" + ticker + "-" + UUID.randomUUID().toString().substring(0, 8);
-		return new WorkerDebateStarted(id, snapshotId(ticker), "running", false);
+		if (asOf == null) {
+			return new WorkerDebateStarted(id, snapshotId(ticker), "running", false);
+		}
+		LocalDate day = tradingDayOnOrBefore(asOf);
+		return new WorkerDebateStarted(id + "-" + day, ticker + "-" + day + "-fake", "running", false);
+	}
+
+	private LocalDate tradingDayOnOrBefore(LocalDate asOf) {
+		LocalDate today = LocalDate.now(clock);
+		LocalDate d = asOf.isAfter(today) ? today : asOf;
+		while (weekend(d)) {
+			d = d.minusDays(1);
+		}
+		return d;
+	}
+
+	private BigDecimal closeOn(String ticker, LocalDate day) {
+		return dailyCloses(ticker, day, day).get(0).close();
 	}
 
 	@Override
@@ -175,9 +198,11 @@ public class FakeWorkerClient implements WorkerClient {
 
 	@Override
 	public Flux<WorkerEvent> events(String workerDebateId, long afterSeq) {
-		String ticker = workerDebateId.split("-")[1];
+		String[] parts = workerDebateId.split("-", 4);
+		String ticker = parts[1];
+		LocalDate asOf = parts.length == 4 ? LocalDate.parse(parts[3]) : null;
 		List<WorkerEvent> script = workerDebateId.startsWith("fakesingle-") ? single(find(ticker))
-				: script(workerDebateId, find(ticker));
+				: script(workerDebateId, find(ticker), asOf);
 		Flux<WorkerEvent> events = Flux.fromIterable(script)
 				.filter(e -> e.seq() > afterSeq);
 		return delay.isZero() ? events : events.delayElements(delay);
@@ -199,10 +224,17 @@ public class FakeWorkerClient implements WorkerClient {
 
 	// ---- 토론 대본 ----
 
-	private List<WorkerEvent> script(String workerDebateId, WorkerStock s) {
+	/** @param asOf 백테스트 기준일. null이면 10/22 */
+	private List<WorkerEvent> script(String workerDebateId, WorkerStock s, LocalDate asOf) {
 		List<Map<String, Object>> raw = new ArrayList<>();
-		raw.add(event("snapshot_created", Map.of("snapshot_id", snapshotId(s.ticker()), "ticker", s.ticker(),
-				"name", s.name(), "as_of", AS_OF.toString(), "close", s.close(), "warnings", List.of())));
+		if (asOf == null) {
+			raw.add(event("snapshot_created", Map.of("snapshot_id", snapshotId(s.ticker()), "ticker", s.ticker(),
+					"name", s.name(), "as_of", AS_OF.toString(), "close", s.close(), "warnings", List.of())));
+		} else {
+			raw.add(event("snapshot_created", Map.of("snapshot_id", s.ticker() + "-" + asOf + "-fake", "ticker",
+					s.ticker(), "name", s.name(), "as_of", asOf.toString(), "close", closeOn(s.ticker(), asOf),
+					"warnings", List.of())));
+		}
 
 		turn(raw, "bull", "opening", "get_price_metrics",
 				"1년간 127% 오른 상승 추세는 살아 있어요. 고점 대비 43% 내려온 지금은 추세 속 조정 구간이에요.",

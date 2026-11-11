@@ -94,8 +94,8 @@ public class SingleVerdictRunner implements DisposableBean {
 				select d.id, d.ticker, d.snapshot_id, coalesce(s.attempts, 0), s.status
 				from debates d
 				left join single_verdicts s on s.debate_id = d.id
-				where d.origin = 'SCHEDULED' and d.status = 'COMPLETED' and d.snapshot_id is not null
-				  and d.trade_date >= :start
+				where ((d.origin = 'SCHEDULED' and d.trade_date >= :start) or d.origin = 'BACKTEST')
+				  and d.status = 'COMPLETED' and d.snapshot_id is not null
 				  and (s.debate_id is null or s.status = 'RUNNING' or (s.status = 'FAILED' and s.attempts < :max))
 				order by (s.status = 'RUNNING') desc nulls last, d.created_at
 				""")

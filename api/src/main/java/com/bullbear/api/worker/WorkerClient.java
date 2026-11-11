@@ -13,9 +13,19 @@ public interface WorkerClient {
 
 	List<WorkerStock> search(String query, int limit);
 
-	WorkerStockDetail stock(String ticker);
+	default WorkerStockDetail stock(String ticker) {
+		return stock(ticker, null);
+	}
 
-	WorkerDebateStarted startDebate(String ticker, String requestId);
+	/** @param asOf 백테스트(계약 v0.7): 이 날짜 이전 마지막 거래일 기준. null이면 최신 종가 기준 */
+	WorkerStockDetail stock(String ticker, LocalDate asOf);
+
+	default WorkerDebateStarted startDebate(String ticker, String requestId) {
+		return startDebate(ticker, requestId, null);
+	}
+
+	/** @param asOf 백테스트(계약 v0.7): 이 날짜까지의 데이터만으로 토론. null이면 최신 종가 기준 */
+	WorkerDebateStarted startDebate(String ticker, String requestId, LocalDate asOf);
 
 	/** 단일 모드(실험 조건 B, 계약 v0.6): 같은 스냅샷으로 모델 하나가 바로 판정. 이벤트는 events()로 받는다 */
 	WorkerDebateStarted startSingle(String ticker, String snapshotId, String requestId);

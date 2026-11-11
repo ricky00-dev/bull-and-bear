@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("bullbear")
 public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budget budget,
-		ForwardRun forwardRun, Experiment experiment) {
+		ForwardRun forwardRun, Experiment experiment, Backtest backtest) {
 
 	public record Cors(List<String> allowedOrigins) {
 	}
@@ -65,5 +65,13 @@ public record BullbearProperties(Cors cors, Worker worker, Scoring scoring, Budg
 	 * @param maxAttempts 단일 판정이 실패하면 이만큼까지 다시 시도
 	 */
 	public record Experiment(LocalDate start, boolean singleEnabled, int maxAttempts) {
+	}
+
+	/**
+	 * 백테스트: 과거 기준일 토론 (docs/experiment.md). 서버 안에서 POST /ops/backtest로 시작한다.
+	 *
+	 * @param dailyUsd 하루에 시작한 백테스트 토론 비용 상한. 전향 운용·사용자 상한과 따로 센다
+	 */
+	public record Backtest(int maxConcurrent, BigDecimal dailyUsd, Duration pollInterval) {
 	}
 }
