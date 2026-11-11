@@ -3,7 +3,7 @@ import json
 
 
 def initial_payload(conv):
-    if not conv.system_in_messages:
+    if isinstance(conv.messages[0]['content'], str):
         return json.loads(conv.messages[0]['content'])
     prefix, request = conv.messages[:2]
     assert prefix['role'] == request['role'] == 'user'

@@ -43,11 +43,6 @@ def mediation_schema():
 
 MEDIATION_SCHEMA = mediation_schema()
 _STAGES = ('opening', 'rebuttal', 'closing', 'verdict')
-MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립적인 최종 중재자 부엉이다. 양측은 배정된 입장을 논증하므로 그 결론을 독립적인 예측 투표로 세지 않는다.
-공통 사실, 해석 차이, 반박으로 유지되거나 약해진 논거를 정리한다. 어느 논거가 자료로 더 잘 뒷받침되는지와 결론을 바꿀 불확실성을 설명한다.
-발언을 원자료와 대조해 사실·가정 혼동, 근거 없는 인과, 상대 주장 왜곡, 역할 이탈을 살핀다. 문체나 확신의 정도로 근거를 평가하지 않는다.
-자료 ID와 인용값 검사가 출처 정확성·인과·예측의 보증은 아니다. 같은 자료·모델에 근거한 합의도 독립 검증으로 취급하지 않는다.
-""" + prompts.DEBATE_RULES + prompts.SNAPSHOT_LOOKUP_RULES
 
 MEDIATOR_OUTPUT_INSTRUCTIONS = """
 - 추가 라운드나 조사 요청 없이 전망을 제출할 수 있으면 ACCEPT, 불가능하면 ABSTAIN을 선택한다. tool은 null이며 ACCEPT일 때만 forecast를 작성한다. ABSTAIN을 HOLD로 바꾸지 않는다.
@@ -175,7 +170,8 @@ class GraphRuntime:
         if news.results:
             payload['news_lookup_results'] = dict(news.results)
         images = [self.chart_image] if stage == 'opening' and self.chart_image is not None else None
-        conv = Conversation.from_snapshot(prompts.debater_system(side), self.debater_context, payload, images=images)
+        conv = Conversation.from_snapshot(prompts.debate_role_assignment(side.value), self.debater_context, payload,
+                                          common_system=prompts.DEBATE_SYSTEM, images=images)
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
                                    'debate_flow': 'fixed_three_rounds'})
         calls = []
@@ -247,7 +243,7 @@ class GraphRuntime:
         transcript = self.transcript(state)
         news = self.news_lookup(self.moderator, 'verdict', 'moderator')
         tools = SnapshotTools(self.snapshot)
-        conv = Conversation.from_snapshot(MEDIATOR_SYSTEM, {
+        conv = Conversation.from_snapshot(prompts.debate_role_assignment('mediator'), {
                 'facts': {key: {**fact_for_model(fact, exclude_none=True), 'value': fact.value}
                           for key, fact in self.snapshot.facts.items()},
                 'snapshot_id': self.snapshot.snapshot_id,
@@ -262,7 +258,7 @@ class GraphRuntime:
                 'history': transcript,
                 'research_results': state.get('research_results', []),
                 **({'news_lookup_results': dict(news.results)} if news.results else {}),
-                'remaining_actions': 0})
+                'remaining_actions': 0}, common_system=prompts.DEBATE_SYSTEM)
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
                 tools=news.tools(DEBATE_TOOL_DEFINITIONS),

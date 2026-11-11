@@ -41,16 +41,15 @@ class GraphLLM:
                         tool='get_disclosures' if action == 'REQUEST_RESEARCH' else None,
                         forecast=forecast if action == 'ACCEPT' else None)
         candidate = with_analysis(statement(('E1', 'PX.CLOSE', self.snapshot.facts['PX.CLOSE'].value)))
-        side = Side.BULL if '매수(상승)' in conv.system else Side.BEAR
+        payload = initial_payload(conv)
+        side = Side.BULL if payload['assigned_outlook'] == 'BUY' else Side.BEAR
         candidate.analysis.outlook = Decision.BUY if side == Side.BULL else Decision.SELL
         direction = '강세' if side == Side.BULL else '약세'
         candidate.claim = f'7거래일 코스피 대비 {direction}를 주장한다'
         candidate.argument = '관측된 가격을 배경으로 비슷한 흐름을 가정하지만 불확실하다 [E1].'
-        payload = initial_payload(conv)
         history = payload.get('history', [])
         if payload.get('round') == 'rebuttal':
             from bullbear.schemas import Rebuttal
-            side = Side.BULL if '매수(상승)' in conv.system else Side.BEAR
             target = next(r for r in history_records(history) if r['side'] != side.value)
             quote = '7거래일 코스피 대비'
             candidate.argument = f'상대의 “{quote}” 전망은 자료로 확정할 수 없다 [E1].'

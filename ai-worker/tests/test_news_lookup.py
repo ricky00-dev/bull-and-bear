@@ -126,12 +126,18 @@ def test_budgeted_sonnet_continues_after_worker_tool_result(tmp_path, public_dns
     client = NS(max_retries=0, beta=NS(messages=NS(stream=stream)))
     ledger = WorkerSpendLedger(tmp_path / "ledger.sqlite3", "fetch-test", "3.00")
     llm = LLM(MODEL, client=client, budget=ledger)
-    conv = Conversation("role", [{"role": "user", "content": "기사 근거를 확인하세요."}])
+    conv = Conversation.from_snapshot("role", {"snapshot_id": snap.snapshot_id},
+                                      {"task": "기사 근거를 확인하세요."}, common_system="공통 분석 규칙")
     tools = SnapshotTools(snap)
     assert llm.structured(conv, schema={}, effort="medium", tools=news.tools(TOOL_DEFINITIONS),
         tool_handler=lambda name, args: news.handle_tool(tools, name, args)) == {}
     assert requests[0]["tools"][-1]["name"] == "fetch_news"
     assert requests[0]["tools"][-1]["strict"] is True
+    marker = {"type": "ephemeral", "ttl": "5m"}
+    for request in requests:
+        assert request["tools"][-1]["cache_control"] == marker
+        assert request["system"][0]["cache_control"] == marker
+        assert request["messages"][0]["content"][0]["cache_control"] == marker
     assert not any(tool.get("type", "custom") != "custom" for tool in requests[0]["tools"])
     result_block, = requests[1]["messages"][-1]["content"]
     assert result_block["type"] == "tool_result" and result_block["tool_use_id"] == "toolu_news"

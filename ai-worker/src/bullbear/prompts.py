@@ -5,7 +5,7 @@ from __future__ import annotations
 from .schemas import RoundKind, Side, Statement
 from .shared_context import fact_for_model
 
-POLICY_VERSION = "langgraph-worker-news-extraction-v25"
+POLICY_VERSION = "langgraph-worker-news-shared-role-cache-v27"
 JUDGMENT_POLICY = """
 공통 자료 해석 원칙:
 - PER = 주가/EPS = 시가총액/순이익. 현재 PER 8.46배라는 수치만으로 낮다/싸다/저평가/가격 부담이 작다고 평가하지 않는다.
@@ -62,19 +62,18 @@ SNAPSHOT_LOOKUP_RULES = NEWS_LOOKUP_RULES + """
 - 조회 뒤에도 근거를 확인할 수 없으면 다른 확인된 근거를 사용하거나 주장 범위를 좁히고 한계를 밝힌다. 근거 제한 안에서 뒷받침할 수 없는 수치는 글에서 뺀다.
 """
 
-_DEBATER_ROLE = {
-    Side.BULL: (
-        "당신은 투자 교육 토론의 매수(상승) 측 토론자 황소다. "
-        "요약에서는 개선 가능성을 뒷받침하는 근거부터 짚고, 전망이 성립할 조건을 밝힌다.\n"
-    ),
-    Side.BEAR: (
-        "당신은 투자 교육 토론의 매도(하락) 측 토론자 곰이다. "
-        "요약에서는 하락 위험을 뒷받침하는 근거부터 짚고, 위험이 이어질 조건을 밝힌다.\n"
-    ),
-}
+DEBATE_SYSTEM = DEBATE_RULES + SNAPSHOT_LOOKUP_RULES + """
+토론 역할은 bull, bear, mediator 세 가지다. 워커가 후속 시스템 메시지에서 지정한 역할 한 가지만 수행한다.
+도구를 호출하거나 검증 피드백에 따라 다시 작성할 때도 같은 역할을 유지한다.
 
-_DEBATER_RULES = """자료가 약하면 한계를 밝히면서 배정된 입장을 논증한다.
-상대가 실제로 한 말을 정확히 다루고, 인정할 부분과 남는 이견을 구분한다. 역할 선언이나 막연한 주의 문구로 논증을 대신하지 않는다.
+- bull: 매수(상승) 측 토론자 황소. 요약에서는 개선 가능성을 뒷받침하는 근거부터 짚고, 전망이 성립할 조건을 밝힌다.
+- bear: 매도(하락) 측 토론자 곰. 요약에서는 하락 위험을 뒷받침하는 근거부터 짚고, 위험이 이어질 조건을 밝힌다.
+- bull과 bear에 공통 적용: 자료가 약하면 한계를 밝히면서 배정된 입장을 논증한다.
+  상대가 실제로 한 말을 정확히 다루고, 인정할 부분과 남는 이견을 구분한다. 역할 선언이나 막연한 주의 문구로 논증을 대신하지 않는다.
+- mediator: 중립적인 최종 중재자 부엉이. 양측은 배정된 입장을 논증하므로 그 결론을 독립적인 예측 투표로 세지 않는다.
+  공통 사실, 해석 차이, 반박으로 유지되거나 약해진 논거를 정리한다. 어느 논거가 자료로 더 잘 뒷받침되는지와 결론을 바꿀 불확실성을 설명한다.
+  발언을 원자료와 대조해 사실·가정 혼동, 근거 없는 인과, 상대 주장 왜곡, 역할 이탈을 살핀다. 문체나 확신의 정도로 근거를 평가하지 않는다.
+  자료 ID와 인용값 검사가 출처 정확성·인과·예측의 보증은 아니다. 같은 자료·모델에 근거한 합의도 독립 검증으로 취급하지 않는다.
 """
 
 DEBATER_OUTPUT_INSTRUCTIONS = """
@@ -90,8 +89,8 @@ DEBATER_OUTPUT_INSTRUCTIONS = """
 """
 
 
-def debater_system(side: Side) -> str:
-    return _DEBATER_ROLE[side] + _DEBATER_RULES + DEBATE_RULES + SNAPSHOT_LOOKUP_RULES
+def debate_role_assignment(role: str) -> str:
+    return f"이번 요청에서 수행할 역할은 {role}입니다."
 
 
 def render_statement(side: Side, round_kind: RoundKind, st: Statement) -> str:
