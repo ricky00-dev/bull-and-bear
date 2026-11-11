@@ -20,6 +20,7 @@ Git 제외 원자료는 새 clone에 포함되지 않는다.
 
 ## 단일 모드·의미 검토·데이터 품질
 
+- [스냅샷 품질과 API → AI 입력 전달 설계 — 2026-11-11](worker-snapshot-context-design-20261111.md): 현재 v27 재현, 데이터 결함, 역할별 전달·조회·측정 설계
 - [삼성전자 지표 재검증 · 2026-10-29](metric-audit-20261029.md)
 - [실제 Claude 의미 검토 수정 전후 비교](semantic-ab-live-comparison.md)
 - [B2 평가 구간 보완 및 실제 Claude 재검증](semantic-window-live-comparison.md)
