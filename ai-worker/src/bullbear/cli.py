@@ -111,6 +111,7 @@ def cmd_debate(args, settings: Settings) -> None:
     for model in models.values():
         validate_model(model)
     runner = LiveRunner(settings)
+    runner.live_news = args.snapshot is None
     try:
         result = runner.run(snap, debate_id, args.max_extra_rounds, _printer)
         usage = runner.usage()

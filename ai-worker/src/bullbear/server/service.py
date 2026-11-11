@@ -28,6 +28,7 @@ class LiveRunner:
         self.budget = budget
         self.budget_scopes = set()
         self.review_statements = settings.review_statements if review_statements is None else review_statements
+        self.live_news = False
 
     def new_client(self, model, scope):
         validate_snapshot_model(model)
@@ -77,6 +78,7 @@ class LiveRunner:
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
             moderator_effort=settings.moderator_effort,
             include_chart_image=self.budget is None,
+            news_web_fetch=settings.news_web_fetch_enabled and self.live_news,
             statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
                 if self.review_statements else None).run()
 
@@ -199,7 +201,9 @@ class Service:
                                       self.settings.naver_client_id, self.settings.naver_client_secret,
                                       self.settings.fred_api_key, self.settings.ecos_api_key))
             with audit.stage('snapshot'):
+                live_news = snapshot is None
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
+                collected_at = snapshot.created_at
                 self.store.save_snapshot(debate_id, snapshot)
                 # A content-addressed ID may already exist with an earlier
                 # observation cutoff. Both modes must use the stored object.
@@ -212,6 +216,7 @@ class Service:
                 runner = self.runner_factory()
                 if isinstance(runner, LiveRunner):
                     runner.audit = audit
+                    runner.live_news = live_news and snapshot.created_at == collected_at
                 audit.attach_runner(runner)
 
             def emit(event, payload):

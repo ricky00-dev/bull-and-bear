@@ -5,6 +5,7 @@ import time
 
 import pytest
 
+from bullbear import prompts
 from bullbear.events import EventLog
 from bullbear.llm import LLMError
 from bullbear.schemas import Decision
@@ -49,6 +50,7 @@ class Reviewer:
         payload = initial_payload(conv)
         assert not kwargs.get('tools')
         assert '해당 스냅샷 도구를 호출' not in conv.system
+        assert prompts.NEWS_CITATION_RULES in conv.system
         assert 'get_daily_chart' not in payload['statement_output_instructions']
         self.calls.append(payload)
         text = payload['statement']['argument']

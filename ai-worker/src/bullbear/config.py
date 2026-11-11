@@ -27,6 +27,7 @@ class Settings:
     vix_enabled: bool = False
     market_news_limit: int = 8
     stock_news_limit: int = 30
+    news_web_fetch_enabled: bool = False
 
     @property
     def snapshot_dir(self) -> Path:
@@ -62,6 +63,7 @@ def load_settings() -> Settings:
         market_news_limit=_news_limit("BULLBEAR_MARKET_NEWS_LIMIT", 8),
         stock_news_limit=_news_limit("BULLBEAR_STOCK_NEWS_LIMIT", 30),
         review_statements=os.getenv("BULLBEAR_REVIEW_STATEMENTS", "true").strip().lower() == "true",
+        news_web_fetch_enabled=os.getenv("BULLBEAR_NEWS_WEB_FETCH_ENABLED", "false").strip().lower() == "true",
     )
 
 

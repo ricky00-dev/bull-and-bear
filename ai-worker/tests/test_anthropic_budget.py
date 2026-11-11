@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 
 from bullbear.anthropic_budget import (
-    BudgetDenied, BudgetUsageError, LEGACY_PRICE_HASH, PRICE_HASH,
+    BudgetDenied, BudgetUsageError, LEGACY_PRICE_HASH, PREVIOUS_PRICE_HASH, PRICE_HASH,
     WorkerSpendLedger, read_summary, usage_cost,
 )
 
@@ -88,7 +88,8 @@ def test_cache_miss_and_hit_settle_separately_and_survive_restart(tmp_path):
     assert reopened.summary()['unconfirmed_requests'] == 0
 
 
-def test_legacy_policy_migration_preserves_spend_reservations_and_halt(tmp_path):
+@pytest.mark.parametrize('prior_hash', [LEGACY_PRICE_HASH, PREVIOUS_PRICE_HASH])
+def test_legacy_policy_migration_preserves_spend_reservations_and_halt(tmp_path, prior_hash):
     spend = ledger(tmp_path, '5')
     done = spend.reserve(request(), scope='settled')
     spend.settle(done, response())
@@ -96,7 +97,7 @@ def test_legacy_policy_migration_preserves_spend_reservations_and_halt(tmp_path)
     spend.reserve(request(), scope='interrupted')
     spend.unknown(unknown, 'TimeoutError')
     with spend._db() as db:
-        db.execute('UPDATE authorization SET price_hash=?', (LEGACY_PRICE_HASH,))
+        db.execute('UPDATE authorization SET price_hash=?', (prior_hash,))
         requests_before = db.execute('SELECT * FROM requests ORDER BY id').fetchall()
     before = spend.summary()
     reopened = ledger(tmp_path, '5')

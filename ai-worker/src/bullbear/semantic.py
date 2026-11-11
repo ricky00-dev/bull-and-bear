@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from .llm import Conversation, LLMError
-from .prompts import JUDGMENT_POLICY
+from .prompts import JUDGMENT_POLICY, NEWS_CITATION_RULES
 from .presentation import argument_quote_spans
 from .history import history_entry, reference_map as history_reference_map, contains_quote
 from .shared_context import fact_for_model
@@ -90,7 +90,7 @@ PX.EXCESS_KOSPI_3D/7D 등 스냅샷 수익률 지표는 기준일에 끝나는 �
 반대 주장을 인용한 뒤 부정한 문장은 그 오류를 지지한 것으로 보지 않는다.
 불확실한 방향성 주장은 허용한다. 근거 없는 정확한 예상 수익률 숫자를 요구하지 않는다.
 오류가 없으면 issues=[]를 반환한다. 검증 통과가 투자 성과나 원천 데이터 정확성을 보장한다는 표현은 오류다.
-""" + JUDGMENT_POLICY
+""" + JUDGMENT_POLICY + NEWS_CITATION_RULES
 
 
 SINGLE_REVIEW_SYSTEM = """당신은 중립적인 단일 분석 결과의 독립된 검토 역할이다. 매수/매도 편을 들지 않는다.
@@ -147,7 +147,7 @@ PX.EXCESS_KOSPI_3D/7D 등 스냅샷 수익률 지표는 기준일에 끝나는 �
 인용한 주장을 부정한 문장은 그 오류를 지지한 것으로 보지 않는다.
 불확실한 방향성 주장은 허용한다. 근거 없는 정확한 예상 수익률 숫자를 요구하지 않는다.
 오류가 없으면 issues=[]를 반환한다. 검증 통과가 투자 성과나 원천 데이터 정확성을 보장한다는 표현은 오류다.
-""" + JUDGMENT_POLICY
+""" + JUDGMENT_POLICY + NEWS_CITATION_RULES
 
 
 class SemanticReviewer:
