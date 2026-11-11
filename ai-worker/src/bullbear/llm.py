@@ -1,6 +1,6 @@
 """Claude 호출 공통부: 스트리밍 + 도구 루프 + 구조화 출력.
 
-- 도구 실행은 호출자가 넘긴 핸들러가 한다. 이 모듈은 스냅샷을 모른다.
+- 로컬 도구는 호출자가 넘긴 핸들러가 실행하고, 서버 도구는 Anthropic이 실행한다.
 - 대화 기록은 덧붙이기만 한다. 응답 content를 그대로 다시 보내야 thinking 블록이 유지된다.
 - Haiku·Sonnet만 허용하며 서버 측 자동 모델 대체는 사용하지 않는다.
 """
@@ -163,7 +163,8 @@ class LLM:
         if conv.system_in_messages:
             validate_snapshot_model(self.model)
         on_event = on_event or (lambda *_: None)
-        tools = [{**t, "strict": True, "eager_input_streaming": True} for t in tools or []]
+        tools = [{**t, "strict": True, "eager_input_streaming": True}
+                 if t.get("type", "custom") == "custom" else t for t in tools or []]
         json_retries = 0
 
         for _ in range(self.max_tool_turns):
@@ -234,9 +235,16 @@ class LLM:
                 raise LLMError("max_tokens에 도달해 응답이 잘렸습니다")
 
             conv.messages.append({"role": "assistant", "content": msg.content})
+            for block in msg.content:
+                if block.type in {"server_tool_use", "web_fetch_tool_result"}:
+                    on_event(block.type, block.model_dump(mode="json"))
+            if msg.stop_reason == "pause_turn":
+                continue
             tool_uses = [b for b in msg.content if b.type == "tool_use"]
             if not tool_uses:
-                text = "".join(b.text for b in msg.content if b.type == "text")
+                # Server tool turns can include an explanation before the fetch.
+                last_fetch = max((i for i, b in enumerate(msg.content) if b.type == "web_fetch_tool_result"), default=-1)
+                text = "".join(b.text for b in msg.content[last_fetch + 1:] if b.type == "text")
                 try:
                     return json.loads(text)
                 except json.JSONDecodeError as e:

@@ -36,7 +36,7 @@ REVIEW_SYSTEM = """당신은 토론 발언의 공개 전 근거 검토자다. �
 자료에 없는 내용은 확인 불가로 보고 외부 기억으로 정정하지 않는다. 근거 있는 의견 차이와 조건부 전망은 허용하며 문체·길이로 반려하지 않는다.
 문제가 없으면 발언을 그대로 통과시킨다. 문제가 있으면 같은 응답에서 해당 문제를 직접 고친 전체 발언을 작성한다.
 원래 화자의 입장과 말투를 유지하는 편집자이며, 승패나 독립적인 매수·보류·매도 판정을 내리지 않는다.
-""" + prompts.DEBATE_RULES
+""" + prompts.DEBATE_RULES + prompts.NEWS_CITATION_RULES
 
 REVIEW_INSTRUCTIONS = """
 - claim, argument, evidence.interpretation과 analysis를 인용 자료의 제목·note·값·기간과 대조한다. 매출/영업이익, 분기/누적, 원/조원, 발행일/사건일, 상대수익 부호와 과거/미래를 구분한다.
@@ -99,7 +99,8 @@ def _revision_errors(revised, statement, facts, assigned_outlook, validate):
     return invalid
 
 
-def review_statement(llm, statement, snapshot, transcript, *, effort, side=None, round_kind=None, validate=None):
+def review_statement(llm, statement, snapshot, transcript, *, effort, side=None, round_kind=None,
+                     validate=None, news_results=None):
     records = history_records(transcript)
     keys = {e.source_id for e in statement.evidence}
     # Opponent evidence is included to check the fidelity of rebuttals.
@@ -108,6 +109,9 @@ def review_statement(llm, statement, snapshot, transcript, *, effort, side=None,
             if isinstance(evidence, dict):
                 keys.add(evidence.get('source_id'))
     facts = {key: fact_for_model(snapshot.facts[key]) for key in keys if key in snapshot.facts}
+    for key, result in (news_results or {}).items():
+        if key in facts:
+            facts[key]['news_lookup_result'] = result
     assigned_outlook = {Side.BULL: 'BUY', Side.BEAR: 'SELL'}.get(side)
     payload = {'review_instructions': REVIEW_INSTRUCTIONS,
                'statement_output_instructions': prompts.DEBATER_OUTPUT_INSTRUCTIONS,

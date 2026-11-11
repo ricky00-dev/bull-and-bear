@@ -341,6 +341,9 @@ KRX 종가는 기업행사 미보정이며, 연속 종가의 30% 초과 단절�
 국내 시황은 증시·통화정책·환율·경제산업 키워드로 검색해 관련 주제 수와 최신성으로 정렬한다.
 같은 링크, 정규화 제목, 발행 시각이 가깝고 제목이 매우 유사한 기사는 대표 기사만 남긴다.
 `get_new_url`에 기사 Fact의 `source_id` 하나를 넣으면 스냅샷에 저장된 원문 URL을 반환한다. 외부 페이지에 접속하지 않는다.
+신규 Sonnet 토론에서 `BULLBEAR_NEWS_WEB_FETCH_ENABLED=true`를 설정하면 `get_new_url` 결과를 Anthropic의 `web_fetch`로 열 수 있다.
+본문 조회에 실패하면 스냅샷에 저장된 요약문을 인용한다. 같은 토론에서는 조회 결과를 후속 라운드와 검수가 재사용한다.
+저장된 스냅샷을 다시 실행할 때는 그 스냅샷의 요약문을 사용한다.
 OpenDART 영업활동현금흐름은 전체 재무제표
 응답에 동일 접수번호·보고 기준의 원화 계정이 있을 때만 추가한다.
 
@@ -350,6 +353,7 @@ OpenDART 영업활동현금흐름은 전체 재무제표
 | `BULLBEAR_VIX_ENABLED` | 기본 false. Cboe VIX 사용권과 서비스 노출 범위를 확인한 뒤 true로 설정 |
 | `ECOS_API_KEY` | 한국은행 기준금리 `722Y001 / 0101000 / D` 조회. 키 생략 시 ECOS 비활성 |
 | `BULLBEAR_MARKET_NEWS_LIMIT`, `BULLBEAR_STOCK_NEWS_LIMIT` | 기본 8건·30건. 각 0~30, 0이면 해당 검색 비활성 |
+| `BULLBEAR_NEWS_WEB_FETCH_ENABLED` | 기본 false. true이면 신규 Sonnet 토론에서 기사 본문 조회 |
 
 FRED는 한국 마감 시각보다 앞서 끝난 미국 중부 달력일을 vintage로 지정한다. `vintage_date`는 그날에
 조회 가능했던 자료라는 근거이며 정확한 공개 시각은 아니다. ECOS는 공개 시각이나 vintage가 없어, 워커가

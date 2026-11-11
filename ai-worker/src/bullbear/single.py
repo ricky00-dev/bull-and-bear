@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from . import prompts
 from .llm import Conversation, LLMError
+from .news_lookup import NewsLookup
 from .presentation import verdict_issues
 from .schemas import Decision, MODERATOR_SCHEMA
 from .semantic import SemanticReviewer, concept_issues
@@ -50,6 +51,7 @@ class SingleAnalyst:
 
     def evaluate(self, log):
         snap = self.snapshot
+        news = NewsLookup(snap)
         conv = Conversation.from_snapshot(SYSTEM, {
             'ticker': snap.ticker, 'name': snap.name, 'price_as_of': str(snap.as_of),
             'decision_at': snap.decision_at.isoformat(), 'warnings': snap.warnings,
@@ -67,6 +69,7 @@ class SingleAnalyst:
                 conv.messages.append({'role': 'user', 'content': '스키마와 confidence 범위를 지켜 다시 작성하세요.'})
                 continue
             issues = verdict_issues(verdict) + concept_issues(verdict.reasoning)
+            issues += news.issues(verdict.decisive_evidence)
             if any(key not in snap.facts for key in verdict.decisive_evidence):
                 issues.append(Issue(severity='error', code='unknown_source', message='판정 근거 ID가 스냅샷에 없습니다.'))
             if not issues:

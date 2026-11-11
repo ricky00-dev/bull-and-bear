@@ -22,6 +22,8 @@ def test_moderator_receives_own_style_and_retry_instructions(tmp_path):
             assert '중립적인 최종 중재자 부엉이' in conv.system
             assert '차분한 해요체' in conv.system
             assert prompts.SNAPSHOT_LOOKUP_RULES in conv.system
+            assert '받은 URL을 web_fetch로 조회한다' in conv.system
+            assert '본문 조회에 실패했거나' in conv.system
             assert any(tool['name'] == 'get_daily_chart' for tool in kwargs['tools'])
             assert '최대 3문장' not in conv.system
             payload = initial_payload(conv)
@@ -53,6 +55,7 @@ def test_single_retry_and_review_use_single_fields_only(tmp_path):
     llm = QueueLLM([bad.model_dump(mode='json'), good.model_dump(mode='json'), {'issues': []}])
     assert SingleAnalyst(llm, snapshot).evaluate(EventLog(tmp_path / 'single.jsonl')) == good
     assert len(llm.calls) == 3  # Existing length guard, one rewrite, then ordinary review.
+    assert prompts.NEWS_LOOKUP_RULES in llm.calls[0][0].system
     feedback = llm.calls[1][0].messages[-1]['content']
     assert '최대 3문장' in feedback
     assert all(term not in feedback for term in ('claim', 'argument', 'rebuttal', 'comment', 'forecast'))
@@ -62,6 +65,7 @@ def test_single_retry_and_review_use_single_fields_only(tmp_path):
     assert '전체 스냅샷에 존재하지만 인용하지 않은 사실' in review.system
     assert '판단 범위는 candidate 전체' in review.system
     assert '조건부 가설을 확정 사실처럼 읽지 않는다' in review.system
+    assert prompts.NEWS_CITATION_RULES in review.system
 
 
 def test_debater_keeps_role_in_system_and_output_guidance_in_user_message(tmp_path):
@@ -86,6 +90,7 @@ def test_debater_keeps_role_in_system_and_output_guidance_in_user_message(tmp_pa
             assert payload['assigned_outlook'] == ('BUY' if side == Side.BULL else 'SELL')
             instructions = payload['output_instructions']
             assert all(term in instructions for term in ('두 문장 요약', '최대 3문장', 'rebuttal', 'analysis.outlook'))
+            assert '뉴스에는 본문 조회 및 요약문 대체 규칙을 적용' in instructions
     feedback = prompts.verifier_feedback('근거 오류')
     assert 'claim' in feedback and 'analysis.rebuttal' in feedback
     assert 'reasoning' not in feedback

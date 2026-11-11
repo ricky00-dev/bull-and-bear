@@ -13,6 +13,7 @@ from .chart_image import daily_chart_image
 from .graph import Analysis, Mediation, build_debate_graph
 from .interpretations import analysis_issues, bind_statement, history_records
 from .llm import Conversation, LLMError
+from .news_lookup import NewsLookup
 from .presentation import statement_issues, moderator_issues
 from .schemas import (Side, Statement, ModeratorDecision, STRUCTURED_STATEMENT_SCHEMA,
                       STRUCTURED_MODERATOR_SCHEMA)
@@ -40,6 +41,7 @@ def mediation_schema():
 
 
 MEDIATION_SCHEMA = mediation_schema()
+_STAGES = ('opening', 'rebuttal', 'closing', 'verdict')
 MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립적인 최종 중재자 부엉이다. 양측은 배정된 입장을 논증하므로 그 결론을 독립적인 예측 투표로 세지 않는다.
 공통 사실, 해석 차이, 반박으로 유지되거나 약해진 논거를 정리한다. 어느 논거가 자료로 더 잘 뒷받침되는지와 결론을 바꿀 불확실성을 설명한다.
 발언을 원자료와 대조해 사실·가정 혼동, 근거 없는 인과, 상대 주장 왜곡, 역할 이탈을 살핀다. 문체나 확신의 정도로 근거를 평가하지 않는다.
@@ -70,7 +72,7 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 statement_reviewers=None, include_chart_image=True):
+                 statement_reviewers=None, include_chart_image=True, news_web_fetch=False):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.shared_push = build_shared_push(snapshot)
@@ -92,6 +94,25 @@ class GraphRuntime:
         # reviewer reservations exhausting a shared pilot budget unnecessarily.
         self.review_lock = threading.Lock()
         self.attempts = {side.value: [] for side in Side}
+        self.news_web_fetch = news_web_fetch
+        self.news_results = {}
+
+    def news_lookup(self, llm, stage, role):
+        with self.lock:
+            previous = {}
+            for earlier in _STAGES[:_STAGES.index(stage)]:
+                for side in Side:
+                    for key, result in self.news_results.get((earlier, side.value), {}).items():
+                        if previous.get(key, {}).get('status') != 'body':
+                            previous[key] = result
+
+        def record(source_id, result):
+            with self.lock:
+                self.log.append('news_fetch_result', role=role, round=stage, source_id=source_id, **result)
+
+        return NewsLookup(self.snapshot, enabled=self.news_web_fetch and
+                          getattr(llm, 'model', '').startswith('claude-sonnet-5-5'),
+                          previous=previous, record=record)
 
     def emit(self, event, payload):
         # Parallel initial nodes must not interleave event sequence assignment.
@@ -105,12 +126,14 @@ class GraphRuntime:
                                         state[side.value][index].statement)
                 for index in range(3) for side in Side if index < len(state.get(side.value, []))]
 
-    def verify_statement(self, statement, *, side, stage, transcript):
+    def verify_statement(self, statement, *, side, stage, transcript, news=None):
         """Apply the same publication checks to drafts and reviewer revisions."""
         result = verify(statement, self.snapshot)
         # Source correctness is independent of the application's later scoring.
         issues = list(result.issues)
         refs = {e.ref: e.source_id for e in statement.evidence}
+        if news is not None:
+            issues += news.issues(refs.values())
         for text in (statement.claim, statement.argument):
             issues += return_issues(text, self.snapshot, refs)
             issues += source_issues(text, self.snapshot, refs)
@@ -133,8 +156,9 @@ class GraphRuntime:
 
     def analyze(self, side, state, llm):
         history = state.get(side.value, [])
-        stage = ('opening', 'rebuttal', 'closing')[len(history)]
+        stage = _STAGES[len(history)]
         transcript = self.transcript(state)
+        news = self.news_lookup(llm, stage, side.value)
         task = {
             'opening': '첫 주장: 관측·해석·가정·한계를 구분해 배정 입장을 논증하세요.',
             'rebuttal': '상대 첫 주장의 중요한 해석을 인용하고 인정·반박 이유·미해결 쟁점을 작성하세요.',
@@ -145,6 +169,8 @@ class GraphRuntime:
                    'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
                    'history': transcript,
                    'research_results': state.get('research_results', [])}
+        if news.results:
+            payload['news_lookup_results'] = dict(news.results)
         images = [self.chart_image] if stage == 'opening' and self.chart_image is not None else None
         conv = Conversation.from_snapshot(prompts.debater_system(side), self.debater_context, payload, images=images)
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
@@ -154,10 +180,10 @@ class GraphRuntime:
         def tool(name, arguments):
             calls.append(name)
             self.emit('tool_call', {'side': side, 'tool': name})
-            return tools(name, arguments)
+            return news.handle_tool(tools, name, arguments)
         for attempt in range(1, 4):
             raw = llm.structured(conv, schema=STRUCTURED_STATEMENT_SCHEMA, effort=self.debater_effort,
-                                 tools=DEBATE_TOOL_DEFINITIONS, tool_handler=tool)
+                                 tools=news.tools(DEBATE_TOOL_DEFINITIONS), tool_handler=tool, on_event=news.observe)
             try:
                 statement = Statement.model_validate(raw)
             except ValidationError:
@@ -169,14 +195,14 @@ class GraphRuntime:
                     'issues': failure.issues})
                 conv.messages.append({'role': 'user', 'content': '필수 analysis와 발언 스키마를 지켜 다시 작성하세요.'})
                 continue
-            result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript)
+            result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript, news=news)
             if result.passed and side.value in self.statement_reviewers:
                 with self.review_lock:
                     review = review_statement(self.statement_reviewers[side.value], statement,
                         self.snapshot, transcript, effort=self.moderator_effort,
-                        side=side, round_kind=stage,
+                        side=side, round_kind=stage, news_results=news.results,
                         validate=lambda candidate: self.verify_statement(candidate,
-                            side=side, stage=stage, transcript=transcript))
+                            side=side, stage=stage, transcript=transcript, news=news))
                 original_verification = result
                 if review.issues:
                     original_verification = result.model_copy(update={'passed': False,
@@ -193,7 +219,7 @@ class GraphRuntime:
                         self.attempts[side.value].append((len(history), original_verification))
                 if review.revised_statement is not None:
                     statement = review.revised_statement
-                    result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript)
+                    result = self.verify_statement(statement, side=side, stage=stage, transcript=transcript, news=news)
                     if not result.passed:
                         raise LLMError('Reviewer revision failed publication checks')
             with self.lock:
@@ -201,6 +227,8 @@ class GraphRuntime:
                 self.log.append('statement_attempt', side=side, round=stage, attempt=attempt,
                                 statement=statement, verification=result)
             if result.passed:
+                with self.lock:
+                    self.news_results[(stage, side.value)] = news.results
                 statement = bind_statement(statement, self.snapshot,
                     debate_id=f'{self.debate_id}:{side.value}', turn_index=len(history) + 1)
                 self.emit('statement_accepted', {'side': side, 'round': stage, 'attempts': attempt,
@@ -214,6 +242,8 @@ class GraphRuntime:
     def mediate(self, state):
         self.emit('moderator_started', {'engine': 'langgraph'})
         transcript = self.transcript(state)
+        news = self.news_lookup(self.moderator, 'verdict', 'moderator')
+        tools = SnapshotTools(self.snapshot)
         conv = Conversation.from_snapshot(MEDIATOR_SYSTEM, {
                 'facts': {key: {**fact_for_model(fact, exclude_none=True), 'value': fact.value}
                           for key, fact in self.snapshot.facts.items()},
@@ -228,10 +258,12 @@ class GraphRuntime:
                 'output_instructions': MEDIATOR_OUTPUT_INSTRUCTIONS,
                 'history': transcript,
                 'research_results': state.get('research_results', []),
+                **({'news_lookup_results': dict(news.results)} if news.results else {}),
                 'remaining_actions': 0})
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
-                tools=DEBATE_TOOL_DEFINITIONS, tool_handler=SnapshotTools(self.snapshot))
+                tools=news.tools(DEBATE_TOOL_DEFINITIONS),
+                tool_handler=lambda name, arguments: news.handle_tool(tools, name, arguments), on_event=news.observe)
             try:
                 decision = Mediation.model_validate(raw)
                 if decision.action not in ('ACCEPT', 'ABSTAIN'):
@@ -249,6 +281,7 @@ class GraphRuntime:
                 candidate = ModeratorDecision(action='verdict', extra_question=None,
                                              **decision.forecast.model_dump())
                 issues = moderator_issues(candidate)
+                issues += news.issues(candidate.decisive_evidence)
                 refs = {f'E{i}': key for i, key in enumerate(candidate.decisive_evidence, 1)}
                 issues += return_issues(candidate.reasoning, self.snapshot, refs)
                 issues += source_issues(candidate.reasoning, self.snapshot, refs)
