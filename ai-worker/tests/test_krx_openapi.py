@@ -159,3 +159,29 @@ def test_old_empty_day_is_not_refetched(tmp_path, monkeypatch):
     monkeypatch.setattr("bullbear.data.krx_openapi.time.time", lambda: now + 3600)
     assert source._day("sto/stk_bydd_trd", holiday) == []
     assert len(calls) == 1
+
+
+def test_kospi_stock_outside_universe_does_not_need_kosdaq_api(tmp_path, monkeypatch):
+    # 대형주 30종목 밖 코스피 종목(한미반도체). 코스닥 API가 403이어도 코스피 목록에서 찾으면 된다.
+    # 기준일(10/16)은 아직 안 올라와 비어 있다
+    def get(url, **kwargs):
+        day = kwargs["params"]["basDd"]
+        if "ksq_bydd_trd" in url:
+            return httpx.Response(403, json={}, request=httpx.Request("GET", url))
+        rows = [] if day == "20261016" else [row("042700", day)]
+        return httpx.Response(200, json={"OutBlock_1": rows}, request=httpx.Request("GET", url))
+    monkeypatch.setattr("bullbear.data.krx_openapi.httpx.get", get)
+    monkeypatch.setattr("bullbear.data.krx_openapi.time.sleep", lambda *_: None)
+    bars = KrxOpenApiSource("test-key", None, tmp_path).get_daily_prices("042700", date(2026, 10, 15), date(2026, 10, 16))
+    assert [b.close for b in bars] == [101]
+
+
+def test_ticker_missing_everywhere_is_unavailable(tmp_path, monkeypatch):
+    def get(url, **kwargs):
+        if "ksq_bydd_trd" in url:
+            return httpx.Response(403, json={}, request=httpx.Request("GET", url))
+        return httpx.Response(200, json={"OutBlock_1": [row("005930", kwargs["params"]["basDd"])]}, request=httpx.Request("GET", url))
+    monkeypatch.setattr("bullbear.data.krx_openapi.httpx.get", get)
+    monkeypatch.setattr("bullbear.data.krx_openapi.time.sleep", lambda *_: None)
+    with pytest.raises(DataUnavailable, match="찾을 수 없습니다"):
+        KrxOpenApiSource("test-key", None, tmp_path).get_daily_prices("999990", date(2026, 10, 15), date(2026, 10, 16))

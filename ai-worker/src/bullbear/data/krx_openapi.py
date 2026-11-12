@@ -165,9 +165,18 @@ class KrxOpenApiSource(PykrxDartSource):
             from .universe import UNIVERSE
             if ticker in UNIVERSE or ticker == "005935":
                 return "sto/stk_bydd_trd"
-            for day in reversed(list(self._days(end - timedelta(days=10), end))):
-                for endpoint in ("sto/stk_bydd_trd", "sto/ksq_bydd_trd"):
-                    if any(r.get("ISU_CD") == ticker for r in self._day(endpoint, day)):
+            days = list(reversed(list(self._days(end - timedelta(days=10), end))))
+            # 코스피를 먼저 다 본다. 코스닥 API는 승인이 없을 수 있어(403) 코스피에서 못 찾았을 때만 부르고,
+            # 거기서 실패하면 "찾을 수 없음"으로 본다. 예전에는 날마다 코스닥까지 불러 403이 그대로 실패가 됐다
+            for endpoint in ("sto/stk_bydd_trd", "sto/ksq_bydd_trd"):
+                for day in days:
+                    try:
+                        rows = self._day(endpoint, day)
+                    except DataUnavailable:
+                        if endpoint == "sto/stk_bydd_trd":
+                            raise
+                        break
+                    if any(r.get("ISU_CD") == ticker for r in rows):
                         self._markets[key] = endpoint
                         return endpoint
             raise DataUnavailable("KRX 주식 일별 데이터에서 종목을 찾을 수 없습니다")
