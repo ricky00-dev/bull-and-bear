@@ -58,3 +58,37 @@ def test_market_blocks_tickers_outside_kospi_list(tmp_path):
         market.quote('365340')
     assert e.value.status == 422 and e.value.reasons == [KOSPI_ONLY]
     assert '365340' not in source.price_calls
+
+
+def test_search_uses_latest_quotes_without_loading_history(tmp_path):
+    """검색 목록은 종목별 1년치 일봉을 계산하지 않는다 (결과가 많으면 시세 대기열이 막혔다)."""
+    from dataclasses import replace
+
+    from bullbear.config import load_settings
+
+    from .fakes import FakeSource
+    from .http_fixture import fixture_market
+
+    class LatestSource(FakeSource):
+        price_calls = []
+
+        def kospi_tickers(self, end):
+            return {'005930', '000660', '005935'}
+
+        def latest_quotes(self, end):
+            return {'005930': (100000.0, -1.5), '005935': (80000.0, 0.5)}
+
+        def get_daily_prices(self, ticker, start, end):
+            self.price_calls.append(ticker)
+            return super().get_daily_prices(ticker, start, end)
+
+    source = LatestSource()
+    market = fixture_market(replace(load_settings(), data_dir=tmp_path), source=source)
+    market.catalog_loaded = True
+
+    items = {i['ticker']: i for i in market.search('', 10)['items']}
+    assert items['005930']['eligible'] is True and items['005930']['close'] == 100000.0
+    assert items['005930']['change_pct'] == -1.5
+    assert items['005935']['eligible'] is False and '우선주' in items['005935']['block_reason']
+    assert items['000660']['eligible'] is False and items['000660']['block_reason'] == '시세 조회 불가'
+    assert source.price_calls == []

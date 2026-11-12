@@ -136,3 +136,26 @@ def test_kospi_tickers_use_latest_published_day(tmp_path, monkeypatch):
     transport(monkeypatch, lambda day: {"OutBlock_1": [] if day == "20261016" else [row("005930", day), row("000660", day)]})
     source = KrxOpenApiSource("test-key", None, tmp_path)
     assert source.kospi_tickers(date(2026, 10, 16)) == {"005930", "000660"}
+
+
+def test_latest_quotes_read_one_published_day(tmp_path, monkeypatch):
+    # 검색 목록은 최근 거래일 파일 하나에서 종가·등락률을 읽는다. 거래정지(종가 0)는 뺀다
+    calls = transport(monkeypatch, lambda day: {"OutBlock_1": [] if day == "20261016" else
+                                                [row("005930", day, FLUC_RT="-1.25"), row("000660", day, TDD_OPNPRC="0", TDD_HGPRC="0", TDD_LWPRC="0",
+                                                                                        TDD_CLSPRC="0", ACC_TRDVOL="0")]})
+    source = KrxOpenApiSource("test-key", None, tmp_path)
+    assert source.latest_quotes(date(2026, 10, 16)) == {"005930": (101.0, -1.25)}
+    assert [c[1]["params"]["basDd"] for c in calls] == ["20261016", "20261015"]
+
+
+def test_old_empty_day_is_not_refetched(tmp_path, monkeypatch):
+    # 일주일 지난 휴장일은 빈 응답이어도 다시 받지 않는다 (예전에는 60초마다 다시 받았다)
+    import time as real_time
+    calls = transport(monkeypatch, {"OutBlock_1": []})
+    source = KrxOpenApiSource("test-key", None, tmp_path)
+    holiday = date(2026, 10, 5)
+    assert source._day("sto/stk_bydd_trd", holiday) == []
+    now = real_time.time()
+    monkeypatch.setattr("bullbear.data.krx_openapi.time.time", lambda: now + 3600)
+    assert source._day("sto/stk_bydd_trd", holiday) == []
+    assert len(calls) == 1

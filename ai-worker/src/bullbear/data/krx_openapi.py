@@ -56,7 +56,8 @@ class KrxOpenApiSource(PykrxDartSource):
                     # permanent historical close. Empty publication results retry sooner.
                     after_close = modified >= datetime.combine(day, clock_time(15, 40), KST).timestamp()
                     ttl = 3600 if rows else 60
-                    if after_close and age >= 0 and ((old and rows) or age < ttl):
+                    # 일주일 지난 날은 휴장일(빈 응답)도 바뀌지 않는다. 매번 다시 받으면 전역 잠금을 오래 잡는다
+                    if after_close and age >= 0 and (old or age < ttl):
                         return rows
                 except (OSError, EOFError, ValueError, KeyError, TypeError):
                     pass
@@ -135,6 +136,26 @@ class KrxOpenApiSource(PykrxDartSource):
             if rows:
                 return {r["ISU_CD"] for r in rows if r.get("ISU_CD")}
         raise DataUnavailable("KRX 코스피 종목 목록을 찾을 수 없습니다")
+
+    def latest_quotes(self, end):
+        """기준일 이전 가장 최근 거래일의 코스피 종목별 (종가, 등락률 %).
+
+        검색 목록용. 하루치 파일 하나에 전 종목이 있어서 종목마다 1년치 일봉을 읽지 않아도 된다.
+        """
+        for day in reversed(list(self._days(end - timedelta(days=10), end))):
+            rows = self._day("sto/stk_bydd_trd", day)
+            if not rows:
+                continue
+            out = {}
+            for r in rows:
+                try:
+                    close, change = self._number(r["TDD_CLSPRC"]), self._number(r.get("FLUC_RT") or 0)
+                except (KeyError, ValueError):
+                    continue
+                if close > 0:
+                    out[r["ISU_CD"]] = (close, change)
+            return out
+        raise DataUnavailable("KRX 코스피 시세를 찾을 수 없습니다")
 
     def _stock_endpoint(self, ticker, end):
         key = (ticker, end)
