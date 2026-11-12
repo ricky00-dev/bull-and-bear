@@ -67,12 +67,12 @@ export function StockPage() {
 
             <Card className="flex flex-col gap-3">
               <h2 className="text-sm font-extrabold">AI가 확인할 데이터</h2>
-              <DataRow ok label="시세 지표" detail="수익률·이동평균·변동성·거래량" />
+              <DataRow ok label="시세 지표" detail="수익률·이동평균·변동성·거래량 · 확보됨" />
               <DataRow label="재무제표" detail="정기보고서 · 토론 시작 시 조회" />
               <DataRow label="공시" detail="최근 90일 · 토론 시작 시 조회" />
               <DataRow label="뉴스" detail="최근 7일 · 토론 시작 시 조회" />
               <p className="border-t border-line-soft pt-2 text-xs leading-relaxed text-sub">
-                토론 시작 시 확보한 데이터를 고정해요. 두 AI는 같은 자료를 근거로 쓰고, 인용한 수치를 고정된 자료와 대조해요. 수집하지 못한 자료는 근거로 쓰지 않아요.
+                시세는 지금 확보했고, 나머지는 토론을 시작할 때 모아요. 모은 자료는 고정해서 두 AI가 같은 자료를 근거로 써요. 수집하지 못한 자료는 근거로 쓰지 않아요.
               </p>
             </Card>
 

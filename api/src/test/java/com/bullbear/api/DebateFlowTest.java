@@ -134,6 +134,17 @@ class DebateFlowTest {
 	}
 
 	@Test
+	void 뉴스_근거는_소문자_해시_ID도_담을_수_있다() throws Exception {
+		// 실제 워커의 뉴스 Fact ID는 NEWS.0efa3366처럼 소문자 해시다 (예전 검사가 대문자만 받아 400)
+		String debateId = createDebate("018260");
+		awaitCompleted(debateId);
+		mvc.perform(post("/api/debates/" + debateId + "/judgment").header("Authorization", bearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"decision\":\"BUY\",\"confidence\":60,\"evidencePicks\":[\"NEWS.0efa3366\",\"VAL.PBR\"]}"))
+				.andExpect(status().isCreated());
+	}
+
+	@Test
 	void 잘못된_판정_요청은_400() throws Exception {
 		String debateId = createDebate("005380");
 		awaitCompleted(debateId);

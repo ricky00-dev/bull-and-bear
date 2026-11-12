@@ -27,12 +27,12 @@ import jakarta.validation.constraints.Size;
 public class JudgmentController {
 
 	/**
-	 * @param evidencePicks 가장 설득력 있던 근거의 Fact ID, 최대 2개
+	 * @param evidencePicks 가장 설득력 있던 근거의 Fact ID, 최대 2개. 뉴스 ID는 소문자 해시를 쓴다 (NEWS.0efa3366)
 	 */
 	public record SubmitRequest(
 			@NotNull Decision decision,
 			@Min(50) @Max(100) int confidence,
-			@Size(max = 2) List<@Pattern(regexp = "[A-Z0-9_.]{2,60}") String> evidencePicks,
+			@Size(max = 2) List<@Pattern(regexp = "[A-Za-z0-9_.\\-]{2,80}") String> evidencePicks,
 			@Size(max = 200) String memo) {
 	}
 
