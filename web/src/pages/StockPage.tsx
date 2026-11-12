@@ -10,7 +10,13 @@ import type { StockDetail } from '../lib/types'
 export function StockPage() {
   const { ticker = '' } = useParams()
   const navigate = useNavigate()
-  const stock = useQuery({ queryKey: ['stock', ticker], queryFn: () => api.stock(ticker) })
+  // 워커가 시세를 처음 준비하는 동안은 503(준비 중)이 온다. 몇 초 간격으로 30초가량 기다린다
+  const stock = useQuery({
+    queryKey: ['stock', ticker],
+    queryFn: () => api.stock(ticker),
+    retry: (n, e) => (e instanceof ApiError && e.status === 503 ? n < 10 : n < 2),
+    retryDelay: 3000,
+  })
   const start = useMutation({
     mutationFn: () => api.createDebate(ticker),
     onSuccess: (d) => navigate(`/debates/${d.id}`),

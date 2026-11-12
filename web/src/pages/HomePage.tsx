@@ -40,6 +40,12 @@ function saveRecent(name: string) {
   }
 }
 
+/**
+ * 워커가 검색 결과마다 시세를 새로 계산하다 시간이 넘으면 "시세 조회 불가"로 온다. 종목이 막힌 게 아니라
+ * 아직 준비 중일 뿐이라 누를 수 있게 둔다. 종목 화면이 다시 시도한다. 우선주·ETF·코스닥 같은 진짜 제한은 그대로 막는다.
+ */
+const preparing = (s: StockItem) => !s.eligible && s.blockReason === '시세 조회 불가'
+
 export function HomePage() {
   const [query, setQuery] = useState('')
   const deferred = useDeferredValue(query.trim())
@@ -70,7 +76,7 @@ export function HomePage() {
   const suggestions = SUGGESTIONS.filter((s) => !inFeed.has(s.ticker))
 
   const items = search.data?.items ?? []
-  const eligibleCount = items.filter((i) => i.eligible).length
+  const eligibleCount = items.filter((i) => i.eligible || preparing(i)).length
 
   return (
     <Screen wide>
@@ -195,7 +201,7 @@ export function HomePage() {
               <ul className="overflow-hidden rounded-2xl bg-surface">
                 {items.map((s) => (
                   <li key={s.ticker} className="border-b border-line-soft last:border-0">
-                    {s.eligible ? (
+                    {s.eligible || preparing(s) ? (
                       <button type="button" onClick={() => open(s)} className="pressable flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <Highlighted text={s.name} query={deferred} />
@@ -203,7 +209,7 @@ export function HomePage() {
                             {s.ticker} · {s.market}
                           </span>
                         </span>
-                        <Price close={s.close} change={s.changePct} />
+                        {s.eligible ? <Price close={s.close} change={s.changePct} /> : <span className="text-xs text-sub">시세 준비 중</span>}
                       </button>
                     ) : (
                       <div className="flex min-h-16 items-center gap-3 bg-surface-2 px-4 py-2.5">
