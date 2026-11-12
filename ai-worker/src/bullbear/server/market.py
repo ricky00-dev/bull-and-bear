@@ -102,6 +102,7 @@ class Market:
         self.quote_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='market-quote')
         self.quote_jobs = {}
         self.kospi = {}
+        self.latest = {}
         self.closed = False
 
     def close(self):
@@ -142,6 +143,22 @@ class Market:
         with self.lock:
             self.kospi = {cutoff: tickers}
         return tickers
+
+    def latest_quotes(self, cutoff):
+        """검색 목록용 최근 거래일 종가·등락률. 공급자가 못 주면 None이고 종목별 시세 조회로 돌아간다."""
+        loader = getattr(self.source, 'latest_quotes', None)
+        if loader is None:
+            return None
+        with self.lock:
+            if cutoff in self.latest:
+                return self.latest[cutoff]
+        try:
+            quotes = loader(cutoff)
+        except DataUnavailable:
+            return None
+        with self.lock:
+            self.latest = {cutoff: quotes}
+        return quotes
 
     def outside_kospi(self, ticker, cutoff):
         kospi = self.kospi_tickers(cutoff)
@@ -211,6 +228,7 @@ class Market:
                    if q in info[0].casefold() or ticker.startswith(q) or q in initial(info[0]).casefold()]
         cutoff = confirmed_date(self.now())
         kospi = self.kospi_tickers(cutoff)
+        latest = self.latest_quotes(cutoff)
         # 대형주 30종목 → 나머지 코스피 → 코스피 밖 순서
         matches.sort(key=lambda item: (item[0] not in UNIVERSE, kospi is not None and item[0] not in kospi, item[0]))
         def item(match):
@@ -220,6 +238,16 @@ class Market:
                             close=0, change_pct=0, eligible=False, block_reason=KOSPI_ONLY)
             if kospi is not None and market is None:
                 market = 'KOSPI'
+            if latest is not None:
+                # 검색 결과마다 1년치 일봉을 계산하지 않는다. 자세한 시세는 종목 화면에서 받는다
+                price = latest.get(ticker)
+                if price is None:
+                    return dict(ticker=ticker, name=name, market=market, featured=ticker in UNIVERSE,
+                                close=0, change_pct=0, eligible=False, block_reason='시세 조회 불가')
+                reasons = block_reasons(ticker, name, market)
+                return dict(ticker=ticker, name=name, market=market, featured=ticker in UNIVERSE,
+                            close=price[0], change_pct=round(price[1], 2), eligible=not reasons,
+                            block_reason='; '.join(reasons) or None)
             try:
                 quote = self.quote(ticker)
                 detail = quote.detail()

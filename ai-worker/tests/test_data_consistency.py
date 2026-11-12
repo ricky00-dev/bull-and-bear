@@ -56,16 +56,21 @@ def test_preclose_cache_is_not_used_as_confirmed_close(tmp_path, monkeypatch):
 
 
 def test_empty_cache_retries_after_one_minute(tmp_path, monkeypatch):
+    # 최근(일주일 안) 날의 빈 응답은 아직 안 올라온 것일 수 있어 1분 뒤 다시 받는다.
+    # 일주일 지난 빈 날은 휴장일로 보고 다시 받지 않는다 (test_old_empty_day_is_not_refetched)
     import time
-    path = tmp_path / 'krx-openapi/sto/stk_bydd_trd/20261016.json.gz'
+    from datetime import datetime
+    from bullbear.snapshot import KST
+    day = datetime.now(KST).date() - timedelta(days=1)
+    path = tmp_path / f'krx-openapi/sto/stk_bydd_trd/{day:%Y%m%d}.json.gz'
     path.parent.mkdir(parents=True)
     with gzip.open(path, 'wt', encoding='utf-8') as f:
         json.dump([], f)
     stamp = time.time() - 61
     os.utime(path, (stamp, stamp))
-    calls = transport(monkeypatch, {'OutBlock_1': [row()]})
-    bars = KrxOpenApiSource('test', None, tmp_path).get_daily_prices('005930', AS_OF, AS_OF)
-    assert bars[0].close == 101 and len(calls) == 1
+    calls = transport(monkeypatch, {'OutBlock_1': [row(day=f'{day:%Y%m%d}')]})
+    assert KrxOpenApiSource('test', None, tmp_path)._day('sto/stk_bydd_trd', day)[0]['TDD_CLSPRC'] == '101'
+    assert len(calls) == 1
 
 
 def test_bad_provider_response_never_becomes_persistent_cache(tmp_path, monkeypatch):
