@@ -65,7 +65,7 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert manifest['snapshot_payload_hash'] == canonical_hash(snap)
         assert manifest['provenance']['code'] == {'revision': 'a' * 40, 'dirty': False}
         assert set(manifest['provenance']['schema_hashes']) == {
-            'statement', 'statement_opening', 'statement_rebuttal', 'statement_closing',
+            'statement', 'statement_wire',
             'moderator', 'semantic_review'}
         assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime', 'shared_context'}
         assert manifest['usage'] == result['usage']
@@ -294,3 +294,14 @@ def test_no_paid_runner_when_initial_audit_cannot_be_flushed(setup, monkeypatch)
         assert not called and not list((settings.data_dir / 'audits').glob('*/.manifest-*.tmp'))
     finally:
         svc.close()
+
+
+def test_system_hash_covers_cached_common_rules(setup):
+    """Debater rules are sent as the cached top-level system, not in conv.system."""
+    settings, _ = setup
+    audit = make_audit(settings)
+    calls = [audit.begin_call('debater', 'debater', NS(model='chosen'),
+                              Conversation('황소', common_system=rules), {}, 'medium', [])
+             for rules in ('규칙 1', '규칙 2', None)]
+    assert len({call['system_hash'] for call in calls}) == 3
+    assert calls[2]['system_hash'] == canonical_hash('황소')  # Unchanged without shared rules.

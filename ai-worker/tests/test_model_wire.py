@@ -34,7 +34,7 @@ def statement_wire(stage='opening'):
 
 def mediation_wire():
     return {'action': 'ACCEPT', 'reason': '양측 자료를 대조했어요.', 'forecast': {
-        'decision': 'HOLD', 'confidence': 0.45,
+        'decision': 'SELL', 'confidence': 0.55,
         'reasoning': '관측은 맞지만 미래 지속은 확인되지 않았어요 [E1].',
         'evidence': ['FIN.OPERATING_INCOME'], 'scores': [1, 2, 3, 4, 5, 4, 3, 2],
         'comments': ['조건부 논증을 유지했어요.', '반대 경로를 설명했어요.'],
@@ -101,6 +101,10 @@ def test_statement_wire_rejects_duplicate_refs_sources_extra_keys_and_wrong_roun
         expand_statement_response(statement_wire('rebuttal'), 'closing')
     with pytest.raises(ValueError):
         expand_statement_response(statement_wire(), 'rebuttal')
+    # The shared schema allows both fields, so the adapter alone enforces the round.
+    for filled in ('rebuttal', 'closing'):
+        with pytest.raises(ValueError, match=f'{filled} must be null'):
+            expand_statement_response(statement_wire(filled), 'opening')
 
 
 @pytest.mark.parametrize('row', [
@@ -189,7 +193,7 @@ def test_abstain_and_canonical_compatibility_still_validate_structure():
 
 def test_anthropic_schema_relaxation_does_not_weaken_adapter_row_validation():
     schema = anthropic_schema(mediation_wire_schema())
-    scores = schema['properties']['forecast']['anyOf'][0]['properties']['scores']
+    scores = schema['properties']['forecast']['properties']['scores']
     assert scores['minItems'] == 1 and 'maxItems' not in scores
     assert 'Constraints:' in scores['description']
     bad = mediation_wire()
@@ -198,7 +202,7 @@ def test_anthropic_schema_relaxation_does_not_weaken_adapter_row_validation():
         expand_mediation_response(bad)
 
 
-def test_generation_schemas_are_strict_and_stage_specific():
+def test_generation_schemas_are_strict_and_round_independent():
     def inspect(node):
         if isinstance(node, dict):
             if node.get('type') == 'object':
@@ -209,13 +213,13 @@ def test_generation_schemas_are_strict_and_stage_specific():
         elif isinstance(node, list):
             for child in node:
                 inspect(child)
+    schema = statement_wire_schema()
+    inspect(anthropic_schema(schema))
+    # One schema for every round keeps the prompt cache; the adapter enforces the
+    # round (see test_statement_wire_rejects_duplicate_refs_sources_extra_keys_and_wrong_rounds).
+    for field in ('rebuttal', 'closing'):
+        assert [option['type'] for option in schema['properties'][field]['anyOf']] == ['array', 'null']
     for stage in ('opening', 'rebuttal', 'closing'):
-        schema = statement_wire_schema(stage)
-        inspect(anthropic_schema(schema))
-        for field in ('rebuttal', 'closing'):
-            assert schema['properties'][field]['type'] == ('array' if stage == field else 'null')
         assert isinstance(WIRE_STATEMENT_RULES[stage], str)
     inspect(anthropic_schema(mediation_wire_schema()))
     assert 'scores' in WIRE_MEDIATION_RULES
-    with pytest.raises(ValueError):
-        statement_wire_schema('extra')

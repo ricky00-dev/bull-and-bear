@@ -11,7 +11,7 @@ from ..audit import AuditedLLM, RunAudit, selected_models
 from ..data.base import DataUnavailable
 from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
-from ..llm import LLM, LLMError, validate_snapshot_model
+from ..llm import LLM, validate_snapshot_model
 from ..single import SingleAnalyst
 from ..snapshot import Snapshot
 from .errors import ApiError
@@ -21,13 +21,12 @@ log = logging.getLogger(__name__)
 
 
 class LiveRunner:
-    def __init__(self, settings, *, budget=None, review_statements=None):
+    def __init__(self, settings, *, budget=None):
         self.settings = settings
         self.clients = []
         self.audit = None
         self.budget = budget
         self.budget_scopes = set()
-        self.review_statements = settings.review_statements if review_statements is None else review_statements
         self.live_news = False
 
     def new_client(self, model, scope):
@@ -64,12 +63,8 @@ class LiveRunner:
         def client(role, model_role):
             with self.audit.stage(f'{role}_client_initialization') if self.audit else nullcontext():
                 llm = self.new_client(models[model_role], f'{debate_id}:{role}')
-                if role.startswith('reviewer_'):
-                    # A review may include a complete corrected statement.
-                    llm.max_output_tokens = 8192
                 self.clients.append(llm)
-                audit_role = 'statement_reviewer' if role.startswith('reviewer_') else model_role
-                return AuditedLLM(llm, self.audit, audit_role) if self.audit else llm
+                return AuditedLLM(llm, self.audit, model_role) if self.audit else llm
 
         return GraphRuntime(snapshot, debate_id=debate_id,
             bull=client('bull', 'debater'), bear=client('bear', 'debater'),
@@ -78,9 +73,7 @@ class LiveRunner:
             max_extra_rounds=max_extra_rounds, debater_effort=settings.debater_effort,
             moderator_effort=settings.moderator_effort,
             include_chart_image=self.budget is None,
-            news_web_fetch=settings.news_web_fetch_enabled and self.live_news,
-            statement_reviewers={side: client('reviewer_' + side, 'moderator') for side in ('bull', 'bear')}
-                if self.review_statements else None).run()
+            news_web_fetch=settings.news_web_fetch_enabled and self.live_news).run()
 
     def close(self):
         for client in self.clients:

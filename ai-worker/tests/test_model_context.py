@@ -6,10 +6,7 @@ import pytest
 
 from bullbear.model_context import full_model_history, model_history
 from bullbear.prompts import debater_system, statement_output_instructions
-from bullbear.schemas import (STRUCTURED_STATEMENT_SCHEMA, Side, Statement, compact_schema,
-                              statement_schema)
-from .fakes import statement
-from .learning_fixtures import with_analysis
+from bullbear.schemas import Side, compact_schema
 
 
 def turn(side, stage='opening', index=1, target=None):
@@ -68,7 +65,7 @@ def test_full_history_preserves_exact_prose_conditions_and_ids_without_copying_f
     assert len(json.dumps(view, ensure_ascii=False)) < len(json.dumps(transcript, ensure_ascii=False))
 
 
-@pytest.mark.parametrize('role', ['moderator', 'debater', 'reviewer'])
+@pytest.mark.parametrize('role', ['moderator', 'debater'])
 def test_initial_history_keeps_public_conditions_and_moves_private_analysis_to_detail(role):
     source = turn('bear', 'rebuttal', 2, 'd:bull:t1')
     source['claim'] = '반등이 가능하지만 실적이 유지되어야 해요.'
@@ -91,65 +88,11 @@ def test_initial_history_keeps_public_conditions_and_moves_private_analysis_to_d
     assert json.loads(transcript[0]) == source
 
 
-def test_reviewer_selects_exact_rebuttal_target_but_keeps_other_quoted_turns():
-    own, other = turn('bull'), turn('bear')
-    current = turn('bull', 'rebuttal', 2, other['statement_id'])
-    only_target = model_history(encoded(own, other), role='reviewer', side='bull',
-                                round_kind='rebuttal', statement=current)
-    assert [r['statement_id'] for r in only_target] == [other['statement_id']]
-    current['argument'] = f'“{own["argument"]}”라는 설명도 점검합니다.'
-    both = model_history(encoded(own, other), role='reviewer', side='bull',
-                         round_kind='rebuttal', statement=current)
-    assert [r['statement_id'] for r in both] == [own['statement_id'], other['statement_id']]
-
-
-def test_reviewer_retains_history_for_stance_comparisons_and_invalid_targets():
-    own, other = turn('bull'), turn('bear')
-    current = turn('bull', 'rebuttal', 2, other['statement_id'])
-    current['argument'] = '기존 주장과 달라진 점을 설명합니다.'
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-    current['argument'] = '현재 주장입니다.'
-    current['analysis']['rebuttal']['target_statement_id'] = 'missing'
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-
-
-def test_reviewer_preserves_transitive_target_quotes():
-    own, other = turn('bull'), turn('bear', 'rebuttal', 2, 'd:bull:t1')
-    current = turn('bull', 'rebuttal', 3, other['statement_id'])
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-
-
 def test_opening_has_no_history_and_unknown_role_is_rejected():
     assert model_history(encoded(turn('bull')), role='debater', round_kind='opening') == []
-    with pytest.raises(ValueError):
-        model_history([], role='unknown')
-
-
-@pytest.mark.parametrize('stage,expected_defs', [
-    ('opening', {'Decision', 'InterpretationContext'}),
-    ('rebuttal', {'Decision', 'InterpretationContext', 'Rebuttal'}),
-    ('closing', {'Decision', 'InterpretationContext', 'Closing'}),
-])
-def test_round_schema_has_only_needed_structures_and_keeps_canonical_null_fields(stage, expected_defs):
-    before = deepcopy(STRUCTURED_STATEMENT_SCHEMA)
-    schema = statement_schema(stage)
-    assert set(schema['$defs']) == expected_defs
-    analysis = schema['properties']['analysis']
-    assert set(analysis['required']) == {'outlook', 'interpretations', 'rebuttal', 'closing'}
-    for field in ('rebuttal', 'closing'):
-        if stage == field:
-            assert analysis['properties'][field]['$ref'] == f'#/$defs/{field.title()}'
-        else:
-            assert analysis['properties'][field] == {'type': 'null'}
-    assert schema['properties']['evidence']['maxItems'] == 3
-    assert schema['$defs']['InterpretationContext']['properties']['assumptions']['minItems'] == 1
-    assert STRUCTURED_STATEMENT_SCHEMA == before
-    # Existing persisted/generation models continue to accept the same shape.
-    candidate = with_analysis(statement(('E1', 'PX.CLOSE', 100)))
-    assert Statement.model_validate(candidate.model_dump()).analysis.rebuttal is None
+    for role in ('unknown', 'reviewer'):
+        with pytest.raises(ValueError):
+            model_history([], role=role)
 
 
 def test_compact_schema_preserves_field_names_and_constraints():
@@ -169,7 +112,7 @@ def test_round_instructions_keep_citation_and_condition_requirements(stage):
     assert all(term in text for term in ('두 문장 요약', '최대 3문장', 'source_id', 'value',
                                          '가정', '한계', 'STALE', 'get_statement_details'))
     system = debater_system(Side.BULL)
-    assert '제목만 보고 뉴스 내용을 인용하지 않는다' in system
+    assert '뉴스는 제목만으로 내용을 말하지 않는다' in system
     assert '기사 요약에 따르면' in system
     assert 'metadata.groups' in system and 'facts_csv는 fact_metadata' in system
     if stage == 'rebuttal':

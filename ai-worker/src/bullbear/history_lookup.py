@@ -17,10 +17,6 @@ class HistoryLookup:
     def __init__(self, transcript):
         self.records = {r['statement_id']: r for r in history_records(transcript) if r.get('statement_id')}
 
-    @property
-    def tools(self):
-        return [STATEMENT_DETAIL_TOOL] if self.records else []
-
     def __call__(self, arguments):
         if not isinstance(arguments, dict) or set(arguments) != {'statement_id'}:
             raise ValueError('statement_id 하나를 지정하세요')

@@ -37,7 +37,7 @@ class GraphLLM:
         if 'forecast' in schema['properties']:
             action = next(self.actions, 'ACCEPT')
             score = dict(relevance=3, materiality=3, rebuttal=3, risk_awareness=3, comment='자료와 한계를 살폈다.')
-            forecast = dict(decision='HOLD', confidence=.5,
+            forecast = dict(decision='SELL', confidence=.55,
                 reasoning='7거래일 코스피 대비 비슷한 흐름을 예상하지만 관계의 지속은 불확실하다 [E1].',
                 decisive_evidence=['PX.CLOSE'], bull=score, bear=score,
                 analysis=moderator_analysis().model_dump(mode='json'))
@@ -48,7 +48,7 @@ class GraphLLM:
                         tool='get_disclosures' if action == 'REQUEST_RESEARCH' else None,
                         forecast=forecast if action == 'ACCEPT' else None)
         candidate = with_analysis(statement(('E1', 'PX.CLOSE', self.snapshot.facts['PX.CLOSE'].value)))
-        side = Side.BULL if '매수(상승)' in conv.system else Side.BEAR
+        side = Side.BULL if '매수 측 토론자' in conv.system else Side.BEAR
         candidate.analysis.outlook = Decision.BUY if side == Side.BULL else Decision.SELL
         direction = '강세' if side == Side.BULL else '약세'
         candidate.claim = f'7거래일 코스피 대비 {direction}를 주장한다'
@@ -57,7 +57,7 @@ class GraphLLM:
         history = payload.get('history', [])
         if payload.get('round') == 'rebuttal':
             from bullbear.schemas import Rebuttal
-            side = Side.BULL if '매수(상승)' in conv.system else Side.BEAR
+            side = Side.BULL if '매수 측 토론자' in conv.system else Side.BEAR
             target = next(r for r in model_records(history) if r['side'] != side.value)
             quote = '7거래일 코스피 대비'
             candidate.argument = f'상대의 “{quote}” 전망은 자료로 확정할 수 없다 [E1].'

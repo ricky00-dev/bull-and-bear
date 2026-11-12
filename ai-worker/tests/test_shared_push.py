@@ -15,7 +15,7 @@ from bullbear.data.macro import MacroReading
 from bullbear.events import EventLog
 from bullbear.graph_runtime import GraphRuntime
 from bullbear.shared_context import build_shared_push, weekly_ohlcv
-from bullbear.snapshot import KST, Snapshot, build_snapshot
+from bullbear.snapshot import DAILY_FACT_PREFIX, DAILY_FACT_SESSIONS, KST, Snapshot, build_snapshot
 from bullbear.server.store import Store
 from bullbear.tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
@@ -72,7 +72,8 @@ def test_ohlcv_dates_moving_average_windows_and_kospi_volatility(sessions, missi
             expected[:missing] = [None] * missing
         assert [p["value"] for p in points] == expected
         if expected[-1] is not None:
-            assert snap.facts[key].value == expected[-1]
+            # Facts are whole won; the series keeps chart precision.
+            assert snap.facts[key].value == float(round(expected[-1]))
         else:
             assert key not in snap.facts
     returns = [math.log(n / (n - 1)) for n in range(1380, 1400)]
@@ -101,7 +102,8 @@ def test_snapshot_hash_includes_series_and_sqlite_keeps_first_creation(tmp_path)
     class RevisedCandle(FakeSource):
         def get_daily_prices(self, ticker, start, end):
             bars = super().get_daily_prices(ticker, start, end)
-            bars[-30] = replace(bars[-30], volume=99999)
+            # Older than every volume window behind the facts, but still in the chart series.
+            bars[-45] = replace(bars[-45], volume=99999)
             return bars
 
     base = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
@@ -197,10 +199,9 @@ def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cite
             return raw
 
     bull = NewsDebater(snap)
-    bear, moderator, reviewer = (GraphLLM(snap) for _ in range(3))
+    bear, moderator = (GraphLLM(snap) for _ in range(2))
     events = []
     run = GraphRuntime(snap, debate_id="shared-push", bull=bull, bear=bear, moderator=moderator,
-                       statement_reviewers={"bull": reviewer},
                        log=EventLog(tmp_path / "events.jsonl"), emit=lambda name, data: events.append((name, data)))
     assert run.run()["verdict"]["decisive_evidence"] == ["PX.CLOSE"]
     assert [payload["tool"] for name, payload in events if name == "tool_call"] == ["get_facts"]
@@ -255,17 +256,13 @@ def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cite
         assert moderator_facts[fact_id]["value"] == shared_facts[fact_id]["value"]
     assert mod["snapshot_id"] == snap.snapshot_id and moderator_facts["PX.CLOSE"]["value"] == "399"
     assert len(moderator_facts) < len(snap.facts)
-    for client in (bull, bear, moderator, reviewer):
+    for client in (bull, bear, moderator):
         for conv, _ in client.calls:
             assert {'return_context', 'source_context'}.isdisjoint(initial_payload(conv))
     assert moderator_facts[market_fact.id]["note"] == market_fact.note
     assert moderator_facts[market_fact.id]["value"] == ""
     assert "shared_push" not in mod and "stock_ohlcv" not in mod
-    review_csv = initial_payload(reviewer.calls[0][0])["facts_csv"]
-    review_facts = {row["source_id"]: row for row in csv.DictReader(StringIO(review_csv, newline=""))}
-    assert review_facts[market_fact.id]["note"] == market_fact.note
-    assert {"id", "url", "inputs", "report_basis"}.isdisjoint(review_facts[market_fact.id])
-    for client in (bull, bear, moderator, reviewer):
+    for client in (bull, bear, moderator):
         for conv, _ in client.calls:
             assert all(fact.url not in json.dumps(initial_payload(conv)) for fact in snap.by_category("news"))
     opening = next(payload["statement"] for name, payload in events
@@ -386,7 +383,7 @@ def test_bull_bear_can_query_daily_chart_from_same_frozen_snapshot(tmp_path):
     assert left["coverage_start"] == str(AS_OF - timedelta(days=125))
     assert list(csv.DictReader(StringIO(left["daily_ohlcv_csv"]))) == [{
         "date": str(day), "open": "339", "high": "340", "low": "338", "close": "339", "volume": "1239",
-        "ma7": "336", "ma11": "334", "ma25": "327", "ma200": "239.5", "kospi_close": "1339",
+        "ma7": "336", "ma11": "334", "ma25": "327", "ma200": "240", "kospi_close": "1339",
     }]
 
 
@@ -445,3 +442,25 @@ def test_half_year_image_uses_126_sessions_and_ma200_needs_325_bars(monkeypatch,
     assert captured == snap.series.stock_ohlcv
     assert captured[-1].date == AS_OF
     assert len(weekly_ohlcv(snap)) == 10
+
+
+def test_recent_sessions_are_citable_daily_facts_in_the_shared_push():
+    snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW, index_loader=index_loader)
+    bars = snap.series.stock_ohlcv
+    daily = sorted(key for key in snap.facts if key.startswith(DAILY_FACT_PREFIX))
+    assert daily == [f"{DAILY_FACT_PREFIX}{bar.date:%Y%m%d}" for bar in bars[-DAILY_FACT_SESSIONS:]]
+    last, previous = bars[-1], bars[-2]
+    fact = snap.facts[f"{DAILY_FACT_PREFIX}{last.date:%Y%m%d}"]
+    assert fact.label == f"{last.date.month}월 {last.date.day}일 등락률" and fact.as_of == last.date
+    assert fact.value == round((last.close / previous.close - 1) * 100, 2) == snap.facts["PX.CHG_1D"].value
+    # The note carries the bar, the volume against the same window as PX.VOLUME_RATIO, and the market move.
+    assert f"종가 {last.close:,.0f}원" in fact.note and f"고가 {last.high:,.0f}" in fact.note
+    assert f"평균의 {snap.facts['PX.VOLUME_RATIO'].value:.2f}배" in fact.note
+    kospi = (last.close + 1000) / (previous.close + 1000) - 1
+    assert f"코스피 {kospi * 100:+.2f}%" in fact.note
+    shared = compact_rows(build_shared_push(snap))
+    assert set(daily) <= shared.keys()
+    assert {"PX.VS_MA200", "PX.VS_MA20", "PX.FROM_LOW_52W", "PX.VOLUME_RATIO"} <= shared.keys()
+    ma200 = snap.series.moving_averages["PX.MA200"][-1].value
+    assert snap.facts["PX.VS_MA200"].value == round((last.close / ma200 - 1) * 100, 2)
+    assert snap.facts["PX.MA200"].value == float(round(ma200))

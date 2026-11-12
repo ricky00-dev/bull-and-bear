@@ -256,20 +256,3 @@ def compact_schema(schema: dict) -> dict:
     if needed:
         result['$defs'] = {key: value for key, value in definitions.items() if key in needed}
     return result
-
-
-def statement_schema(round_kind: RoundKind) -> dict:
-    """Generate only this round's analysis structures, keeping null fields."""
-    from copy import deepcopy
-
-    if round_kind not in ('opening', 'rebuttal', 'closing', 'extra'):
-        raise ValueError(f'Unknown statement round: {round_kind}')
-    result = deepcopy(STRUCTURED_STATEMENT_SCHEMA)
-    properties = result['properties']['analysis']['properties']
-    if round_kind != 'extra':
-        for field, stage, definition in (
-            ('rebuttal', 'rebuttal', 'Rebuttal'), ('closing', 'closing', 'Closing'),
-        ):
-            properties[field] = ({'$ref': f'#/$defs/{definition}'} if round_kind == stage
-                                 else {'type': 'null'})
-    return compact_schema(result)

@@ -11,6 +11,8 @@ from .schemas import Statement
 
 
 _DECISIONS = ('BUY', 'HOLD', 'SELL')
+# The moderator always picks a side (user decision 2026-11-12); HOLD stays valid for debaters.
+MODERATOR_DECISIONS = ('BUY', 'SELL')
 _SCORE_FIELDS = ('relevance', 'materiality', 'rebuttal', 'risk_awareness')
 _CLOSING_FIELDS = ('retained', 'conceded', 'outlook_reason', 'uncertainties',
                    'change_conditions', 'stance_change')
@@ -27,7 +29,8 @@ WIRE_STATEMENT_RULES = {
     'opening': _EVIDENCE_WIRE_RULES + 'rebuttal=closing=null.',
     'rebuttal': _EVIDENCE_WIRE_RULES +
         'rebuttal=[target_statement_id,exact_quote,acknowledged,reason,*unresolved]; closing=null. '
-        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다.',
+        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다. '
+        'acknowledged에는 상대가 든 것 중 사실로 맞는 것을 쓴다.',
     'closing': _EVIDENCE_WIRE_RULES +
         'rebuttal=null. closing에는 retained,conceded,outlook_reason,'
         'uncertainties,change_conditions,stance_change별로 [kind,*texts] 행을 하나씩 쓴다. '
@@ -35,11 +38,11 @@ WIRE_STATEMENT_RULES = {
         'stance_change=maintained|weakened|revised는 배정된 입장 안에서의 변화를 뜻한다.',
 }
 WIRE_MEDIATION_RULES = (
-    '응답 형식: ACCEPT이면 forecast가 필요하고 ABSTAIN이면 null이다. scores는 정수 8개로, '
-    '황소 다음 곰 순서이며 각각 relevance/materiality/rebuttal/risk_awareness 점수(1~5)다. '
-    'comments=[황소 평가,곰 평가]. evidence에는 Fact ID를 넣는다. analysis에는 '
+    '응답 형식: action은 ACCEPT, forecast.decision은 BUY 또는 SELL이다. scores는 정수 8개로, '
+    '매수 측 다음 매도 측 순서이며 각각 relevance/materiality/rebuttal/risk_awareness 점수(1~5)다. '
+    'comments=[매수 측 평가,매도 측 평가]. evidence에는 Fact ID를 넣는다. analysis에는 '
     'common_ground,core_issues,disagreements,unverified,outlook_basis,outlook_limits별로 '
-    '[kind,*texts] 행을 하나씩 쓴다. keys에는 해석 ID를 넣는다. reviews는 6개 행이며 형식은 '
+    '[kind,*texts] 행을 하나씩 쓰고 texts는 3개 이하다. keys에는 해석 ID를 넣는다. reviews는 6개 행이며 형식은 '
     '[statement_id,no_issue_found|concern|uncertain,reason,*source_ids]이고 각 행의 근거 ID는 최대 3개다.'
 )
 
@@ -65,8 +68,13 @@ def _stage(stage):
         raise ValueError(f'Unknown wire statement round: {stage}')
 
 
-def statement_wire_schema(stage):
-    _stage(stage)
+def statement_wire_schema():
+    """One schema for every round.
+
+    A different output schema rewrites the whole prompt cache, so every debater
+    request keeps this one. WIRE_STATEMENT_RULES tells the model which of
+    rebuttal/closing to fill, and expand_statement_response enforces it.
+    """
     evidence = _object({
         'ref': {'type': 'string', 'pattern': '^E[1-9][0-9]*$'},
         'source_id': {'type': 'string'}, 'value': {'type': ['number', 'null']},
@@ -78,23 +86,22 @@ def statement_wire_schema(stage):
         'claim': {'type': 'string'}, 'argument': {'type': 'string'},
         'outlook': {'type': 'string', 'enum': list(_DECISIONS)},
         'evidence': _array(evidence, 1, 3),
-        'rebuttal': _strings(5, 7) if stage == 'rebuttal' else {'type': 'null'},
-        'closing': _array(_strings(2, 4), 6, 6) if stage == 'closing' else {'type': 'null'},
+        'rebuttal': {'anyOf': [_strings(5, 7), {'type': 'null'}]},
+        'closing': {'anyOf': [_array(_strings(2, 4), 6, 6), {'type': 'null'}]},
     })
 
 
 def mediation_wire_schema():
     forecast = _object({
-        'decision': {'type': 'string', 'enum': list(_DECISIONS)},
+        'decision': {'type': 'string', 'enum': list(MODERATOR_DECISIONS)},
         'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
         'reasoning': {'type': 'string'}, 'evidence': _strings(1, 3),
         'scores': _array({'type': 'integer', 'enum': [1, 2, 3, 4, 5]}, 8, 8),
         'comments': _strings(2, 2), 'analysis': _array(_strings(1, 4), 6, 6),
         'keys': _strings(0, 6), 'reviews': _array(_strings(3, 6), 6, 6),
     })
-    return _object({'action': {'type': 'string', 'enum': ['ACCEPT', 'ABSTAIN']},
-                    'reason': {'type': 'string'},
-                    'forecast': {'anyOf': [forecast, {'type': 'null'}]}})
+    return _object({'action': {'type': 'string', 'enum': ['ACCEPT']},
+                    'reason': {'type': 'string'}, 'forecast': forecast})
 
 
 def _keys(value, required, name, optional=()):
