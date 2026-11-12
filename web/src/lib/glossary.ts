@@ -28,9 +28,11 @@ const ENTRIES: Record<string, Entry> = {
   'PX.MA20': { label: '20일 이동평균', desc: '최근 20거래일 종가의 평균이에요.', format: won },
   'PX.MA60': { label: '60일 이동평균', desc: '최근 60거래일 종가의 평균이에요.', format: won },
   'PX.MA120': { label: '120일 이동평균', desc: '최근 120거래일(약 반년) 종가의 평균이에요.', format: won },
+  'PX.MA200': { label: '200일 이동평균', desc: '최근 200거래일(약 10개월) 종가의 평균이에요. 긴 추세를 볼 때 가장 많이 쓰는 기준선이에요.', format: won },
   'PX.VS_MA20': { label: '20일 이동평균 대비', desc: '최근 20거래일 평균 가격보다 지금 가격이 얼마나 높거나 낮은지예요. 짧은 추세를 볼 때 써요.', format: signedPct },
   'PX.VS_MA60': { label: '60일 이동평균 대비', desc: '최근 60거래일 평균보다 얼마나 높거나 낮은지예요.', format: signedPct },
   'PX.VS_MA120': { label: '120일 이동평균 대비', desc: '최근 반년 평균보다 얼마나 높거나 낮은지예요. 20·60·120일 평균을 모두 밑돌면 하락 추세로 보는 경우가 많아요.', format: signedPct },
+  'PX.VS_MA200': { label: '200일 이동평균 대비', desc: '최근 200거래일 평균보다 지금 가격이 얼마나 높거나 낮은지예요. 이 선 위에 있으면 긴 상승 추세로 보는 경우가 많아요.', format: signedPct },
   'PX.VOL_20D': { label: '20일 변동성', desc: '하루하루 가격이 얼마나 들쭉날쭉했는지 1년 기준으로 바꾼 값이에요. 높을수록 위아래로 크게 움직여요.', format: plainPct },
   'PX.AVG_VOLUME_20D': { label: '20일 평균 거래량', desc: '최근 20거래일 동안 하루 평균 거래된 주식 수예요.', format: (v) => `${Math.round(v).toLocaleString('ko-KR')}주` },
   'PX.VOLUME_RATIO': { label: '거래량 / 20일 평균', desc: '오늘 거래량이 평소(20일 평균)의 몇 배인지예요. 크게 떨어지는 날 거래량까지 많으면 한꺼번에 파는 투매로 봐요.', format: times },
@@ -70,15 +72,35 @@ const PREFIX: Record<string, { label: string; desc: string }> = {
   DISC: { label: '공시', desc: '회사가 DART에 제출한 공식 보고서예요.' },
 }
 
+/** 이름에 날짜·기간이 들어가 표에 미리 적을 수 없는 근거: 날짜별 일봉, 재무 전년 대비 */
+function dynamicEntry(sourceId: string): Entry | undefined {
+  const day = /^PX\.DAY_(\d{4})(\d{2})(\d{2})$/.exec(sourceId)
+  if (day) {
+    return {
+      label: `${Number(day[2])}월 ${Number(day[3])}일 등락률`,
+      desc: '그날 종가가 전날 종가보다 얼마나 움직였는지예요. 같은 날 코스피와 비교하면 시장 탓인지 종목 탓인지 가늠할 수 있어요.',
+      format: signedPct,
+    }
+  }
+  if (sourceId.startsWith('FIN.') && sourceId.endsWith('_YOY')) {
+    return { label: '전년 동기 대비', desc: '작년 같은 기간보다 얼마나 늘거나 줄었는지예요. 재무제표 두 기간을 비교해 계산했어요.', format: signedPct }
+  }
+  return undefined
+}
+
+function entry(sourceId: string): Entry | undefined {
+  return ENTRIES[sourceId] ?? dynamicEntry(sourceId)
+}
+
 export function describe(sourceId: string): { label: string; desc: string } {
-  const e = ENTRIES[sourceId]
+  const e = entry(sourceId)
   if (e) return { label: e.label, desc: e.desc }
   return PREFIX[sourceId.split('.')[0]] ?? { label: sourceId, desc: '' }
 }
 
 export function formatValue(sourceId: string, value: number | null): string {
   if (value === null) return ''
-  const e = ENTRIES[sourceId]
+  const e = entry(sourceId)
   if (e) return e.format(value)
   return sourceId.startsWith('FIN.') ? bigWon(value) : value.toLocaleString('ko-KR')
 }

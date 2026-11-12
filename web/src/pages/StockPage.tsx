@@ -109,7 +109,7 @@ function quotaBlock(q: StockDetail['quota'] | undefined): string | null {
 }
 
 function quotaHint(q: StockDetail['quota'] | undefined): string {
-  return q ? `자료 조회·검증에 수 분 걸릴 수 있어요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '자료 조회·검증에 수 분 걸릴 수 있어요'
+  return q ? `자료 조회와 토론에 수 분 걸릴 수 있어요 · 오늘 ${q.left}번 더 시작할 수 있어요` : '자료 조회와 토론에 수 분 걸릴 수 있어요'
 }
 
 function DataRow({ ok = false, label, detail }: { ok?: boolean; label: string; detail: string }) {
