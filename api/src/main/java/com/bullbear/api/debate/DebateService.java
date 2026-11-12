@@ -1,6 +1,7 @@
 package com.bullbear.api.debate;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -56,7 +57,10 @@ public class DebateService {
 	 * @param requestedBy 시작한 사용자. 스케줄러가 시작하면 null
 	 */
 	public Created create(String ticker, UUID requestedBy, Debate.Origin origin) {
-		return create(worker.stock(ticker), requestedBy, origin, null);
+		// 스케줄러(전향 운용)는 시세 준비(503)를 기다린다. 사용자 요청은 바로 돌려주고 웹이 다시 시도한다
+		WorkerStockDetail stock = origin == Debate.Origin.USER ? worker.stock(ticker)
+				: worker.stockWhenReady(ticker, null, 12, Duration.ofSeconds(5));
+		return create(stock, requestedBy, origin, null);
 	}
 
 	/**
