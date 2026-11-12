@@ -386,7 +386,8 @@ def test_moderator_reviews_all_statements_without_debater_self_review(snapshot, 
             assert len(payload['history']) == 6
             facts = {row['source_id']: row for row in csv.DictReader(StringIO(payload['facts_csv'], newline=''))}
             assert facts['PX.CLOSE']['value'] == '399'
-            assert '기관 매수가 이미 발생했다' not in conv.messages[1]['content']
+            # The judge reads the full record, including each chip's assumptions.
+            assert '기관 매수가 이미 발생했다' in conv.messages[1]['content']
             detail = json.loads(kwargs['tool_handler']('get_statement_details', {
                 'statement_id': next(r['statement_id'] for r in payload['history'] if r['side'] == 'bull')}))
             assert detail['analysis']['interpretations'][0]['assumptions'] == ['기관 매수가 이미 발생했다']
@@ -567,18 +568,23 @@ def test_rebuttal_failure_preserves_openings_without_calling_moderator(snapshot,
     assert not run.moderator.calls
 
 
-def test_structured_opponent_reference_does_not_trigger_code_rejection(snapshot, tmp_path):
-    class InvalidTarget(GraphLLM):
+def test_rebuttal_target_outside_opponent_statements_is_retried(snapshot, tmp_path):
+    """Observed: a model filled the rebuttal row with prose, so the target ID field
+    held text. With no reviewer, the target must name a real opponent statement."""
+    class InvalidTargetOnce(GraphLLM):
+        invented = False
         def structured(self, conv, **kwargs):
             raw = super().structured(conv, **kwargs)
-            if raw.get('analysis', {}).get('rebuttal'):
-                raw['analysis']['rebuttal']['target_statement_id'] = 'invented-opponent'
+            if raw.get('analysis', {}).get('rebuttal') and not self.invented:
+                self.invented = True
+                raw['analysis']['rebuttal']['target_statement_id'] = '[@S2] "인용": 평가'
             return raw
-    run = runtime(snapshot, tmp_path, bull=InvalidTarget(snapshot))
+    run = runtime(snapshot, tmp_path, bull=InvalidTargetOnce(snapshot))
     run.run()
-    assert len(run.moderator.calls) == 1 and len(run.bull.calls) == 3
+    assert len(run.moderator.calls) == 1 and len(run.bull.calls) == 4
     events = EventLog.read(run.log.path)
-    assert not any(e['type'] == 'statement_rejected' for e in events)
-    accepted = next(e for e in events if e['type'] == 'statement_accepted'
-                    and e['side'] == 'bull' and e['round'] == 'rebuttal')
-    assert accepted['statement']['analysis']['rebuttal']['target_statement_id'] == 'invented-opponent'
+    rejected = [(e['side'], e['round']) for e in events if e['type'] == 'statement_rejected']
+    assert rejected == [('bull', 'rebuttal')]
+    accepted = {(e['side'], e['round']): e['statement'] for e in events if e['type'] == 'statement_accepted'}
+    target = accepted[('bull', 'rebuttal')]['analysis']['rebuttal']['target_statement_id']
+    assert target == accepted[('bear', 'opening')]['statement_id']

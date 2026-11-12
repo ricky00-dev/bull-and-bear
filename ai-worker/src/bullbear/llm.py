@@ -200,9 +200,13 @@ class LLM:
                     raise
             try:
                 with self.client.beta.messages.stream(**parameters) as stream:
-                    # Other requests can read this prompt's cache from here on.
-                    on_event("stream_started", {})
+                    started = False
                     for event in stream:
+                        if not started and event.type == "content_block_start":
+                            # A cache write becomes readable once the response has begun
+                            # generating; response headers alone can arrive before prefill.
+                            started = True
+                            on_event("stream_started", {})
                         if event.type == "text":
                             on_event("token", {"text": event.text})
                     msg = stream.get_final_message()

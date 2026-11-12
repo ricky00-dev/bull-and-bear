@@ -15,7 +15,7 @@ from bullbear.data.macro import MacroReading
 from bullbear.events import EventLog
 from bullbear.graph_runtime import GraphRuntime
 from bullbear.shared_context import build_shared_push, weekly_ohlcv
-from bullbear.snapshot import KST, Snapshot, build_snapshot
+from bullbear.snapshot import DAILY_FACT_PREFIX, DAILY_FACT_SESSIONS, KST, Snapshot, build_snapshot
 from bullbear.server.store import Store
 from bullbear.tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
@@ -72,7 +72,8 @@ def test_ohlcv_dates_moving_average_windows_and_kospi_volatility(sessions, missi
             expected[:missing] = [None] * missing
         assert [p["value"] for p in points] == expected
         if expected[-1] is not None:
-            assert snap.facts[key].value == expected[-1]
+            # Facts are whole won; the series keeps chart precision.
+            assert snap.facts[key].value == float(round(expected[-1]))
         else:
             assert key not in snap.facts
     returns = [math.log(n / (n - 1)) for n in range(1380, 1400)]
@@ -101,7 +102,8 @@ def test_snapshot_hash_includes_series_and_sqlite_keeps_first_creation(tmp_path)
     class RevisedCandle(FakeSource):
         def get_daily_prices(self, ticker, start, end):
             bars = super().get_daily_prices(ticker, start, end)
-            bars[-30] = replace(bars[-30], volume=99999)
+            # Older than every volume window behind the facts, but still in the chart series.
+            bars[-45] = replace(bars[-45], volume=99999)
             return bars
 
     base = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW)
@@ -381,7 +383,7 @@ def test_bull_bear_can_query_daily_chart_from_same_frozen_snapshot(tmp_path):
     assert left["coverage_start"] == str(AS_OF - timedelta(days=125))
     assert list(csv.DictReader(StringIO(left["daily_ohlcv_csv"]))) == [{
         "date": str(day), "open": "339", "high": "340", "low": "338", "close": "339", "volume": "1239",
-        "ma7": "336", "ma11": "334", "ma25": "327", "ma200": "239.5", "kospi_close": "1339",
+        "ma7": "336", "ma11": "334", "ma25": "327", "ma200": "240", "kospi_close": "1339",
     }]
 
 
@@ -440,3 +442,25 @@ def test_half_year_image_uses_126_sessions_and_ma200_needs_325_bars(monkeypatch,
     assert captured == snap.series.stock_ohlcv
     assert captured[-1].date == AS_OF
     assert len(weekly_ohlcv(snap)) == 10
+
+
+def test_recent_sessions_are_citable_daily_facts_in_the_shared_push():
+    snap = build_snapshot(FakeSource(), "000000", "가짜전자", now=NOW, index_loader=index_loader)
+    bars = snap.series.stock_ohlcv
+    daily = sorted(key for key in snap.facts if key.startswith(DAILY_FACT_PREFIX))
+    assert daily == [f"{DAILY_FACT_PREFIX}{bar.date:%Y%m%d}" for bar in bars[-DAILY_FACT_SESSIONS:]]
+    last, previous = bars[-1], bars[-2]
+    fact = snap.facts[f"{DAILY_FACT_PREFIX}{last.date:%Y%m%d}"]
+    assert fact.label == f"{last.date.month}월 {last.date.day}일 등락률" and fact.as_of == last.date
+    assert fact.value == round((last.close / previous.close - 1) * 100, 2) == snap.facts["PX.CHG_1D"].value
+    # The note carries the bar, the volume against the same window as PX.VOLUME_RATIO, and the market move.
+    assert f"종가 {last.close:,.0f}원" in fact.note and f"고가 {last.high:,.0f}" in fact.note
+    assert f"평균의 {snap.facts['PX.VOLUME_RATIO'].value:.2f}배" in fact.note
+    kospi = (last.close + 1000) / (previous.close + 1000) - 1
+    assert f"코스피 {kospi * 100:+.2f}%" in fact.note
+    shared = compact_rows(build_shared_push(snap))
+    assert set(daily) <= shared.keys()
+    assert {"PX.VS_MA200", "PX.VS_MA20", "PX.FROM_LOW_52W", "PX.VOLUME_RATIO"} <= shared.keys()
+    ma200 = snap.series.moving_averages["PX.MA200"][-1].value
+    assert snap.facts["PX.VS_MA200"].value == round((last.close / ma200 - 1) * 100, 2)
+    assert snap.facts["PX.MA200"].value == float(round(ma200))

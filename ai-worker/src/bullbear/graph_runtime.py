@@ -3,7 +3,6 @@
 The graph owns scheduling. This module owns model I/O, required shape recovery
 and publication; both speakers join after each of three fixed rounds.
 """
-from copy import deepcopy
 import threading
 
 from pydantic import ValidationError
@@ -13,45 +12,43 @@ from .context_ids import RequestIds
 from .chart_image import daily_chart_image
 from .graph import Analysis, Mediation, build_debate_graph
 from .interpretations import bind_statement
-from .history_lookup import HistoryLookup
+from .history_lookup import STATEMENT_DETAIL_TOOL, HistoryLookup
 from .llm import Conversation, LLMError
-from .model_context import model_history
+from .model_context import full_model_history, model_history
 from .model_wire import (statement_wire_schema, expand_statement_response, mediation_wire_schema,
                          expand_mediation_response, WIRE_STATEMENT_RULES, WIRE_MEDIATION_RULES)
 from .news_lookup import NewsLookup
-from .schemas import Side, Statement, STRUCTURED_MODERATOR_SCHEMA, compact_schema
+from .schemas import Side, Statement
 from .shared_context import build_shared_push, build_moderator_context, referenced_fact_context
 from .tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
 
-def mediation_schema():
-    forecast = deepcopy(STRUCTURED_MODERATOR_SCHEMA)
-    definitions = forecast.pop('$defs', {})
-    for key in ('action', 'extra_question'):
-        forecast['properties'].pop(key)
-        forecast['required'].remove(key)
-    return compact_schema({'type': 'object', 'additionalProperties': False, '$defs': definitions,
-            'properties': {'action': {'type': 'string', 'enum': ['ACCEPT', 'ABSTAIN']},
-                           'reason': {'type': 'string'},
-                           'tool': {'type': ['string', 'null']},
-                           'forecast': {'anyOf': [forecast, {'type': 'null'}]}},
-            'required': ['action', 'reason', 'tool', 'forecast']})
-
-
+# Tools and the output schema lead the cached prefix, so every debater request
+# sends these exact objects; get_statement_details is offered even before any
+# turn exists (unknown IDs are refused by HistoryLookup).
+STATEMENT_WIRE_SCHEMA = statement_wire_schema()
+DEBATE_TOOLS = [*DEBATE_TOOL_DEFINITIONS, STATEMENT_DETAIL_TOOL]
 MEDIATION_SCHEMA = mediation_wire_schema()
 _STAGES = ('opening', 'rebuttal', 'closing', 'verdict')
 # Upper bound on Bear's opening wait for Bull's response to start (see analyze).
 _PREFIX_WAIT_SECONDS = 30
-MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립 중재자 부엉이다.
-여섯 발언 모두를 근거와 대조하여 사실과 가정, 인과관계, 왜곡, 유지되거나 약해진 논거와 불확실성을 평가한다.
-황소·곰에게 배정된 입장은 독립적인 투표가 아니다. 말투·확신·같은 모델 간 동의·유효한 ID와 값만으로 사실이나 예측이 입증되지는 않는다.
-""" + prompts.DEBATE_RULES + prompts.SNAPSHOT_LOOKUP_RULES + prompts.MODEL_HISTORY_RULES
+# Debater-only paragraphs (the student game, stance, lookup, writing) are not
+# inherited; only the shared block that both roles need follows.
+MEDIATOR_SYSTEM = """당신은 이 투자 교육 토론의 중재자다. 학생은 여섯 발언을 읽고 이미 자기 판정을 냈고, 이제 당신의 판정과 자기 판정을 비교하며 배운다. 그래서 학생에게 필요한 것은 분명한 의견 하나와 그 의견을 가른 사실이 무엇이었는지다. 공정한 심판처럼 차분하고 쉬운 해요체로 쓰고, 지표 이름이나 투자 용어는 학생이 처음 듣는 말이라고 생각하고 풀어 쓰며, 숫자는 읽기 쉽게 어림해 쓴다.
+
+토론자는 배정된 입장을 변호하도록 되어 있어서 두 입장은 독립된 두 표가 아니고, 말투나 확신의 세기는 증거가 아니다. 판정은 자료에서 나온다. 당신은 스냅샷의 수치 자료 전체(최근 20거래일의 날짜별 일봉 포함)와 여섯 발언의 전체 기록(근거별 해석·가정·한계, 반박과 최종변론의 상세)을 받는다. 토론자가 든 수치·날짜는 이 자료에서 확인하고, 더 앞선 일봉이나 기사 내용은 read_snapshot으로 확인한다. 토론자가 무엇을 말했고 무엇에 답했는지는 전체 기록에서 찾는다. 확인된 자료가 어느 쪽 읽기와 더 잘 맞는지로 의견을 정하고, 토론자가 놓친 중요한 사실이 있으면 그것도 판정에 쓴다. 이 종목의 수치·사건·뉴스는 받은 자료와 조회한 자료에 있는 것만 쓰고, 비율과 차이는 자료에 있는 값을 쓴다.
+
+의견은 확인한 근거 가운데 어느 쪽이 더 무거운지로 정하고, 그 판단이 얼마나 굳은지는 확신도로 나타낸다. 근거의 무게는 크기, 같은 방향을 가리키는 다른 자료가 있는지, 짧은 기간의 우연으로 설명될 수 있는지로 따진다. 양쪽에 근거가 하나씩 있다는 것만으로는 보유가 아니다. 보유는 두 힘을 따져 보니 실제로 맞먹는다는 판단이다. 빠진 자료 때문에 생기는 불확실성은 확신도에 담고, 판단에 꼭 필요한 자료가 없어 어느 쪽도 가릴 수 없을 때만 판단을 유보한다. 수익을 약속하거나, 매매를 권하거나, 목표 가격을 말하지 않고 의견으로 말한다.
+
+토론자의 평가와 점수는 학생이 보는 요약·본문·근거 칩을 기준으로 하고, 내부 기록은 그 발언이 무엇을 전제했는지 확인하는 데 쓴다. 토론자를 평가할 때는 추론의 질을 본다. 든 사실과 지표의 뜻이 정확한지, 그 사실에서 결론까지 이어지는 고리가 합리적인지, 상대의 실제 주장에 답했는지, 자기 논거가 틀릴 수 있는 지점을 알고 있는지다. 자료에서 합리적으로 이어지는 해석은 자료에 그대로 적혀 있지 않아도 정당한 논증이다. 양측이 다르게 한 만큼 평가와 점수도 다르게 매긴다.
+""" + prompts.DEBATE_SHARED_RULES
 
 MEDIATOR_OUTPUT_INSTRUCTIONS = """
-근거가 있는 매수·보유·매도 의견을 내고 판단할 수 없으면 판단을 유보한다(action=ABSTAIN). 판단 유보는 보유 의견과 다르다. confidence는 보정된 확률이 아니다.
-reasoning은 핵심 근거와 한계를 담은 한 문단·한국어 최대 3문장이다. 근거 ID 1~3개를 [E1]부터 순서대로 인용한다.
-각 측의 comment는 한 문장이다. 여섯 발언 ID를 각각 한 번씩 검토하고 이유와 확인한 Fact ID를 적는다.
-no_issue_found는 오류를 찾지 못했다는 뜻이며 옳음이 입증됐다는 뜻이 아니다. 미확인 해석은 한계와 평가에 반영한다.
+매수·보유·매도 의견을 낸다. 판단에 필요한 자료가 없으면 판단을 유보한다(action=ABSTAIN). confidence는 이 의견이 얼마나 굳은지를 0~1로 나타내며, 확인한 근거가 한쪽으로 모일수록 높고 엇갈릴수록 낮다.
+reasoning은 학생 화면에 나오는 유일한 해설이다. 의견을 가른 사실과 그 사실을 어떻게 읽었는지를 담고, 토론에서 사실이나 지표의 뜻이 잘못 쓰인 곳이 있었다면 가장 중요한 하나를 바로잡는다. 이 모두를 한 문단·한국어 최대 3문장에 담는다. 근거 ID 1~3개를 [E1]부터 순서대로 인용한다.
+각 측의 comment는 그 측이 가장 잘한 점이나 가장 약했던 고리를 구체적으로 짚는 한 문장이다. 여섯 발언 ID를 각각 한 번씩 검토하고 이유와 확인한 Fact ID를 적는다.
+검토 결과는 셋 중 하나다. no_issue_found는 사실과 추론에서 고칠 점을 찾지 못한 발언, concern은 사실 오류나 결론을 흔드는 추론의 빈틈이 있는 발언, uncertain은 결론이 자료로 가릴 수 없는 전제에 크게 기대는 발언이다. 검토 이유는 그 결과를 고른 이유다.
+점수는 이 토론의 실제 발언을 기준으로 1(거의 못함)~5(매우 잘함)로 매긴다. relevance는 논거가 이 종목의 지금 상황과 맞닿아 있는지, materiality는 든 근거가 결론을 좌우할 만큼 중요한지, rebuttal은 상대의 실제 주장에 답했는지, risk_awareness는 자기 논거가 틀릴 조건을 알고 있는지다.
 """ + WIRE_MEDIATION_RULES
 
 
@@ -80,6 +77,7 @@ class GraphRuntime:
         self.debater_effort, self.moderator_effort = debater_effort, moderator_effort
         self.lock = threading.RLock()
         self.opening_prefix_cached = threading.Event()
+        self.bull_opening_failed = False
         self.news_web_fetch = news_web_fetch
         self.news_results = {}
 
@@ -113,19 +111,46 @@ class GraphRuntime:
                 for index in range(3) for side in Side if index < len(state.get(side.value, []))]
 
     def analyze(self, side, state, llm):
+        if state.get(side.value):  # Later rounds start after both openings.
+            return self.statement(side, state, llm)
+        # Simultaneous requests cannot read each other's cache writes, so Bear's
+        # opening starts once Bull's response has begun and reads the shared prefix.
+        if side == Side.BULL:
+            try:
+                return self.statement(side, state, llm, announce=True)
+            except BaseException:
+                self.bull_opening_failed = True  # Set before Bear can wake.
+                raise
+            finally:
+                self.opening_prefix_cached.set()  # Never leave Bear waiting.
+        if not self.opening_prefix_cached.wait(timeout=_PREFIX_WAIT_SECONDS):
+            with self.lock:
+                self.log.append('opening_wait', side=side, outcome='timeout')
+        if self.bull_opening_failed:
+            # The debate cannot finish without Bull, so skip a billable request.
+            with self.lock:
+                self.log.append('opening_wait', side=side, outcome='bull_failed')
+            raise LLMError("Bear opening skipped because Bull's opening failed")
+        return self.statement(side, state, llm)
+
+    def statement(self, side, state, llm, *, announce=False):
         history = state.get(side.value, [])
         stage = _STAGES[len(history)]
+        opponent = Side.BEAR if side == Side.BULL else Side.BULL
+        opponent_ids = {turn.statement.statement_id for turn in state.get(opponent.value, [])}
         transcript = self.transcript(state)
         history_lookup = HistoryLookup(transcript)
         ids = RequestIds(self.snapshot, transcript)
         news = self.news_lookup(stage, side.value)
-        task = prompts.DEBATER_TASKS[stage] + '\n' + prompts.DEBATER_TASKS['common']
-        payload = {'task': task, 'output_instructions': prompts.COMPACT_STATEMENT_STYLE + WIRE_STATEMENT_RULES[stage],
+        payload = {'task': prompts.DEBATER_TASKS[stage],
+                   'output_instructions': prompts.COMPACT_STATEMENT_STYLE + WIRE_STATEMENT_RULES[stage],
                    'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
                    'history': model_history(transcript, role='debater', side=side, round_kind=stage),
                    'research_results': state.get('research_results', []),
                    **referenced_fact_context(self.snapshot, transcript)}
-        if stage == 'opening':
+        # Asking for an article when the snapshot has none put "no article" lines
+        # in public text. This request JSON sits after the cached prefix.
+        if stage == 'opening' and sum(self.debater_context['shared_push']['news_available'].values()) > 0:
             payload['output_instructions'] += prompts.OPENING_NEWS_INSTRUCTIONS
         if news.results:
             payload['news_lookup_results'] = dict(news.results)
@@ -142,27 +167,21 @@ class GraphRuntime:
             calls.append(name)
             self.emit('tool_call', {'side': side, 'tool': name})
             return history_lookup(arguments) if name == 'get_statement_details' else news.handle_tool(tools, name, arguments)
-        # Simultaneous requests cannot read each other's cache writes, so Bear's
-        # opening starts once Bull's response has begun and reads the shared prefix.
-        announce = stage == 'opening' and side == Side.BULL
-        if stage == 'opening' and side == Side.BEAR:
-            self.opening_prefix_cached.wait(timeout=_PREFIX_WAIT_SECONDS)
-
         def on_event(event, payload):
             if announce and event == 'stream_started':
                 self.opening_prefix_cached.set()
             news.observe(event, payload)
 
         for attempt in range(1, 4):
-            try:
-                raw = llm.structured(conv, schema=statement_wire_schema(), effort=self.debater_effort,
-                                     tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
-                                     tool_handler=ids.wrap_tool_handler(tool), on_event=on_event)
-            finally:
-                if announce:  # Never leave Bear waiting on a request that failed to start.
-                    self.opening_prefix_cached.set()
+            raw = llm.structured(conv, schema=STATEMENT_WIRE_SCHEMA, effort=self.debater_effort,
+                                 tools=DEBATE_TOOLS, tool_handler=ids.wrap_tool_handler(tool),
+                                 on_event=on_event)
             try:
                 statement = Statement.model_validate(ids.decode_response(expand_statement_response(raw, stage)))
+                rebuttal = statement.analysis.rebuttal if statement.analysis else None
+                if rebuttal is not None and rebuttal.target_statement_id not in opponent_ids:
+                    # Observed: the whole row filled with '[@S1] "quote": comment' prose.
+                    raise ValueError('Rebuttal target is not an opponent statement ID')
             except (ValueError, ValidationError):
                 # A response must be decodable into the public data contract.
                 # This retry does not assess source correctness or prose quality.
@@ -193,16 +212,16 @@ class GraphRuntime:
         tools = SnapshotTools(self.snapshot)
         conv = Conversation.from_snapshot(MEDIATOR_SYSTEM,
             ids.encode_context(build_moderator_context(self.snapshot, transcript)), ids.encode_context({
-                'task': '양측의 입론·반박·최종변론 6개를 검토하고 종목에 대한 독립적인 의견을 작성하세요.',
+                'task': '양측의 여섯 발언을 검토하고, 자료를 직접 확인한 뒤 이 종목에 대한 독립적인 의견을 내세요.',
                 'output_instructions': MEDIATOR_OUTPUT_INSTRUCTIONS,
-                'history': model_history(transcript, role='moderator'),
+                'history': full_model_history(transcript),
                 'research_results': state.get('research_results', []),
                 **({'news_lookup_results': dict(news.results)} if news.results else {}),
                 'remaining_actions': 0}))
         conv.context_ids = ids
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
-                tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
+                tools=DEBATE_TOOLS,
                 tool_handler=ids.wrap_tool_handler(lambda name, arguments: history_lookup(arguments)
                     if name == 'get_statement_details' else news.handle_tool(tools, name, arguments)), on_event=news.observe)
             try:

@@ -6,10 +6,7 @@ import pytest
 
 from bullbear.model_context import full_model_history, model_history
 from bullbear.prompts import debater_system, statement_output_instructions
-from bullbear.schemas import (STRUCTURED_STATEMENT_SCHEMA, Side, Statement, compact_schema,
-                              statement_schema)
-from .fakes import statement
-from .learning_fixtures import with_analysis
+from bullbear.schemas import Side, compact_schema
 
 
 def turn(side, stage='opening', index=1, target=None):
@@ -98,30 +95,6 @@ def test_opening_has_no_history_and_unknown_role_is_rejected():
             model_history([], role=role)
 
 
-@pytest.mark.parametrize('stage,expected_defs', [
-    ('opening', {'Decision', 'InterpretationContext'}),
-    ('rebuttal', {'Decision', 'InterpretationContext', 'Rebuttal'}),
-    ('closing', {'Decision', 'InterpretationContext', 'Closing'}),
-])
-def test_round_schema_has_only_needed_structures_and_keeps_canonical_null_fields(stage, expected_defs):
-    before = deepcopy(STRUCTURED_STATEMENT_SCHEMA)
-    schema = statement_schema(stage)
-    assert set(schema['$defs']) == expected_defs
-    analysis = schema['properties']['analysis']
-    assert set(analysis['required']) == {'outlook', 'interpretations', 'rebuttal', 'closing'}
-    for field in ('rebuttal', 'closing'):
-        if stage == field:
-            assert analysis['properties'][field]['$ref'] == f'#/$defs/{field.title()}'
-        else:
-            assert analysis['properties'][field] == {'type': 'null'}
-    assert schema['properties']['evidence']['maxItems'] == 3
-    assert schema['$defs']['InterpretationContext']['properties']['assumptions']['minItems'] == 1
-    assert STRUCTURED_STATEMENT_SCHEMA == before
-    # Existing persisted/generation models continue to accept the same shape.
-    candidate = with_analysis(statement(('E1', 'PX.CLOSE', 100)))
-    assert Statement.model_validate(candidate.model_dump()).analysis.rebuttal is None
-
-
 def test_compact_schema_preserves_field_names_and_constraints():
     schema = {'title': 'Root', 'type': 'object', 'properties': {
         'title': {'title': 'Title field', 'type': 'string', 'minLength': 2},
@@ -139,7 +112,7 @@ def test_round_instructions_keep_citation_and_condition_requirements(stage):
     assert all(term in text for term in ('두 문장 요약', '최대 3문장', 'source_id', 'value',
                                          '가정', '한계', 'STALE', 'get_statement_details'))
     system = debater_system(Side.BULL)
-    assert '제목만 보고 뉴스 내용을 인용하지 않는다' in system
+    assert '뉴스는 제목만으로 내용을 말하지 않는다' in system
     assert '기사 요약에 따르면' in system
     assert 'metadata.groups' in system and 'facts_csv는 fact_metadata' in system
     if stage == 'rebuttal':

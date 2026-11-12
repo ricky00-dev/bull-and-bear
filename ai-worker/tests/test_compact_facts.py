@@ -9,7 +9,7 @@ import pytest
 
 from bullbear.shared_context import (build_compact_fact_context, build_moderator_context, build_shared_push,
                                     expand_fact_ids, referenced_fact_context)
-from bullbear.snapshot import build_snapshot
+from bullbear.snapshot import DAILY_FACT_PREFIX, DAILY_FACT_SESSIONS, build_snapshot
 from bullbear.tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
 from .fakes import FakeNews, FakeSource, NOW
@@ -25,8 +25,8 @@ def snapshot():
                           news=FakeNews(), index_loader=index_loader)
 
 
-def transcript(source_id):
-    return [json.dumps({"evidence": [{"source_id": source_id}]})]
+def transcript(*source_ids):
+    return [json.dumps({"evidence": [{"source_id": source_id} for source_id in source_ids]})]
 
 
 def test_dependency_closure_handles_cycles_and_reports_missing_without_mutation():
@@ -41,20 +41,18 @@ def test_dependency_closure_handles_cycles_and_reports_missing_without_mutation(
     assert snap == before
 
 
-def test_moderator_keeps_citations_dependency_ids_neutral_baseline_and_provenance():
+def test_moderator_gets_every_non_news_fact_cited_news_and_provenance():
     snap = snapshot()
-    unrelated = snap.by_category("disclosure")[0]
     snap.warnings.append("테스트 위험 경고")
-    context = build_moderator_context(snap, transcript("VAL.OP_MARGIN_TTM"))
+    news = snap.by_category("news")
+    context = build_moderator_context(snap, transcript("VAL.OP_MARGIN_TTM", news[0].id))
     supplied = compact_rows(context)
-    assert {"PX.CLOSE", "PX.EXCESS_KOSPI_3D", "PX.EXCESS_KOSPI_7D", "PX.VOL_20D",
-            "VAL.PER_TTM", "VAL.PBR", "VAL.DEBT_RATIO", "VAL.OP_MARGIN_TTM"} <= supplied.keys()
-    assert unrelated.id not in supplied
+    # Debaters cite what they looked up, so the judge starts from the whole snapshot.
+    assert {key for key, fact in snap.facts.items() if fact.category != "news"} <= supplied.keys()
+    assert news[0].id in supplied
+    assert not {fact.id for fact in news[1:]} & supplied.keys()
     for key in supplied:
         assert json.loads(supplied[key].get("inputs") or "[]") == snap.facts[key].inputs
-    assert "VAL.OPERATING_INCOME_TTM" not in supplied
-    dependency = json.loads(SnapshotTools(snap)("get_facts", {"source_ids": ["VAL.OPERATING_INCOME_TTM"]}))
-    assert "VAL.OPERATING_INCOME_TTM" in rows(dependency["facts_csv"])
     for key in ("FIN.2026H1.OPERATING_INCOME_YTD",):
         assert supplied[key]["value"] == str(int(snap.facts[key].value))
         assert supplied[key]["unit"] == "KRW"
@@ -146,7 +144,9 @@ def test_compact_fact_metadata_round_trips_values_units_dates_basis_and_qualifie
             if observed:
                 assert row[field] == observed.isoformat()
     shared = rows(build_shared_push(snap)["facts_csv"])
-    assert len(shared) < 26
+    daily = [key for key in shared if key.startswith(DAILY_FACT_PREFIX)]
+    assert len(daily) == DAILY_FACT_SESSIONS
+    assert len(shared) - len(daily) < 30
     assert "PX.RET_3D" not in shared
     assert "PX.RET_3D" in snap.facts  # Still accessible for detailed validation.
 

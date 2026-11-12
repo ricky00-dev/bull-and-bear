@@ -262,6 +262,10 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 - v0.12 구현 초안 (2026-11-12): 사용자 결정으로 공개 전 리뷰어를 제거한다(비용: 토론당 LLM 호출 6회, effort high).
   필드·이벤트 구조는 그대로이며 `statement_accepted`는 응답 형식 처리 직후 전달된다. 비공개 `statement_reviewed` 이벤트와
   감사 기록의 `statement_reviewer` 역할은 더 이상 생기지 않는다. 워커 설정 `BULLBEAR_REVIEW_STATEMENTS`는 삭제됐다. 공동 검토 전 초안이다.
+  같은 초안에서 스냅샷 `facts`에 근거로 걸 수 있는 ID가 추가된다(필드 구조는 그대로): 최근 20거래일 날짜별
+  `PX.DAY_YYYYMMDD`(값은 그날 등락률 %, note에 가격·거래량·같은 날 코스피 등락률), `PX.VS_MA200`(200일 이동평균 대비 %).
+  이동평균 Fact 값은 원 단위로 반올림한다. 웹 용어 사전에 이 ID들과 기존 `PX.MA200`이 없어 칩 이름이 ID로 보일 수 있다
+  (`facts[source_id].label` 또는 `observation.label`로 대체 필요).
 
 - v0.11 구현 초안 (2026-11-11): 사용자 요청으로 토론의 코드 내용 검증기를 제거하고 공개 전 리뷰어는 유지한다.
   기존 필드 구조로 `verified=false`, `verification_scope=not_checked`, 미측정 검증 비율 `null`을 전달한다.

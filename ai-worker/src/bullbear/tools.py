@@ -255,8 +255,10 @@ class SnapshotTools:
         kospi = {p.date: p.close for p in series.kospi_close}
         columns = ("date", "open", "high", "low", "close", "volume",
                    *(key.removeprefix("PX.").lower() for key in averages), "kospi_close")
+        # Averages in whole won, matching the PX.MA* facts.
         rows = ((bar.date.isoformat(), bar.open, bar.high, bar.low, bar.close, bar.volume,
-                 *(points.get(bar.date) for points in averages.values()), kospi.get(bar.date))
+                 *(None if (value := points.get(bar.date)) is None else round(value)
+                   for points in averages.values()), kospi.get(bar.date))
                 for bar in series.stock_ohlcv if start <= bar.date <= end)
         return json.dumps({
             "snapshot_id": self.snapshot.snapshot_id, "price_basis": series.price_basis,

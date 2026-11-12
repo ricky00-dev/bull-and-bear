@@ -88,7 +88,7 @@ def provenance() -> dict:
     }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'history.py', 'model_context.py', 'history_lookup.py', 'moderator_edit.py', 'tools.py', 'news_lookup.py', 'data/article_body.py', 'context_ids.py', 'model_wire.py')
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'history.py', 'model_context.py', 'history_lookup.py', 'tools.py', 'news_lookup.py', 'data/article_body.py', 'context_ids.py', 'model_wire.py')
     }
     return result
 
@@ -266,7 +266,8 @@ class RunAudit:
             call = {"call_id": len(self.data["llm_calls"]) + 1, "role": role,
                     "client_role": client_role, "selected_model": llm.model,
                     "status": "running", "started_at": self._now(), "effort": effort,
-                    "system_hash": canonical_hash(conv.system),
+                    "system_hash": canonical_hash(conv.system if conv.common_system is None
+                                                   else [conv.common_system, conv.system]),
                     "messages_hash": canonical_hash(conv.messages),
                     "schema_hash": canonical_hash(schema), "tools_hash": canonical_hash(tools or [])}
             self.data["llm_calls"].append(call)

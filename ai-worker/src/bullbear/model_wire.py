@@ -27,7 +27,8 @@ WIRE_STATEMENT_RULES = {
     'opening': _EVIDENCE_WIRE_RULES + 'rebuttal=closing=null.',
     'rebuttal': _EVIDENCE_WIRE_RULES +
         'rebuttal=[target_statement_id,exact_quote,acknowledged,reason,*unresolved]; closing=null. '
-        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다.',
+        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다. '
+        'acknowledged에는 상대가 든 것 중 사실로 맞는 것을 쓴다.',
     'closing': _EVIDENCE_WIRE_RULES +
         'rebuttal=null. closing에는 retained,conceded,outlook_reason,'
         'uncertainties,change_conditions,stance_change별로 [kind,*texts] 행을 하나씩 쓴다. '
@@ -36,10 +37,10 @@ WIRE_STATEMENT_RULES = {
 }
 WIRE_MEDIATION_RULES = (
     '응답 형식: ACCEPT이면 forecast가 필요하고 ABSTAIN이면 null이다. scores는 정수 8개로, '
-    '황소 다음 곰 순서이며 각각 relevance/materiality/rebuttal/risk_awareness 점수(1~5)다. '
-    'comments=[황소 평가,곰 평가]. evidence에는 Fact ID를 넣는다. analysis에는 '
+    '매수 측 다음 매도 측 순서이며 각각 relevance/materiality/rebuttal/risk_awareness 점수(1~5)다. '
+    'comments=[매수 측 평가,매도 측 평가]. evidence에는 Fact ID를 넣는다. analysis에는 '
     'common_ground,core_issues,disagreements,unverified,outlook_basis,outlook_limits별로 '
-    '[kind,*texts] 행을 하나씩 쓴다. keys에는 해석 ID를 넣는다. reviews는 6개 행이며 형식은 '
+    '[kind,*texts] 행을 하나씩 쓰고 texts는 3개 이하다. keys에는 해석 ID를 넣는다. reviews는 6개 행이며 형식은 '
     '[statement_id,no_issue_found|concern|uncertain,reason,*source_ids]이고 각 행의 근거 ID는 최대 3개다.'
 )
 

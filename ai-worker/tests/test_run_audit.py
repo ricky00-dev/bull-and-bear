@@ -294,3 +294,14 @@ def test_no_paid_runner_when_initial_audit_cannot_be_flushed(setup, monkeypatch)
         assert not called and not list((settings.data_dir / 'audits').glob('*/.manifest-*.tmp'))
     finally:
         svc.close()
+
+
+def test_system_hash_covers_cached_common_rules(setup):
+    """Debater rules are sent as the cached top-level system, not in conv.system."""
+    settings, _ = setup
+    audit = make_audit(settings)
+    calls = [audit.begin_call('debater', 'debater', NS(model='chosen'),
+                              Conversation('황소', common_system=rules), {}, 'medium', [])
+             for rules in ('규칙 1', '규칙 2', None)]
+    assert len({call['system_hash'] for call in calls}) == 3
+    assert calls[2]['system_hash'] == canonical_hash('황소')  # Unchanged without shared rules.

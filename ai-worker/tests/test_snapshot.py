@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from datetime import date, datetime
 
 import httpx
@@ -40,6 +41,24 @@ def test_financials_and_ttm_valuation(snap):
     assert f["VAL.DEBT_RATIO"].value == 50.0
     assert set(f["VAL.PER_TTM"].inputs) == {"VAL.MKTCAP", "VAL.NET_INCOME_TTM"}
 
+
+
+@pytest.mark.parametrize("consolidated,basis", [(True, "consolidated"), (False, "separate")])
+def test_loss_making_company_still_builds_and_marks_per_unavailable(consolidated, basis):
+    """A trailing net loss used to raise NameError, so the snapshot (and debate) never started."""
+    class LossSource(FakeSource):
+        def get_financial_reports(self, ticker, as_of):
+            def loss(report):
+                net = report.accounts["net_income"]
+                flipped = replace(net, current=-net.current, ytd=-net.ytd,
+                                  prior_ytd=None if net.prior_ytd is None else -net.prior_ytd)
+                return replace(report, consolidated=consolidated,
+                               accounts={**report.accounts, "net_income": flipped})
+            return [loss(report) for report in super().get_financial_reports(ticker, as_of)]
+
+    per = build_snapshot(LossSource(), "000000", "가짜전자", news=FakeNews(), now=NOW).facts["VAL.PER_TTM"]
+    assert per.value is None and "순손실" in per.note
+    assert per.report_period == "2026H1" and per.report_basis == basis
 
 def test_disclosure_fact(snap):
     d = snap.facts["DISC.20261001000123"]

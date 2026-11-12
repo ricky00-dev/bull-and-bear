@@ -11,7 +11,7 @@ from ..audit import AuditedLLM, RunAudit, selected_models
 from ..data.base import DataUnavailable
 from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
-from ..llm import LLM, LLMError, validate_snapshot_model
+from ..llm import LLM, validate_snapshot_model
 from ..single import SingleAnalyst
 from ..snapshot import Snapshot
 from .errors import ApiError

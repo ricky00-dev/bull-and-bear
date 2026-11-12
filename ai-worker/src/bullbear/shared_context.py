@@ -7,10 +7,14 @@ import json
 
 from .chart_data import csv_rows
 from .history import history_entry
-from .snapshot import Fact, Snapshot, chart_window_start, week_start
+from .snapshot import DAILY_FACT_PREFIX, Fact, Snapshot, chart_window_start, week_start
 
+# Where the price stands and how it got there; the recent daily facts are added
+# separately. Every one of these is citable as evidence without a lookup.
 PRICE_IDS = (
-    "PX.CLOSE", "PX.VOL_20D", "PX.MA200", "MKT.KOSPI_CLOSE", "MKT.KOSPI_VOL_20D",
+    "PX.CLOSE", "PX.VOL_20D", "PX.MA200", "PX.VS_MA20", "PX.VS_MA60", "PX.VS_MA200",
+    "PX.RET_1M", "PX.RET_3M", "PX.RET_1Y", "PX.FROM_HIGH_52W", "PX.FROM_LOW_52W", "PX.VOLUME_RATIO",
+    "MKT.KOSPI_CLOSE", "MKT.KOSPI_VOL_20D",
     "MKT.KOSPI_RET_3D", "PX.EXCESS_KOSPI_3D",
     "MKT.KOSPI_RET_7D", "PX.EXCESS_KOSPI_7D",
     "MKT.KOSPI_RET_21D", "PX.EXCESS_KOSPI_21D",
@@ -39,10 +43,11 @@ def expand_fact_ids(snapshot: Snapshot, ids: Iterable[str]) -> tuple[list[Fact],
     return [snapshot.facts[key] for key in sorted(visited - missing)], sorted(missing)
 
 
-def core_fact_ids(snapshot: Snapshot, *, moderator: bool = False) -> set[str]:
+def core_fact_ids(snapshot: Snapshot) -> set[str]:
     """Fixed, side-neutral coverage of price, earnings, valuation and macro risk."""
     facts = snapshot.facts
     ids = {key for key in (*PRICE_IDS, *VALUATION_IDS) if key in facts}
+    ids.update(key for key in facts if key.startswith(DAILY_FACT_PREFIX))
     # Keep the stock return as a fallback when the short-window comparison is missing.
     ids.update(f"PX.RET_{n}D" for n in (3, 7)
                if f"PX.EXCESS_KOSPI_{n}D" not in facts and f"PX.RET_{n}D" in facts)
@@ -50,11 +55,10 @@ def core_fact_ids(snapshot: Snapshot, *, moderator: bool = False) -> set[str]:
     latest = max((f for f in financials if f.source != "derived"),
                  key=lambda f: (f.as_of, f.report_period or "", f.id), default=None)
     if latest is not None:
-        accounts = {"OPERATING_INCOME", "OPERATING_INCOME_YTD", "REVENUE_YOY"} if moderator else _CORE_ACCOUNTS
         ids.update(f.id for f in financials if f.as_of == latest.as_of
                    and f.report_period == latest.report_period and f.report_basis == latest.report_basis
                    and (f.source == latest.source or f.source == "derived")
-                   and f.id.rsplit(".", 1)[-1] in accounts)
+                   and f.id.rsplit(".", 1)[-1] in _CORE_ACCOUNTS)
     ids.update(f.id for f in snapshot.by_category("macro"))
     return ids
 
@@ -264,8 +268,12 @@ def build_shared_push(snapshot: Snapshot) -> dict:
 
 
 def build_moderator_context(snapshot: Snapshot, transcript: list[str]) -> dict:
-    """Independent baseline plus cited facts; input IDs keep detail lookup open."""
-    ids = core_fact_ids(snapshot, moderator=True)
+    """Every non-news fact plus cited articles.
+
+    The judge checks claims that debaters drew from lookups, so it starts from
+    the whole snapshot rather than from what happened to be cited.
+    """
+    ids = {key for key, fact in snapshot.facts.items() if fact.category != "news"}
     for entry in transcript:
         record = history_entry(entry)
         ids.update(e["source_id"] for e in record.get("evidence", [])
