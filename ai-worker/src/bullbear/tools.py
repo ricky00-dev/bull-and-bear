@@ -7,9 +7,11 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 
 from .chart_data import chart_averages, csv_rows
+from .shared_context import fact_table_csv, ordered_news
 from .snapshot import Category, Snapshot
 
 _NO_INPUT = {"type": "object", "properties": {}, "required": [], "additionalProperties": False}
@@ -56,23 +58,32 @@ TOOL_DEFINITIONS = [
 
 
 _DAILY_CHART_MAX_DAYS = 14
+_FACT_BATCH_SIZE = 8
+_FACT_TABLE_MAX_CHARS = 8000
+_CATALOG_PAGE_SIZE = 20
+_NEWS_PAGE_SIZE = 5
 DEBATE_TOOL_DEFINITIONS = [
-    *TOOL_DEFINITIONS,
     {
-        "name": "get_daily_chart",
+        "name": "read_snapshot",
         "description": (
-            "스냅샷에 보관된 지정 구간의 일봉 OHLCV, 일별 MA7/11/25/200, 코스피 종가를 CSV로 조회한다. "
-            "시작일·종료일을 포함해 최대 14달력일이며 종료일은 종목 기준일을 넘을 수 없다. "
-            "하루만 조회할 때는 두 날짜를 같게 입력한다. 반환된 일별 행은 차트 자료다."
+            "Read frozen data. args: facts=[id,...] (1-8); "
+            "catalog=[category,offset] (20 ids/page; price|financials|valuation|disclosure|news|macro); "
+            "news=[company|market,offset] (5/page); chart=[start,end] (YYYY-MM-DD,1-14 days). "
+            "Offset is a string, initially '0'; use next_offset for later pages."
         ),
         "input_schema": {
-            "type": "object",
-            "properties": {
-                "start_date": {"type": "string", "description": "시작일 (YYYY-MM-DD)"},
-                "end_date": {"type": "string", "description": "종료일 (YYYY-MM-DD)"},
-            },
-            "required": ["start_date", "end_date"],
-            "additionalProperties": False,
+            "type": "object", "properties": {
+                "kind": {"type": "string", "enum": ["facts", "catalog", "news", "chart"]},
+                "args": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": _FACT_BATCH_SIZE},
+            }, "required": ["kind", "args"], "additionalProperties": False,
+        },
+    },
+    {
+        "name": "get_news_body",
+        "description": "read_snapshot으로 요약을 읽은 뒤 필요한 정보가 없을 때 기사 source_id로 본문을 조회한다. 먼저 호출하면 요약을 반환한다.",
+        "input_schema": {
+            "type": "object", "properties": {"source_id": {"type": "string", "description": "제공된 뉴스 Fact ID"}},
+            "required": ["source_id"], "additionalProperties": False,
         },
     },
 ]
@@ -83,10 +94,18 @@ class SnapshotTools:
         self.snapshot = snapshot
 
     def __call__(self, name: str, _input: dict) -> str:
+        if name == "read_snapshot":
+            return self._read_snapshot(_input)
+        if name == "get_facts":
+            return self._facts(_input)
+        if name == "get_fact_catalog":
+            return self._catalog(_input)
         if name == "get_daily_chart":
             return self._daily_chart(_input)
         if name == "get_new_url":
             return self._news_url(_input)
+        if name == "get_snapshot_news":
+            return self._snapshot_news(_input)
         category = TOOL_CATEGORIES.get(name)
         if category is None:
             raise ValueError(f"알 수 없는 도구: {name}")
@@ -119,6 +138,94 @@ class SnapshotTools:
         ]
         return json.dumps({"snapshot_id": self.snapshot.snapshot_id, "items": items}, ensure_ascii=False)
 
+    def _read_snapshot(self, arguments: dict) -> str:
+        """Small model-facing schema; legacy handlers retain their full validation."""
+        if not isinstance(arguments, dict) or set(arguments) != {"kind", "args"}:
+            raise ValueError("read_snapshot에는 kind와 args만 입력하세요")
+        kind, args = arguments["kind"], arguments["args"]
+        if (not isinstance(kind, str) or kind not in {"facts", "catalog", "news", "chart"}
+                or not isinstance(args, list) or not 1 <= len(args) <= _FACT_BATCH_SIZE
+                or any(not isinstance(value, str) or not value.strip() for value in args)):
+            raise ValueError("kind는 facts/catalog/news/chart, args는 비어 있지 않은 문자열 1~8개여야 합니다")
+        if kind == "facts":
+            return self._facts({"source_ids": args})
+        if len(args) != 2:
+            raise ValueError("catalog/news/chart의 args는 정확히 두 문자열이어야 합니다")
+        if kind == "chart":
+            return self._daily_chart({"start_date": args[0], "end_date": args[1]})
+        if not re.fullmatch(r"0|[1-9][0-9]*", args[1]):
+            raise ValueError("offset은 '0' 또는 양의 정수 문자열이어야 합니다")
+        if kind == "catalog":
+            return self._catalog({"category": args[0], "offset": int(args[1])})
+        return self._snapshot_news({"scope": args[0], "offset": int(args[1])})
+
+    def _fact_page(self, facts):
+        """Never cut a fact's text mid-sentence or silently lose a queued fact."""
+        selected, oversized = [], []
+        for index, fact in enumerate(facts):
+            if len(fact_table_csv([fact])) > _FACT_TABLE_MAX_CHARS:
+                oversized.append(fact.id)
+                continue
+            if len(fact_table_csv([*selected, fact])) > _FACT_TABLE_MAX_CHARS:
+                return selected, oversized, index
+            selected.append(fact)
+        return selected, oversized, len(facts)
+
+    def _facts(self, arguments: dict) -> str:
+        ids = arguments.get("source_ids")
+        if (set(arguments) != {"source_ids"} or not isinstance(ids, list)
+                or not 1 <= len(ids) <= _FACT_BATCH_SIZE
+                or any(not isinstance(key, str) or not key for key in ids)):
+            raise ValueError("source_ids에 Fact ID 1~8개를 입력하세요")
+        ids = list(dict.fromkeys(ids))
+        found = [self.snapshot.facts[key] for key in ids if key in self.snapshot.facts]
+        selected, oversized, consumed = self._fact_page(found)
+        return json.dumps({
+            "facts_csv": fact_table_csv(selected),
+            "missing_source_ids": [key for key in ids if key not in self.snapshot.facts],
+            "remaining_source_ids": [f.id for f in found[consumed:]],
+            "oversized_source_ids": oversized,
+        }, ensure_ascii=False, separators=(",", ":"))
+
+    @staticmethod
+    def _offset(arguments):
+        offset = arguments.get("offset", 0)
+        if type(offset) is not int or offset < 0:
+            raise ValueError("offset은 0 이상의 정수여야 합니다")
+        return offset
+
+    def _catalog(self, arguments: dict) -> str:
+        category = arguments.get("category")
+        if (set(arguments) - {"category", "offset"} or not isinstance(category, str)
+                or category not in {"price", "financials", "valuation", "disclosure", "news", "macro"}):
+            raise ValueError("유효한 category와 offset을 입력하세요")
+        offset = self._offset(arguments)
+        facts = sorted(self.snapshot.by_category(category), key=lambda f: (f.as_of, f.id), reverse=True)
+        page = facts[offset:offset + _CATALOG_PAGE_SIZE]
+        end = offset + len(page)
+        return json.dumps({
+            "catalog_csv": csv_rows(("source_id", "label", "as_of"),
+                                    ((f.id, f.label[:160], str(f.as_of)) for f in page)),
+            "labels_truncated": [f.id for f in page if len(f.label) > 160],
+            "next_offset": end if end < len(facts) else None,
+        }, ensure_ascii=False, separators=(",", ":"))
+
+    def _snapshot_news(self, arguments: dict) -> str:
+        scope = arguments.get("scope")
+        if set(arguments) - {"scope", "offset"} or scope not in ("company", "market"):
+            raise ValueError("scope는 company 또는 market이어야 합니다")
+        offset = self._offset(arguments)
+        facts = ordered_news(self.snapshot, scope)
+        page, oversized, consumed = self._fact_page(facts[offset:offset + _NEWS_PAGE_SIZE])
+        end = offset + consumed
+        return json.dumps({
+            "snapshot_id": self.snapshot.snapshot_id,
+            "scope": scope,
+            "facts_csv": fact_table_csv(page),
+            "next_offset": end if end < len(facts) else None,
+            "oversized_source_ids": oversized,
+        }, ensure_ascii=False, separators=(",", ":"))
+
     def _news_url(self, arguments: dict) -> str:
         source_id = arguments.get("source_id")
         if set(arguments) != {"source_id"} or not isinstance(source_id, str):
@@ -148,8 +255,10 @@ class SnapshotTools:
         kospi = {p.date: p.close for p in series.kospi_close}
         columns = ("date", "open", "high", "low", "close", "volume",
                    *(key.removeprefix("PX.").lower() for key in averages), "kospi_close")
+        # Averages in whole won, matching the PX.MA* facts.
         rows = ((bar.date.isoformat(), bar.open, bar.high, bar.low, bar.close, bar.volume,
-                 *(points.get(bar.date) for points in averages.values()), kospi.get(bar.date))
+                 *(None if (value := points.get(bar.date)) is None else round(value)
+                   for points in averages.values()), kospi.get(bar.date))
                 for bar in series.stock_ohlcv if start <= bar.date <= end)
         return json.dumps({
             "snapshot_id": self.snapshot.snapshot_id, "price_basis": series.price_basis,

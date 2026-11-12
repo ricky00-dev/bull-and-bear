@@ -71,13 +71,14 @@ def _printer(event: str, payload: dict) -> None:
     elif event == "tool_call":
         print(".", end="", flush=True)
     elif event == "statement_accepted":
-        st, ver = payload["statement"], payload["verification"]
-        mark = "검증 통과" if payload["verified"] else "검증 실패"
+        st, ver = payload["statement"], payload.get("verification")
+        mark = "발언 확정" if payload.get("verification_scope") == "not_checked" else (
+            "검증 통과" if payload["verified"] else "검증 실패")
         print(f"({mark}, 시도 {payload['attempts']}회)")
         print(st.argument or st.claim)
         for e in st.evidence:
             print(f"  {e.ref} {e.source_id} = {e.value}  — {e.interpretation}")
-        for i in ver.issues:
+        for i in ver.issues if ver is not None else ():
             print(f"  ! {i.severity}: {i.message}")
     elif event == "moderator_started":
         print("\n── 중재자 평가 중...", flush=True)

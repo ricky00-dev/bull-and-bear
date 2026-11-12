@@ -10,33 +10,6 @@ from .snapshot import KST
 from .verifier import Issue
 
 
-def source_context(snapshot):
-    news = []
-    for fact in snapshot.facts.values():
-        if fact.category != 'news':
-            continue
-        published = fact.published_at.astimezone(KST) if fact.published_at else None
-        news.append({'source_id': fact.id,
-                     'publication_date_kst': published.date().isoformat() if published else None,
-                     'event_date': None,
-                     'event_date_status': 'not_separately_structured_do_not_infer_from_publication',
-                     'available_scope': 'title_and_summary' if fact.note else 'title'})
-    per = snapshot.facts.get('VAL.PER_TTM')
-    return {'price_date': str(snapshot.as_of), 'articles': news,
-            'per': None if per is None else {
-                'source_id': per.id, 'value': per.value, 'unit': per.unit,
-                'as_of': str(per.as_of), 'calculation_note': per.note,
-                'comparison_basis': 'no_structured_peer_or_historical_per_benchmark',
-                'permitted_interpretation': '현재 이익 기준 가격 배수. 수치 자체는 싸거나 비싸다는 판단이 아님.',
-            },
-            'instructions': [
-                '기사 인용 시 확인된 발행일을 절대 날짜로 쓰고, 사건 발생일은 인용한 본문 또는 요약에서 별도로 확인한 경우에만 말한다.',
-                '오늘/어제/다음 날/발표 당일 같은 상대 날짜 대신 확인된 YYYY-MM-DD를 쓴다. 날짜가 없으면 미확인이라고 한다.',
-                '현재 PER과 비교 대상의 회계기간·이익 정의가 맞는 별도 근거 없이는 낮음/쌈/저평가/가격 부담 작음을 주장하지 않는다.',
-                '이 스냅샷 경로에는 검증된 업종/과거 PER 비교 필드가 없다. 알려진 기억이나 임의 임계값으로 채우지 않는다.',
-            ]}
-
-
 def source_issues(text, snapshot, references=None):
     references = references or {}
     issues = []

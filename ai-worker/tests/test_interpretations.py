@@ -48,6 +48,16 @@ def test_same_source_has_distinct_stable_interpretation_ids_and_snapshot_copy(sn
     assert Statement.model_validate_json(bull.model_dump_json()) == bull
 
 
+def test_unknown_source_keeps_authored_evidence_without_fabricating_observation(snap):
+    original = candidate()
+    original.evidence[0].source_id = 'UNKNOWN.FACT'
+    bound = bind_statement(original, snap, debate_id='d', turn_index=1)
+    assert bound.evidence[0].source_id == 'UNKNOWN.FACT'
+    assert bound.evidence[0].value == original.evidence[0].value
+    assert bound.evidence[0].observation is None
+    assert bound.evidence[0].interpretation_id == 'd:t1:E1'
+
+
 @pytest.mark.parametrize('target,quote,bad', [('d:t1', '관측된 가격은 방향을', False),
     ('missing', '관측된 가격은 방향을', True), ('d:t2', '관측된 가격은 방향을', True),
     ('d:t1', '상대가 말하지 않은 문장', True)])

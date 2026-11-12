@@ -1,5 +1,8 @@
 """Offline context/guard tests; these do not measure an LLM's semantic accuracy."""
 
+import csv
+from io import StringIO
+
 import pytest
 
 from bullbear.events import EventLog
@@ -31,6 +34,10 @@ def candidate():
     )
 
 
+def fact_rows(payload):
+    return {row['source_id']: row for row in csv.DictReader(StringIO(payload['facts_csv']))}
+
+
 def test_reviewer_receives_qualifiers_in_other_sentences_and_original_time_anchors(snap):
     verdict = candidate()
     llm = QueueLLM([{'issues': []}])
@@ -42,11 +49,15 @@ def test_reviewer_receives_qualifiers_in_other_sentences_and_original_time_ancho
     assert payload['price_as_of'] == str(snap.as_of)
     assert payload['snapshot_created_at'] == str(snap.created_at)
     assert payload['reference_map'] == {'E1': 'PX.CLOSE'}
-    assert payload['facts']['PX.CLOSE'] == snap.facts['PX.CLOSE'].model_dump(mode='json')
+    close = fact_rows(payload)['PX.CLOSE']
+    assert float(close['value']) == snap.facts['PX.CLOSE'].value
+    assert close['unit'] == snap.facts['PX.CLOSE'].unit
+    assert close['as_of'] == str(snap.facts['PX.CLOSE'].as_of)
+    assert close['source'] == snap.facts['PX.CLOSE'].source
     # Check the instructions delivered to the actual review boundary, not a separate prompt file.
     assert '판단 범위는 candidate 전체' in conv.system
     assert 'price_as_of는 가격 자료의 기준일' in conv.system
-    assert '후자는 계속 반려한다' in conv.system
+    assert '근거 인용 불일치·관측 사실 날조·확정 수익 보장은 반려한다' in conv.system
 
 
 @pytest.mark.parametrize('code', [
@@ -102,11 +113,12 @@ def test_review_has_uncited_snapshot_facts_without_promoting_them_to_citations(s
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, snap).check(verdict, [], verdict.decisive_evidence)
     payload = initial_payload(llm.calls[0][0])
-    assert payload['facts'] == {k: f.model_dump(mode='json') for k, f in snap.facts.items()}
+    facts = fact_rows(payload)
+    assert facts.keys() == snap.facts.keys()
     assert payload['reference_map'] == {'E1': 'VAL.PER_TTM'}
     assert payload['selected_source_ids'] == ['VAL.PER_TTM']
-    assert payload['facts']['PX.CLOSE']['value'] == snap.facts['PX.CLOSE'].value
-    assert payload['facts']['PX.VOL_20D']['value'] == snap.facts['PX.VOL_20D'].value
+    assert float(facts['PX.CLOSE']['value']) == snap.facts['PX.CLOSE'].value
+    assert float(facts['PX.VOL_20D']['value']) == snap.facts['PX.VOL_20D'].value
     assert '전체 스냅샷에 존재하지만 인용하지 않은 사실' in llm.calls[0][0].system
 
 
@@ -117,8 +129,9 @@ def test_review_does_not_fill_missing_benchmark_or_volatility(snap):
     llm = QueueLLM([{'issues': []}])
     SemanticReviewer(llm, missing).check(candidate(), [], ['PX.CLOSE'])
     payload = initial_payload(llm.calls[0][0])
-    assert 'PX.VOL_20D' not in payload['facts']
-    assert not any(k.startswith('MKT.') for k in payload['facts'])
+    facts = fact_rows(payload)
+    assert 'PX.VOL_20D' not in facts
+    assert not any(k.startswith('MKT.') for k in facts)
     assert payload['warnings'] == ['코스피 비교 자료 없음']
 
 

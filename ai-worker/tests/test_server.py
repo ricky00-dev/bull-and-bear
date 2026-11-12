@@ -125,9 +125,10 @@ def test_replay_resume_contract_and_private_data_filter(setup):
         events = parse_sse(response.text)
         assert [e[0] for e in events] == list(range(1, len(events) + 1))
         assert events[0][1] == 'snapshot_created' and events[-1][1] == 'debate_completed'
-        assert any(e[1] == 'statement_rejected' for e in events)
+        assert not any(e[1] == 'statement_rejected' for e in events)
         accepted = [e[2] for e in events if e[1] == 'statement_accepted']
-        assert all(e['verified'] and 'warnings' in e and 'verification' not in e for e in accepted)
+        assert all(e['verified'] is False and e['verification_scope'] == 'not_checked'
+                   and e['warnings'] == [] and 'verification' not in e for e in accepted)
         assert next(e[2] for e in events if e[1] == 'tool_call') == {'side': 'bull', 'tool': 'get_price'}
         assert parse_sse(c.get(url, headers={**AUTH, 'Last-Event-ID': '3'}).text) == events[3:]
         assert c.get(url, headers={**AUTH, 'Last-Event-ID': str(events[-1][0])}).text == ''
@@ -156,14 +157,17 @@ def test_concurrent_idempotency_capacity_and_live_stream(setup):
             gate.set()
 
 
-def test_failed_verification_never_emits_statement_and_releases_capacity(setup):
+def test_unchecked_values_are_delivered_without_fabricated_verification_stats(setup):
     with TestClient(app_for(setup, max_running=1, runner_factory=lambda: TestRunner(setup[0], invalid=True))) as c:
         d = start(c).json()['debate_id']
         result = completed(c, d)
-        assert result['status'] == 'failed' and result['error']['code'] == 'LLM_ERROR'
-        assert result['statements'] == [] and result['usage']['calls']
+        assert result['status'] == 'completed' and len(result['statements']) == 6
+        assert all(item['statement']['evidence'][0]['value'] == -1 for item in result['statements'])
+        assert all(side['evidence_accuracy'] is None and side['first_try_pass_rate'] is None
+                   for side in result['stats'].values())
+        assert result['usage']['calls']
         assert start(c).json()['debate_id'] == d
-        assert start(c, key='retry').json()['debate_id'] != d
+        assert start(c, key='retry').json()['debate_id'] == d
 
 
 def test_durable_replay_idempotency_and_restart_failure(setup):

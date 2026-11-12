@@ -3,7 +3,7 @@ from datetime import date, datetime, timezone
 import pytest
 
 from bullbear.snapshot import Fact, Snapshot
-from bullbear.source_grounding import source_context, source_issues
+from bullbear.source_grounding import source_issues
 
 
 def snapshot():
@@ -24,15 +24,6 @@ REFS = {'E1': 'NEWS.A', 'E2': 'VAL.PER_TTM'}
 
 def codes(text):
     return {i.code for i in source_issues(text, snapshot(), REFS)}
-
-
-def test_publication_kst_is_not_event_date_or_price_date():
-    context = source_context(snapshot())
-    assert context['price_date'] == '2026-10-30'
-    assert context['articles'][0]['publication_date_kst'] == '2026-11-02'
-    assert context['articles'][0]['event_date'] is None
-    assert context['per']['value'] == 8.46
-    assert context['per']['comparison_basis'].startswith('no_structured')
 
 
 @pytest.mark.parametrize('text', [

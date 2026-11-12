@@ -37,7 +37,7 @@ export function EvidenceSheet({ evidence, sourceId, citations = [], asOf, onClos
           <p className="text-sm leading-relaxed">{use.evidence.interpretation || '해석이 제공되지 않았어요.'}</p>
         </div>)}
         {uses.length === 0 && <p className="text-sm text-sub">이 근거의 발언 내용을 아직 불러오지 못했어요.</p>}
-        <p className="text-[13px] leading-relaxed text-sub">수치 검증을 통과해도 전망과 해석이 맞다는 뜻은 아니에요. 같은 수치를 양쪽이 다르게 해석할 수 있어요.</p>
+        <p className="text-[13px] leading-relaxed text-sub">같은 수치를 양쪽이 다르게 해석할 수 있어요. 원자료와 각 주장의 조건을 함께 살펴보세요.</p>
       </section>
       {onPick && <div className="flex flex-col gap-2"><button type="button" aria-pressed={picked} disabled={full} onClick={() => onPick(id)} className={`min-h-touch rounded-control border px-4 text-sm font-bold ${picked ? 'border-point bg-point text-on-point' : 'pressable border-line disabled:text-faint'}`}>{picked ? '판정 근거에서 빼기' : '내 판정 근거로 담기'}</button><p className="text-xs text-sub">{full ? '최대 2개예요. 담아둔 근거를 해제하면 바꿀 수 있어요.' : '담은 근거는 다음 판정 화면으로 이어져요.'}</p></div>}
     </BottomSheet>

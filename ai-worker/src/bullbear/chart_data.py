@@ -21,10 +21,10 @@ def chart_averages(snapshot: Snapshot) -> dict:
     return averages
 
 
-def csv_rows(columns, rows) -> str:
+def csv_rows(columns, rows, *, line_ending="\n") -> str:
     output = StringIO(newline="")
-    writer = csv.writer(output, lineterminator="\n")
+    writer = csv.writer(output, lineterminator=line_ending)
     writer.writerow(columns)
     for row in rows:
         writer.writerow(int(value) if isinstance(value, float) and value.is_integer() else value for value in row)
-    return output.getvalue().rstrip("\n")
+    return output.getvalue().removesuffix(line_ending)

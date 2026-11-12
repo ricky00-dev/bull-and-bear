@@ -48,6 +48,9 @@ NEWS_CLOSE = time(15, 30)  # 기준일 정규장 마감. 그 뒤 정보는 채�
 DAILY_CHART_SESSIONS = 126
 CHART_WEEKS = 10
 PUSH_MA_WINDOWS = (7, 11, 24, 25, 200)
+# Recent sessions become citable facts; chart-tool rows carry no source ID.
+DAILY_FACT_SESSIONS = 20
+DAILY_FACT_PREFIX = "PX.DAY_"
 
 
 def week_start(day: date) -> date:
@@ -237,6 +240,7 @@ def build_snapshot(
         except DataUnavailable:
             warnings.append("코스피 비교 입력 없음: 지수 조회 실패")
             status["kospi"] = status["kospi_volatility"] = "FAILED"
+    _add(facts, daily_facts(bars, provider=provider, index={p.date: p.close for p in series.kospi_close}))
 
     # OpenDART's report/share/list endpoints expose filing dates, not times.
     # A filing on the cutoff date cannot be assumed available at 15:30 KST.
@@ -366,13 +370,13 @@ def benchmark_facts(bars: list[PriceBar], index: dict[date, float], provider: st
             continue
         stock_return = (last.close / base.close - 1) * 100
         index_return = (index[last.date] / index[base.date] - 1) * 100
-        note = (f'{base.date} → {last.date}, 종목 종가 {base.close:g} → {last.close:g}원, '
-                f'코스피 {index[base.date]:g} → {index[last.date]:g}포인트. '
-                '동일 날짜 종가 기준 과거 수익률이며 미래 채점 결과가 아님. 종목 기업행사 미보정.')
+        note = (f'{base.date} 종가 → {last.date} 종가. 종목 {base.close:,.0f} → {last.close:,.0f}원({stock_return:+.2f}%), '
+                f'코스피 {index[base.date]:,.2f} → {index[last.date]:,.2f}({index_return:+.2f}%). '
+                '과거 수익률이며 미래 채점 결과가 아님.')
         for fid, label, value, source, inputs in (
-            (f'PX.RET_{n}D', f'최근 {n}종목 거래일 수익률', stock_return, provider, []),
-            (f'MKT.KOSPI_RET_{n}D', f'동일 기간 코스피 수익률({n}종목 거래일)', index_return, provider, []),
-            (f'PX.EXCESS_KOSPI_{n}D', f'동일 기간 코스피 대비 초과수익률({n}종목 거래일, %p)',
+            (f'PX.RET_{n}D', f'최근 {n}거래일 수익률', stock_return, provider, []),
+            (f'MKT.KOSPI_RET_{n}D', f'최근 {n}거래일 코스피 수익률', index_return, provider, []),
+            (f'PX.EXCESS_KOSPI_{n}D', f'최근 {n}거래일 코스피 대비 초과수익률(%p)',
              stock_return - index_return, 'derived', [f'PX.RET_{n}D', f'MKT.KOSPI_RET_{n}D']),
         ):
             facts.append(Fact(id=fid, category='price', label=label, value=round(value, 2), unit='%',
@@ -422,13 +426,20 @@ def price_facts(bars: list[PriceBar], *, provider: str = "pykrx") -> list[Fact]:
     for n in _MA_WINDOWS:
         if len(closes) >= n:
             ma = sum(closes[-n:]) / n
-            fact(f"PX.MA{n}", f"{n}일 이동평균", ma, "KRW/share")
-            fact(f"PX.VS_MA{n}", f"{n}일 이동평균 대비", (last.close / ma - 1) * 100, "%")
+            fact(f"PX.MA{n}", f"{n}일 이동평균", ma, "KRW/share", note=moving_average_note(n))
+            fact(f"PX.VS_MA{n}", f"{n}일 이동평균 대비", (last.close / ma - 1) * 100, "%",
+                 note=f"종가와 {n}일 이동평균의 차이. " + MOVING_AVERAGE_LIMIT)
+
+    if len(closes) >= 200:
+        fact("PX.VS_MA200", "200일 이동평균 대비", (last.close / (math.fsum(closes[-200:]) / 200) - 1) * 100, "%",
+             note="종가와 200일 이동평균의 차이. " + MOVING_AVERAGE_LIMIT)
 
     if len(closes) > 20:
-        fact("PX.VOL_20D", "최근 20거래일 일간 수익률의 연율화 변동성",
-             realized_volatility(closes[-21:]), "%",
-             note="최근 21개 종가로 구한 20개 일간 로그수익률의 표본표준편차 × √252 × 100. 20일 누적 등락률이나 예상 하락폭이 아님. 원시 종가 기준으로 기업행사 미보정.")
+        volatility = realized_volatility(closes[-21:])
+        # Price basis is stated once in the shared context, not in every note.
+        fact("PX.VOL_20D", "최근 20거래일 일간 수익률의 연율화 변동성", volatility, "%",
+             note="최근 21개 종가로 구한 20개 일간 로그수익률의 표본표준편차 × √252 × 100. "
+                  f"하루 단위 표준편차로는 약 {volatility / math.sqrt(252):.1f}%. 20일 누적 등락률이나 예상 하락폭이 아님.")
 
     if len(bars) >= 21:
         avg = sum(b.volume for b in bars[-21:-1]) / 20
@@ -436,6 +447,33 @@ def price_facts(bars: list[PriceBar], *, provider: str = "pykrx") -> list[Fact]:
         if avg > 0:
             fact("PX.VOLUME_RATIO", "거래량 / 20일 평균", last.volume / avg, "x")
     return out
+
+
+def daily_facts(bars: list[PriceBar], *, provider: str, index: dict[date, float]) -> list[Fact]:
+    """One fact per recent session: the change is the value, the bar and volume are the note."""
+    out = []
+    for i in range(max(1, len(bars) - DAILY_FACT_SESSIONS), len(bars)):
+        bar, previous = bars[i], bars[i - 1]
+        note = (f"전일 종가 {previous.close:,.0f}원, 시가 {bar.open:,.0f}·고가 {bar.high:,.0f}·"
+                f"저가 {bar.low:,.0f}·종가 {bar.close:,.0f}원, 거래량 {bar.volume:,.0f}주")
+        prior = bars[i - 20:i] if i >= 20 else []
+        average = sum(b.volume for b in prior) / 20 if prior else 0
+        if average > 0:
+            note += f"(직전 20거래일 평균의 {bar.volume / average:.2f}배)"
+        if bar.date in index and previous.date in index:
+            note += f". 같은 날 코스피 {(index[bar.date] / index[previous.date] - 1) * 100:+.2f}%"
+        out.append(Fact(id=f"{DAILY_FACT_PREFIX}{bar.date:%Y%m%d}", category="price",
+                        label=f"{bar.date.month}월 {bar.date.day}일 등락률",
+                        value=round((bar.close / previous.close - 1) * 100, 2), unit="%",
+                        as_of=bar.date, source=provider, note=note))
+    return out
+
+
+MOVING_AVERAGE_LIMIT = "이동평균은 종가만의 단순 평균이라 거래량을 반영하지 않으며, 투자자들이 산 가격의 평균이 아님."
+
+
+def moving_average_note(n: int) -> str:
+    return f"최근 {n}개 종가의 산술평균. " + MOVING_AVERAGE_LIMIT
 
 
 def realized_volatility(closes: list[float]) -> float:
@@ -457,9 +495,10 @@ def moving_average_series(bars: list[PriceBar], series: SnapshotSeries) -> list[
                   for i in range(len(bars) - len(series.stock_ohlcv) + 1, len(bars) + 1)]
         series.moving_averages[key] = points
         if points[-1].value is not None:
+            # Whole won like PX.MA20/60/120; the series keeps chart precision.
             facts.append(Fact(id=key, category="price", label=f"{n}일 이동평균",
-                              value=points[-1].value, unit="KRW/share", as_of=bars[-1].date,
-                              source="derived", note=f"최근 {n}개 종가의 산술평균"))
+                              value=_round(points[-1].value, "KRW/share"), unit="KRW/share", as_of=bars[-1].date,
+                              source="derived", note=moving_average_note(n)))
     return facts
 
 

@@ -89,7 +89,8 @@ def build_debate_graph(
                 previous = history[-1].statement.model_dump_json()
                 task += f"\n이전 분석: {previous}\n재검토 요청: {state['decisions'][-1].reason}"
             conversation = Conversation(
-                system=f"{side.label} 측에서 가설과 반증을 조사하고 제공된 근거 ID를 인용하세요.\n" + prompts.NEWS_LOOKUP_RULES,
+                system=(f"{side.label} 측에서 가설과 반증을 조사하고 제공된 근거 ID를 인용하세요.\n"
+                        + prompts.SNAPSHOT_CSV_RULES + prompts.NEWS_LOOKUP_RULES),
                 messages=[{"role": "user", "content": task}],
             )
             calls = []

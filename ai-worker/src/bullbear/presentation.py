@@ -5,6 +5,9 @@ from .verifier import Issue
 from .history import history_entry, reference_map, contains_quote
 
 
+_REQUEST_ID = re.compile(r"(?<![A-Za-z0-9])@[FSI]\d+(?![A-Za-z0-9])")
+
+
 def error(code, message):
     return Issue(severity="error", code=code, message=message)
 
@@ -39,6 +42,8 @@ def statement_issues(statement, round_kind, used):
     if len(ids) > 3 or len(ids) != len(set(ids)):
         issues.append(error("evidence_limit", "서로 다른 근거를 최대 3개만 쓰세요."))
     text = "\n".join([statement.claim, statement.argument, *(e.interpretation for e in statement.evidence)])
+    if _REQUEST_ID.search(text):
+        issues.append(error("internal_details", "본문의 내부 ID를 지우고 근거는 [E1] 번호로만 가리키세요."))
     issues += money_issues(text)
     return issues
 
@@ -76,7 +81,7 @@ def verdict_issues(decision, *, comments=(), extra_question=None):
         issues.append(error("reasoning_length", f"판정 이유가 {count}문장입니다. 불확실성 설명까지 포함해 최대 3문장으로 다시 쓰세요."))
     if any(sentence_count(t) > 1 for t in comments):
         issues.append(error("comment_length", "양측 평가는 각각 한 문장으로 쓰세요."))
-    if re.search(r"\b(?:PX|MKT|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):
+    if _REQUEST_ID.search(text) or re.search(r"\b(?:PX|MKT|VAL|FIN|NEWS|DISC|DART)\.[A-Za-z0-9_.]+|evidence_accuracy|first_try_pass_rate|rejected_attempts|검증\s*통계|반려\s*(?:횟수|시도|\d)|인용\s*(?:정확도|일치율)|통과율", text):
         issues.append(error("internal_details", "내부 근거 이름·검증 통계는 글에서 빼고 근거는 [E1] 번호로만 가리키세요."))
     if re.search(r"(?:단기|장기|중장기|위험회피)\s*(?:투자자|트레이더)|손절|분할\s*매수", text):
         issues.append(error("investor_advice", "투자자별 권고·손절·분할매수 권유를 빼고 공통 질문에만 답하세요."))

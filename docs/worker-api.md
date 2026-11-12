@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.9, 초안)
+# AI 워커 API 계약 (v0.11, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -9,7 +9,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 |---|---|---|
 | 외부 노출 | 브라우저가 호출하는 유일한 서버 | 내부망 전용, Spring만 호출 |
 | 상태 | 사용자, 판정, 원장, 채점, 리그. **DB가 기준 데이터** | 스냅샷, 토론 이벤트 파일. 다시 만들 수 있는 데이터 |
-| 토론 | 요청 → 워커 이벤트 구독 → 저장 → 브라우저로 중계 | 스냅샷 고정, 토론 진행, 검증, 중재자 판정 |
+| 토론 | 요청 → 워커 이벤트 구독 → 저장 → 브라우저로 중계 | 스냅샷 고정, 토론 진행, 중재자 판정 |
 | 판정 봉인 | **중재자 판정을 사용자 판정 제출 전까지 숨긴다** | 판정을 그대로 돌려준다 (숨기지 않음) |
 | 채점 | 3일·7일 뒤 스케줄러가 종가·지수 조회 후 채점 | 종가·지수 조회 엔드포인트 제공 |
 
@@ -126,7 +126,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 | `snapshot_created` | 시작 | `{snapshot_id, ticker, name, as_of, close, warnings[]}`. `close`는 채점 기준 가격 |
 | `turn_started` | 발언 차례 시작 | `{side, round}` |
 | `tool_call` | 에이전트가 데이터 조회 | `{side, tool}` (진행 표시용) |
-| `statement_rejected` | 검증기 반려 | `{side, round, attempt, issues[]}` |
+| `statement_rejected` | 응답 형식 처리 실패 | `{side, round, attempt, issues[]}` |
 | `statement_accepted` | 발언 확정 | 아래 예시 |
 | `extra_round_requested` | 중재자가 추가 질문 | `{question}` |
 | `moderator_started` | 평가 시작 | `{}` |
@@ -135,7 +135,9 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
 
 `side`: `bull` | `bear`. `round`: `opening` | `rebuttal` | `closing` | `extra`.
 
-발언 본문은 검증을 통과한 뒤에만 보낸다 (`statement_accepted`). 검증 전 토큰은 흘리지 않는다.
+발언 본문은 응답 형식을 처리한 뒤 보낸다 (`statement_accepted`). 원시 토큰은 흘리지 않는다. v0.12부터 공개 전 리뷰어는 없다.
+v0.11 토론은 코드 내용 검증기를 실행하지 않으므로 `verified=false`, `verification_scope=not_checked`를 반환한다.
+`verified=false`는 코드 검증 미실시를 뜻하며 발언 공개 실패를 뜻하지 않는다. 이전 기록의 `verified=true`도 읽을 수 있다.
 화면의 타이핑 효과는 클라이언트에서 낸다.
 
 `statement_accepted`:
@@ -145,7 +147,8 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
   "side": "bear",
   "round": "rebuttal",
   "attempts": 2,
-  "verified": true,
+  "verified": false,
+  "verification_scope": "not_checked",
   "statement": {
     "claim": "20일 변동성이 연율 70%대다. 반등을 기다리는 동안 손실 폭이 클 수 있다.",
     "argument": "최근 20일 변동성은 70.4% [E1]로 ...",
@@ -153,7 +156,7 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
       { "ref": "E1", "source_id": "PX.VOL_20D", "value": 70.4, "interpretation": "변동성은 ..." }
     ]
   },
-  "warnings": [ { "code": "unused_evidence", "message": "..." } ]
+  "warnings": []
 }
 ```
 
@@ -175,8 +178,8 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
     }
   },
   "stats": {
-    "bull": { "statements": 3, "first_try_pass_rate": 1.0, "rejected_attempts": 0, "evidence_accuracy": 1.0 },
-    "bear": { "statements": 3, "first_try_pass_rate": 0.67, "rejected_attempts": 1, "evidence_accuracy": 0.83 }
+    "bull": { "statements": 3, "first_try_pass_rate": null, "rejected_attempts": 0, "evidence_accuracy": null },
+    "bear": { "statements": 3, "first_try_pass_rate": null, "rejected_attempts": 0, "evidence_accuracy": null }
   },
   "usage": {
     "calls": [
@@ -189,6 +192,9 @@ Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만
   }
 }
 ```
+
+검증 미실시 시 `stats.first_try_pass_rate`와 `stats.evidence_accuracy`는 `null`이다. `rejected_attempts`는 코드 내용 검증 반려 수이므로 0이다.
+필수 응답 형식의 복구 횟수는 발언별 `attempts`와 비공개 이벤트에 남는다.
 
 `usage`는 이 토론에서 쓴 LLM 사용량을 **모델별로 합친 것**이다 (재시도·반려된 발언 포함).
 `input_tokens`는 캐시를 뺀 입력 토큰 (API 응답 `usage`와 같은 뜻). `cost_usd`는 선택이다.
@@ -253,6 +259,21 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 
 ## 변경 이력
 
+- v0.12 구현 초안 (2026-11-12): 사용자 결정으로 공개 전 리뷰어를 제거한다(비용: 토론당 LLM 호출 6회, effort high).
+  필드·이벤트 구조는 그대로이며 `statement_accepted`는 응답 형식 처리 직후 전달된다. 비공개 `statement_reviewed` 이벤트와
+  감사 기록의 `statement_reviewer` 역할은 더 이상 생기지 않는다. 워커 설정 `BULLBEAR_REVIEW_STATEMENTS`는 삭제됐다. 공동 검토 전 초안이다.
+  같은 초안에서 스냅샷 `facts`에 근거로 걸 수 있는 ID가 추가된다(필드 구조는 그대로): 최근 20거래일 날짜별
+  `PX.DAY_YYYYMMDD`(값은 그날 등락률 %, note에 가격·거래량·같은 날 코스피 등락률), `PX.VS_MA200`(200일 이동평균 대비 %).
+  이동평균 Fact 값은 원 단위로 반올림한다. 웹 용어 사전에 이 ID들과 기존 `PX.MA200`이 없어 칩 이름이 ID로 보일 수 있다
+  (`facts[source_id].label` 또는 `observation.label`로 대체 필요).
+  같은 초안에서 사용자 결정으로 중재자 `verdict.decision`은 `BUY` 또는 `SELL`만 낸다(`HOLD`·판단 유보 없음, 필드 타입은 그대로라
+  예전 기록의 `HOLD`도 읽을 수 있다). `confidence`는 고른 쪽이 맞다고 보는 정도로 0.5~1을 쓴다.
+  Spring 채점에서 중재자는 더 이상 ±2%p 보유 구간을 맞힐 수 없으므로 AI 적중률의 의미가 달라진다.
+
+- v0.11 구현 초안 (2026-11-11): 사용자 요청으로 토론의 코드 내용 검증기를 제거하고 공개 전 리뷰어는 유지한다.
+  기존 필드 구조로 `verified=false`, `verification_scope=not_checked`, 미측정 검증 비율 `null`을 전달한다.
+  필수 응답 형식 복구·리뷰어 패치 처리·판정 봉인은 유지한다. Spring/web은 해당 검증 필드를 게이트로 사용하지 않음을 확인했으며 공동 검토 전 초안이다.
+
 - v0.10 (2026-11-11): 백테스트용 선택 필드. `GET /stocks/{ticker}?as_of=`, `POST /debates`의 `as_of`.
   보내지 않으면 기존과 똑같다. Spring 백테스트 실행기(`POST /ops/backtest`)가 쓴다. 워커 구현은 jangwonii.
 
@@ -295,7 +316,7 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 - HTTP 서버: 인증·종목 조회·비동기 토론·스냅샷·종목/지수 기간 시세 및 SSE 재생을 구현했다.
   SQLite로 이벤트·멱등 키를 보존하며 데이터 디렉터리당 단일 프로세스로 실행한다.
   `uv run uvicorn bullbear.server:app --port 8000`, Spring은 `worker` 프로필과 같은 `WORKER_TOKEN`을 사용한다.
-- 토론 엔진은 7거래일 판정 기준, 수치·개념·논리·표현 검증과 재작성을 적용한다.
+- 토론 엔진은 공개 전 리뷰어를 유지하며 코드의 수치·개념·논리·표현 검증과 내용 재작성을 적용하지 않는다.
   HTTP/CLI는 Anthropic 경로이고, OpenAI는 `python -m bullbear.experiment` 비교 실험에서 사용한다.
 - 주가·지수는 KRX 공식 OPEN API, 재무·공시는 OpenDART, 뉴스는 NAVER API HUB를 사용한다.
   최초 시세 캐시는 `bullbear snapshot`으로 미리 준비한다. 원시 종가의 기업행사 보정은 아직 없다.

@@ -121,11 +121,23 @@ def test_moderator_refs_are_local_to_decisive_list():
     ('MKT.KOSPI_RET_7D를 확인했습니다 [E1].','internal_details'),
     ('반려 횟수는 4회입니다.','internal_details'),
     ('evidence_accuracy는 1.0입니다.','internal_details'),
+    ('@F12가 핵심입니다 [E1].','internal_details'),
+    ('@S1의 @I3을 확인했습니다 [E1].','internal_details'),
     ('장기 투자자는 분할매수하세요.','investor_advice'),
 ])
 def test_moderator_hides_internal_detail_and_advice(text,code):
     d=verdict();d.bull.comment=text
     assert code in codes(moderator_issues(d))
+
+
+@pytest.mark.parametrize('field', ['claim', 'argument', 'interpretation'])
+def test_request_aliases_cannot_leak_into_public_statement(field):
+    candidate = statement(('E1', 'PX.CLOSE', 399))
+    target = candidate.evidence[0] if field == 'interpretation' else candidate
+    setattr(target, field, '@F12를 확인했어요 [E1].')
+    assert 'internal_details' in codes(statement_issues(candidate, 'opening', set()))
+    setattr(target, field, 'F1 시장을 확인했어요 [E1].')
+    assert 'internal_details' not in codes(statement_issues(candidate, 'opening', set()))
 
 
 def test_hold_does_not_require_a_benchmark_return_interval():

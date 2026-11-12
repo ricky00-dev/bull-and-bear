@@ -68,13 +68,12 @@ def selected_models(settings) -> dict:
 
 
 def provenance() -> dict:
-    from . import graph, graph_runtime, shared_context
+    from . import graph, graph_runtime, shared_context, model_wire
     # Hash source files as well as schemas: template rendering and reviewer
     # policy changes must be distinguishable without storing prompt text.
     result = {
         "code": code_revision(),
         "policy_version": prompts.POLICY_VERSION,
-        "judgment_policy_hash": canonical_hash(prompts.JUDGMENT_POLICY),
         "prompt_source_hashes": {
             module.__name__.rsplit(".", 1)[-1]: "sha256:" + hashlib.sha256(
                 Path(module.__file__).read_bytes()).hexdigest()
@@ -82,13 +81,14 @@ def provenance() -> dict:
         },
         "schema_hashes": {
             "statement": canonical_hash(schemas.STRUCTURED_STATEMENT_SCHEMA),
+            "statement_wire": canonical_hash(model_wire.statement_wire_schema()),
             "moderator": canonical_hash(graph_runtime.MEDIATION_SCHEMA),
             "semantic_review": canonical_hash(semantic.Review.model_json_schema()),
         },
     }
     result['worker_source_hashes'] = {
         name: 'sha256:' + hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'statement_review.py', 'history.py')
+        for name in ('llm.py', 'anthropic_budget.py', 'server/service.py', 'return_grounding.py', 'source_grounding.py', 'history.py', 'model_context.py', 'history_lookup.py', 'tools.py', 'news_lookup.py', 'data/article_body.py', 'context_ids.py', 'model_wire.py')
     }
     return result
 
@@ -266,7 +266,8 @@ class RunAudit:
             call = {"call_id": len(self.data["llm_calls"]) + 1, "role": role,
                     "client_role": client_role, "selected_model": llm.model,
                     "status": "running", "started_at": self._now(), "effort": effort,
-                    "system_hash": canonical_hash(conv.system),
+                    "system_hash": canonical_hash(conv.system if conv.common_system is None
+                                                   else [conv.common_system, conv.system]),
                     "messages_hash": canonical_hash(conv.messages),
                     "schema_hash": canonical_hash(schema), "tools_hash": canonical_hash(tools or [])}
             self.data["llm_calls"].append(call)
