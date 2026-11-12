@@ -46,7 +46,7 @@ class Reviewer:
 
     def structured(self, conv, **kwargs):
         payload = initial_payload(conv)
-        assert {'read_snapshot', 'get_new_url'} <= {tool['name'] for tool in kwargs.get('tools', [])}
+        assert {'read_snapshot', 'get_news_body'} <= {tool['name'] for tool in kwargs.get('tools', [])}
         assert '해당 스냅샷 도구를 호출' not in conv.system
         assert prompts.NEWS_CITATION_RULES in conv.system
         assert 'statement_output_instructions' not in payload

@@ -54,7 +54,7 @@ def test_custom_tool_constraints_are_adapted_before_provider_dispatch():
     assert tool['input_schema']['properties']['kind']['enum'] == ['facts', 'catalog', 'news', 'chart']
     original = next(t for t in DEBATE_TOOL_DEFINITIONS if t['name'] == 'read_snapshot')
     assert original['input_schema']['properties']['args']['maxItems'] == 8
-    assert set(t['name'] for t in calls[0]['tools']) == {'read_snapshot', 'get_new_url'}
+    assert set(t['name'] for t in calls[0]['tools']) == {'read_snapshot', 'get_news_body'}
 
 
 def test_usage_tracks_actual_model_and_cache_writes_without_haiku_fallback():

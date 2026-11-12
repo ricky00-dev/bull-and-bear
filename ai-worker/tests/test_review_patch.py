@@ -167,7 +167,7 @@ def test_review_includes_recursive_fact_dependencies_and_missing_dependency_noti
 def test_opening_review_has_no_history_tool(snapshot):
     class OpeningReviewer:
         def structured(self, conv, **kwargs):
-            assert {tool['name'] for tool in kwargs['tools']} == {'read_snapshot', 'get_new_url'}
+            assert {tool['name'] for tool in kwargs['tools']} == {'read_snapshot', 'get_news_body'}
             assert '제공된 도구만 호출한다' in conv.messages[1]['content']
             return {'issues': [], 'edits': []}
 
@@ -193,7 +193,7 @@ def test_review_can_lookup_prior_conditions_and_ground_edits_in_newly_read_facts
 
     class HistoryReviewer:
         def structured(self, conv, **kwargs):
-            assert {tool['name'] for tool in kwargs['tools']} == {'read_snapshot', 'get_new_url', 'get_statement_details'}
+            assert {tool['name'] for tool in kwargs['tools']} == {'read_snapshot', 'get_news_body', 'get_statement_details'}
             fixed = conv.context_ids.decode_response(json.loads(conv.messages[1]['content']))
             assert 'PX.BASE' not in fixed['facts_csv']
             handle = kwargs['tool_handler']

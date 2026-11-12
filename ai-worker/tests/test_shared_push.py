@@ -35,6 +35,8 @@ def compact_rows(context):
     for row in csv.DictReader(StringIO(context["facts_csv"])):
         inherited = {**metadata["default"], **metadata["groups"][row["meta"]]}
         inherited["source"] = metadata["sources"][inherited["source"]]
+        if row.get("note_ref"):
+            row["note"] = metadata["notes"][row["note_ref"]]
         rows[row["source_id"]] = {**inherited, **row}
     return rows
 
@@ -134,7 +136,9 @@ def test_legacy_snapshot_reads_without_v2_fields(tmp_path):
     assert snap.schema_version == 1 and snap.time_context is None
     assert snap.decision_at == snap.information_cutoff == NOW
     assert weekly_ohlcv(snap) == []
-    assert "chart_data" not in build_shared_push(snap)
+    push = build_shared_push(snap)
+    assert "chart_data" not in push
+    assert compact_rows(push).keys() == {"PX.CLOSE"}
     assert json.loads(SnapshotTools(snap)("get_price_metrics", {}))["items"][0]["id"] == "PX.CLOSE"
 
 
@@ -239,11 +243,16 @@ def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cite
     assert market_fact.note not in json.dumps(push, ensure_ascii=False)
     assert snap.facts[market["source_id"]].event_id.startswith("EVT.")
     assert all(a["source_id"] in snap.facts for a in (stock, market))
-    financials = compact_rows(push)
-    assert financials["FIN.2026H1.REVENUE_YOY"]["report_basis"] == "consolidated"
-    assert "published_at" not in financials["FIN.2026H1.REVENUE_YOY"]
+    shared_facts = compact_rows(push)
+    assert shared_facts["FIN.2026H1.REVENUE_YOY"]["report_basis"] == "consolidated"
+    assert "published_at" not in shared_facts["FIN.2026H1.REVENUE_YOY"]
     mod = initial_payload(moderator.calls[0][0])
     moderator_facts = compact_rows(mod)
+    kospi_ids = {"MKT.KOSPI_CLOSE", "MKT.KOSPI_VOL_20D", "MKT.KOSPI_RET_3D", "MKT.KOSPI_RET_7D",
+                 "MKT.KOSPI_RET_21D", "PX.EXCESS_KOSPI_3D", "PX.EXCESS_KOSPI_7D", "PX.EXCESS_KOSPI_21D"}
+    for fact_id in kospi_ids:
+        assert float(shared_facts[fact_id]["value"]) == snap.facts[fact_id].value
+        assert moderator_facts[fact_id]["value"] == shared_facts[fact_id]["value"]
     assert mod["snapshot_id"] == snap.snapshot_id and moderator_facts["PX.CLOSE"]["value"] == "399"
     assert len(moderator_facts) < len(snap.facts)
     for client in (bull, bear, moderator, reviewer):
@@ -269,7 +278,8 @@ def test_get_new_url_only_returns_the_requested_snapshot_news_link():
     market = next(fact for fact in snap.by_category("news") if fact.news_scope == "market")
     definitions = {tool["name"]: tool for tool in DEBATE_TOOL_DEFINITIONS}
     assert "get_news" not in definitions
-    assert definitions["get_new_url"]["input_schema"]["required"] == ["source_id"]
+    assert definitions["get_news_body"]["input_schema"]["required"] == ["source_id"]
+    assert "get_new_url" not in definitions
     tools = SnapshotTools(snap)
     assert json.loads(tools("get_new_url", {"source_id": market.id})) == {
         "source_id": market.id, "url": market.url,

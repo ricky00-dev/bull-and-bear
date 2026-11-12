@@ -85,7 +85,7 @@ class GraphRuntime:
         self.news_web_fetch = news_web_fetch
         self.news_results = {}
 
-    def news_lookup(self, llm, stage, role):
+    def news_lookup(self, stage, role):
         with self.lock:
             previous = {}
             for earlier in _STAGES[:_STAGES.index(stage)]:
@@ -98,8 +98,7 @@ class GraphRuntime:
             with self.lock:
                 self.log.append('news_fetch_result', role=role, round=stage, source_id=source_id, **result)
 
-        return NewsLookup(self.snapshot, enabled=self.news_web_fetch and
-                          getattr(llm, 'model', '').startswith('claude-sonnet-5-5'),
+        return NewsLookup(self.snapshot, enabled=self.news_web_fetch,
                           previous=previous, record=record, require_summary_lookup=True)
 
     def emit(self, event, payload):
@@ -121,13 +120,8 @@ class GraphRuntime:
         transcript = self.transcript(state)
         history_lookup = HistoryLookup(transcript)
         ids = RequestIds(self.snapshot, transcript)
-        news = self.news_lookup(llm, stage, side.value)
-        task = {
-            'opening': '첫 주장: 관측·해석·가정·한계를 구분해 배정 입장을 논증하세요.',
-            'rebuttal': '상대 첫 주장의 중요한 해석을 인용하고 인정·반박 이유·미해결 쟁점을 작성하세요.',
-            'closing': '상대 반박을 읽고 유지된 주장·인정할 부분·남은 불확실성·전망을 바꿀 조건을 정리하세요. '
-                       '새 논점과 새 근거는 필수가 아닙니다.',
-        }[stage]
+        news = self.news_lookup(stage, side.value)
+        task = prompts.DEBATER_TASKS[stage] + '\n' + prompts.DEBATER_TASKS['common']
         payload = {'task': task, 'output_instructions': prompts.COMPACT_STATEMENT_STYLE + WIRE_STATEMENT_RULES[stage],
                    'round': stage, 'assigned_outlook': 'BUY' if side == Side.BULL else 'SELL',
                    'history': model_history(transcript, role='debater', side=side, round_kind=stage),
@@ -151,7 +145,7 @@ class GraphRuntime:
             return history_lookup(arguments) if name == 'get_statement_details' else news.handle_tool(tools, name, arguments)
         for attempt in range(1, 4):
             raw = llm.structured(conv, schema=statement_wire_schema(stage), effort=self.debater_effort,
-                                 tools=news.tools([*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools]),
+                                 tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
                                  tool_handler=ids.wrap_tool_handler(tool), on_event=news.observe)
             try:
                 statement = Statement.model_validate(ids.decode_response(expand_statement_response(raw, stage)))
@@ -194,7 +188,7 @@ class GraphRuntime:
         transcript = self.transcript(state)
         history_lookup = HistoryLookup(transcript)
         ids = RequestIds(self.snapshot, transcript)
-        news = self.news_lookup(self.moderator, 'verdict', 'moderator')
+        news = self.news_lookup('verdict', 'moderator')
         tools = SnapshotTools(self.snapshot)
         conv = Conversation.from_snapshot(MEDIATOR_SYSTEM,
             ids.encode_context(build_moderator_context(self.snapshot, transcript)), ids.encode_context({
@@ -207,7 +201,7 @@ class GraphRuntime:
         conv.context_ids = ids
         for attempt in range(1, 4):
             raw = self.moderator.structured(conv, schema=MEDIATION_SCHEMA, effort=self.moderator_effort,
-                tools=news.tools([*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools]),
+                tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
                 tool_handler=ids.wrap_tool_handler(lambda name, arguments: history_lookup(arguments)
                     if name == 'get_statement_details' else news.handle_tool(tools, name, arguments)), on_event=news.observe)
             try:

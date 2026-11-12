@@ -72,9 +72,10 @@ def test_reviewer_fetches_missing_fact_with_alias_then_uses_it_in_edit(snapshot)
     assert result.revised_statement.evidence[0].value == 42
 
 
-def test_reviewer_news_lookup_updates_shared_news_state():
-    from .test_news_lookup import article_snapshot, fetch_blocks, MODEL, BODY
+def test_reviewer_news_lookup_updates_shared_news_state(monkeypatch):
+    from .test_news_lookup import article_snapshot, mock_fetch, MODEL, BODY
     snapshot, article = article_snapshot()
+    fetches = mock_fetch(monkeypatch, True)
     candidate = review_candidate(snapshot)
     news = NewsLookup(snapshot, enabled=True, require_summary_lookup=True)
 
@@ -82,16 +83,11 @@ def test_reviewer_news_lookup_updates_shared_news_state():
         model = MODEL
 
         def structured(self, conv, **kwargs):
-            assert 'web_fetch' in {tool['name'] for tool in kwargs['tools']}
+            assert {tool['name'] for tool in kwargs['tools']} == {'get_news_body', 'read_snapshot'}
             alias = conv.context_ids.fact_ids[article.id]
-            summaries = json.loads(kwargs['tool_handler']('read_snapshot',
-                {'kind': 'facts', 'args': [alias]}))
-            assert article.note in summaries['facts_csv']
-            result = json.loads(kwargs['tool_handler']('get_new_url', {'source_id': alias}))
-            assert result['url'] == article.url and result['summary'] == article.note
-            requested, fetched = fetch_blocks(article.url, True)
-            kwargs['on_event'](requested['type'], requested)
-            kwargs['on_event'](fetched['type'], fetched)
+            kwargs['tool_handler']('read_snapshot', {'kind': 'facts', 'args': [alias]})
+            result = json.loads(kwargs['tool_handler']('get_news_body', {'source_id': alias}))
+            assert result['source_id'] == alias and result['text'] == BODY
             response = revised_review(candidate, sources=(article.id,))
             return conv.context_ids.encode_context(response)
 
@@ -100,3 +96,4 @@ def test_reviewer_news_lookup_updates_shared_news_state():
     assert result.issues[0].source_ids == [article.id]
     assert news.results[article.id]['status'] == 'body'
     assert news.results[article.id]['text'] == BODY
+    assert fetches == [article.url]

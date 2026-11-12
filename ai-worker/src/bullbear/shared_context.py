@@ -10,10 +10,13 @@ from .history import history_entry
 from .snapshot import Fact, Snapshot, chart_window_start, week_start
 
 PRICE_IDS = (
-    "PX.CLOSE", "PX.VOL_20D", "PX.MA200", "PX.EXCESS_KOSPI_3D", "PX.EXCESS_KOSPI_7D",
+    "PX.CLOSE", "PX.VOL_20D", "PX.MA200", "MKT.KOSPI_CLOSE", "MKT.KOSPI_VOL_20D",
+    "MKT.KOSPI_RET_3D", "PX.EXCESS_KOSPI_3D",
+    "MKT.KOSPI_RET_7D", "PX.EXCESS_KOSPI_7D",
+    "MKT.KOSPI_RET_21D", "PX.EXCESS_KOSPI_21D",
 )
 VALUATION_IDS = ("VAL.PER_TTM", "VAL.PBR", "VAL.DEBT_RATIO")
-NEWS_PREVIEW_LIMITS = {"market": 1, "company": 2}
+NEWS_PREVIEW_TARGETS = {"market": 3, "company": 7}
 _CORE_ACCOUNTS = {
     "REVENUE", "REVENUE_YTD", "REVENUE_YOY",
     "OPERATING_INCOME", "OPERATING_INCOME_YTD", "OPERATING_INCOME_YOY", "OPERATING_CASH_FLOW",
@@ -40,10 +43,9 @@ def core_fact_ids(snapshot: Snapshot, *, moderator: bool = False) -> set[str]:
     """Fixed, side-neutral coverage of price, earnings, valuation and macro risk."""
     facts = snapshot.facts
     ids = {key for key in (*PRICE_IDS, *VALUATION_IDS) if key in facts}
-    # Relative-return facts already carry the comparison. Supply its components
-    # only if the comparison itself is unavailable; all inputs remain queryable.
-    ids.update(key for n in (3, 7) if f"PX.EXCESS_KOSPI_{n}D" not in facts
-               for key in (f"PX.RET_{n}D", f"MKT.KOSPI_RET_{n}D") if key in facts)
+    # Keep the stock return as a fallback when the short-window comparison is missing.
+    ids.update(f"PX.RET_{n}D" for n in (3, 7)
+               if f"PX.EXCESS_KOSPI_{n}D" not in facts and f"PX.RET_{n}D" in facts)
     financials = snapshot.by_category("financials")
     latest = max((f for f in financials if f.source != "derived"),
                  key=lambda f: (f.as_of, f.report_period or "", f.id), default=None)
@@ -71,15 +73,15 @@ def ordered_news(snapshot: Snapshot, scope: str) -> list[Fact]:
                   key=sort_key, reverse=True)
 
 
-def preview_news(snapshot: Snapshot, scope: str) -> list[Fact]:
-    selected, events = [], set()
-    for fact in ordered_news(snapshot, scope):
+def _take_news(facts: list[Fact], limit: int, events: set[str]) -> list[Fact]:
+    selected = []
+    for fact in facts:
+        if len(selected) == limit:
+            break
         event = fact.event_id or fact.id
         if event not in events:
             selected.append(fact)
             events.add(event)
-        if len(selected) == NEWS_PREVIEW_LIMITS[scope]:
-            break
     return selected
 
 
@@ -120,11 +122,35 @@ def fact_table_csv(facts: Iterable[Fact]) -> str:
     return _record_table(rows, ("source_id", "category", "label", "value", "unit", "as_of", "source"))
 
 
+def _compact_fact_rows(rows):
+    columns = ("source_id", "label", "value", "unit", "meta")
+    table = _record_table(rows, columns)
+    counts = Counter(row["note"] for row in rows if "note" in row)
+    repeated = (note for note, count in counts.items() if count > 1)
+    refs = {note: f"n{index}" for index, note in enumerate(repeated)}
+    if not refs:
+        return table, {}
+
+    referenced_rows = [row.copy() for row in rows]
+    for row in referenced_rows:
+        if ref := refs.get(row.get("note")):
+            row["note_ref"] = ref
+            del row["note"]
+    compact = _record_table(referenced_rows, columns)
+    note_metadata = {"notes": {ref: note for note, ref in refs.items()}}
+    original_json = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
+    compact_json = json.dumps([compact, note_metadata], ensure_ascii=False, separators=(",", ":"))
+    if len(compact_json) < len(original_json):
+        return compact, note_metadata
+    return table, {}
+
+
 def build_compact_fact_context(facts: Iterable[Fact], *, price_as_of=None) -> dict:
     """Factor repeated provenance; preserve every value, unit, qualifier and input ID.
 
     ``meta`` joins a row to ``fact_metadata.groups``. Group values override
     ``fact_metadata.default``; the group's source references ``sources``.
+    ``note_ref`` points to an unchanged note in the same table's ``notes`` map.
     Dependency IDs need not have rows: callers can retrieve them with get_facts.
     """
     facts = sorted(facts, key=lambda fact: fact.id)
@@ -159,20 +185,36 @@ def build_compact_fact_context(facts: Iterable[Fact], *, price_as_of=None) -> di
             groups[group_ids[signature]] = item
         row["meta"] = group_ids[signature]
         rows.append(row)
+    table, note_metadata = _compact_fact_rows(rows)
     return {
-        "facts_csv": _record_table(rows, ("source_id", "label", "value", "unit", "meta")),
+        "facts_csv": table,
         "fact_metadata": {
             "default": {"as_of": default_date} if default_date is not None else {},
             "sources": {key: source for source, key in sources.items()},
             "groups": groups,
+            **note_metadata,
         },
     }
 
 
 def build_news_context(snapshot: Snapshot) -> dict:
-    news = {"market": [], "company": []}
-    for scope in news:
-        for fact in preview_news(snapshot, scope):
+    ordered = {scope: ordered_news(snapshot, scope) for scope in NEWS_PREVIEW_TARGETS}
+    events: set[str] = set()
+    preview = {}
+    for scope, facts in ordered.items():
+        preview[scope] = _take_news(facts, NEWS_PREVIEW_TARGETS[scope], events)
+    # Use any unfilled slots for additional articles from the other scope.
+    remaining = sum(NEWS_PREVIEW_TARGETS.values()) - len(events)
+    for scope, facts in ordered.items():
+        if remaining == 0:
+            break
+        additional = _take_news(facts, remaining, events)
+        preview[scope].extend(additional)
+        remaining -= len(additional)
+
+    news = {scope: [] for scope in ordered}
+    for scope, facts in preview.items():
+        for fact in facts:
             news[scope].append({
                 "source_id": fact.id,
                 "title": fact.label,
@@ -183,7 +225,7 @@ def build_news_context(snapshot: Snapshot) -> dict:
     return {
         "market_news_csv": _record_table(news["market"], ("source_id", "title")),
         "stock_news_csv": _record_table(news["company"], ("source_id", "title")),
-        "news_available": {scope: len(ordered_news(snapshot, scope)) for scope in news},
+        "news_available": {scope: len(facts) for scope, facts in ordered.items()},
     }
 
 

@@ -27,8 +27,7 @@ WIRE_STATEMENT_RULES = {
     'opening': _EVIDENCE_WIRE_RULES + 'rebuttal=closing=null.',
     'rebuttal': _EVIDENCE_WIRE_RULES +
         'rebuttal=[target_statement_id,exact_quote,acknowledged,reason,*unresolved]; closing=null. '
-        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다. '
-        '자신의 argument에서도 같은 논점을 다룬다.',
+        '실제 상대 발언을 대상으로 삼고 claim/argument에서 최소 6자를 그대로 인용한다.',
     'closing': _EVIDENCE_WIRE_RULES +
         'rebuttal=null. closing에는 retained,conceded,outlook_reason,'
         'uncertainties,change_conditions,stance_change별로 [kind,*texts] 행을 하나씩 쓴다. '

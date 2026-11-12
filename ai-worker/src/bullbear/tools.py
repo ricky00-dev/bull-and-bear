@@ -79,11 +79,10 @@ DEBATE_TOOL_DEFINITIONS = [
         },
     },
     {
-        # Keep this name separate: Anthropic web_fetch allowlists its URL output.
-        "name": "get_new_url",
-        "description": "Get a frozen news URL by source_id for web_fetch.",
+        "name": "get_news_body",
+        "description": "read_snapshot으로 요약을 읽은 뒤 필요한 정보가 없을 때 기사 source_id로 본문을 조회한다. 먼저 호출하면 요약을 반환한다.",
         "input_schema": {
-            "type": "object", "properties": {"source_id": {"type": "string"}},
+            "type": "object", "properties": {"source_id": {"type": "string", "description": "제공된 뉴스 Fact ID"}},
             "required": ["source_id"], "additionalProperties": False,
         },
     },

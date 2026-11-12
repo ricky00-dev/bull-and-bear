@@ -80,20 +80,28 @@ def test_per_round_supplement_restores_only_extra_cited_facts_and_dependency_ids
     assert referenced_fact_context(snap, transcript("unknown")) == {"missing_referenced_fact_ids": ["unknown"]}
 
 
-def test_news_preview_is_neutral_deterministic_and_event_deduplicated_with_detail_access():
+@pytest.mark.parametrize(('market_events', 'company_events', 'expected'), [
+    (4, 12, (3, 7)), (0, 12, (0, 10)), (9, 3, (7, 3)), (2, 3, (2, 3)),
+])
+def test_news_preview_is_neutral_deterministic_and_event_deduplicated_with_detail_access(
+        market_events, company_events, expected):
     snap = snapshot()
-    article = snap.by_category("news")[0]
-    for n in range(12):
-        fact = article.model_copy(update={"id": f"NEWS.extra{n:02}", "label": f"기사 {n}",
-            "published_at": article.published_at - timedelta(minutes=n), "event_id": f"event{n // 2}"})
-        snap.facts[fact.id] = fact
+    article, = snap.by_category("news")
+    del snap.facts[article.id]
+    for scope, count in (("market", market_events), ("company", company_events)):
+        for n in range(2 * count):
+            fact = article.model_copy(update={"id": f"NEWS.{scope}{n:02}", "label": f"기사 {n}",
+                "published_at": article.published_at - timedelta(minutes=n),
+                "news_scope": scope, "event_id": f"{scope}{n // 2}"})
+            snap.facts[fact.id] = fact
     push = build_shared_push(snap)
-    preview = rows(push["stock_news_csv"])
-    assert len(preview) == 2
-    assert len({snap.facts[key].event_id for key in preview}) == 2
-    assert push["news_available"]["company"] == 13
-    assert all("summary" not in row for row in preview.values())
-    assert all(snap.facts[key].note not in row.values() for key, row in preview.items())
+    previews = {"market": rows(push["market_news_csv"]), "company": rows(push["stock_news_csv"])}
+    assert (len(previews["market"]), len(previews["company"])) == expected
+    for scope, preview in previews.items():
+        assert list(preview) == [f"NEWS.{scope}{n:02}" for n in range(0, 2 * len(preview), 2)]
+        assert all("summary" not in row for row in preview.values())
+        assert all(snap.facts[key].note not in row.values() for key, row in preview.items())
+    assert push["news_available"] == {"market": 2 * market_events, "company": 2 * company_events}
     reversed_snapshot = snap.model_copy(update={"facts": dict(reversed(list(snap.facts.items())))})
     assert build_shared_push(reversed_snapshot) == push
     tools = SnapshotTools(snap)
@@ -105,7 +113,7 @@ def test_news_preview_is_neutral_deterministic_and_event_deduplicated_with_detai
         assert not visited & page.keys()
         visited.update(page)
         offset = result["next_offset"]
-    assert visited == {f.id for f in snap.by_category("news")}
+    assert visited == {f.id for f in snap.by_category("news") if f.news_scope == "company"}
 
 
 def test_compact_fact_metadata_round_trips_values_units_dates_basis_and_qualifiers():
@@ -137,9 +145,28 @@ def test_compact_fact_metadata_round_trips_values_units_dates_basis_and_qualifie
             observed = getattr(fact, field)
             if observed:
                 assert row[field] == observed.isoformat()
-    assert len(rows(build_shared_push(snap)["facts_csv"])) < 20
-    assert "PX.RET_3D" not in rows(build_shared_push(snap)["facts_csv"])
+    shared = rows(build_shared_push(snap)["facts_csv"])
+    assert len(shared) < 26
+    assert "PX.RET_3D" not in shared
     assert "PX.RET_3D" in snap.facts  # Still accessible for detailed validation.
+
+
+def test_shared_kospi_note_is_sent_once_without_changing_fact_metadata():
+    snap = snapshot()
+    context = build_shared_push(snap)
+    raw = rows(context["facts_csv"])
+    restored = compact_rows(context)
+    for period in (3, 7, 21):
+        keys = (f"MKT.KOSPI_RET_{period}D", f"PX.EXCESS_KOSPI_{period}D")
+        ref = raw[keys[0]]["note_ref"]
+        assert ref and raw[keys[1]]["note_ref"] == ref
+        assert context["fact_metadata"]["notes"][ref] == snap.facts[keys[0]].note
+        for key in keys:
+            fact = snap.facts[key]
+            assert not raw[key].get("note")
+            assert restored[key]["note"] == fact.note
+            assert restored[key]["source"] == fact.source
+            assert json.loads(restored[key].get("inputs") or "[]") == fact.inputs
 
 
 def test_fact_lookup_batches_exact_values_reports_unknown_ids_and_limits_responses():
@@ -172,7 +199,7 @@ def test_catalog_exposes_omitted_facts_and_rejects_invalid_pagination():
     assert source_id in rows(json.loads(tools("get_facts", {"source_ids": [source_id]}))["facts_csv"])
     assert catalog["next_offset"] is None
     definitions = {tool["name"] for tool in DEBATE_TOOL_DEFINITIONS}
-    assert {"read_snapshot", "get_new_url"} == definitions
+    assert {"read_snapshot", "get_news_body"} == definitions
     # Stored old requests still have a compatible local handler.
     assert json.loads(tools("get_price_metrics", {}))["items"]
     for offset in (-1, True, "0", 1.5):

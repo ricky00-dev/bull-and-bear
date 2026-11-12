@@ -116,7 +116,7 @@ def test_tool_wrapper_decodes_ids_before_execution_and_encodes_only_returned_ids
     assert json.loads(result) == {'source_id': '@F3', 'note': 'PX.CLOSE'}
     assert request_ids.decode_tool_arguments('get_statement_details', {'statement_id': '@S2'}) == {
         'statement_id': 'deb:bear:t1'}
-    assert request_ids.decode_tool_arguments('get_new_url', {'source_id': '@F1'}) == {'source_id': 'NEWS.A'}
+    assert request_ids.decode_tool_arguments('get_news_body', {'source_id': '@F1'}) == {'source_id': 'NEWS.A'}
     assert request_ids.decode_tool_arguments('read_snapshot', {'kind': 'catalog', 'args': ['@F3', '0']}) == {
         'kind': 'catalog', 'args': ['@F3', '0']}
     assert request_ids.encode_tool_result('plain error PX.CLOSE') == 'plain error PX.CLOSE'

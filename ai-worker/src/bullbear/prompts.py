@@ -5,11 +5,11 @@ from __future__ import annotations
 from .schemas import RoundKind, Side, Statement
 from .shared_context import fact_for_model
 
-POLICY_VERSION = "langgraph-korean-prompts-v30"
+POLICY_VERSION = "langgraph-closing-rebuttal-evidence-v36"
 
 SNAPSHOT_CSV_RULES = """
 CSV 첫 행은 열 이름이며 source_id는 Fact 식별자다. 빈칸은 값 없음, 뉴스·공시의 value는 null이다.
-meta는 해당 표의 metadata.groups, source는 metadata.sources에서 찾는다. 행 값, 그룹 값, 기본값 순으로 우선한다.
+해당 표의 meta, source, note_ref는 각각 metadata.groups, metadata.sources, metadata.notes를 참조한다. 행 값, 그룹 값, 기본값 순으로 우선한다.
 facts_csv는 fact_metadata, referenced_facts_csv는 referenced_fact_metadata를 사용한다. 별칭은 해당 표 안에서만 유효하다.
 """
 
@@ -24,13 +24,13 @@ DEBATE_RULES = """
 """ + PUBLIC_DECISION_STYLE
 
 NEWS_CITATION_RULES = """
-제목만 보고 뉴스 내용을 인용하지 않는다. 뉴스 Fact ID를 인용하기 전에 기사 본문을 확인한다.
-본문 조회가 실패하거나 불가능하면 조회한 요약만 사용하고 '기사 요약에 따르면'이라고 밝힌다. 본문과 요약이 모두 없으면 인용하지 않는다.
+제목만 보고 뉴스 내용을 인용하지 않는다. 저장 요약을 먼저 읽고, 요약으로 확인한 내용을 인용할 때는 '기사 요약에 따르면'이라고 밝힌다.
+공개 발언에서 요약만 사용했다는 이유로 본문 미확인이나 막연한 불확실성 문구를 덧붙이지 않는다. 결론에 영향을 주는 미확인 수치·맥락·조건이 있다면 그 내용만 구체적으로 밝힌다. 읽은 요약과 본문이 모두 없으면 인용하지 않는다.
 관측 사실과 인과·전망에 관한 의견을 구분하고 의견의 주체를 밝힌다.
 """
 
 NEWS_LOOKUP_RULES = NEWS_CITATION_RULES + """
-web_fetch를 사용할 수 있으면 get_new_url(source_id)이 반환한 URL로 본문을 조회한다. 기존 news_lookup_results를 재사용한다. URL만 받은 것은 본문 확인이 아니다.
+read_snapshot을 사용할 수 있으면 kind=facts, args=[source_id]로 저장 요약을 조회한다. 그 결과를 읽은 뒤, 요약이 없거나 논증에 필요한 수치·맥락·발언 주체가 요약에 없을 때만 get_news_body에 기사 source_id를 넣는다. 기존 news_lookup_results를 재사용한다.
 """
 
 SNAPSHOT_LOOKUP_RULES = SNAPSHOT_CSV_RULES + NEWS_LOOKUP_RULES + """
@@ -39,27 +39,57 @@ SNAPSHOT_LOOKUP_RULES = SNAPSHOT_CSV_RULES + NEWS_LOOKUP_RULES + """
 """
 
 _DEBATER_ROLE = {
-    Side.BULL: (
-        "당신은 투자 교육 토론의 매수(상승) 측 토론자 황소다. "
-        "요약에서는 개선 가능성을 뒷받침하는 근거부터 짚고, 전망이 성립할 조건을 밝힌다.\n"
-    ),
-    Side.BEAR: (
-        "당신은 투자 교육 토론의 매도(하락) 측 토론자 곰이다. "
-        "요약에서는 하락 위험을 뒷받침하는 근거부터 짚고, 위험이 이어질 조건을 밝힌다.\n"
-    ),
+    Side.BULL: "당신은 투자 교육 토론의 매수(상승) 측 토론자 황소다.\n",
+    Side.BEAR: "당신은 투자 교육 토론의 매도(하락) 측 토론자 곰이다.\n",
 }
 
 _DEBATER_RULES = """자료가 약하면 한계를 밝히면서 배정된 입장을 논증한다.
 상대가 실제로 한 말을 정확히 다루고, 인정할 부분과 남는 이견을 구분한다. 역할 선언이나 막연한 주의 문구로 논증을 대신하지 않는다.
+요약(claim)은 라운드별 지시에 따라 한국어 두 문장으로 쓴다. 근거·반박·조건·한계의 의미를 보존하고 본문보다 확신을 높이지 않는다.
+본문(argument)은 한 문단·최대 3문장으로 쓴다.
 """
+
+DEBATER_TASKS = {
+    'opening': (
+        '배정된 입장에서 가장 중요한 주장을 제시하세요. '
+        '주장을 뒷받침하는 관측 자료와 그 자료에 대한 해석을 연결하고, '
+        '관측된 사실과 추론을 혼동하지 마세요. '
+        '근거가 성립하는 조건이나 자료의 한계가 판단에 영향을 준다면 함께 설명하세요. '
+        '요약은 핵심 주장과 이를 뒷받침하는 근거를 중심으로 작성하세요.'
+    ),
+    'rebuttal': (
+        '상대 첫 주장의 핵심 논리를 정확히 짚고 답하세요. '
+        '상대가 실제로 말하지 않은 내용을 만들어 반박하거나, '
+        '상대의 입장을 과장해 요약하지 마세요. '
+        '상대 해석 중 타당한 부분이 있으면 구체적으로 인정하고, '
+        '동의하지 않는 부분은 근거와 함께 설명하세요. '
+        '상대의 근거가 결론을 충분히 뒷받침하는지, 다른 해석이나 한계는 없는지 검토하세요. '
+        '요약에는 상대 주장에 대한 평가와 핵심 반박 이유를 담으세요.'
+    ),
+    'closing': (
+        '상대가 내 입론에 제기한 핵심 반박 하나를 골라 공개 본문에서 먼저 답하세요. '
+        '그 반박의 전제를 판단할 근거를 제시하고, 그 근거로 어디까지 답할 수 있는지 설명하세요. '
+        '기존 근거로 그 전제를 판단하기 어렵다면 사용 가능한 도구로 그 전제에 직접 관련된 근거를 조회하세요. '
+        '새로 확인한 근거는 반박에 대한 답을 뒷받침할 때 출처와 함께 인용하세요. '
+        '추가 자료가 없거나 확인할 수 없다면 그 사실을 밝히고, 확인되지 않은 내용을 단정하지 마세요. '
+        '마지막에는 어떤 관측이나 변화가 나오면 판단을 바꿀지 구체적으로 제시하세요. '
+        '요약은 최종 판단, 핵심 이유, 판단을 바꿀 조건을 간결하게 담으세요.'
+    ),
+    'common': (
+        '사실에 관한 주장은 제공된 자료나 도구 조회 결과로 뒷받침하세요. '
+        '가능하면 근거 ID나 출처를 표시하고, 자료에서 직접 확인되는 사실과 '
+        '그 사실을 바탕으로 한 해석·추론을 구분하세요. '
+        '자료에 없는 수치나 상대 발언을 만들어내지 마세요. '
+        '근거가 불충분하면 확정적으로 말하지 말고 불확실한 지점을 밝혀주세요.'
+    ),
+}
 
 MODEL_HISTORY_RULES = """
 history에는 공개 발언과 인용이 있지만 내부 분석 전체는 없다. 생략된 가정·한계·인정한 논거에 의존하기 전에 get_statement_details(statement_id)로 확인한다. 해석을 관측 사실로 취급하지 않는다.
 """
 
 COMPACT_STATEMENT_STYLE = """
-claim은 근거·반박·조건·한계를 보존한 한국어 두 문장으로 쓰고 argument보다 확신을 높이지 않는다.
-argument는 한 문단·최대 3문장이다. 서로 다른 Fact를 최대 3개 인용하며 [E1]은 evidence.ref와 연결하고 제공된 source_id·value를 정확히 유지한다.
+서로 다른 Fact를 최대 3개 인용하며 [E1]은 evidence.ref와 연결하고 제공된 source_id·value를 정확히 유지한다.
 각 interpretation은 쉬운 한 문장이다. 1조 원 이상 금액은 본문에서 조 원으로 표시하고 근거 값은 원래 단위를 유지한다.
 assigned_outlook과 필요한 가정(assumptions)·한계(limits)를 명시하고 짧게 쓴다. STALE 값은 관측일을 밝힌다.
 공시는 제공된 범위에서만 근거로 삼는다. 같은 사건의 뉴스는 독립 근거로 세지 않는다.
@@ -73,9 +103,9 @@ analysis.outlook은 assigned_outlook이다. 각 evidence.ref마다 interpretatio
 """
 
 OPENING_NEWS_INSTRUCTIONS = """
-입론에서는 논지와 관련된 기사 1개를 인용한다. 공통 뉴스에서 고르거나 read_snapshot의 news/catalog로 찾고, get_new_url과 사용 가능한 본문 조회 도구로 내용을 확인한다.
+입론에서는 논지와 관련된 기사 1개를 인용한다. 공통 뉴스에서 고르거나 read_snapshot의 news/catalog로 찾고, 먼저 read_snapshot의 facts로 저장 요약을 확인한다. 요약이 충분하면 요약을 인용하고, 논증에 필요한 세부 내용이 없을 때만 get_news_body를 사용한다.
 확인한 기사 Fact 1개를 evidence에 포함하고 argument에서 해당 [E번호]로 인용한다. 기사도 전체 Fact 최대 3개 제한에 포함한다.
-본문을 확인할 수 없으면 조회한 요약을 사용하고 '기사 요약에 따르면'이라고 밝힌다. 확인 가능한 본문·요약이 모두 없으면 제목만으로 내용을 만들지 말고 기사 인용의 한계를 밝힌다.
+요약으로 확인한 내용은 '기사 요약에 따르면'이라고 출처를 밝힌다. 읽은 본문·요약이 모두 없으면 기사 내용을 인용하지 않는다.
 """
 
 _ROUND_OUTPUT_INSTRUCTIONS = {

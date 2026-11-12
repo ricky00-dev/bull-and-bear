@@ -215,7 +215,7 @@ def review_statement(llm, statement, snapshot, transcript, *, effort, side=None,
         snapshot, previous=news_results, require_summary_lookup=True)
 
     def review_tool(name, arguments):
-        if name in {'read_snapshot', 'get_new_url'}:
+        if name in {'read_snapshot', 'get_news_body'}:
             result = news.handle_tool(snapshot_tools, name, arguments)
             delivered = json.loads(result)
             # Only actually delivered complete facts may ground a later patch.
@@ -224,7 +224,7 @@ def review_statement(llm, statement, snapshot, transcript, *, effort, side=None,
                     key = row.get('source_id')
                     if key in snapshot.facts:
                         facts[key] = snapshot.facts[key]
-            if name == 'get_new_url' and delivered.get('summary'):
+            if name == 'get_news_body' and delivered.get('status') in {'body', 'summary'}:
                 key = delivered.get('source_id')
                 if key in snapshot.facts:
                     facts[key] = snapshot.facts[key]
@@ -265,8 +265,6 @@ def review_statement(llm, statement, snapshot, transcript, *, effort, side=None,
     texts = _review_texts(payload['statement'])
     had_supported_concern = False
     tools = [*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools]
-    if getattr(llm, 'model', '').startswith('claude-sonnet-5-5'):
-        tools = news.tools(tools)
     for attempt in range(2):
         raw = ids.decode_response(llm.structured(conv, schema=REVIEW_SCHEMA, effort=effort,
                              tools=tools, tool_handler=ids.wrap_tool_handler(review_tool), on_event=news.observe))

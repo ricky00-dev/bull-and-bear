@@ -253,6 +253,7 @@ class LLM:
                     raise LLMError(f"구조화 출력 파싱 실패: {text[:300]}") from e
 
             results = []
+            on_event("tool_batch_start", {})
             for block in tool_uses:
                 on_event("tool_call", {"name": block.name})
                 try:
