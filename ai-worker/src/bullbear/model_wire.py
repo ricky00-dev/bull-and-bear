@@ -65,8 +65,13 @@ def _stage(stage):
         raise ValueError(f'Unknown wire statement round: {stage}')
 
 
-def statement_wire_schema(stage):
-    _stage(stage)
+def statement_wire_schema():
+    """One schema for every round.
+
+    A different output schema rewrites the whole prompt cache, so every debater
+    request keeps this one. WIRE_STATEMENT_RULES tells the model which of
+    rebuttal/closing to fill, and expand_statement_response enforces it.
+    """
     evidence = _object({
         'ref': {'type': 'string', 'pattern': '^E[1-9][0-9]*$'},
         'source_id': {'type': 'string'}, 'value': {'type': ['number', 'null']},
@@ -78,8 +83,8 @@ def statement_wire_schema(stage):
         'claim': {'type': 'string'}, 'argument': {'type': 'string'},
         'outlook': {'type': 'string', 'enum': list(_DECISIONS)},
         'evidence': _array(evidence, 1, 3),
-        'rebuttal': _strings(5, 7) if stage == 'rebuttal' else {'type': 'null'},
-        'closing': _array(_strings(2, 4), 6, 6) if stage == 'closing' else {'type': 'null'},
+        'rebuttal': {'anyOf': [_strings(5, 7), {'type': 'null'}]},
+        'closing': {'anyOf': [_array(_strings(2, 4), 6, 6), {'type': 'null'}]},
     })
 
 

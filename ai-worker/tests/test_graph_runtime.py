@@ -83,9 +83,8 @@ def test_agent_and_reviewer_systems_do_not_impose_application_scoring():
     from bullbear.graph_runtime import MEDIATOR_SYSTEM
     from bullbear.semantic import SYSTEM as REVIEW_SYSTEM
     from bullbear.single import SYSTEM as SINGLE_SYSTEM
-    from bullbear.statement_review import REVIEW_SYSTEM as STATEMENT_REVIEW_SYSTEM
 
-    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM, STATEMENT_REVIEW_SYSTEM]
+    systems = [MEDIATOR_SYSTEM, REVIEW_SYSTEM, SINGLE_SYSTEM]
     systems += [prompts.debater_system(side) for side in Side]
     for system in systems:
         assert all(marker not in system for marker in ('7거래일', '2%p', '일곱 번째', 'T7'))
@@ -171,6 +170,8 @@ def test_parallel_initial_nodes_keep_separate_clients_ids_and_events(snapshot, t
     class Parallel(GraphLLM):
         def structured(self, conv, **kwargs):
             if not self.calls:
+                # Bear starts once Bull's response has begun; both then generate together.
+                kwargs['on_event']('stream_started', {})
                 barrier.wait(timeout=5)
             return super().structured(conv, **kwargs)
     run = runtime(snapshot, tmp_path)
@@ -191,10 +192,8 @@ def test_parallel_initial_nodes_keep_separate_clients_ids_and_events(snapshot, t
 def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
     snapshot.facts = {'PX.CLOSE': snapshot.facts['PX.CLOSE']}
     run = runtime(snapshot, tmp_path)
-    run.statement_reviewers = {side.value: GraphLLM(snapshot) for side in Side}
     result = run.run()
     assert all(result['stats'][side]['statements'] == 3 for side in ('bull', 'bear'))
-    assert all(client.count == 3 for client in run.statement_reviewers.values())
     for stats in result['stats'].values():
         assert stats['first_try_pass_rate'] is None
         assert stats['evidence_accuracy'] is None
@@ -204,7 +203,7 @@ def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
     accepted = [e for e in events if e['type'] == 'statement_accepted']
     assert all(e['verified'] is False and e['verification'] is None
                and e['verification_scope'] == 'not_checked' for e in accepted)
-    assert sum(e['type'] == 'statement_reviewed' for e in events) == 6
+    assert not any(e['type'] == 'statement_reviewed' for e in events)
     assert [e['round'] for e in accepted] == ['opening']*2 + ['rebuttal']*2 + ['closing']*2
     assert all(e['statement']['analysis']['outlook'] == ('BUY' if e['side']=='bull' else 'SELL') for e in accepted)
     assert events.index(next(e for e in events if e['type']=='moderator_started')) > events.index(accepted[-1])
@@ -219,7 +218,7 @@ def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
                               for item in record['evidence']]
         expected.append(record)
     by_id = {record['statement_id']: record for record in expected}
-    for client in (run.bull, run.bear, *run.statement_reviewers.values()):
+    for client in (run.bull, run.bear):
         calls = [initial_payload(conv) for conv, _ in client.calls]
         assert [c['round'] for c in calls] == rounds
         for call, count in zip(calls, (0, 2, 4), strict=True):
@@ -235,53 +234,6 @@ def test_fixed_rounds_join_both_sides_and_reuse_evidence(snapshot, tmp_path):
                        if 'forecast' in schema['properties']]
     assert [r['statement_id'] for r in moderator_call['history']] == list(by_id)
     assert [r['argument'] for r in moderator_call['history']] == [r['argument'] for r in expected]
-
-
-def test_reviewer_still_edits_a_draft_without_code_verifier_retries(snapshot, tmp_path, monkeypatch):
-    from bullbear import graph_runtime, verifier
-    from bullbear.news_lookup import NewsLookup
-
-    def unexpected_check(*args, **kwargs):
-        pytest.fail('The removed content verifier must not run')
-
-    monkeypatch.setattr(verifier, 'verify', unexpected_check)
-    monkeypatch.setattr(NewsLookup, 'issues', unexpected_check)
-    for name in ('verify', 'statement_issues', 'moderator_issues', 'analysis_issues',
-                 'return_issues', 'source_issues', 'concept_issues', 'repair_comments'):
-        monkeypatch.setattr(graph_runtime, name, unexpected_check, raising=False)
-
-    class Draft(GraphLLM):
-        def structured(self, conv, **kwargs):
-            raw = super().structured(conv, **kwargs)
-            raw['argument'] = '현재 가격은 999원이라 상승을 보장해요 [E1].'
-            raw['evidence'][0]['value'] = 999
-            return raw
-
-    class Reviewer(GraphLLM):
-        def structured(self, conv, **kwargs):
-            super().structured(conv, **kwargs)
-            candidate = initial_payload(conv)['statement']
-            return {'issues': [{'quote': candidate['argument'], 'kind': 'unsupported_fact',
-                'reason': '제공 종가는 399원이고 상승 보장은 확인되지 않았어요.',
-                'source_ids': ['PX.CLOSE'], 'instruction': '실제 값과 조건부 해석으로 수정하세요.'}],
-                'edits': [
-                    {'path': 'argument', 'value': '종가는 399원이며 미래 방향은 확정되지 않았어요 [E1].'},
-                    {'path': 'evidence.0.value', 'value': 399},
-                ]}
-
-    run = runtime(snapshot, tmp_path, bull=Draft(snapshot))
-    run.statement_reviewers = {'bull': Reviewer(snapshot), 'bear': GraphLLM(snapshot)}
-    result = run.run()
-    assert run.bull.count == 3 and run.bear.count == 3 and run.moderator.count == 1
-    assert all(client.count == 3 for client in run.statement_reviewers.values())
-    events = EventLog.read(run.log.path)
-    assert sum(event['type'] == 'statement_reviewed' for event in events) == 6
-    assert not any(event['type'] in ('statement_rejected', 'moderator_rejected') for event in events)
-    edited = [event['statement'] for event in events
-              if event['type'] == 'statement_accepted' and event['side'] == 'bull']
-    assert all(candidate['argument'] == '종가는 399원이며 미래 방향은 확정되지 않았어요 [E1].'
-               and candidate['evidence'][0]['value'] == 399 for candidate in edited)
-    assert result['stats']['bull']['evidence_accuracy'] is None
 
 
 def test_overlong_moderator_comment_does_not_call_an_editor(snapshot, tmp_path):
@@ -552,12 +504,11 @@ def test_live_http_uses_graph_and_preserves_usage_and_sealed_payload(setup, monk
             assert 'usage' not in result and not manifest['usage_complete']
         else:
             assert manifest['usage'] == result['usage']
-        assert len(manifest['llm_calls']) == (15 if action == 'INVALID' else 13)
-        reviews = [call for call in manifest['llm_calls'] if call['role'] == 'statement_reviewer']
-        assert len(reviews) == 6
+        # Six statements and the moderator only; there is no statement reviewer.
+        assert len(manifest['llm_calls']) == (9 if action == 'INVALID' else 7)
+        assert {call['role'] for call in manifest['llm_calls']} == {'debater', 'moderator'}
         private_events = EventLog.read(settings.debate_dir / f'{ident}.jsonl')
-        assert sum(event['type'] == 'statement_reviewed' for event in private_events) == 6
-        assert not any(kind == 'statement_reviewed' for _, kind, _ in events)
+        assert not any(event['type'] == 'statement_reviewed' for event in private_events)
         assert 'PRIVATE_INVALID_TYPE' not in json.dumps(events)
         if action == 'INVALID':
             private = EventLog.read(settings.debate_dir / f'{ident}.jsonl')
@@ -565,7 +516,7 @@ def test_live_http_uses_graph_and_preserves_usage_and_sealed_payload(setup, monk
             assert len(rejected) == 3
             assert all(e['category'] == 'schema_or_action' and e['issue_codes'] == ['invalid_mediation']
                        for e in rejected)
-    assert len(clients) == 5 and all(c.closed for c in clients)
+    assert len(clients) == 3 and all(c.closed for c in clients)
 
 
 def test_cli_calls_same_graph_runner_and_waits_for_user_before_printing_verdict(snapshot, tmp_path, monkeypatch, capsys):

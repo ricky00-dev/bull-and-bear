@@ -98,10 +98,12 @@ class Conversation:
     messages: list[dict] = field(default_factory=list)
     system_in_messages: bool = False
     context_ids: Any = None  # Worker-only codec; never serialized to the provider.
+    # Rules shared by several roles, sent as the cached top-level system ahead of the snapshot.
+    common_system: str | None = None
 
     @classmethod
     def from_snapshot(cls, system: str, snapshot_context: dict, request_context: dict,
-                      *, images: list[dict] | None = None) -> Conversation:
+                      *, images: list[dict] | None = None, common_system: str | None = None) -> Conversation:
         """Cache frozen data before request-specific instructions and the role.
 
         Keep the system message in its original position on tool calls and retries;
@@ -119,7 +121,7 @@ class Conversation:
         if images:
             messages.append({'role': 'user', 'content': deepcopy(images)})
         messages.append({'role': 'system', 'content': system})
-        return cls(system, messages, system_in_messages=True)
+        return cls(system, messages, system_in_messages=True, common_system=common_system)
 
 
 class LLM:
@@ -168,10 +170,18 @@ class LLM:
                   "strict": True, "eager_input_streaming": True}
                  if t.get("type", "custom") == "custom" else t for t in tools or []]
         json_retries = 0
+        if not conv.system_in_messages:
+            system = conv.system
+        elif conv.common_system:
+            # Its own breakpoint lets debates on other snapshots reuse it as well.
+            system = [{'type': 'text', 'text': conv.common_system,
+                       'cache_control': {'type': 'ephemeral', 'ttl': '5m'}}]
+        else:
+            system = anthropic.omit
 
         for _ in range(self.max_tool_turns):
             parameters = dict(model=self.model, max_tokens=self.max_output_tokens,
-                system=anthropic.omit if conv.system_in_messages else conv.system,
+                system=system,
                 messages=conv.messages, tools=tools or anthropic.omit,
                 output_config={"effort": effort, "format": {"type": "json_schema", "schema": anthropic_schema(schema)}})
             reservation = None
@@ -190,6 +200,8 @@ class LLM:
                     raise
             try:
                 with self.client.beta.messages.stream(**parameters) as stream:
+                    # Other requests can read this prompt's cache from here on.
+                    on_event("stream_started", {})
                     for event in stream:
                         if event.type == "text":
                             on_event("token", {"text": event.text})

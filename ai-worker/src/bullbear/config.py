@@ -21,7 +21,6 @@ class Settings:
     moderator_model: str | None = None
     worker_budget_usd: str | None = None
     worker_budget_id: str | None = None
-    review_statements: bool = True
     fred_api_key: str | None = field(default=None, repr=False)
     ecos_api_key: str | None = field(default=None, repr=False)
     vix_enabled: bool = False
@@ -62,7 +61,6 @@ def load_settings() -> Settings:
         vix_enabled=os.getenv("BULLBEAR_VIX_ENABLED", "false").strip().lower() == "true",
         market_news_limit=_news_limit("BULLBEAR_MARKET_NEWS_LIMIT", 8),
         stock_news_limit=_news_limit("BULLBEAR_STOCK_NEWS_LIMIT", 30),
-        review_statements=os.getenv("BULLBEAR_REVIEW_STATEMENTS", "true").strip().lower() == "true",
         news_web_fetch_enabled=os.getenv("BULLBEAR_NEWS_WEB_FETCH_ENABLED", "false").strip().lower() == "true",
     )
 

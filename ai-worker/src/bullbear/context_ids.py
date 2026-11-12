@@ -23,7 +23,7 @@ _PROSE_FIELDS = {
     'conceded', 'outlook_reason', 'uncertainties', 'change_conditions', 'comment',
     'comments', 'reasoning', 'common_ground', 'core_issues', 'disagreements',
     'unverified', 'outlook_basis', 'outlook_limits', 'instruction', 'task',
-    'review_instructions', 'statement_output_instructions', 'output_instructions',
+    'statement_output_instructions', 'output_instructions',
     'system', 'summary', 'text', 'note', 'label', 'title', 'description', 'warnings',
 }
 _FACT_MAP_FIELDS = {'news_lookup_results', 'facts', 'facts_by_id'}
@@ -133,11 +133,6 @@ class RequestIds:
                 result[key] = [([_map_ids(row[0], maps[1]), *deepcopy(row[1:3]),
                                  *_map_ids(row[3:], maps[0])] if isinstance(row, list) and row else
                                 self._walk(row, maps)) for row in item]
-            elif key == 'value' and isinstance(value.get('path'), str):
-                # Reviewer patches carry typed IDs in value only at named ID paths.
-                field = value['path'].rsplit('.', 1)[-1]
-                patch_map = self._field_map(field, maps)
-                result[key] = _map_ids(item, patch_map) if patch_map is not None else deepcopy(item)
             else:
                 result[key] = self._walk(item, maps)
         return result

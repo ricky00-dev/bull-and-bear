@@ -101,6 +101,10 @@ def test_statement_wire_rejects_duplicate_refs_sources_extra_keys_and_wrong_roun
         expand_statement_response(statement_wire('rebuttal'), 'closing')
     with pytest.raises(ValueError):
         expand_statement_response(statement_wire(), 'rebuttal')
+    # The shared schema allows both fields, so the adapter alone enforces the round.
+    for filled in ('rebuttal', 'closing'):
+        with pytest.raises(ValueError, match=f'{filled} must be null'):
+            expand_statement_response(statement_wire(filled), 'opening')
 
 
 @pytest.mark.parametrize('row', [
@@ -198,7 +202,7 @@ def test_anthropic_schema_relaxation_does_not_weaken_adapter_row_validation():
         expand_mediation_response(bad)
 
 
-def test_generation_schemas_are_strict_and_stage_specific():
+def test_generation_schemas_are_strict_and_round_independent():
     def inspect(node):
         if isinstance(node, dict):
             if node.get('type') == 'object':
@@ -209,13 +213,13 @@ def test_generation_schemas_are_strict_and_stage_specific():
         elif isinstance(node, list):
             for child in node:
                 inspect(child)
+    schema = statement_wire_schema()
+    inspect(anthropic_schema(schema))
+    # One schema for every round keeps the prompt cache; the adapter enforces the
+    # round (see test_statement_wire_rejects_duplicate_refs_sources_extra_keys_and_wrong_rounds).
+    for field in ('rebuttal', 'closing'):
+        assert [option['type'] for option in schema['properties'][field]['anyOf']] == ['array', 'null']
     for stage in ('opening', 'rebuttal', 'closing'):
-        schema = statement_wire_schema(stage)
-        inspect(anthropic_schema(schema))
-        for field in ('rebuttal', 'closing'):
-            assert schema['properties'][field]['type'] == ('array' if stage == field else 'null')
         assert isinstance(WIRE_STATEMENT_RULES[stage], str)
     inspect(anthropic_schema(mediation_wire_schema()))
     assert 'scores' in WIRE_MEDIATION_RULES
-    with pytest.raises(ValueError):
-        statement_wire_schema('extra')

@@ -93,17 +93,6 @@ def test_compact_wire_only_rewrites_documented_id_positions(request_ids):
     assert request_ids.decode_response(encoded) == wire
 
 
-def test_reviewer_patch_values_are_decoded_only_at_id_paths(request_ids):
-    response = {'issues': [{'quote': '@F3', 'source_ids': ['@F1'], 'reason': '@F3'}],
-                'edits': [{'path': 'evidence.0.source_id', 'value': '@F3'},
-                          {'path': 'argument', 'value': '@F3'},
-                          {'path': 'analysis.interpretations.0.limitations', 'value': ['@F3']}]}
-    decoded = request_ids.decode_response(response)
-    assert decoded['issues'] == [{'quote': '@F3', 'source_ids': ['NEWS.A'], 'reason': '@F3'}]
-    assert decoded['edits'][0]['value'] == 'PX.CLOSE'
-    assert decoded['edits'][1:] == response['edits'][1:]
-
-
 def test_tool_wrapper_decodes_ids_before_execution_and_encodes_only_returned_ids(request_ids):
     calls = []
 

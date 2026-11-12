@@ -1,6 +1,4 @@
 from copy import deepcopy
-from csv import DictReader
-from io import StringIO
 import json
 from types import SimpleNamespace as NS
 
@@ -112,7 +110,7 @@ def test_budgeted_llm_reads_body_by_article_alias_or_falls_back_to_summary(tmp_p
 
 
 @pytest.mark.parametrize('success', [True, False])
-def test_new_debate_passes_fetch_outcome_to_review_and_later_rounds(tmp_path, monkeypatch, success):
+def test_new_debate_passes_fetch_outcome_to_later_rounds_and_moderator(tmp_path, monkeypatch, success):
     snap, article = article_snapshot()
     fetches = mock_fetch(monkeypatch, success)
 
@@ -130,10 +128,10 @@ def test_new_debate_passes_fetch_outcome_to_review_and_later_rounds(tmp_path, mo
             return raw
 
     bull = NewsDebater(snap, model=MODEL)
-    bear, reviewer, moderator = (GraphLLM(snap, model=MODEL) for _ in range(3))
+    bear, moderator = (GraphLLM(snap, model=MODEL) for _ in range(2))
     log = EventLog(tmp_path / 'debate.jsonl')
     run = GraphRuntime(snap, debate_id='fetch', bull=bull, bear=bear, moderator=moderator,
-                       log=log, statement_reviewers={'bull': reviewer}, news_web_fetch=True)
+                       log=log, news_web_fetch=True)
     assert run.run()['graph_status'] == 'accepted'
     assert fetches == [article.url]
     records = EventLog.read(log.path)
@@ -143,10 +141,6 @@ def test_new_debate_passes_fetch_outcome_to_review_and_later_rounds(tmp_path, mo
     observed = initial_payload(bear.calls[1][0])['news_lookup_results'][article.id]
     assert observed['status'] == ('body' if success else 'summary')
     assert observed.get('text') == (BODY if success else None)
-    review_input = initial_payload(reviewer.calls[0][0])
-    review_facts = {row['source_id']: row for row in DictReader(StringIO(review_input['facts_csv']))}
-    assert review_facts[article.id]['note'] == article.note
-    assert review_input['news_lookup_results'][article.id] == observed
     assert initial_payload(moderator.calls[0][0])['news_lookup_results'][article.id] == observed
     assert BODY not in log.path.read_text(encoding='utf-8')
 

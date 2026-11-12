@@ -68,7 +68,7 @@ def test_full_history_preserves_exact_prose_conditions_and_ids_without_copying_f
     assert len(json.dumps(view, ensure_ascii=False)) < len(json.dumps(transcript, ensure_ascii=False))
 
 
-@pytest.mark.parametrize('role', ['moderator', 'debater', 'reviewer'])
+@pytest.mark.parametrize('role', ['moderator', 'debater'])
 def test_initial_history_keeps_public_conditions_and_moves_private_analysis_to_detail(role):
     source = turn('bear', 'rebuttal', 2, 'd:bull:t1')
     source['claim'] = '반등이 가능하지만 실적이 유지되어야 해요.'
@@ -91,41 +91,11 @@ def test_initial_history_keeps_public_conditions_and_moves_private_analysis_to_d
     assert json.loads(transcript[0]) == source
 
 
-def test_reviewer_selects_exact_rebuttal_target_but_keeps_other_quoted_turns():
-    own, other = turn('bull'), turn('bear')
-    current = turn('bull', 'rebuttal', 2, other['statement_id'])
-    only_target = model_history(encoded(own, other), role='reviewer', side='bull',
-                                round_kind='rebuttal', statement=current)
-    assert [r['statement_id'] for r in only_target] == [other['statement_id']]
-    current['argument'] = f'“{own["argument"]}”라는 설명도 점검합니다.'
-    both = model_history(encoded(own, other), role='reviewer', side='bull',
-                         round_kind='rebuttal', statement=current)
-    assert [r['statement_id'] for r in both] == [own['statement_id'], other['statement_id']]
-
-
-def test_reviewer_retains_history_for_stance_comparisons_and_invalid_targets():
-    own, other = turn('bull'), turn('bear')
-    current = turn('bull', 'rebuttal', 2, other['statement_id'])
-    current['argument'] = '기존 주장과 달라진 점을 설명합니다.'
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-    current['argument'] = '현재 주장입니다.'
-    current['analysis']['rebuttal']['target_statement_id'] = 'missing'
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-
-
-def test_reviewer_preserves_transitive_target_quotes():
-    own, other = turn('bull'), turn('bear', 'rebuttal', 2, 'd:bull:t1')
-    current = turn('bull', 'rebuttal', 3, other['statement_id'])
-    assert len(model_history(encoded(own, other), role='reviewer', side='bull',
-                             round_kind='rebuttal', statement=current)) == 2
-
-
 def test_opening_has_no_history_and_unknown_role_is_rejected():
     assert model_history(encoded(turn('bull')), role='debater', round_kind='opening') == []
-    with pytest.raises(ValueError):
-        model_history([], role='unknown')
+    for role in ('unknown', 'reviewer'):
+        with pytest.raises(ValueError):
+            model_history([], role=role)
 
 
 @pytest.mark.parametrize('stage,expected_defs', [

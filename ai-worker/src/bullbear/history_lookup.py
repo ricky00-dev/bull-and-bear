@@ -19,7 +19,9 @@ class HistoryLookup:
 
     @property
     def tools(self):
-        return [STATEMENT_DETAIL_TOOL] if self.records else []
+        # Offered even before any turn exists: a tool list that changes between
+        # rounds rewrites the whole prompt cache. Unknown IDs are refused below.
+        return [STATEMENT_DETAIL_TOOL]
 
     def __call__(self, arguments):
         if not isinstance(arguments, dict) or set(arguments) != {'statement_id'}:

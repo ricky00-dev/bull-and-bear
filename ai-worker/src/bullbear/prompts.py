@@ -5,7 +5,7 @@ from __future__ import annotations
 from .schemas import RoundKind, Side, Statement
 from .shared_context import fact_for_model
 
-POLICY_VERSION = "langgraph-closing-rebuttal-evidence-v36"
+POLICY_VERSION = "langgraph-cached-debater-rules-v38"
 
 SNAPSHOT_CSV_RULES = """
 CSV 첫 행은 열 이름이며 source_id는 Fact 식별자다. 빈칸은 값 없음, 뉴스·공시의 value는 null이다.
@@ -131,8 +131,17 @@ DEBATER_OUTPUT_INSTRUCTIONS = (_DEBATER_OUTPUT_COMMON + '\n'.join(
     '- ' + text for text in _ROUND_OUTPUT_INSTRUCTIONS.values()))
 
 
+# Identical for Bull and Bear, so it is sent once as the cached top-level system;
+# only the one-line role (debater_role) follows the request.
+DEBATER_COMMON_SYSTEM = _DEBATER_RULES + DEBATE_RULES + SNAPSHOT_LOOKUP_RULES + MODEL_HISTORY_RULES
+
+
+def debater_role(side: Side) -> str:
+    return _DEBATER_ROLE[side]
+
+
 def debater_system(side: Side) -> str:
-    return _DEBATER_ROLE[side] + _DEBATER_RULES + DEBATE_RULES + SNAPSHOT_LOOKUP_RULES + MODEL_HISTORY_RULES
+    return debater_role(side) + DEBATER_COMMON_SYSTEM
 
 
 def render_statement(side: Side, round_kind: RoundKind, st: Statement, *, include_observation: bool = True) -> str:

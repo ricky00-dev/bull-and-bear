@@ -65,7 +65,7 @@ def test_success_records_exact_snapshot_provenance_and_keeps_http_contract(setup
         assert manifest['snapshot_payload_hash'] == canonical_hash(snap)
         assert manifest['provenance']['code'] == {'revision': 'a' * 40, 'dirty': False}
         assert set(manifest['provenance']['schema_hashes']) == {
-            'statement', 'statement_opening', 'statement_rebuttal', 'statement_closing',
+            'statement', 'statement_wire',
             'moderator', 'semantic_review'}
         assert set(manifest['provenance']['prompt_source_hashes']) == {'prompts', 'semantic', 'graph', 'graph_runtime', 'shared_context'}
         assert manifest['usage'] == result['usage']

@@ -1,7 +1,7 @@
 """Live LangGraph nodes and the legacy HTTP wire-format adapter.
 
-The graph owns scheduling. This module owns model I/O, required shape recovery,
-review and publication; both speakers join after each of three fixed rounds.
+The graph owns scheduling. This module owns model I/O, required shape recovery
+and publication; both speakers join after each of three fixed rounds.
 """
 from copy import deepcopy
 import threading
@@ -21,7 +21,6 @@ from .model_wire import (statement_wire_schema, expand_statement_response, media
 from .news_lookup import NewsLookup
 from .schemas import Side, Statement, STRUCTURED_MODERATOR_SCHEMA, compact_schema
 from .shared_context import build_shared_push, build_moderator_context, referenced_fact_context
-from .statement_review import review_statement
 from .tools import DEBATE_TOOL_DEFINITIONS, SnapshotTools
 
 
@@ -41,6 +40,8 @@ def mediation_schema():
 
 MEDIATION_SCHEMA = mediation_wire_schema()
 _STAGES = ('opening', 'rebuttal', 'closing', 'verdict')
+# Upper bound on Bear's opening wait for Bull's response to start (see analyze).
+_PREFIX_WAIT_SECONDS = 30
 MEDIATOR_SYSTEM = """당신은 투자 교육 토론의 중립 중재자 부엉이다.
 여섯 발언 모두를 근거와 대조하여 사실과 가정, 인과관계, 왜곡, 유지되거나 약해진 논거와 불확실성을 평가한다.
 황소·곰에게 배정된 입장은 독립적인 투표가 아니다. 말투·확신·같은 모델 간 동의·유효한 ID와 값만으로 사실이나 예측이 입증되지는 않는다.
@@ -67,7 +68,7 @@ class MediationFailed(LLMError):
 class GraphRuntime:
     def __init__(self, snapshot, *, debate_id, bull, bear, moderator, log, emit=None,
                  max_extra_rounds=1, debater_effort='medium', moderator_effort='high',
-                 statement_reviewers=None, include_chart_image=True, news_web_fetch=False):
+                 include_chart_image=True, news_web_fetch=False):
         self.snapshot, self.debate_id, self.log = snapshot, debate_id, log
         self.bull, self.bear, self.moderator = bull, bear, moderator
         self.debater_context = {'shared_push': build_shared_push(snapshot)}
@@ -77,11 +78,8 @@ class GraphRuntime:
             raise ValueError("max_extra_rounds must be between 0 and 3")
         # Accepted for caller compatibility; fixed rounds never schedule extras.
         self.debater_effort, self.moderator_effort = debater_effort, moderator_effort
-        self.statement_reviewers = statement_reviewers or {}
         self.lock = threading.RLock()
-        # Sonnet requests reserve a full context window; avoid two simultaneous
-        # reviewer reservations exhausting a shared pilot budget unnecessarily.
-        self.review_lock = threading.Lock()
+        self.opening_prefix_cached = threading.Event()
         self.news_web_fetch = news_web_fetch
         self.news_results = {}
 
@@ -132,8 +130,9 @@ class GraphRuntime:
         if news.results:
             payload['news_lookup_results'] = dict(news.results)
         images = [self.chart_image] if stage == 'opening' and self.chart_image is not None else None
-        conv = Conversation.from_snapshot(prompts.debater_system(side), ids.encode_context(self.debater_context),
-                                          ids.encode_context(payload), images=images)
+        conv = Conversation.from_snapshot(prompts.debater_role(side), ids.encode_context(self.debater_context),
+                                          ids.encode_context(payload), images=images,
+                                          common_system=prompts.DEBATER_COMMON_SYSTEM)
         conv.context_ids = ids
         self.emit('turn_started', {'side': side, 'round': stage, 'engine': 'langgraph',
                                    'debate_flow': 'fixed_three_rounds'})
@@ -143,10 +142,25 @@ class GraphRuntime:
             calls.append(name)
             self.emit('tool_call', {'side': side, 'tool': name})
             return history_lookup(arguments) if name == 'get_statement_details' else news.handle_tool(tools, name, arguments)
+        # Simultaneous requests cannot read each other's cache writes, so Bear's
+        # opening starts once Bull's response has begun and reads the shared prefix.
+        announce = stage == 'opening' and side == Side.BULL
+        if stage == 'opening' and side == Side.BEAR:
+            self.opening_prefix_cached.wait(timeout=_PREFIX_WAIT_SECONDS)
+
+        def on_event(event, payload):
+            if announce and event == 'stream_started':
+                self.opening_prefix_cached.set()
+            news.observe(event, payload)
+
         for attempt in range(1, 4):
-            raw = llm.structured(conv, schema=statement_wire_schema(stage), effort=self.debater_effort,
-                                 tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
-                                 tool_handler=ids.wrap_tool_handler(tool), on_event=news.observe)
+            try:
+                raw = llm.structured(conv, schema=statement_wire_schema(), effort=self.debater_effort,
+                                     tools=[*DEBATE_TOOL_DEFINITIONS, *history_lookup.tools],
+                                     tool_handler=ids.wrap_tool_handler(tool), on_event=on_event)
+            finally:
+                if announce:  # Never leave Bear waiting on a request that failed to start.
+                    self.opening_prefix_cached.set()
             try:
                 statement = Statement.model_validate(ids.decode_response(expand_statement_response(raw, stage)))
             except (ValueError, ValidationError):
@@ -158,19 +172,6 @@ class GraphRuntime:
                 conv.messages.append({'role': 'user', 'content':
                     '응답 형식이 잘못되었습니다. 제공된 압축 출력 스키마에 맞춰 다시 작성하세요. ' + WIRE_STATEMENT_RULES[stage]})
                 continue
-            if side.value in self.statement_reviewers:
-                with self.review_lock:
-                    review = review_statement(self.statement_reviewers[side.value], statement,
-                        self.snapshot, transcript, effort=self.moderator_effort,
-                        side=side, round_kind=stage, news_results=news.results,
-                        shared_context=self.debater_context, news_lookup=news)
-                # Private audit only: unpublished text/reviews never enter the public event stream.
-                with self.lock:
-                    self.log.append('statement_reviewed', side=side, round=stage, attempt=attempt,
-                                    statement=statement, review=review,
-                                    original_verification=None)
-                if review.revised_statement is not None:
-                    statement = review.revised_statement
             with self.lock:
                 self.log.append('statement_attempt', side=side, round=stage, attempt=attempt,
                                 statement=statement, verification=None)

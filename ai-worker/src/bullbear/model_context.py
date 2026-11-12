@@ -5,7 +5,6 @@ view preserves the public speech verbatim. Separately authored interpretation
 details remain available through ``full_model_history`` for explicit lookup.
 """
 from copy import deepcopy
-import re
 
 from .history import history_entry
 
@@ -18,52 +17,16 @@ def _record(entry):
     return deepcopy(entry) if isinstance(entry, dict) else history_entry(entry)
 
 
-def _statement_data(statement):
-    if hasattr(statement, 'model_dump'):
-        return statement.model_dump(mode='json')
-    return statement if isinstance(statement, dict) else {}
-
-
 def _rebuttal(record):
     return (record.get('analysis') or {}).get('rebuttal') or record.get('rebuttal') or {}
 
 
-def _related_records(records, *, role, side, round_kind, statement):
-    if role == 'moderator' or round_kind in ('closing', 'extra'):
-        return records
-    if round_kind == 'opening':
+def _related_records(records, *, role, round_kind):
+    # Both openings provide the opponent's actual target and the speaker's
+    # existing position, so every later debater turn and the moderator keep all.
+    if role != 'moderator' and round_kind == 'opening':
         return []
-    if role == 'debater':
-        # Both openings provide the opponent's actual target and the speaker's
-        # existing position. Later rounds above retain their full dependencies.
-        return records
-    if role != 'reviewer' or round_kind != 'rebuttal':
-        return records
-
-    current = _statement_data(statement)
-    target = _rebuttal(current).get('target_statement_id')
-    if not target or not any(r.get('statement_id') == target for r in records):
-        return records  # Missing or legacy targets must not hide context.
-    prose = '\n'.join(current.get(key, '') for key in ('claim', 'argument'))
-    # Changes to the speaker's earlier position can require more than the
-    # named opponent turn. Keep all history for such comparisons.
-    if re.search(r'이전|앞서|당초|처음|기존|번복|수정|바꿨|바꾸|유지', prose):
-        return records
-    selected = {target}
-    # Include any other turn quoted verbatim, including the speaker's own.
-    quotes = re.findall(r'[“「『"]([^”」』"]{6,})[”」』"]', prose)
-    for record in records:
-        if any(quote in record.get(key, '') for quote in quotes for key in ('claim', 'argument')):
-            selected.add(record.get('statement_id'))
-    # A selected rebuttal may itself refer to an earlier turn.
-    while True:
-        dependencies = {_rebuttal(record).get('target_statement_id') for record in records
-                        if record.get('statement_id') in selected}
-        expanded = selected | (dependencies - {None})
-        if expanded == selected:
-            break
-        selected = expanded
-    return [record for record in records if record.get('statement_id') in selected]
+    return records
 
 
 def _compact_record(record):
@@ -106,18 +69,17 @@ def full_model_history(transcript):
     return [_compact_record(record) for entry in transcript if (record := _record(entry))]
 
 
-def model_history(transcript, *, role, side=None, round_kind=None, statement=None):
+def model_history(transcript, *, role, side=None, round_kind=None):
     """Return public speech and citations; private analysis requires lookup.
 
     This intentionally narrows the initial model context. It is not a lossless
     substitute for the full analysis. A model must fetch statement details when
     its judgment needs an assumption or limitation not stated in the speech.
     """
-    if role not in {'debater', 'reviewer', 'moderator'}:
+    if role not in {'debater', 'moderator'}:
         raise ValueError(f'Unknown history role: {role}')
     records = [record for entry in transcript if (record := _record(entry))]
-    selected = _related_records(records, role=role, side=_value(side),
-                                round_kind=_value(round_kind), statement=statement)
+    selected = _related_records(records, role=role, round_kind=_value(round_kind))
     result = []
     for record in selected:
         view = {key: deepcopy(record[key]) for key in

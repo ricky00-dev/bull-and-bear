@@ -197,10 +197,9 @@ def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cite
             return raw
 
     bull = NewsDebater(snap)
-    bear, moderator, reviewer = (GraphLLM(snap) for _ in range(3))
+    bear, moderator = (GraphLLM(snap) for _ in range(2))
     events = []
     run = GraphRuntime(snap, debate_id="shared-push", bull=bull, bear=bear, moderator=moderator,
-                       statement_reviewers={"bull": reviewer},
                        log=EventLog(tmp_path / "events.jsonl"), emit=lambda name, data: events.append((name, data)))
     assert run.run()["verdict"]["decisive_evidence"] == ["PX.CLOSE"]
     assert [payload["tool"] for name, payload in events if name == "tool_call"] == ["get_facts"]
@@ -255,17 +254,13 @@ def test_graph_bull_bear_get_identical_push_and_fetch_news_detail_only_when_cite
         assert moderator_facts[fact_id]["value"] == shared_facts[fact_id]["value"]
     assert mod["snapshot_id"] == snap.snapshot_id and moderator_facts["PX.CLOSE"]["value"] == "399"
     assert len(moderator_facts) < len(snap.facts)
-    for client in (bull, bear, moderator, reviewer):
+    for client in (bull, bear, moderator):
         for conv, _ in client.calls:
             assert {'return_context', 'source_context'}.isdisjoint(initial_payload(conv))
     assert moderator_facts[market_fact.id]["note"] == market_fact.note
     assert moderator_facts[market_fact.id]["value"] == ""
     assert "shared_push" not in mod and "stock_ohlcv" not in mod
-    review_csv = initial_payload(reviewer.calls[0][0])["facts_csv"]
-    review_facts = {row["source_id"]: row for row in csv.DictReader(StringIO(review_csv, newline=""))}
-    assert review_facts[market_fact.id]["note"] == market_fact.note
-    assert {"id", "url", "inputs", "report_basis"}.isdisjoint(review_facts[market_fact.id])
-    for client in (bull, bear, moderator, reviewer):
+    for client in (bull, bear, moderator):
         for conv, _ in client.calls:
             assert all(fact.url not in json.dumps(initial_payload(conv)) for fact in snap.by_category("news"))
     opening = next(payload["statement"] for name, payload in events
