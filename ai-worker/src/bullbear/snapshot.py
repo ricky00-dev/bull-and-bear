@@ -559,7 +559,8 @@ def valuation_facts(last: PriceBar, reports: list[FinancialReport], shares: int,
     elif ni:
         out.append(Fact(id="VAL.PER_TTM", category="valuation", label="PER(최근 4분기)", value=None, unit="text",
                         as_of=as_of, source="derived", inputs=["VAL.NET_INCOME_TTM"], note="최근 4분기 순손실로 PER 산출 불가",
-                        report_period=latest.period, report_basis=report_basis))
+                        report_period=latest.period,
+                        report_basis="consolidated" if latest.consolidated else "separate"))
     if equity and equity.current and equity.current > 0:
         derived("VAL.PBR", "PBR", mktcap / equity.current, "x", ["VAL.MKTCAP", eq_id], f"{latest.period} 자본총계 기준")
         if ni:
