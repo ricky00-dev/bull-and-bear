@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.bullbear.api.admin.AdminInterceptor;
 import com.bullbear.api.auth.AuthInterceptor;
 import com.bullbear.api.auth.CurrentUserArgumentResolver;
 
@@ -16,10 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
 
 	private final BullbearProperties properties;
 	private final AuthInterceptor authInterceptor;
+	private final AdminInterceptor adminInterceptor;
 
-	public WebConfig(BullbearProperties properties, AuthInterceptor authInterceptor) {
+	public WebConfig(BullbearProperties properties, AuthInterceptor authInterceptor, AdminInterceptor adminInterceptor) {
 		this.properties = properties;
 		this.authInterceptor = authInterceptor;
+		this.adminInterceptor = adminInterceptor;
 	}
 
 	@Override
@@ -35,7 +38,9 @@ public class WebConfig implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(authInterceptor)
 				.addPathPatterns("/api/**")
-				.excludePathPatterns("/api/auth/guest");
+				.excludePathPatterns("/api/auth/guest", "/api/admin/**");
+		// 관리자 화면은 사용자 토큰이 아니라 관리자 토큰으로 연다
+		registry.addInterceptor(adminInterceptor).addPathPatterns("/api/admin/**");
 	}
 
 	@Override

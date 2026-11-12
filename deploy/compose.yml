@@ -42,6 +42,7 @@ services:
       BULLBEAR_BACKTEST_DAILY_USD: ${BACKTEST_DAILY_USD:-40.0}
       KAKAO_REST_KEY: ${KAKAO_REST_KEY:-}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
       interval: 10s

@@ -76,6 +76,9 @@ bullbear:
     single-enabled: ${BULLBEAR_SINGLE_ENABLED:false}
     max-attempts: 3
     poll-interval: 5m
+  admin:
+    # 관리자 화면(/admin)을 여는 토큰. 비우면 관리자 API가 꺼진다 (404)
+    token: ${ADMIN_TOKEN:}
   kakao:
     # 카카오 developers > 내 애플리케이션 > 앱 키 > REST API 키. 비우면 카카오 로그인 버튼이 "준비 중"
     rest-key: ${KAKAO_REST_KEY:}

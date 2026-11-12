@@ -1,6 +1,7 @@
 import { Route, Routes, useLocation } from 'react-router'
 import { ScrollPosition } from './components/ScrollPosition'
 import { AppUpdateNotice } from './components/AppUpdateNotice'
+import { AdminPage } from './pages/AdminPage'
 import { DebatePage } from './pages/DebatePage'
 import { ExhibitPage } from './pages/ExhibitPage'
 import { HomePage } from './pages/HomePage'
@@ -20,12 +21,13 @@ import { StockPage } from './pages/StockPage'
 import { SideNav } from './components/TabBar'
 
 export default function App() {
-  // 전시 화면은 메뉴 없이 한 화면 전체를 쓴다
-  const exhibit = useLocation().pathname === '/exhibit'
+  // 전시 화면과 관리자 화면은 메뉴 없이 한 화면 전체를 쓴다
+  const { pathname } = useLocation()
+  const bare = pathname === '/exhibit' || pathname === '/admin'
   return (
     <div className="flex min-h-full">
       <ScrollPosition />
-      {!exhibit && <SideNav />}
+      {!bare && <SideNav />}
       <div className="flex min-h-full min-w-0 flex-1 flex-col">
         <AppUpdateNotice />
         <Routes>
@@ -44,6 +46,7 @@ export default function App() {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/policy/:kind" element={<PolicyPage />} />
           <Route path="/exhibit" element={<ExhibitPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/auth/kakao" element={<KakaoCallbackPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
