@@ -5,7 +5,7 @@ from __future__ import annotations
 from .schemas import RoundKind, Side, Statement
 from .shared_context import fact_for_model
 
-POLICY_VERSION = "langgraph-debater-context-v48"
+POLICY_VERSION = "langgraph-debater-context-v49"
 
 SNAPSHOT_CSV_RULES = """
 CSV 첫 행은 열 이름이며 source_id는 Fact 식별자다. 빈칸은 값 없음, 뉴스·공시의 value는 null이다.

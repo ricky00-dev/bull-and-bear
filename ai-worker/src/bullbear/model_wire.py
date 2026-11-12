@@ -11,6 +11,8 @@ from .schemas import Statement
 
 
 _DECISIONS = ('BUY', 'HOLD', 'SELL')
+# The moderator always picks a side (user decision 2026-11-12); HOLD stays valid for debaters.
+MODERATOR_DECISIONS = ('BUY', 'SELL')
 _SCORE_FIELDS = ('relevance', 'materiality', 'rebuttal', 'risk_awareness')
 _CLOSING_FIELDS = ('retained', 'conceded', 'outlook_reason', 'uncertainties',
                    'change_conditions', 'stance_change')
@@ -36,7 +38,7 @@ WIRE_STATEMENT_RULES = {
         'stance_change=maintained|weakened|revised는 배정된 입장 안에서의 변화를 뜻한다.',
 }
 WIRE_MEDIATION_RULES = (
-    '응답 형식: ACCEPT이면 forecast가 필요하고 ABSTAIN이면 null이다. scores는 정수 8개로, '
+    '응답 형식: action은 ACCEPT, forecast.decision은 BUY 또는 SELL이다. scores는 정수 8개로, '
     '매수 측 다음 매도 측 순서이며 각각 relevance/materiality/rebuttal/risk_awareness 점수(1~5)다. '
     'comments=[매수 측 평가,매도 측 평가]. evidence에는 Fact ID를 넣는다. analysis에는 '
     'common_ground,core_issues,disagreements,unverified,outlook_basis,outlook_limits별로 '
@@ -91,16 +93,15 @@ def statement_wire_schema():
 
 def mediation_wire_schema():
     forecast = _object({
-        'decision': {'type': 'string', 'enum': list(_DECISIONS)},
+        'decision': {'type': 'string', 'enum': list(MODERATOR_DECISIONS)},
         'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
         'reasoning': {'type': 'string'}, 'evidence': _strings(1, 3),
         'scores': _array({'type': 'integer', 'enum': [1, 2, 3, 4, 5]}, 8, 8),
         'comments': _strings(2, 2), 'analysis': _array(_strings(1, 4), 6, 6),
         'keys': _strings(0, 6), 'reviews': _array(_strings(3, 6), 6, 6),
     })
-    return _object({'action': {'type': 'string', 'enum': ['ACCEPT', 'ABSTAIN']},
-                    'reason': {'type': 'string'},
-                    'forecast': {'anyOf': [forecast, {'type': 'null'}]}})
+    return _object({'action': {'type': 'string', 'enum': ['ACCEPT']},
+                    'reason': {'type': 'string'}, 'forecast': forecast})
 
 
 def _keys(value, required, name, optional=()):

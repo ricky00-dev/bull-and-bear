@@ -266,6 +266,9 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
   `PX.DAY_YYYYMMDD`(값은 그날 등락률 %, note에 가격·거래량·같은 날 코스피 등락률), `PX.VS_MA200`(200일 이동평균 대비 %).
   이동평균 Fact 값은 원 단위로 반올림한다. 웹 용어 사전에 이 ID들과 기존 `PX.MA200`이 없어 칩 이름이 ID로 보일 수 있다
   (`facts[source_id].label` 또는 `observation.label`로 대체 필요).
+  같은 초안에서 사용자 결정으로 중재자 `verdict.decision`은 `BUY` 또는 `SELL`만 낸다(`HOLD`·판단 유보 없음, 필드 타입은 그대로라
+  예전 기록의 `HOLD`도 읽을 수 있다). `confidence`는 고른 쪽이 맞다고 보는 정도로 0.5~1을 쓴다.
+  Spring 채점에서 중재자는 더 이상 ±2%p 보유 구간을 맞힐 수 없으므로 AI 적중률의 의미가 달라진다.
 
 - v0.11 구현 초안 (2026-11-11): 사용자 요청으로 토론의 코드 내용 검증기를 제거하고 공개 전 리뷰어는 유지한다.
   기존 필드 구조로 `verified=false`, `verification_scope=not_checked`, 미측정 검증 비율 `null`을 전달한다.

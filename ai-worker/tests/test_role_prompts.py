@@ -54,7 +54,7 @@ def test_moderator_receives_style_instructions_without_content_retries(tmp_path)
             assert '여섯 발언 ID를 각각 한 번씩' in payload['output_instructions']
             assert WIRE_MEDIATION_RULES in payload['output_instructions']
             assert prompts.MODEL_HISTORY_RULES in conv.system
-            forecast = kwargs['schema']['properties']['forecast']['anyOf'][0]['properties']
+            forecast = kwargs['schema']['properties']['forecast']['properties']
             assert {'scores', 'comments', 'reviews', 'analysis', 'evidence'} <= forecast.keys()
             assert forecast['scores']['minItems'] == forecast['scores']['maxItems'] == 8
             assert forecast['reviews']['minItems'] == forecast['reviews']['maxItems'] == 6

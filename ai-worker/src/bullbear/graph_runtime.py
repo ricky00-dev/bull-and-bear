@@ -16,7 +16,7 @@ from .history_lookup import STATEMENT_DETAIL_TOOL, HistoryLookup
 from .llm import Conversation, LLMError
 from .model_context import full_model_history, model_history
 from .model_wire import (statement_wire_schema, expand_statement_response, mediation_wire_schema,
-                         expand_mediation_response, WIRE_STATEMENT_RULES, WIRE_MEDIATION_RULES)
+                         expand_mediation_response, MODERATOR_DECISIONS, WIRE_STATEMENT_RULES, WIRE_MEDIATION_RULES)
 from .news_lookup import NewsLookup
 from .schemas import Side, Statement
 from .shared_context import build_shared_push, build_moderator_context, referenced_fact_context
@@ -38,13 +38,13 @@ MEDIATOR_SYSTEM = """당신은 이 투자 교육 토론의 중재자다. 학생�
 
 토론자는 배정된 입장을 변호하도록 되어 있어서 두 입장은 독립된 두 표가 아니고, 말투나 확신의 세기는 증거가 아니다. 판정은 자료에서 나온다. 당신은 스냅샷의 수치 자료 전체(최근 20거래일의 날짜별 일봉 포함)와 여섯 발언의 전체 기록(근거별 해석·가정·한계, 반박과 최종변론의 상세)을 받는다. 토론자가 든 수치·날짜는 이 자료에서 확인하고, 더 앞선 일봉이나 기사 내용은 read_snapshot으로 확인한다. 토론자가 무엇을 말했고 무엇에 답했는지는 전체 기록에서 찾는다. 확인된 자료가 어느 쪽 읽기와 더 잘 맞는지로 의견을 정하고, 토론자가 놓친 중요한 사실이 있으면 그것도 판정에 쓴다. 이 종목의 수치·사건·뉴스는 받은 자료와 조회한 자료에 있는 것만 쓰고, 비율과 차이는 자료에 있는 값을 쓴다.
 
-의견은 확인한 근거 가운데 어느 쪽이 더 무거운지로 정하고, 그 판단이 얼마나 굳은지는 확신도로 나타낸다. 근거의 무게는 크기, 같은 방향을 가리키는 다른 자료가 있는지, 짧은 기간의 우연으로 설명될 수 있는지로 따진다. 양쪽에 근거가 하나씩 있다는 것만으로는 보유가 아니다. 보유는 두 힘을 따져 보니 실제로 맞먹는다는 판단이다. 빠진 자료 때문에 생기는 불확실성은 확신도에 담고, 판단에 꼭 필요한 자료가 없어 어느 쪽도 가릴 수 없을 때만 판단을 유보한다. 수익을 약속하거나, 매매를 권하거나, 목표 가격을 말하지 않고 의견으로 말한다.
+의견은 매수와 매도 가운데 하나다. 확인한 근거 가운데 어느 쪽이 더 무거운지로 고르고, 그 판단이 얼마나 굳은지는 확신도로 나타낸다. 근거의 무게는 크기, 같은 방향을 가리키는 다른 자료가 있는지, 짧은 기간의 우연으로 설명될 수 있는지로 따진다. 두 쪽이 팽팽하거나 자료가 빠져 있어도 조금이라도 더 무거운 쪽을 고르고, 그 팽팽함과 불확실성은 낮은 확신도와 해설에 담는다. 수익을 약속하거나, 매매를 권하거나, 목표 가격을 말하지 않고 의견으로 말한다.
 
 토론자의 평가와 점수는 학생이 보는 요약·본문·근거 칩을 기준으로 하고, 내부 기록은 그 발언이 무엇을 전제했는지 확인하는 데 쓴다. 토론자를 평가할 때는 추론의 질을 본다. 든 사실과 지표의 뜻이 정확한지, 그 사실에서 결론까지 이어지는 고리가 합리적인지, 상대의 실제 주장에 답했는지, 자기 논거가 틀릴 수 있는 지점을 알고 있는지다. 자료에서 합리적으로 이어지는 해석은 자료에 그대로 적혀 있지 않아도 정당한 논증이다. 양측이 다르게 한 만큼 평가와 점수도 다르게 매긴다.
 """ + prompts.DEBATE_SHARED_RULES
 
 MEDIATOR_OUTPUT_INSTRUCTIONS = """
-매수·보유·매도 의견을 낸다. 판단에 필요한 자료가 없으면 판단을 유보한다(action=ABSTAIN). confidence는 이 의견이 얼마나 굳은지를 0~1로 나타내며, 확인한 근거가 한쪽으로 모일수록 높고 엇갈릴수록 낮다.
+매수 또는 매도 의견을 낸다. confidence는 고른 쪽이 맞다고 보는 정도로 0.5(팽팽함)~1 사이이며, 확인한 근거가 한쪽으로 모일수록 높고 엇갈릴수록 0.5에 가깝다.
 reasoning은 학생 화면에 나오는 유일한 해설이다. 의견을 가른 사실과 그 사실을 어떻게 읽었는지를 담고, 토론에서 사실이나 지표의 뜻이 잘못 쓰인 곳이 있었다면 가장 중요한 하나를 바로잡는다. 이 모두를 한 문단·한국어 최대 3문장에 담는다. 근거 ID 1~3개를 [E1]부터 순서대로 인용한다.
 각 측의 comment는 그 측이 가장 잘한 점이나 가장 약했던 고리를 구체적으로 짚는 한 문장이다. 여섯 발언 ID를 각각 한 번씩 검토하고 이유와 확인한 Fact ID를 적는다.
 검토 결과는 셋 중 하나다. no_issue_found는 사실과 추론에서 고칠 점을 찾지 못한 발언, concern은 사실 오류나 결론을 흔드는 추론의 빈틈이 있는 발언, uncertain은 결론이 자료로 가릴 수 없는 전제에 크게 기대는 발언이다. 검토 이유는 그 결과를 고른 이유다.
@@ -232,6 +232,8 @@ class GraphRuntime:
                     raise ValueError('Unexpected tool')
                 if (decision.action == 'ACCEPT') != (decision.forecast is not None):
                     raise ValueError('Only ACCEPT requires a forecast')
+                if decision.forecast is not None and decision.forecast.decision.value not in MODERATOR_DECISIONS:
+                    raise ValueError('The moderator must choose BUY or SELL')
             except (ValueError, ValidationError):
                 self.log.append('moderator_rejected', attempt=attempt, category='schema_or_action',
                                 issue_codes=['invalid_mediation'])

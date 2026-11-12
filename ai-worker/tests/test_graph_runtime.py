@@ -303,6 +303,26 @@ def test_unknown_verdict_source_is_preserved_without_code_gate(snapshot, tmp_pat
     assert moderator.count == 1
 
 
+def test_moderator_must_choose_buy_or_sell(snapshot, tmp_path):
+    from bullbear.graph_runtime import MEDIATION_SCHEMA
+    forecast = MEDIATION_SCHEMA['properties']['forecast']
+    assert forecast['properties']['decision']['enum'] == ['BUY', 'SELL']
+    assert MEDIATION_SCHEMA['properties']['action']['enum'] == ['ACCEPT']
+
+    class HoldFirst(GraphLLM):
+        def structured(self, conv, **kwargs):
+            raw = super().structured(conv, **kwargs)
+            if raw.get('forecast') and self.count == 1:
+                raw['forecast']['decision'] = 'HOLD'
+            return raw
+    moderator = HoldFirst(snapshot)
+    run = runtime(snapshot, tmp_path, moderator=moderator)
+    result = run.run()
+    assert result['verdict']['decision'] == 'SELL' and moderator.count == 2
+    rejected = [e for e in EventLog.read(run.log.path) if e['type'] == 'moderator_rejected']
+    assert len(rejected) == 1
+
+
 def test_abstention_preserves_all_six_statements(snapshot, tmp_path):
     run = runtime(snapshot, tmp_path, actions=['ABSTAIN'])
     with pytest.raises(GraphStopped) as exc:
