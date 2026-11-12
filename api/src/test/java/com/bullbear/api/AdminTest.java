@@ -42,7 +42,7 @@ class AdminTest {
 	void 끝난_토론이_비용_목록_이벤트에_잡힌다() throws Exception {
 		String guest = JsonPath.read(mvc.perform(post("/api/auth/guest")).andReturn().getResponse().getContentAsString(), "$.token");
 		String id = JsonPath.read(mvc.perform(post("/api/debates").header("Authorization", "Bearer " + guest)
-				.contentType(MediaType.APPLICATION_JSON).content("{\"ticker\":\"051910\"}"))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"ticker\":\"028260\"}"))
 				.andReturn().getResponse().getContentAsString(), "$.id");
 		awaitCompleted(id, guest);
 
@@ -59,7 +59,7 @@ class AdminTest {
 
 		mvc.perform(get("/api/admin/debates").param("status", "COMPLETED").header("X-Admin-Token", "test-admin"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[?(@.id == '" + id + "')].ticker").value("051910"));
+				.andExpect(jsonPath("$[?(@.id == '" + id + "')].ticker").value("028260"));
 
 		mvc.perform(get("/api/admin/debates/" + id).header("X-Admin-Token", "test-admin"))
 				.andExpect(status().isOk())
