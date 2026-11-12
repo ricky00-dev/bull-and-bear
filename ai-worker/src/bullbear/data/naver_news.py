@@ -79,6 +79,28 @@ class NaverNewsSource(NewsSource):
             articles.extend(a for a in items if any(alias in a.title for alias in aliases))
         return articles
 
+    def _historical_items(self, query, start, end):
+        """Search candidates by relevance; dates in the query are not filters."""
+        day = end.astimezone(_KST).date()
+        prefixes = [day.strftime("%Y %m %d"), f"{day.year} 상반기"]
+        if day.month > 6:
+            prefixes.append(f"{day.year} 하반기")
+        items = []
+        for prefix in prefixes:
+            items.extend(self._search(f"{prefix} {query}", start, sort="sim"))
+        return items
+
+    def search_historical(self, ticker, name, start, end):
+        query = QUERY_OVERRIDES.get(ticker, name)
+        return filter_articles(self._historical_items(query, start, end), name, start, end)
+
+    def search_market_historical(self, start, end):
+        articles = []
+        for query, aliases in MARKET_TOPICS:
+            items = filter_articles(self._historical_items(query, start, end), None, start, end)
+            articles.extend(a for a in items if any(alias in a.title for alias in aliases))
+        return articles
+
     def close(self):
         self._http.close()
 

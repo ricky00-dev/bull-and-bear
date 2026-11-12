@@ -48,6 +48,9 @@ class Store:
         if 'mode' not in {row['name'] for row in self.db.execute('PRAGMA table_info(debates)')}:
             with self.db:
                 self.db.execute("ALTER TABLE debates ADD COLUMN mode TEXT NOT NULL DEFAULT 'debate'")
+        if "data_policy" not in {row["name"] for row in self.db.execute("PRAGMA table_info(debates)")}:
+            with self.db:
+                self.db.execute("ALTER TABLE debates ADD COLUMN data_policy TEXT NOT NULL DEFAULT 'live'")
         for row in ([] if maintenance else self.db.execute("SELECT id FROM debates WHERE status='running'").fetchall()):
             recovery = self.recovery_record(directory.parent, row['id'])
             with self.transaction() as db:
@@ -101,13 +104,13 @@ class Store:
                 raise ApiError(409, 'INVALID_REQUEST', 'request_id를 다른 요청 본문에 재사용할 수 없습니다')
             return self.get(row['debate_id'])
 
-    def create(self, request_id, fingerprint, ticker, data_date, max_running, *, mode='debate', snapshot_id=None):
+    def create(self, request_id, fingerprint, ticker, data_date, max_running, *, mode='debate', snapshot_id=None, data_policy='live'):
         with self.transaction() as db:
             prior = self.request(request_id, fingerprint)
             if prior:
                 return prior, True
             selector, values = ('snapshot_id=?', (snapshot_id,)) if snapshot_id else (
-                'ticker=? AND data_date=?', (ticker, data_date))
+                'ticker=? AND data_date=? AND data_policy=?', (ticker, data_date, data_policy))
             row = db.execute(f"SELECT * FROM debates WHERE {selector} AND mode=? AND status IN ('running','completed') ORDER BY created_at DESC LIMIT 1",
                              (*values, mode)).fetchone()
             reused = row is not None
@@ -119,6 +122,8 @@ class Store:
                            (debate_id, ticker, data_date, snapshot_id, datetime.now(KST).isoformat(), mode))
             else:
                 debate_id = row['id']
+            if not reused:
+                db.execute("UPDATE debates SET data_policy=? WHERE id=?", (data_policy, debate_id))
             db.execute('INSERT INTO requests VALUES (?,?,?)', (request_id, fingerprint, debate_id))
             return self.get(debate_id), reused
 

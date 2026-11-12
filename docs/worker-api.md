@@ -1,4 +1,4 @@
-# AI 워커 API 계약 (v0.11, 초안)
+# AI 워커 API 계약 (v0.13, 초안)
 
 Spring API 서버 ↔ Python AI 워커 사이의 약속. 양쪽은 이 문서만 보고 동시에 개발한다.
 바꿀 때는 이 문서를 먼저 고치는 PR을 올리고 양쪽 담당자가 승인한다.
@@ -258,6 +258,17 @@ Spring 채점 스케줄러가 장 마감 뒤(16:10, 18:10, 20:10) 호출한다. 
 기존 저장 판정·가짜 워커 출력에는 번호가 없을 수 있으므로 기존 텍스트 표시도 유지할 수 있다.
 
 ## 변경 이력
+
+- v0.13 구현 초안 (2026-11-12): 사용자 요청으로 최초 LLM 판정이 HOLD일 때만 단순 평균 점수 규칙을 적용한다.
+  매수 측 4항목 평균 − 매도 측 4항목 평균이 **±0.2 이내(경계 포함)는 HOLD**,
+  +0.2 초과는 BUY, −0.2 미만은 SELL이다. HOLD에서 BUY/SELL로 바뀔 때만 새 중재 요청의 task에 판정을 지정해 해설을 재생성하며 점수·평가 문구는 보존한다.
+  최초 BUY/SELL은 계산·재생성 없이 유지하며 평균·차이·mean_decision은 null로 저장한다.
+  `verdict`에 선택 필드 `decision_comparison`을 추가한다: `policy`(`hold-only-simple-mean-v1`), `hold_band`(0.2),
+  `bull_mean`, `bear_mean`, `mean_gap`, `mean_decision`, `original_verdict`(최초 판정 전체, 기존 verdict 형식),
+  `explanation_regenerated`(boolean). 과거 기록·단일 분석에는 이 필드가 없을 수 있다.
+  Spring은 기존 전체 verdict JSON 저장 경로로 원본을 보존하며 기존 최종 판정 채점·봉인 방식은 유지한다.
+  재생성 실패 시 최종 판정을 발행하지 않고 최초 판정은 워커 비공개 `moderator_original` 이벤트에 남긴다.
+  초기 중재 요청 형식·토론 흐름은 유지하며 변경 시의 추가 호출도 기존 사용량에 합산된다. 공동 검토 전 초안이다.
 
 - v0.12 구현 초안 (2026-11-12): 사용자 결정으로 공개 전 리뷰어를 제거한다(비용: 토론당 LLM 호출 6회, effort high).
   필드·이벤트 구조는 그대로이며 `statement_accepted`는 응답 형식 처리 직후 전달된다. 비공개 `statement_reviewed` 이벤트와

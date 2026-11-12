@@ -24,6 +24,8 @@ from .data.base import INCOME_ACCOUNTS
 from .data.macro import BOK_RATE, FRED_SERIES, DataStatus, MacroSource
 from .data.news_selection import select_news
 
+HISTORICAL_DATA_POLICY = "historical_news_v1"
+
 Category = Literal["price", "financials", "valuation", "disclosure", "news", "macro"]
 
 ACCOUNT_LABELS = {
@@ -123,6 +125,7 @@ class Snapshot(BaseModel):
     facts: dict[str, Fact]
     warnings: list[str] = Field(default_factory=list)
 
+    data_policy: Literal["live", "historical", "historical_news_v1"] = "live"
     schema_version: Literal[1, 2] = 1
     series: SnapshotSeries = Field(default_factory=SnapshotSeries)
     time_context: TimeContext | None = None
@@ -171,13 +174,17 @@ def build_snapshot(
     *,
     news: NewsSource | None = None,
     now: datetime | None = None,
+    as_of: date | None = None,
     index_loader=None,
     macro: MacroSource | None = None,
     market_news_limit: int = 8,
     stock_news_limit: int = MAX_NEWS,
 ) -> Snapshot:
     now = now or datetime.now(KST)
-    price_cutoff = confirmed_date(now)
+    historical = as_of is not None
+    if as_of is not None and as_of > confirmed_date(now):
+        raise ValueError("as_of는 확정 종가 기준일보다 뒤일 수 없습니다")
+    price_cutoff = as_of if as_of is not None else confirmed_date(now)
     warnings = list(getattr(source, "warnings", []))
     facts: dict[str, Fact] = {}
     status: dict[str, DataStatus] = {}
@@ -288,22 +295,25 @@ def build_snapshot(
     if news is None:
         warnings.append("뉴스 소스 미설정")
     else:
+        if historical:
+            warnings.append("과거 뉴스는 현재 검색 결과의 발행시각으로 필터링한 요약입니다. 당시 검색 목록·수정 전 본문은 재현하지 않습니다.")
+        stock_search = getattr(news, "search_historical", None) if historical else news.search
         news_start = decision_at - timedelta(days=NEWS_LOOKBACK_DAYS)
         stock_news = []
-        if stock_news_limit:
+        if stock_news_limit and stock_search is not None:
             try:
-                stock_news = select_news(news.search(ticker, name, news_start, decision_at),
-                    news_start, decision_at, limit=stock_news_limit, scope="company")
+                stock_news = select_news(stock_search(ticker, name, news_start, decision_at),
+                    news_start, decision_at, limit=stock_news_limit, scope="company", event_dedupe=historical)
                 _add(facts, news_facts(stock_news, scope="company"))
                 status["stock_news"] = "OK" if stock_news else "EMPTY"
             except DataUnavailable as e:
                 warnings.append(f"뉴스 없음: {e}")
                 status["stock_news"] = "FAILED"
-        search_market = getattr(news, "search_market", None)
+        search_market = getattr(news, "search_market_historical" if historical else "search_market", None)
         if search_market is not None and market_news_limit:
             try:
                 market_news = select_news(search_market(news_start, decision_at), news_start, decision_at,
-                    limit=market_news_limit, scope="market", already_selected=[a for a, _ in stock_news])
+                    limit=market_news_limit, scope="market", already_selected=[a for a, _ in stock_news], event_dedupe=historical)
                 _add(facts, news_facts(market_news, scope="market"))
                 status["market_news"] = "OK" if market_news else "EMPTY"
             except DataUnavailable:
@@ -325,6 +335,7 @@ def build_snapshot(
     snapshot = Snapshot(snapshot_id="", ticker=ticker, name=name, as_of=as_of,
                         created_at=datetime.now(KST), provider=source.name + (f"+{news.name}" if news else ""),
                         facts=facts, warnings=warnings, schema_version=2, series=series,
+                        data_policy=HISTORICAL_DATA_POLICY if historical else "live",
                         time_context=time_context, data_status=status)
     # Creation time is operational metadata. All reusable analysis inputs,
     # including the ordered news selection, determine the content address.
