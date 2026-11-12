@@ -36,6 +36,10 @@ public class BacktestService implements DisposableBean {
 
 	private static final Logger log = LoggerFactory.getLogger(BacktestService.class);
 
+	/** 과거 기준일 시세는 워커가 처음 계산하는 데 수십 초 걸릴 수 있다. 5초 간격으로 1분까지 기다린다 */
+	private static final int QUOTE_ATTEMPTS = 12;
+	private static final Duration QUOTE_RETRY = Duration.ofSeconds(5);
+
 	/** @param tickers 종목 코드 @param dates 기준일. 휴장일이면 워커가 그 전 거래일로 맞춘다 */
 	public record Request(List<String> tickers, List<LocalDate> dates) {
 	}
@@ -111,7 +115,7 @@ public class BacktestService implements DisposableBean {
 				}
 				Progress p = progress;
 				try {
-					WorkerStockDetail stock = worker.stock(ticker, date);
+					WorkerStockDetail stock = worker.stockWhenReady(ticker, date, QUOTE_ATTEMPTS, QUOTE_RETRY);
 					if (stock.asOf().isAfter(date)) {
 						stop("워커가 기준일(as_of)을 지원하지 않아요: " + date + " 요청에 " + stock.asOf() + " 응답");
 						return;

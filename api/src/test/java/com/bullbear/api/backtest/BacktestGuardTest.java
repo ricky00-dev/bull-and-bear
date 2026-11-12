@@ -29,7 +29,7 @@ class BacktestGuardTest {
 
 	@Test
 	void 워커가_기준일을_무시하면_토론을_만들지_않고_멈춘다() throws Exception {
-		WorkerClient worker = mock(WorkerClient.class);
+		WorkerClient worker = mock(WorkerClient.class, org.mockito.Mockito.CALLS_REAL_METHODS); // stockWhenReady는 기본 메서드
 		DebateService debates = mock(DebateService.class);
 		DebateQuota quota = mock(DebateQuota.class);
 		when(quota.backtestBudgetOpen(any())).thenReturn(true);
