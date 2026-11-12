@@ -5,7 +5,7 @@ import math
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 
 from ..data.base import DataUnavailable
@@ -48,6 +48,7 @@ class Quote:
     market: str | None
     bars: list
     reasons: list[str]
+    requested_as_of: date | None = None
 
     def detail(self):
         last, previous = self.bars[-1], self.bars[-2]
@@ -146,12 +147,16 @@ class Market:
         kospi = self.kospi_tickers(cutoff)
         return kospi is not None and ticker not in kospi
 
-    def quote(self, ticker):
+    def quote(self, ticker, *, as_of: date | None = None):
         if ticker not in self.catalog:
             self.load_catalog()
         if ticker not in self.catalog:
             raise ApiError(404, 'NOT_FOUND', '종목을 찾을 수 없습니다')
         cutoff = confirmed_date(self.now())
+        if as_of is not None:
+            if as_of > cutoff:
+                raise ApiError(400, "INVALID_REQUEST", "as_of는 확정 종가 기준일보다 뒤일 수 없습니다")
+            cutoff = as_of
         if self.outside_kospi(ticker, cutoff):
             # 코스닥 등은 시세를 받지 않는다 (KRX 키도 코스피만 승인)
             raise ApiError(422, 'NOT_ELIGIBLE', '토론할 수 없는 종목입니다', reasons=[KOSPI_ONLY])
@@ -163,7 +168,7 @@ class Market:
             self.quote_jobs = {k: v for k, v in self.quote_jobs.items() if not v.done()}
             cached = self.cache.get(key)
             if cached:
-                return cached[1]
+                return replace(cached[1], requested_as_of=as_of)
             job = self.quote_jobs.get(key)
             if job is None:
                 # Bound queued work as well as active provider requests.
@@ -172,10 +177,10 @@ class Market:
                 job = self.quote_pool.submit(self._load_quote, ticker, cutoff)
                 self.quote_jobs[key] = job
         try:
-            return job.result(timeout=self.quote_wait_seconds)
+            return replace(job.result(timeout=self.quote_wait_seconds), requested_as_of=as_of)
         except TimeoutError:
             if job.done():
-                return job.result()
+                return replace(job.result(), requested_as_of=as_of)
             # The shared task continues; subsequent requests reuse its full result.
             raise DataUnavailable('시세 데이터를 준비 중입니다. 잠시 후 다시 시도하세요') from None
         finally:
@@ -230,7 +235,8 @@ class Market:
 
     def snapshot(self, quote):
         snap = build_snapshot(FrozenPrices(self.source, quote.bars), quote.ticker, quote.name,
-                              news=self.news, now=self.now(), index_loader=self.index_loader, macro=self.macro,
+                              news=self.news, now=self.now(), as_of=quote.requested_as_of,
+                              index_loader=self.index_loader, macro=self.macro,
                               market_news_limit=self.settings.market_news_limit,
                               stock_news_limit=self.settings.stock_news_limit)
         snap.save(self.settings.snapshot_dir)

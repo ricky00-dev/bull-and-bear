@@ -51,7 +51,7 @@ def test_search_debate_sse_seal_reveal_and_scoring_reservation(ticker):
         judgment.raise_for_status()
         reveal = c.get(f'/api/debates/{debate_id}/reveal')
         reveal.raise_for_status()
-        assert reveal.json()['verdict']['decision'] == 'SELL'
+        assert reveal.json()['verdict']['decision'] == 'HOLD'
         assert set(reveal.json()['verdict']['scores']) == {'bull', 'bear'}
         judgments = c.get('/api/me/judgments')
         judgments.raise_for_status()

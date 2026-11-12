@@ -37,7 +37,7 @@ class GraphLLM:
         if 'forecast' in schema['properties']:
             action = next(self.actions, 'ACCEPT')
             score = dict(relevance=3, materiality=3, rebuttal=3, risk_awareness=3, comment='자료와 한계를 살폈다.')
-            forecast = dict(decision='SELL', confidence=.55,
+            forecast = dict(decision='HOLD', confidence=.55,
                 reasoning='7거래일 코스피 대비 비슷한 흐름을 예상하지만 관계의 지속은 불확실하다 [E1].',
                 decisive_evidence=['PX.CLOSE'], bull=score, bear=score,
                 analysis=moderator_analysis().model_dump(mode='json'))

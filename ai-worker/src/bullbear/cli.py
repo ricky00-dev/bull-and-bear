@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 from .config import Settings, load_settings
+from .server.errors import ApiError
 from .data import DataUnavailable
 from .data.universe import UNIVERSE, UnknownTicker, resolve
 from .events import EventLog
@@ -32,12 +33,12 @@ def _fmt(value: float | None, unit: str) -> str:
     return f"{value:,.0f}{_UNIT[unit]}"
 
 
-def _make_snapshot(settings: Settings, query: str) -> Snapshot:
+def _make_snapshot(settings: Settings, query: str, as_of: date | None = None) -> Snapshot:
     from .server.market import Market
     ticker, name = resolve(query)
-    market = Market(settings)
+    market = Market(settings, quote_wait_seconds=600)
     try:
-        return market.snapshot(market.quote(ticker))
+        return market.snapshot(market.quote(ticker, as_of=as_of))
     finally:
         market.close()
 
@@ -48,7 +49,7 @@ def cmd_universe(_args, _settings: Settings) -> None:
 
 
 def cmd_snapshot(args, settings: Settings) -> None:
-    snap = _make_snapshot(settings, args.ticker)
+    snap = _make_snapshot(settings, args.ticker, getattr(args, "as_of", None))
     print(f"{snap.name}({snap.ticker})  스냅샷 {snap.snapshot_id}  기준일 {snap.as_of}  공급자 {snap.provider}")
     for category in ("price", "financials", "valuation", "disclosure", "news", "macro"):
         facts = snap.by_category(category)
@@ -102,7 +103,7 @@ def cmd_debate(args, settings: Settings) -> None:
     from .llm import validate_model
     from .audit import selected_models
 
-    snap = Snapshot.load(settings.snapshot_dir, args.snapshot) if args.snapshot else _make_snapshot(settings, args.ticker)
+    snap = Snapshot.load(settings.snapshot_dir, args.snapshot) if args.snapshot else _make_snapshot(settings, args.ticker, getattr(args, "as_of", None))
     for w in snap.warnings:
         print(f"경고: {w}")
     debate_id = f"{datetime.now():%Y%m%d-%H%M%S}-{snap.ticker}"
@@ -112,7 +113,7 @@ def cmd_debate(args, settings: Settings) -> None:
     for model in models.values():
         validate_model(model)
     runner = LiveRunner(settings)
-    runner.live_news = args.snapshot is None
+    runner.live_news = args.snapshot is None and snap.data_policy == "live"
     try:
         result = runner.run(snap, debate_id, args.max_extra_rounds, _printer)
         usage = runner.usage()
@@ -165,8 +166,10 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("universe")
     p = sub.add_parser("snapshot")
     p.add_argument("ticker")
+    p.add_argument("--as-of", type=date.fromisoformat, help="과거 종가 기준일 YYYY-MM-DD (뉴스 제외)")
     p = sub.add_parser("debate")
     p.add_argument("ticker")
+    p.add_argument("--as-of", type=date.fromisoformat, help="과거 종가 기준일 YYYY-MM-DD (뉴스 제외)")
     p.add_argument("--snapshot", help="기존 스냅샷 ID로 토론 (같은 시점 데이터로 재실험)")
     p.add_argument("--no-judge", action="store_true", help="사용자 판정 입력 생략")
     p.add_argument("--max-extra-rounds", type=int, choices=range(4), default=1,
@@ -175,11 +178,13 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("debate_id")
     args = parser.parse_args(argv)
 
+    if getattr(args, "snapshot", None) and getattr(args, "as_of", None):
+        parser.error("--snapshot과 --as-of는 함께 사용할 수 없습니다")
     settings = load_settings()
     handler = {"universe": cmd_universe, "snapshot": cmd_snapshot, "debate": cmd_debate, "replay": cmd_replay}[args.command]
     try:
         handler(args, settings)
-    except (UnknownTicker, DataUnavailable) as e:
+    except (UnknownTicker, DataUnavailable, ApiError) as e:
         print(f"오류: {e}", file=sys.stderr)
         sys.exit(1)
 

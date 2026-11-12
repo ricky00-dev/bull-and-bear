@@ -13,7 +13,7 @@ from ..graph_runtime import MediationFailed, GraphRuntime, GraphStopped
 from ..events import EventLog
 from ..llm import LLM, validate_snapshot_model
 from ..single import SingleAnalyst
-from ..snapshot import Snapshot
+from ..snapshot import Snapshot, HISTORICAL_DATA_POLICY
 from .errors import ApiError
 from .store import Store
 
@@ -124,6 +124,8 @@ class Service:
         # Preserve fingerprints for pre-v0.6 and explicit default requests.
         if body.mode != 'debate' or body.snapshot_id is not None:
             identity.update(mode=body.mode, snapshot_id=body.snapshot_id)
+        if body.as_of is not None:
+            identity["as_of"] = body.as_of.isoformat()
         fingerprint = json.dumps(identity, sort_keys=True)
         existing = self.store.request(body.request_id, fingerprint)
         if existing:
@@ -133,14 +135,17 @@ class Service:
             snapshot = Snapshot.model_validate(self.store.snapshot(body.snapshot_id))
             if snapshot.ticker != body.ticker:
                 raise ApiError(400, 'INVALID_REQUEST', '스냅샷과 요청 종목이 다릅니다')
+            if body.as_of is not None and (snapshot.as_of != body.as_of or snapshot.data_policy not in ("historical", HISTORICAL_DATA_POLICY)):
+                raise ApiError(400, "INVALID_REQUEST", "스냅샷의 기준일 또는 데이터 정책이 요청과 다릅니다")
             data_date = snapshot.as_of.isoformat()
         else:
-            quote = self.market.quote(body.ticker)
+            quote = self.market.quote(body.ticker, as_of=body.as_of)
             if quote.reasons:
                 raise ApiError(422, 'NOT_ELIGIBLE', '토론할 수 없는 종목입니다', reasons=quote.reasons)
             data_date = quote.bars[-1].date.isoformat()
         row, reused = self.store.create(body.request_id, fingerprint, body.ticker,
-                                        data_date, self.max_running, mode=body.mode, snapshot_id=body.snapshot_id)
+                                        data_date, self.max_running, mode=body.mode, snapshot_id=body.snapshot_id,
+                                        data_policy=snapshot.data_policy if snapshot else (HISTORICAL_DATA_POLICY if body.as_of else "live"))
         if not reused:
             try:
                 self.pool.submit(self.run, row['id'], quote, body.max_extra_rounds, mode=body.mode, snapshot=snapshot)
@@ -194,7 +199,7 @@ class Service:
                                       self.settings.naver_client_id, self.settings.naver_client_secret,
                                       self.settings.fred_api_key, self.settings.ecos_api_key))
             with audit.stage('snapshot'):
-                live_news = snapshot is None
+                live_news = snapshot is None and quote.requested_as_of is None
                 snapshot = snapshot if snapshot is not None else self.market.snapshot(quote)
                 collected_at = snapshot.created_at
                 self.store.save_snapshot(debate_id, snapshot)

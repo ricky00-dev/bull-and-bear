@@ -27,6 +27,7 @@ class StartDebate(BaseModel):
     request_id: str = Field(min_length=1, max_length=128)
     max_extra_rounds: int = Field(default=1, ge=0, le=3)
     mode: Literal['debate', 'single'] = 'debate'
+    as_of: date | None = None
     snapshot_id: str | None = Field(default=None, min_length=1, max_length=256)
 
     @model_validator(mode='after')
@@ -104,8 +105,8 @@ def create_app(*, settings=None, market=None, runner_factory=None, token=None, m
         return svc.market.search(q, limit)
 
     @app.get('/stocks/{ticker}', dependencies=secured)
-    def stock(ticker: str, svc=Depends(service)):
-        return svc.market.quote(ticker).detail()
+    def stock(ticker: str, as_of: date | None = Query(default=None), svc=Depends(service)):
+        return svc.market.quote(ticker, as_of=as_of).detail()
 
     @app.get('/stocks/{ticker}/eligibility', dependencies=secured)
     def eligibility(ticker: str, svc=Depends(service)):
