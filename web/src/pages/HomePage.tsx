@@ -83,41 +83,44 @@ export function HomePage() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 px-5 pb-5 pt-3 md:max-w-[560px]">
-        <HeroPair />
-        <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
-          어떤 종목을
-          <br />
-          판정해 볼까요?
-        </h1>
-        <p className="text-sm leading-relaxed text-sub">
-          <b className="text-up-ink">매수</b>와 <b className="text-down-ink">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
-        </p>
-        <label
-          className={`flex min-h-14 items-center gap-2 rounded-control bg-surface pl-4 pr-1.5 transition-colors focus-within:ring-1 focus-within:ring-point ${query ? 'point-ring' : ''}`}
-        >
-          <Icon d={ICONS.search} className="text-sub" />
-          <span className="sr-only">종목 검색</span>
-          <input
-            value={query}
-            type="search"
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="종목명·코드·초성으로 검색"
-            autoComplete="off"
-            enterKeyHint="search"
-            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
-          />
-          {query && (
-            <button
-              type="button"
-              aria-label="검색어 지우기"
-              onClick={() => setQuery('')}
-              className="pressable flex size-touch items-center justify-center rounded-control text-sub"
-            >
-              <Icon d={ICONS.close} size={14} stroke={2.5} />
-            </button>
-          )}
-        </label>
+      {/* PC에서는 아래 두 칸 그리드의 왼쪽 칸과 폭을 맞춘다 */}
+      <div className="px-5 pb-5 pt-3 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-3">
+          <HeroPair />
+          <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
+            어떤 종목을
+            <br />
+            판정해 볼까요?
+          </h1>
+          <p className="text-sm leading-relaxed text-sub">
+            <b className="text-up-ink">매수</b>와 <b className="text-down-ink">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
+          </p>
+          <label
+            className={`flex min-h-14 items-center gap-2 rounded-control bg-surface pl-4 pr-1.5 transition-colors focus-within:ring-1 focus-within:ring-point ${query ? 'point-ring' : ''}`}
+          >
+            <Icon d={ICONS.search} className="text-sub" />
+            <span className="sr-only">종목 검색</span>
+            <input
+              value={query}
+              type="search"
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="종목명·코드·초성으로 검색"
+              autoComplete="off"
+              enterKeyHint="search"
+              className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="검색어 지우기"
+                onClick={() => setQuery('')}
+                className="pressable flex size-touch items-center justify-center rounded-control text-sub"
+              >
+                <Icon d={ICONS.close} size={14} stroke={2.5} />
+              </button>
+            )}
+          </label>
+        </div>
       </div>
 
       <main className="flex flex-1 flex-col gap-6 px-5 pb-8">
