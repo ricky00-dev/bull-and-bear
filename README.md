@@ -24,20 +24,17 @@ Python AI 워커 (ai-worker/) ── KRX OpenAPI, OpenDART, 네이버 뉴스, Cl
 |---|---|---|
 | `api/` | Spring Boot: 사용자, 판정 봉인·공개, 채점, 전향 운용, SSE 중계 | ricky00-dev |
 | `web/` | React + Vite + TypeScript, Tailwind, TanStack Query, SSE 수신 | ricky00-dev |
-| `ai-worker/` | 고정 스냅샷, 토론·단일 분석, 근거 검증, 중재자, HTTP/SSE | jangwonii |
+| `ai-worker/` | 고정 스냅샷, 3라운드 토론·중재자 판정, 단일 분석, HTTP/SSE | jangwonii |
 | `docs/worker-api.md` | Spring ↔ 워커 API 계약 | 공동 |
 
 각 폴더의 README에 실행 방법이 있다. 브라우저는 Spring만 호출하며, AI 판정은 사용자가 판정을 제출한 뒤 공개한다.
 
-## 문서와 현재 상태
+## 문서
 
 - [문서 안내](docs/README.md): 실행·계약·운영·실험·평가 기록의 읽는 순서
-- [워커 최신 현황과 남은 작업](docs/evaluations/worker-goal-readiness-20261102.md): 실모델 결과와 로컬 통합 검증 구분
+- [워커 README](ai-worker/README.md): 현재 기능·실행 방법·운영 시 주의사항
 - [워커 운영 안내](docs/WORKER-OPERATIONS.md): 인증, 동시 실행, 영속 비용 장부, 복구 범위
 - [로드맵](docs/ROADMAP.md), [작업 로그](docs/WORKLOG.md): 팀 일정·결정과 작업 이력
-
-2026-11-02 기준 HTTP 토론·단일 모드는 구현됐고 로컬 fixture 통합·복구 검증을 통과했다.
-실모델 단일 분석은 1회 성공했으나 토론·단일 1쌍 완주와 실제 배포는 미완료다.
 
 ## 협업 규칙
 
