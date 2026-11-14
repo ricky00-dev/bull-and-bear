@@ -29,6 +29,43 @@ Python AI 워커 (ai-worker/) ── KRX OpenAPI, OpenDART, 네이버 뉴스, Cl
 
 각 폴더의 README에 실행 방법이 있다. 브라우저는 Spring만 호출하며, AI 판정은 사용자가 판정을 제출한 뒤 공개한다.
 
+### AI Worker 아키텍처
+
+**같은 자료, 다른 관점.** 기준 시점이 고정된 스냅샷으로 매수·매도가 토론하고, 중재자가 근거를 평가합니다.
+
+```mermaid
+flowchart TB
+    sources["종목 정보 수집<br/>KRX · OpenDART · 네이버 뉴스"]
+    api["Spring API<br/>토론 요청 · 이벤트 중계 · 판정 봉인"]
+
+    subgraph worker["AI Worker · Python / LangGraph / Claude"]
+        snapshot["공통 스냅샷<br/>시세 · 재무 · 공시 · 뉴스 / 기준 시점 고정"]
+        debate["Bull 매수 · Bear 매도<br/>입론 → 반박 → 최종변론<br/>라운드별 병렬 실행 · 총 6개 발언"]
+        judge["중재자<br/>자료와 6개 발언 평가 → BUY / HOLD / SELL"]
+        tools["세 에이전트의 공통 도구<br/>read_snapshot · get_news_body · get_statement_details"]
+        snapshot --> debate --> judge
+        debate <-.->|"필요한 자료 조회"| tools
+        judge <-.->|"근거 확인"| tools
+    end
+
+    sources --> snapshot
+    api -->|"내부 HTTP · 토론 실행"| snapshot
+    judge -->|"SSE · 토론 결과와 판정"| api
+
+    classDef data fill:#eff6ff,stroke:#93b4e8,color:#172554
+    classDef agent fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    classDef server fill:#1e293b,stroke:#1e293b,color:#ffffff
+    class snapshot,tools data
+    class debate,judge,sources agent
+    class api server
+```
+
+- **공통 입력:** 양측은 같은 스냅샷을 사용하고, 반박·최종변론에서는 이전 라운드의 양쪽 발언을 읽습니다.
+- **도구 호출:** 필요한 자료를 조회한 뒤 결과를 반영해 발언하거나 판정합니다. 뉴스 외부 본문 조회는 설정과 실행 조건에 따라 제한됩니다.
+- **판정 공개:** 워커는 Spring에 판정을 반환합니다. Spring은 사용자 판정 제출 전까지 이를 브라우저에 공개하지 않습니다.
+
+라운드별 실행 흐름과 도구별 조회 범위는 [워커 아키텍처](ai-worker/README.md#ai-worker-아키텍처)를 참고하세요.
+
 ## 문서
 
 - [문서 안내](docs/README.md): 실행·계약·운영·실험·평가 기록의 읽는 순서

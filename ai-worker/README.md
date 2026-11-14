@@ -84,7 +84,39 @@ Spring은 기본적으로 가짜 워커를 사용하므로 실제 연결에는 `
 
 워커는 중재자 판정을 그대로 반환합니다. 브라우저에는 Spring을 통해 전달하며, 사용자 판정 전까지 숨기는 처리는 Spring에서 맡습니다.
 
-## 에이전트 구조
+## AI Worker 아키텍처
+
+**수집 → 스냅샷 고정 → 3라운드 토론 → 중재자 판정** 순서로 실행합니다.
+LangGraph는 각 라운드의 매수·매도 발언을 병렬로 실행하고, 두 발언이 모두 완료되면 다음 라운드로 넘어갑니다.
+
+```mermaid
+flowchart TB
+    source["종목 정보 수집<br/>KRX · OpenDART · 네이버 뉴스"]
+    snapshot["공통 분석 자료<br/>기준 시점이 고정된 스냅샷"]
+    source --> snapshot
+
+    subgraph rounds["LangGraph · 3라운드 / 총 6개 발언"]
+        direction TB
+        opening["01 입론<br/>Bull 상승 근거 · Bear 하락 위험"]
+        rebuttal["02 반박<br/>이전 라운드의 양쪽 발언 검토"]
+        closing["03 최종변론<br/>반박을 반영한 최종 입장"]
+        opening -->|"양측 완료"| rebuttal
+        rebuttal -->|"양측 완료"| closing
+    end
+
+    snapshot --> opening
+    closing --> judge["중재자 · Moderator<br/>스냅샷 + 6개 발언 평가<br/>BUY / HOLD / SELL + 이유"]
+    judge --> spring["Spring API<br/>판정 봉인 → 사용자 판정 제출 후 공개"]
+
+    classDef data fill:#eff6ff,stroke:#93b4e8,color:#172554
+    classDef stage fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    classDef server fill:#1e293b,stroke:#1e293b,color:#ffffff
+    class source,snapshot data
+    class opening,rebuttal,closing,judge stage
+    class spring server
+```
+
+### 에이전트 역할
 
 | 에이전트 | 역할 | 입력 |
 |---|---|---|
@@ -94,19 +126,6 @@ Spring은 기본적으로 가짜 워커를 사용하므로 실제 연결에는 `
 | 단일 분석가 (SingleAnalyst) | 토론 없이 중립적으로 판정하는 비교 모드 | 저장된 스냅샷, 토론 이력 없음 |
 
 일반 토론에는 매수·매도·중재자 세 역할이 참여합니다. 단일 분석가는 `mode: "single"`에서 별도로 실행합니다.
-
-```text
-KRX · OpenDART · 네이버 뉴스
-             │
-         고정 스냅샷
-             │
-       매수        매도
-       입론        입론
-       반박        반박
-     최종변론    최종변론
-             │
-         중재자 판정
-```
 
 양측은 같은 스냅샷을 읽고 세 번씩 발언합니다. 반박과 최종변론에서는 앞선 양측 발언을 함께 읽습니다.
 필요한 수치, 뉴스 요약, 이전 발언의 상세 분석은 도구로 조회합니다.
@@ -125,6 +144,16 @@ KRX · OpenDART · 네이버 뉴스
 ### 도구
 
 매수·매도·중재자는 같은 세 도구를 사용합니다.
+
+```mermaid
+flowchart LR
+    agent["Bull · Bear · Moderator<br/>자료 확인이 필요한 에이전트"]
+    tools["공통 도구<br/>read_snapshot<br/>get_news_body<br/>get_statement_details"]
+    agent -->|"도구 호출"| tools
+    tools -->|"조회 결과 반환 · 추론 계속"| agent
+    style agent fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    style tools fill:#eff6ff,stroke:#93b4e8,color:#172554
+```
 
 | 도구 | 조회 내용 |
 |---|---|
