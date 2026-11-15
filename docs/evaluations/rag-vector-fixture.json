@@ -1,0 +1,228 @@
+{
+  "schema": "rag-vector-comparison-v1",
+  "generation_id": "G.0206002dd498c43985a70445fb230d0a1284b6f94314d60dd00bf8b81df2867f",
+  "embedding_version": "EMV.7db181595cb10223b1694a6480034c8f00a536ca22ec924be414bc4f5f2dc9a0",
+  "time_policy": "reconstructed-v1",
+  "judgments_hash": "94e970790011f8ef5a28e082a7c690276bb81ad73d9a2568f857d113a9bb4e3c",
+  "latency_scope": "cached_search_and_context_persistence_excludes_embedding_and_index_build",
+  "evidence_type": "synthetic_vectors_and_judgments_not_real_embedding_quality",
+  "summary": {
+    "bm25": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 0,
+      "p95_cached_seconds": 0.0732280999654904,
+      "recall": 0.5,
+      "mrr": 0.5,
+      "ndcg": 0.5
+    },
+    "dense": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 1,
+      "p95_cached_seconds": 0.1919381000334397,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0
+    },
+    "hybrid": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 1,
+      "p95_cached_seconds": 0.12876839993987232,
+      "recall": 1.0,
+      "mrr": 0.75,
+      "ndcg": 0.8154648767857288
+    }
+  },
+  "results": [
+    {
+      "case_id": "semantic",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.17d0f42e2dff4c46d146bdfcd95d406020b8c81619e06d5b98d7ee4a14e1ef5e",
+      "selected": [
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0732280999654904,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "semantic",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.24f303d7cf550685b3d1d69d328fee4ef5ede48637a993db9a531369c576ad1f",
+      "selected": [
+        "C.52d38d96424f1314ecc32d8cc8406ead0e779b0f51354d4595766d4e057c21f3",
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1919381000334397,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "semantic",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.6c63944a562600cf531a4322e258e7c93bf533efe001a72102e8b80520814da8",
+      "selected": [
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b",
+        "C.52d38d96424f1314ecc32d8cc8406ead0e779b0f51354d4595766d4e057c21f3"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12876839993987232,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 0.5,
+      "ndcg": 0.6309297535714575,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "direct",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.2969839c636ac5454a713734fcd3dc2afe4d259479cb3a7948c997439fa4afc5",
+      "selected": [
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04578479996416718,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "direct",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.4bdced361c4fc429f7c9b8f360212c3046922a44357f8cbe7cfb6d5cb74c3d91",
+      "selected": [
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1",
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12635040003806353,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "direct",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.00f905c0f73b755939d3fa693b20bb44524dcbd90f056e14b9a85152b75c015e",
+      "selected": [
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1",
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11540000000968575,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "negative",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.79e51c4d2a419fa514cf7481dcb4cabe2b2f8f6806e68a2f5715223fa83fe8bb",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04396390006877482,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "negative",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.230455689d8763c42e1b1a29dfdcc486808c8109b847cc77a2d66e2d1849c478",
+      "selected": [
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1",
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.10594150004908442,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "negative",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.ac28a9038b6ce941d7063844d8db2b4ae001b8fa6122134afe68810168d1db67",
+      "selected": [
+        "C.058ed1c918db91fbc28a7a0f20abbfb13d62bfde0d9fd4065b92a028d53fa7a1",
+        "C.2a165573f917e5406effa60091d2be3aba90c0f024b90167a721b1143f6c589b"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.10857010004110634,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "unexpected_answer": true
+    }
+  ],
+  "embedding_ledger": [
+    {
+      "version_id": "EMV.7db181595cb10223b1694a6480034c8f00a536ca22ec924be414bc4f5f2dc9a0",
+      "calls": 7,
+      "reserved_nano": 0,
+      "measured_cost_nano": 0,
+      "unknown_calls": 0,
+      "input_tokens": 7
+    }
+  ],
+  "embedding_spec": {
+    "provider": "fixture",
+    "model": "synthetic-concepts",
+    "revision": "acceptance-v1",
+    "dimensions": 3,
+    "preprocessing": "identity-v1",
+    "document_prefix": "",
+    "query_prefix": "",
+    "price_revision": "synthetic-zero-no-api",
+    "nano_usd_per_token": 0
+  },
+  "pgvector_version": "0.8.7"
+}

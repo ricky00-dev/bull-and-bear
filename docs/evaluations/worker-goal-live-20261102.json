@@ -1,0 +1,237 @@
+{
+  "source_directory": "ai-worker/data/http-live-20261102-121301-ef3a1e",
+  "policy_version": "7d-concise-v5",
+  "provenance": {
+    "code": {
+      "revision": "bb28c57ea79f16837f5854adca8ef76d5dce08d5",
+      "dirty": true
+    },
+    "policy_version": "7d-concise-v5",
+    "judgment_policy_hash": "sha256:14e2b82e7236a57e1ffa0afe0c300be633f6245598ac78432d6ef028f43c47f9",
+    "prompt_source_hashes": {
+      "prompts": "sha256:4e934e133bc7c7cbfb11d10e4dc8de7a5b17249fe9b3e9ec42402f32df2e8aa9",
+      "semantic": "sha256:21b55eef4635fa431dae95ff533ce518f8a707b94a9c7597d514c1544d273592"
+    },
+    "schema_hashes": {
+      "statement": "sha256:814ded64b24f832e3ce0efe1c39c80b1a8f5c8bb9bfeb613cea320f6e74ba3e6",
+      "moderator": "sha256:585310ea0a47b37e054b4c524a93a20b5253c1d732aafd2700c296f2dbd484e4",
+      "semantic_review": "sha256:62c0e3290e81f215c8fa3f341a40908e1df7b096c3baa0a0900190349fee3671"
+    },
+    "rag_source_hashes": {
+      "context.py": "sha256:1be18ea07af82adfd78444d3345f07cffdb16206052b956b43f61099fe25ec7c",
+      "retrieval.py": "sha256:ee39cbe2340ca21685c39446a3c44ab8616672b51c75c9e5dce6a1e552438ab7",
+      "embeddings.py": "sha256:c8f57ec41ac82c14995b32ff78b318c3e260c45f3837f27d15851628dca4da3f",
+      "vectors.py": "sha256:7abce3ee5a4e4e58159d24803756714f90e9795ea5d5f70fb3dae6339df409c5",
+      "index.py": "sha256:4959bdf60e8055206f08b9f0830ac7103428cdc579eb18f460857cc9591feb91",
+      "replay.py": "sha256:67d632b24a4f4ca1da19ff522792059009a0320d989f1841331fd1e65cd94834",
+      "context_repository.py": "sha256:a095d132ee37b5559615f5ad8b41a0aa7d359f41ad1c6ff2c70bc7732710bcbf",
+      "archive_repository.py": "sha256:8eed8ece4a0210c78e02c4e5ab43360b4ebaf123314e5fbd9eae237d3a6ea282",
+      "objects.py": "sha256:536409a576bd5cef06f555290b22adfa0c6271874f1999b55d661896d8308912",
+      "store.py": "sha256:cff7281e8d2bc4a1a16927b6333f5af7da6f98ee360368c69cfb8e8923cc11c6",
+      "schemas.py": "sha256:67bc9c58ffd4b344f03e6c22d564ed618389d0685f1a4a19d4daa65b7fdb92f6"
+    }
+  },
+  "max_extra_rounds": 0,
+  "rag": false,
+  "server_stopped": true,
+  "known_cost_usd": 0.4149254,
+  "unknown_requests": 0,
+  "runs": [
+    {
+      "mode": "debate",
+      "status": "failed",
+      "elapsed_seconds": 209.959,
+      "snapshot_sha256": "1a7164a0e9e8630a2144d8293b72c59f3e1eee89af0cd06f9d0dce1601054d66",
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "requests": 17,
+      "cost_usd": 0.0557934,
+      "accepted_statements": 3,
+      "rejected_candidates": [
+        {
+          "type": "statement_attempt",
+          "round": "opening",
+          "side": "bull",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "argument_length",
+              "ref": null,
+              "message": "본문은 최대 3문장으로 쓰세요."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bull",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘배당 관련 소식이 향후 7거래일 안에 가격에 반영되어 코스피 대비 +2%p를 넘는 것’: 2026년 10월 29일 현금·현물배당결정 공시는 기준일(10월 30일 종가) 이전에 이미 나온 정보이므로, 이를 평가 구간 안의 새 계기로 연결하려면 별도 근거가 필요하다. 후보는 배당 금액과 기준일이 자료에 없어 가격 영향의 크기를 단정할 수 없다고 인정하면서도, 그 소식이 7거래일 안에 코스피 대비 +2%p를 넘게 만든다고 경로를 설명한다. 공시가 이미 가격에 반영되었을 수 있다는 점과 상대수익으로 이어지는 근거를 함께 밝히고, 금액·기준일 등 자료가 없는 불확실성을 명시하는 방향으로 수정해야 한다. 또한 같은 후보가 인용한 기사(E3)는 증권가가 주주환원이 시장 기대에 못 미친다고 평가하므로, 호재 경로만 제시하고 반대 평가를 상쇄 근거 없이 넘긴 점도 함께 고려해야 한다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '0.76%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "rebuttal_target",
+              "ref": null,
+              "message": "반박 본문은 상대의 “원문 일부”로 시작하고, 상대 주장·본문의 6자 이상 문구를 그대로 인용하세요. 내 발언이나 검증 피드백은 상대 주장이 아닙니다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 2,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '0.76%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘소각 결정이 확인되지 않는 한 이 예측은 유지되며 세부 내용이 나오면 바뀔 수 있습니다’: 보통주 소각 결정이 확인되지 않았다는 사실은 종목이 코스피 대비 -2%p 미만으로 부진한다는 근거가 되지 않는다. 상방 계기가 없다는 점은 코스피와 비슷하게 움직일 가능성(보류)과도 양립한다. 7거래일·코스피 대비 기준에서 -2%p 미만으로 가는 경로를 별도로 설명하거나, 매도 판단의 불확실성과 한계를 명시하는 방향으로 수정해야 한다."
+            },
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘최근 3거래일 상대수익이 −0.29%p로 둔화되어 있어 강세가 이어진다고 보기 어렵습니다’: 3거래일 상대수익은 상대가 인용한 7거래일 +0.76%p 구간의 일부이며, 3일 둔화만으로 향후 7거래일 코스피 대비 초과수익이 -2%p 미만으로 갈 것이라는 결론을 뒷받침하지 못한다. 3거래일 값은 보조 관찰로만 쓰고, 7거래일·코스피 대비 판단과의 연결 한계를 밝혀야 한다."
+            }
+          ]
+        },
+        {
+          "type": "statement_attempt",
+          "round": "rebuttal",
+          "side": "bear",
+          "attempt": 3,
+          "issues": [
+            {
+              "severity": "warning",
+              "code": "unbacked_number",
+              "ref": null,
+              "message": "본문 수치 '2%'과 맞는 근거가 없습니다"
+            },
+            {
+              "severity": "error",
+              "code": "argument_length",
+              "ref": null,
+              "message": "본문은 최대 3문장으로 쓰세요."
+            }
+          ]
+        }
+      ],
+      "usage": {
+        "input_tokens": 367819,
+        "output_tokens": 38023,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      },
+      "usage_matches_http": true
+    },
+    {
+      "mode": "single",
+      "status": "failed",
+      "elapsed_seconds": 43.768,
+      "snapshot_sha256": "1a7164a0e9e8630a2144d8293b72c59f3e1eee89af0cd06f9d0dce1601054d66",
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "requests": 7,
+      "cost_usd": 0.359132,
+      "accepted_statements": 0,
+      "rejected_candidates": [
+        {
+          "type": "single_attempt",
+          "round": null,
+          "side": null,
+          "attempt": 1,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘앞으로 7거래일도 이런 동행이 이어져 코스피 대비 초과수익이 -2%p~+2%p 안에 머무를 가능성이 가장 높다고 봅니다.’: HOLD의 근거가 과거 7거래일·21거래일 초과수익이 작았다는 관측뿐입니다. 앞으로도 같은 관계가 유지될 이유는 제시되지 않았습니다. 같은 21거래일 동안 종목은 -17.43%, 코스피는 -16.59%로 모두 크게 하락했고 변동성은 69.57%로 높습니다. 이런 상황에서 동행이 이어질 경로(예: 코스피와 같은 방향으로 움직이는 요인)와 그 관계가 깨질 위험을 구체적으로 설명해야 합니다."
+            }
+          ]
+        },
+        {
+          "type": "single_attempt",
+          "round": null,
+          "side": null,
+          "attempt": 2,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘그래서 최근 낙폭은 종목 고유 요인보다 시장 전체 요인의 영향이 컸다고 보고, 이 요인이 계속 작용하면 앞으로 7거래일도 코스피 대비 -2%p~+2%p 안에서 움직일 것으로 가정합니다.’: 21거래일 동안 종목과 코스피가 비슷하게 하락했다는 관측만으로 낙폭의 원인이 시장 전체 요인이라고 단정하기 어렵습니다. 하락의 원인을 설명하는 자료는 인용되지 않았습니다. 같은 기간 수익률이 비슷했다는 사실만 말하고, 앞으로 7거래일에도 코스피 대비 -2%p~+2%p 안에서 움직일 구체적인 경로나 근거를 보강해야 합니다."
+            }
+          ]
+        },
+        {
+          "type": "single_attempt",
+          "round": null,
+          "side": null,
+          "attempt": 3,
+          "issues": [
+            {
+              "severity": "error",
+              "code": "unsupported_inference",
+              "ref": null,
+              "message": "‘최근 7거래일은 코스피 대비 +0.76%p [E1], 21거래일은 -0.84%p [E2]로 두 구간 모두 ±2%p 안이었지만’: 과거 두 구간의 초과수익이 작았다는 관측만으로 앞으로 7거래일 동안 코스피와 비슷하게 움직일 근거가 되지는 않는다. 그 관계가 유지될 이유를 설명해야 한다. 21거래일 동안 종목과 코스피가 함께 크게 하락한 것은 동행을 시사하지만, 이 추론이 글에 나타나 있지 않다. 또한 \"종목에만 해당하는 확인 가능한 재료는 증권가의 '주주환원이 시장 기대에 못 미친다'는 지적 정도\"라는 단정은, 자료에 있는 배당·자사주 처분 공시 등을 검토하지 않았으므로 지나치게 강하다."
+            }
+          ]
+        }
+      ],
+      "usage": {
+        "input_tokens": 157291,
+        "output_tokens": 4455,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      },
+      "usage_matches_http": true
+    }
+  ]
+}

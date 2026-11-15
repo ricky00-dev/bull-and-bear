@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>불앤베어 B안 캐릭터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ───────── 리뷰 페이지 자체 (가안과 무관한 중립 크롬) ───────── */
+:root{--rv-bg:#ECEDEF;--rv-ink:#16181C;--rv-sub:#5F646C;--rv-line:#D6D8DC;--rv-card:#FFFFFF}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--rv-bg);color:var(--rv-ink);font-family:"Noto Sans KR",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.rv-head{position:sticky;top:0;z-index:50;background:rgba(236,237,239,.9);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border-bottom:1px solid var(--rv-line)}
+.rv-head-in{max-width:1440px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.rv-title{font-size:17px;font-weight:800;letter-spacing:-.01em;margin:0}
+.rv-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.rv-tab{font:inherit;font-size:14px;font-weight:700;border:0;background:var(--rv-card);color:var(--rv-ink);border-radius:999px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px}
+.rv-tab .dot{width:10px;height:10px;border-radius:50%}
+.rv-tab[aria-pressed=true]{background:var(--rv-ink);color:#fff}
+.rv-tog{margin-left:auto;display:flex;gap:16px;align-items:center;font-size:13px;color:var(--rv-sub)}
+.rv-tog label{display:flex;gap:6px;align-items:center;cursor:pointer;min-height:40px}
+.rv-main{max-width:1720px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:40px}
+.rv-sec>h2{font-size:13px;font-weight:800;color:var(--rv-sub);letter-spacing:.02em;margin:0 0 14px}
+.rv-concept{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+@media (max-width:980px){.rv-concept{grid-template-columns:1fr}}
+.rv-box{background:var(--rv-card);border-radius:18px;padding:22px}
+.rv-name{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;line-height:1.2}
+.rv-one{font-size:15px;color:var(--rv-sub);margin:0 0 16px;line-height:1.6}
+.rv-kw{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.rv-kw span{font-size:12px;font-weight:700;background:var(--rv-bg);border-radius:999px;padding:5px 10px}
+.rv-rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.rv-rules li{font-size:14px;line-height:1.6;padding-left:14px;position:relative}
+.rv-rules li::before{content:"";position:absolute;left:0;top:.7em;width:5px;height:5px;border-radius:50%;background:var(--rv-ink)}
+.rv-rules b{font-weight:800}
+.rv-guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.rv-g{background:var(--rv-card);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.rv-g h3{margin:0;font-size:13px;font-weight:800}
+.rv-g p{margin:0;font-size:12.5px;line-height:1.6;color:var(--rv-sub)}
+.sw{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.sw div{aspect-ratio:1;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.sw-l{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:10px;color:var(--rv-sub);text-align:center}
+.lv{display:flex;gap:8px;padding:12px;border-radius:12px}
+.lv div{flex:1;height:54px;display:flex;align-items:flex-end;padding:6px;font-size:10px;font-weight:700}
+.ty{display:flex;flex-direction:column;gap:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px}
+.kv dt{color:var(--rv-sub)}.kv dd{margin:0;font-weight:700}
+.rv-screens{display:flex;gap:28px;overflow-x:auto;padding:4px 4px 18px;scroll-snap-type:x mandatory}
+.rv-phone{flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px}
+.rv-phone>p{margin:0;font-size:13px;font-weight:800}
+.rv-phone>small{font-size:12px;color:var(--rv-sub);max-width:375px;line-height:1.5}
+@media (max-width:1700px){.rv-phone{zoom:.86}}
+.device{width:375px;height:780px;border-radius:44px;padding:10px;background:#0E0F12;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+.device>.scr{width:100%;height:100%;border-radius:34px;overflow:hidden;position:relative}
+.rv-assets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.rv-asset{background:var(--rv-card);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.rv-asset .stagebox{border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.rv-asset .stagebox{aspect-ratio:1}
+.rv-asset .stagebox img{width:82%;height:82%;object-fit:contain;display:block}
+.rv-asset b{font-size:13px}.rv-asset span{font-size:12px;color:var(--rv-sub);line-height:1.5}
+.rv-videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.rv-video{background:var(--rv-card);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.rv-video video,.rv-video img{width:100%;border-radius:12px;display:block;aspect-ratio:16/9;object-fit:cover}
+.rv-video b{font-size:13px}.rv-video span{font-size:12px;color:var(--rv-sub);line-height:1.5}
+.rv-table{width:100%;border-collapse:collapse;background:var(--rv-card);border-radius:16px;overflow:hidden;font-size:13px}
+.rv-table th,.rv-table td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rv-bg);line-height:1.5}
+.rv-table th{font-size:12px;color:var(--rv-sub);font-weight:800;background:#F6F7F8}
+.rv-table tr.on td{background:#FAFAFB;font-weight:700}
+.rv-note{font-size:13px;line-height:1.7;color:var(--rv-sub);background:var(--rv-card);border-radius:16px;padding:18px 20px}
+.rv-note b{color:var(--rv-ink)}
+.missing{display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;background:repeating-linear-gradient(45deg,#f3f3f3,#f3f3f3 6px,#ececec 6px,#ececec 12px);border-radius:8px}
+
+/* ───────── 가안 토큰 ───────── */
+.app{--up:#D92D20;--down:#2B6FE0;font-family:var(--font-body);color:var(--ink);background:var(--ground)}
+.app[data-theme=a]{--ground:#F2F3F5;--surface:#FFFFFF;--surface-2:#F2F3F5;--ink:#111318;--sub:#5B6069;--faint:#9A9FA7;--line:#E4E6E9;
+  --point:#0E9C8C;--point-ink:#0A7A6D;--point-soft:#E2F3F0;--on-point:#FFFFFF;--cta:var(--point);--on-cta:#fff;
+  --r-card:20px;--r-ctl:14px;--r-chip:12px;--shadow:0 1px 2px rgba(17,19,24,.04),0 6px 18px rgba(17,19,24,.06);
+  --font-body:"Noto Sans KR",system-ui,sans-serif;--font-display:"Noto Sans KR",system-ui,sans-serif;--stage:#FFFFFF;--bar-bull:#3D4148;--bar-bear:#AEB3BA}
+.app[data-theme=b]{--point-rgb:255,138,61;--ground:#0B0C0E;--surface:#16171A;--surface-2:#202125;--ink:#F2F2F3;--sub:#A2A5AC;--faint:#6B6F77;--line:#26282C;
+  --point:#FF8A3D;--point-ink:#FFB27E;--point-soft:rgba(var(--point-rgb),.13);--on-point:#1B1006;--cta:var(--point);--on-cta:#1B1006;
+  --r-card:18px;--r-ctl:12px;--r-chip:10px;--shadow:none;--up:#FF6A5C;--down:#5C9BFF;
+  --font-body:"Noto Sans KR",system-ui,sans-serif;--font-display:"Noto Sans KR",system-ui,sans-serif;--stage:#16171A;--bar-bull:#E9E9EA;--bar-bear:#5E6168}
+.app[data-theme=c]{--ground:#F5F4EF;--surface:transparent;--surface-2:#ECEAE3;--ink:#141414;--sub:#56534C;--faint:#8F8B82;--line:#DAD7CE;
+  --point:#FFE14A;--point-ink:#141414;--point-soft:#FFF2A6;--on-point:#141414;--cta:#141414;--on-cta:#F5F4EF;
+  --r-card:0px;--r-ctl:6px;--r-chip:4px;--shadow:none;
+  --font-body:"Noto Sans KR",system-ui,sans-serif;--font-display:"Noto Serif KR",serif;--stage:#F5F4EF;--bar-bull:#141414;--bar-bear:#A9A59C}
+.app[data-theme=d]{--ground:#FFFFFF;--surface:#F4F4F5;--surface-2:#E8E8EA;--ink:#0A0A0A;--sub:#55575C;--faint:#8E9096;--line:#E4E4E7;
+  --point:#6550F5;--point-ink:#4B37D6;--point-soft:#EEEBFF;--on-point:#FFFFFF;--cta:var(--point);--on-cta:#fff;
+  --r-card:16px;--r-ctl:12px;--r-chip:10px;--shadow:none;
+  --font-body:"Noto Sans KR",system-ui,sans-serif;--font-display:"Noto Sans KR",system-ui,sans-serif;--stage:#F4F4F5;--bar-bull:#0A0A0A;--bar-bear:#B4B6BB}
+
+.app[data-theme=b][data-variant=s4]{--point:#C6F24E;--point-rgb:198,242,78;--point-ink:#DDF79A;--on-point:#151A06;--on-cta:#151A06}
+.app[data-theme=b][data-variant=s6]{--point:#F2F2F3;--point-rgb:242,242,243;--point-ink:#F2F2F3;--on-point:#0B0C0E;--on-cta:#0B0C0E;--bull:#FF6A5C;--bear:#5C9BFF;--bull-rgb:255,106,92;--bear-rgb:92,155,255;--bar-bull:var(--bull);--bar-bear:var(--bear)}
+.app[data-variant=s6] .opt.on[data-side=bull]{background:rgba(var(--bull-rgb),.12);box-shadow:inset 0 0 0 1px rgba(var(--bull-rgb),.55),0 0 24px rgba(var(--bull-rgb),.10)}
+.app[data-variant=s6] .opt.on[data-side=bull] .chk{background:var(--bull);color:#fff}
+.app[data-variant=s6] .opt.on[data-side=bear]{background:rgba(var(--bear-rgb),.12);box-shadow:inset 0 0 0 1px rgba(var(--bear-rgb),.55)}
+.app[data-variant=s6] .opt.on[data-side=bear] .chk{background:var(--bear);color:#fff}
+.app[data-variant=s6] .live[data-side=bull]{background:var(--bull)}
+.app[data-variant=s6] .vs .me b{color:var(--bull)}
+.app[data-variant=s6] .chg.up{color:var(--up)}.app[data-variant=s6] .chg.down{color:var(--down)}
+.app[data-variant=s6] .crowd i:nth-child(2){background:#3A3C42}
+.app[data-variant=s6] .chip.on{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.app[data-variant=s6] .chip.on .pick{color:#F2F2F3}
+.app[data-variant=s6] .hero .floor{background:radial-gradient(closest-side,rgba(255,255,255,.10),transparent)}
+.app[data-variant=s6] .rounds li.now i{background:linear-gradient(90deg,#F2F2F3 50%,var(--line) 50%)}
+.app[data-variant=s6] .tabbar span.on{color:#F2F2F3}
+/* ───────── 공통 앱 컴포넌트 ───────── */
+.scr{background:var(--ground);display:flex;flex-direction:column;font-size:15px}
+.scr .body{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 18px 18px;display:flex;flex-direction:column;gap:14px}
+.scr .body::-webkit-scrollbar{display:none}
+.scr .body>*{flex-shrink:0}
+.status{height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:13px;font-weight:700}
+.topbar{display:flex;align-items:center;gap:6px;padding:4px 10px 10px;flex:0 0 auto}
+.topbar .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.topbar h1{margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em}
+.topbar p{margin:0;font-size:11.5px;color:var(--sub)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.01em}
+.h-display{font-family:var(--font-display);font-weight:800;font-size:25px;line-height:1.3;letter-spacing:-.025em;margin:0}
+.app[data-theme=c] .h-display{font-weight:900;letter-spacing:-.03em}
+.lede{margin:0;font-size:13.5px;line-height:1.6;color:var(--sub)}
+.sec-t{margin:6px 0 0;font-size:15px;font-weight:800;letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:baseline}
+.sec-t small{font-size:12px;font-weight:500;color:var(--sub)}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--shadow);padding:16px}
+.app[data-theme=c] .card{padding:14px 0;border-top:1px solid var(--ink)}
+.app[data-theme=c] .card.soft{border-top-color:var(--line)}
+.search{display:flex;align-items:center;gap:10px;min-height:50px;padding:0 16px;border-radius:var(--r-ctl);background:var(--surface);box-shadow:var(--shadow);color:var(--faint);font-size:14px}
+.app[data-theme=b] .search{background:var(--surface)}
+.app[data-theme=c] .search{background:transparent;box-shadow:none;border-bottom:1.5px solid var(--ink);border-radius:0;padding:0 2px}
+.app[data-theme=d] .search{background:var(--surface)}
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:58px;padding:8px 0}
+.row+.row{border-top:1px solid var(--line)}
+.app[data-theme=a] .row+.row,.app[data-theme=b] .row+.row{border-top-color:var(--line)}
+.row b{font-size:15px;font-weight:700}.row small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+.chg{font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+.chg .arr{font-size:10px;margin-right:2px}
+.market .chg.up{color:var(--up)}.market .chg.down{color:var(--down)}
+.btn{font:inherit;display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;width:100%;border:0;border-radius:var(--r-ctl);font-size:16px;font-weight:800;background:var(--cta);color:var(--on-cta);letter-spacing:-.01em}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.app[data-theme=c] .btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.off{background:var(--surface-2);color:var(--faint)}
+.bottom{flex:0 0 auto;padding:12px 18px 26px;display:flex;flex-direction:column;gap:8px;background:var(--ground)}
+.app[data-theme=a] .bottom{background:rgba(242,243,245,.82);backdrop-filter:blur(16px);box-shadow:0 -1px 0 rgba(17,19,24,.05)}
+.app[data-theme=b] .bottom{background:rgba(11,12,14,.85);backdrop-filter:blur(16px);box-shadow:0 -1px 0 rgba(255,255,255,.05)}
+.app[data-theme=c] .bottom{border-top:1px solid var(--ink)}
+.app[data-theme=d] .bottom{box-shadow:0 -1px 0 var(--line)}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:500;color:var(--sub)}
+.tabbar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 24px;background:var(--ground)}
+.app[data-theme=a] .tabbar{background:rgba(255,255,255,.86);backdrop-filter:blur(16px);box-shadow:0 -1px 0 rgba(17,19,24,.05)}
+.app[data-theme=b] .tabbar{background:rgba(22,23,26,.9);backdrop-filter:blur(16px)}
+.app[data-theme=c] .tabbar{border-top:1px solid var(--ink)}
+.app[data-theme=d] .tabbar{box-shadow:0 -1px 0 var(--line)}
+.tabbar span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--faint);min-height:44px;justify-content:center}
+.tabbar span.on{color:var(--ink);font-weight:800}
+.app[data-theme=a] .tabbar span.on,.app[data-theme=d] .tabbar span.on{color:var(--point)}
+.app[data-theme=b] .tabbar span.on{color:var(--point)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* 캐릭터 */
+.hero{position:relative;height:178px;margin:2px -4px 0}
+.hero img{position:absolute;bottom:0;height:158px;width:auto}
+.hero .h-bull{left:6px}.hero .h-bear{right:4px}
+.hero .floor{position:absolute;left:12%;right:12%;bottom:2px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.10),transparent)}
+.app[data-theme=b] .hero .floor{background:radial-gradient(closest-side,rgba(var(--point-rgb),.16),transparent)}
+.app[data-theme=c] .hero .floor{background:none;border-bottom:1px solid var(--ink);border-radius:0;height:1px;left:0;right:0}
+.app[data-theme=d] .hero .floor{background:var(--surface);border-radius:999px;height:10px}
+.ava{width:34px;height:34px;flex:0 0 auto;border-radius:50%;overflow:hidden;background:var(--surface-2);display:block}
+.ava img{width:100%;height:100%;object-fit:cover;display:block}
+.app[data-theme=c] .ava{background:transparent;box-shadow:inset 0 0 0 1px var(--ink)}
+.ava.lg{width:44px;height:44px}
+.ava.mono{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--sub)}
+.who{display:flex;align-items:center;gap:10px}
+.who b{font-size:14px;font-weight:800}.who small{font-size:12px;color:var(--sub);font-weight:500}
+
+/* 토론 */
+.rounds{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rounds li{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--faint)}
+.rounds li i{height:3px;border-radius:2px;background:var(--line);display:block}
+.rounds li.done{color:var(--ink)}.rounds li.done i{background:var(--ink)}
+.rounds li.now{color:var(--ink)}.rounds li.now i{background:linear-gradient(90deg,var(--ink) 50%,var(--line) 50%)}
+.app[data-theme=a] .rounds li.now i,.app[data-theme=d] .rounds li.now i,.app[data-theme=b] .rounds li.now i{background:linear-gradient(90deg,var(--point) 50%,var(--line) 50%)}
+ul.rounds{margin:0;padding:0}
+.stage{position:relative;border-radius:var(--r-card);overflow:hidden;aspect-ratio:16/9;background:var(--stage);box-shadow:var(--shadow)}
+.app[data-theme=c] .stage{border-radius:0;box-shadow:none;border-top:1px solid var(--ink);border-bottom:1px solid var(--line)}
+.stage video,.stage img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage .tag{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;background:var(--ground);color:var(--ink)}
+.app[data-theme=a] .stage .tag{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.app[data-theme=b] .stage .tag{background:rgba(11,12,14,.6);backdrop-filter:blur(10px)}
+.app[data-theme=c] .stage .tag{background:var(--ink);color:var(--ground);border-radius:2px}
+.app[data-theme=d] .stage .tag{background:#fff}
+.live{width:7px;height:7px;border-radius:50%;background:var(--point);animation:pulse 1.4s ease-in-out infinite}
+.app[data-theme=c] .live{background:var(--point)}
+@keyframes pulse{50%{opacity:.3}}
+.stmt{display:flex;flex-direction:column;gap:10px}
+.stmt .claim{margin:0;font-size:14.5px;line-height:1.65;font-weight:500}
+.stmt .more{font-size:12.5px;font-weight:700;color:var(--sub);display:flex;align-items:center;gap:4px;min-height:32px}
+.ev{display:flex;flex-direction:column;gap:6px}
+.chip{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:8px 12px;border-radius:var(--r-chip);background:var(--surface-2);font-size:13px;font-weight:600}
+.chip .pick{font-size:12px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:4px}
+.app[data-theme=c] .chip{background:transparent;padding:8px 0;border-radius:0;border-bottom:1px dashed var(--line)}
+.chip.on .pick{color:var(--point-ink)}
+.app[data-theme=a] .chip.on{background:var(--point-soft)}
+.app[data-theme=b] .chip.on{background:var(--point-soft);box-shadow:inset 0 0 0 1px rgba(var(--point-rgb),.45)}
+.app[data-theme=c] .chip.on .txt{background:linear-gradient(transparent 52%,var(--point) 52%,var(--point) 92%,transparent 92%)}
+.app[data-theme=d] .chip.on{background:var(--point);color:#fff}.app[data-theme=d] .chip.on .pick{color:#fff}
+.stmt.bear{margin-left:28px}.stmt.bull{margin-right:28px}
+.app[data-theme=c] .stmt.bear,.app[data-theme=c] .stmt.bull{margin:0}
+.mod{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6}
+.mod p{margin:0}
+.lock{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}
+
+/* 판정 */
+.opt{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);box-shadow:var(--shadow)}
+.app[data-theme=c] .opt{border-radius:0;border-top:1px solid var(--line);box-shadow:none;padding:12px 2px}
+.opt .ic{width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+.app[data-theme=c] .opt .ic{background:transparent;box-shadow:inset 0 0 0 1px var(--ink)}
+.opt .ic img{width:100%;height:100%;object-fit:cover}
+.opt b{font-size:16px;font-weight:800;display:block;width:fit-content}.opt small{font-size:12.5px;color:var(--sub)}
+.opt .chk{margin-left:auto;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.opt.on .chk{background:var(--point);box-shadow:none;color:var(--on-point)}
+.app[data-theme=a] .opt.on{background:var(--point-soft);box-shadow:none}
+.app[data-theme=b] .opt.on{background:var(--point-soft);box-shadow:inset 0 0 0 1px rgba(var(--point-rgb),.5),0 0 24px rgba(var(--point-rgb),.12)}
+.app[data-theme=c] .opt.on b{background:linear-gradient(transparent 55%,var(--point) 55%)}
+.app[data-theme=c] .opt.on .chk{background:var(--ink);color:var(--ground)}
+.app[data-theme=d] .opt.on{background:var(--point);color:#fff}.app[data-theme=d] .opt.on small{color:rgba(255,255,255,.75)}
+.app[data-theme=d] .opt.on .chk{background:#fff;color:var(--point)}.app[data-theme=d] .opt.on .ic{background:rgba(255,255,255,.18)}
+.tip{font-size:12.5px;line-height:1.6;padding:12px 14px;border-radius:var(--r-chip);background:var(--surface-2)}
+.app[data-theme=c] .tip{background:transparent;border-left:3px solid var(--ink);border-radius:0;padding:4px 0 4px 12px}
+.slider{position:relative;height:28px;display:flex;align-items:center}
+.slider .tr{height:4px;border-radius:2px;background:var(--line);width:100%}
+.slider .fi{position:absolute;left:0;height:4px;border-radius:2px;background:var(--ink);width:60%}
+.app[data-theme=a] .slider .fi,.app[data-theme=b] .slider .fi,.app[data-theme=d] .slider .fi{background:var(--point)}
+.slider .th{position:absolute;left:calc(60% - 12px);width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.08)}
+.app[data-theme=c] .slider .th{background:var(--point);box-shadow:inset 0 0 0 1.5px var(--ink)}
+
+/* 결과 */
+.verdict{display:flex;flex-direction:column;gap:12px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vs div{padding:12px;border-radius:var(--r-chip);background:var(--surface-2);display:flex;flex-direction:column;gap:2px}
+.app[data-theme=c] .vs div{background:transparent;border-top:1px solid var(--line);border-radius:0;padding:10px 0}
+.vs small{font-size:11.5px;color:var(--sub);font-weight:600}.vs b{font-size:17px;font-weight:800}
+.vs .me b{color:var(--point-ink)}
+.app[data-theme=c] .vs .me b{background:linear-gradient(transparent 55%,var(--point) 55%);color:var(--ink);align-self:flex-start}
+.app[data-theme=d] .vs .me{background:var(--point-soft)}
+.rub{display:grid;grid-template-columns:1fr 78px 1fr;align-items:center;gap:6px 8px;font-size:12px}
+.rub .l{display:flex;justify-content:flex-end;gap:6px;align-items:center}.rub .r{display:flex;gap:6px;align-items:center}
+.rub .c{text-align:center;color:var(--sub);font-size:11.5px}
+.rub i{display:block;height:8px;border-radius:4px}
+.rub .l i{background:var(--bar-bull)}.rub .r i{background:var(--bar-bear)}
+.app[data-theme=c] .rub i{border-radius:0}
+.legend{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800}
+.legend .who b{font-size:12.5px}
+.crowd{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px}
+.crowd i:nth-child(1){background:var(--bar-bull)}.crowd i:nth-child(2){background:var(--line)}.crowd i:nth-child(3){background:var(--bar-bear)}
+.app[data-theme=c] .crowd{border-radius:0}
+.timeline{display:flex;flex-direction:column;gap:10px;font-size:13px}
+.timeline div{display:flex;gap:10px;align-items:center}
+.timeline .d{width:10px;height:10px;border-radius:50%;background:var(--line);flex:0 0 auto}
+.timeline .d.on{background:var(--point)}
+.app[data-theme=c] .timeline .d.on{background:var(--ink)}
+.kicker{font-size:12px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:8px}
+.app[data-theme=c] .kicker{letter-spacing:.06em}
+</style>
+</head>
+<body>
+<header class="rv-head"><div class="rv-head-in">
+  <p class="rv-title">B안 · 증권맨 캐릭터 가안</p>
+  <div class="rv-tabs" id="tabs"></div>
+  <div class="rv-tog">
+    <label><input type="checkbox" id="market"> 시세 등락만 관례색(빨강·파랑)</label>
+    <label><input type="checkbox" id="still"> 영상 대신 정지 이미지</label>
+  </div>
+</div></header>
+
+<main class="rv-main">
+  <section class="rv-sec"><h2>캐릭터 컨셉</h2>
+    <div class="rv-concept">
+      <div class="rv-box"><p class="rv-name" id="c-name"></p><p class="rv-one" id="c-one"></p><div class="rv-kw" id="c-kw"></div><ul class="rv-rules" id="c-rules"></ul></div>
+      <div class="rv-box"><p style="margin:0 0 12px;font-size:13px;font-weight:800;color:var(--rv-sub)">B안 공통 (화면 규칙은 그대로)</p><ul class="rv-rules" id="c-shared"></ul></div>
+    </div>
+  </section>
+
+  <section class="rv-sec"><h2>캐릭터 규칙</h2><div class="rv-guide" id="guide"></div></section>
+
+  <section class="rv-sec"><h2>화면 (모바일 375pt · 같은 문구, 규칙만 다름)</h2>
+    <div class="rv-screens">
+      <!-- 홈 -->
+      <div class="rv-phone"><p>홈</p>
+        <div class="device"><div class="scr app" data-app>
+          <div class="status"><span>9:41</span><span>●●●</span></div>
+          <div class="body">
+            <div class="topbar" style="padding:2px 0 0;justify-content:space-between"><span class="logo"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21L11 7l5 8M8 7h3v4M25 7l-8 14-5-8M20 21h-3v-4"/></svg>불앤베어</span><span style="font-size:13px;color:var(--sub)">게스트</span></div>
+            <div class="hero"><span class="floor"></span><img class="h-bull" data-asset="bull" alt=""><img class="h-bear" data-asset="bear" alt=""></div>
+            <h2 class="h-display">어떤 종목을<br>판정해 볼까요?</h2>
+            <p class="lede">매수 AI와 매도 AI의 근거를 읽고, AI보다 먼저 판정해요.</p>
+            <div class="search"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>종목명·코드·초성으로 검색</div>
+            <p class="sec-t">바로 읽을 토론 <small>판정 대기 1개</small></p>
+            <div class="card">
+              <div class="who"><span class="ava mono">삼</span><div><b>삼성전자</b><br><small>토론 완료 · 11/07 종가 기준</small></div><span class="chg up" style="margin-left:auto"><span class="arr">▲</span>1.24%</span></div>
+              <p class="lede" style="margin-top:12px">HBM 공급 확대가 실적을 끌어올릴까, 재고 부담이 먼저일까?</p>
+              <div style="margin-top:12px"><span class="btn" style="min-height:46px;font-size:14px">토론 읽고 판정하기</span></div>
+            </div>
+            <p class="sec-t">종목을 골라 시작하기</p>
+            <div class="card soft" style="padding-top:4px;padding-bottom:4px">
+              <div class="list">
+                <div class="row"><div><b>SK하이닉스</b><small>000660 · 코스피</small></div><span class="chg up"><span class="arr">▲</span>2.87%</span></div>
+                <div class="row"><div><b>카카오</b><small>035720 · 코스피</small></div><span class="chg down"><span class="arr">▼</span>0.85%</span></div>
+                <div class="row"><div><b>현대차</b><small>005380 · 코스피</small></div><span class="chg down"><span class="arr">▼</span>0.32%</span></div>
+              </div>
+            </div>
+          </div>
+          <nav class="tabbar"><span class="on"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>홈</span><span><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>퀴즈</span><span><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>내 판정</span><span><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"/></svg>마이</span></nav>
+        </div></div>
+        <small>캐릭터는 홈 첫 화면에서만 크게. 카드 안 작은 표식은 아바타 크기로만 써요.</small>
+      </div>
+
+      <!-- 토론 -->
+      <div class="rv-phone"><p>토론 (진행 중)</p>
+        <div class="device"><div class="scr app" data-app>
+          <div class="status"><span>9:41</span><span>●●●</span></div>
+          <div class="topbar"><span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></span><div><h1>삼성전자</h1><p>스냅샷 11/07 종가 기준 · 데이터 고정됨</p></div></div>
+          <div class="body">
+            <ul class="rounds"><li class="done"><i></i>오프닝</li><li class="now"><i></i>반박</li><li><i></i>최종 변론</li></ul>
+            <div class="stage"><img class="poster" data-poster="bull" alt=""><video data-video="bull" muted loop playsinline autoplay></video><span class="tag"><span class="live" data-side="bull"></span>매수 AI 발언 중</span></div>
+            <div class="card stmt bull">
+              <div class="who"><span class="ava"><img data-asset="bull-face" alt=""></span><div><b>매수 AI</b> <small>반박</small></div></div>
+              <p class="claim">재고 부담은 이미 3분기에 정점을 지났어요. HBM 출하가 늘면서 영업이익률이 두 분기 연속 개선됐어요.</p>
+              <div class="ev">
+                <div class="chip on"><span class="txt">영업이익률 9.4% → 12.1%</span><span class="pick"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>담음</span></div>
+                <div class="chip"><span class="txt">재고자산회전율 4.1회</span><span class="pick">담기</span></div>
+              </div>
+            </div>
+            <div class="card stmt bear">
+              <div class="who"><span class="ava"><img data-asset="bear-face" alt=""></span><div><b>매도 AI</b> <small>오프닝</small></div></div>
+              <p class="claim">메모리 가격 반등은 공급 조절 덕분이에요. 수요가 따라오지 않으면 4분기 재고가 다시 쌓일 수 있어요.</p>
+              <div class="ev"><div class="chip"><span class="txt">재고자산 52.3조 원</span><span class="pick">담기</span></div></div>
+            </div>
+            <div class="card soft mod"><span class="ava"><img data-asset="owl-face" alt=""></span><p><b>중재자 질문 · </b>매수 측은 4분기 수요 근거를 수치로 보여 주세요.</p></div>
+          </div>
+          <div class="bottom">
+            <div class="meta"><span>담은 근거 1/3</span><span>최근 발언으로 이동</span></div>
+            <div class="lock"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>토론이 끝나면 판정할 수 있어요</div>
+            <span class="btn off">토론 진행 중…</span>
+          </div>
+        </div></div>
+        <small>영상은 화면당 하나, 지금 말하는 쪽만. 매수 차례엔 황소, 매도 차례엔 곰 영상으로 바뀌어요.</small>
+      </div>
+
+      <!-- 판정 -->
+      <div class="rv-phone"><p>내 판정</p>
+        <div class="device"><div class="scr app" data-app>
+          <div class="status"><span>9:41</span><span>●●●</span></div>
+          <div class="topbar"><span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></span><div><h1>삼성전자</h1><p>내 판정</p></div></div>
+          <div class="body">
+            <h2 class="h-display" style="font-size:23px">7거래일 뒤,<br>어떻게 움직일까요?</h2>
+            <p class="lede">코스피보다 2%p 넘게 오르면 매수, 2%p 넘게 내리면 매도, 그 사이면 보류예요.</p>
+            <div class="tip"><b>판정 팁 · </b>누가 말을 잘했는지보다 어느 쪽 근거가 더 탄탄했는지 떠올려 보세요.</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="opt on" data-side="bull"><span class="ic"><img data-asset="bull-face" alt=""></span><div><b>매수</b><small>코스피보다 더 오를 것 같아요</small></div><span class="chk"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px;stroke-width:3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+              <div class="opt"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></span><div><b>보류</b><small>코스피와 비슷하게 움직일 것 같아요</small></div><span class="chk"></span></div>
+              <div class="opt" data-side="bear"><span class="ic"><img data-asset="bear-face" alt=""></span><div><b>매도</b><small>코스피보다 더 내릴 것 같아요</small></div><span class="chk"></span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:14px">얼마나 확신하나요?</b><b style="font-size:20px">80%</b></div>
+            <div class="slider"><span class="tr"></span><span class="fi"></span><span class="th"></span></div>
+            <p class="sec-t" style="font-size:14px">가장 설득력 있던 근거 <small>1/3</small></p>
+            <div class="ev">
+              <div class="chip on"><span class="txt">영업이익률 9.4% → 12.1%</span><span class="pick">담음</span></div>
+              <div class="chip"><span class="txt">재고자산 52.3조 원</span><span class="pick">담기</span></div>
+            </div>
+          </div>
+          <div class="bottom"><span class="btn">판정 제출하기</span></div>
+        </div></div>
+        <small>선택 상태는 포인트 컬러 한 가지로만 표시해요. 매수·매도를 색으로 나누지 않아요.</small>
+      </div>
+
+      <!-- 결과 -->
+      <div class="rv-phone"><p>결과 공개</p>
+        <div class="device"><div class="scr app" data-app>
+          <div class="status"><span>9:41</span><span>●●●</span></div>
+          <div class="topbar"><span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></span><div><h1>삼성전자</h1><p>판정 결과</p></div></div>
+          <div class="body">
+            <div class="card verdict">
+              <div class="kicker"><span class="ava lg"><img data-asset="owl-face" alt=""></span>AI 중재자 판정 공개</div>
+              <h2 class="h-display" style="font-size:22px">AI와 같은 판정이에요</h2>
+              <div class="vs"><div class="me"><small>나</small><b>매수 · 80%</b></div><div><small>AI 중재자</small><b>매수 · 70%</b></div></div>
+              <p class="lede" style="font-size:12.5px">판정이 같다고 정답은 아니에요. 3·7거래일 뒤 실제 주가로 채점해요.</p>
+            </div>
+            <div class="card">
+              <p class="sec-t" style="margin:0 0 12px;font-size:14px">중재자가 본 근거 점수 <small>5점 만점</small></p>
+              <div class="legend"><span class="who"><span class="ava" style="width:24px;height:24px"><img data-asset="bull-face" alt=""></span><b>매수 AI</b></span><span class="who"><b>매도 AI</b><span class="ava" style="width:24px;height:24px"><img data-asset="bear-face" alt=""></span></span></div>
+              <div class="rub" style="margin-top:10px">
+                <span class="l">4<i style="width:64px"></i></span><span class="c">관련성</span><span class="r"><i style="width:48px"></i>3</span>
+                <span class="l">4<i style="width:64px"></i></span><span class="c">중요도</span><span class="r"><i style="width:64px"></i>4</span>
+                <span class="l">5<i style="width:80px"></i></span><span class="c">반박</span><span class="r"><i style="width:32px"></i>2</span>
+                <span class="l">3<i style="width:48px"></i></span><span class="c">리스크 인식</span><span class="r"><i style="width:64px"></i>4</span>
+              </div>
+            </div>
+            <div class="card">
+              <p class="sec-t" style="margin:0 0 10px;font-size:14px">이 토론을 본 사람들 <small>128명</small></p>
+              <div class="crowd"><i style="flex:52"></i><i style="flex:21"></i><i style="flex:27"></i></div>
+              <div class="meta" style="margin-top:8px"><span>매수 52%</span><span>보류 21%</span><span>매도 27%</span></div>
+            </div>
+            <div class="card soft">
+              <p class="sec-t" style="margin:0 0 10px;font-size:14px">채점 일정</p>
+              <div class="timeline"><div><span class="d on"></span>11/10 판정 제출</div><div><span class="d"></span>11/12 3거래일 채점</div><div><span class="d"></span>11/18 7거래일 최종 채점</div></div>
+            </div>
+          </div>
+          <div class="bottom"><span class="btn ghost">다른 토론 보기</span></div>
+        </div></div>
+        <small>점수 막대도 회색 두 단계로만. 매수·매도는 아바타와 위치(왼쪽·오른쪽)로 구분해요.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="rv-sec"><h2>에셋 · 캐릭터 (투명 배경 누끼)</h2><div class="rv-assets" id="assets"></div></section>
+  <section class="rv-sec"><h2>에셋 · 짧은 영상 (8초 루프, 무음)</h2><div class="rv-videos" id="videos"></div></section>
+  <section class="rv-sec"><h2>네 캐릭터 가안 비교</h2><table class="rv-table" id="compare"></table></section>
+  <section class="rv-sec"><h2>검토할 때 정해 주실 것</h2><div class="rv-note" id="decide"></div></section>
+</main>
+
+<script>
+const B = { swatch: ['#F2F2F3', '#A2A5AC', '#6B6F77', '#26282C', '#0B0C0E', '#16171A'], swl: ['글자', '보조', '흐림', '구분선', '바탕', '카드', '포인트'] }
+const T = {
+  s7: { name: 'B-7 · 트레이더 · 편 색 넥타이', dot: 'linear-gradient(90deg,#E5383B 50%,#2F6FEB 50%)', one: 'B-1의 앰버 속빛 몸에 B-3 트레이더 룩을 입히고, 넥타이로 편을 나눈 조합안. 황소는 빨강, 곰은 파랑, 중재자 부엉이는 은회색.',
+    kw: ['앰버 속빛 몸', '셔츠 + 조끼(소매 걷음)', '황소 빨강 · 곰 파랑 넥타이', '부엉이 은회색'],
+    rules: ['<b>넥타이 = 편.</b> 빨강은 매수 AI, 파랑은 매도 AI. 작은 아바타에서도 매듭 색으로 누가 말하는지 읽혀요.', '<b>몸의 앰버 = 브랜드.</b> 화면 포인트(버튼·내 선택·담은 근거)도 앰버라 캐릭터와 화면이 한 톤으로 이어져요.', '<b>성격은 소품 하나로.</b> 황소는 소매를 걷은 트레이더, 곰은 둥근 안경의 애널리스트. 부엉이는 은회색 나비넥타이로 어느 편도 아니에요.'],
+    outfit: '흰 셔츠(황소는 소매 걷음) · 차콜 조끼 · 살짝 풀어진 넥타이. 황소 빨강(#E5383B), 곰 파랑(#2F6FEB)과 둥근 안경, 부엉이 은회색 나비넥타이.', material: '반투명 소프트터치 + 앰버 속빛(몸만). 옷은 무광.',
+    swatch: ['#F2F2F3', '#A2A5AC', '#26282C', '#0B0C0E', '#16171A', '#FF8A3D', '#E5383B', '#2F6FEB'], swl: ['글자', '보조', '구분선', '바탕', '카드', '포인트', '매수', '매도'] },
+  s1: { name: 'B-1 · 클래식 수트', dot: '#FF8A3D', one: '지금 B 캐릭터에 차콜 정장과 앰버 넥타이를 입힌 안. 몸의 앰버 속빛도 그대로라 가장 따뜻하고 친근해요.',
+    kw: ['앰버 속빛 몸', '차콜 정장', '앰버 넥타이'],
+    rules: ['<b>몸은 지금처럼 앰버로 빛나요.</b> 정장은 빛나지 않는 무광 차콜이라 실루엣이 또렷해져요.', '<b>넥타이는 포인트 앰버.</b> 몸 속빛과 같은 계열이라 넥타이가 튀기보다 전체가 한 덩어리로 따뜻해요.', '<b>황소는 손을 들어 제시, 곰은 팔짱.</b> 자세로 설득 방식이 달라요.'],
+    outfit: '차콜 투피스 정장 · 흰 셔츠 · 앰버 넥타이. 부엉이는 같은 정장에 앰버 나비넥타이.', material: '반투명 소프트터치 + 앰버 속빛(몸만). 옷은 무광.' },
+  s2: { name: 'B-2 · 넥타이만 색', dot: '#FF8A3D', one: '몸은 진주빛 무채색으로 빛나고, 캐릭터의 색은 넥타이 하나뿐인 안. 화면의 앰버 버튼과 넥타이가 같은 색으로 이어져요.',
+    kw: ['진주빛 무채색 몸', '차콜 정장', '넥타이만 앰버'],
+    rules: ['<b>캐릭터의 색은 넥타이 하나.</b> 회색조 + 포인트 1색 규칙을 캐릭터까지 그대로 지켜요.', '<b>넥타이 = 버튼 = 내 선택.</b> 화면에서 앰버를 보면 "누를 곳" 아니면 "캐릭터의 넥타이" 둘 중 하나예요.', '<b>몸은 진주빛으로 은은하게.</b> 다크 바탕에서 캐릭터가 조명처럼 떠 보여요.'],
+    outfit: '차콜 투피스 정장 · 흰 셔츠 · 앰버 넥타이(은은하게 빛남). 부엉이는 앰버 나비넥타이.', material: '반투명 진주빛 + 무채색 속빛. 앰버는 넥타이에만.' },
+  s3: { name: 'B-3 · 트레이더 룩', dot: '#FF8A3D', one: '재킷 대신 셔츠 소매를 걷고 조끼를 입은 객장 트레이더 차림. 넥타이를 살짝 풀어 토론의 열기를 담았어요.',
+    kw: ['진주빛 몸', '셔츠 + 조끼', '풀어진 앰버 넥타이'],
+    rules: ['<b>황소는 소매를 걷은 트레이더.</b> 몸짓이 크고 앞으로 나와요.', '<b>곰은 조끼에 둥근 안경을 쓴 애널리스트.</b> 같은 옷 체계 안에서 성격 차이를 소품 하나로 줘요.', '<b>넥타이만 앰버.</b> 정장보다 가볍고 현장감 있는 인상.'],
+    outfit: '흰 셔츠(황소는 소매 걷음) · 차콜 조끼 · 살짝 풀어진 앰버 넥타이. 곰은 둥근 안경. 부엉이는 조끼에 앰버 나비넥타이.', material: '반투명 진주빛 + 무채색 속빛. 앰버는 넥타이에만.' },
+  s4: { name: 'B-4 · 라임 넥타이', dot: '#C6F24E', one: 'B-2와 같은 진주빛 정장 캐릭터에 포인트를 라임으로 바꾼 비교안. 앰버보다 차갑고 핀테크다운 인상이에요.',
+    kw: ['진주빛 몸', '차콜 정장', '라임 넥타이'],
+    rules: ['<b>포인트 색만 바꾼 비교안.</b> 버튼·선택 상태·넥타이가 모두 라임으로 바뀌어요.', '<b>앰버보다 차갑고 또렷해요.</b> 대신 따뜻함·친근함은 줄어요.', '<b>라임 위 글자는 거의 검정.</b> 버튼 글자 대비는 앰버와 같은 방식으로 맞춰요.'],
+    outfit: '차콜 투피스 정장 · 흰 셔츠 · 라임 넥타이. 부엉이는 라임 나비넥타이.', material: '반투명 진주빛 + 무채색 속빛. 라임은 넥타이에만.' },
+  s5: { name: 'B-5 · 편 색 넥타이', dot: 'linear-gradient(90deg,#E5383B 50%,#2F6FEB 50%)', one: '황소는 빨간 넥타이, 곰은 파란 넥타이. 국내 증시 관례(상승 빨강·하락 파랑)를 캐릭터에 입히고, 화면의 앰버 포인트는 그대로 둔 안.',
+    kw: ['진주빛 몸', '매수 빨강 · 매도 파랑 넥타이', '화면 포인트는 앰버'],
+    rules: ['<b>넥타이만 보고도 편을 알아요.</b> 아바타가 작아도 빨강·파랑 매듭이 보여 누가 말하는지 바로 읽혀요.', '<b>화면 색은 B 그대로.</b> 버튼·내 선택·담은 근거는 앰버. 빨강·파랑은 캐릭터 넥타이에만.', '<b>대신 색이 셋.</b> 앰버 + 빨강 + 파랑이 한 화면에 같이 보일 수 있어요. 부엉이는 앰버 나비넥타이.'],
+    outfit: '차콜 정장 · 흰 셔츠. 황소 빨간 넥타이(#E5383B), 곰 파란 넥타이(#2F6FEB), 부엉이 앰버 나비넥타이.', material: '반투명 진주빛 + 무채색 속빛. 색은 넥타이에만.',
+    swatch: ['#F2F2F3', '#A2A5AC', '#26282C', '#0B0C0E', '#16171A', '#FF8A3D', '#E5383B', '#2F6FEB'], swl: ['글자', '보조', '구분선', '바탕', '카드', '포인트', '매수', '매도'] },
+  s6: { name: 'B-6 · 빨강·파랑만', dot: 'linear-gradient(90deg,#FF6A5C 50%,#5C9BFF 50%)', one: '앰버를 빼고 앱의 색을 매수 빨강·매도 파랑 두 가지로만 쓰는 안. 버튼은 흰색이고, 색은 언제나 "어느 편인가"만 뜻해요.',
+    kw: ['진주빛 몸', '빨강·파랑 넥타이', '버튼은 흰색', '앰버 없음'],
+    rules: ['<b>색 = 편.</b> 빨강은 매수, 파랑은 매도. 넥타이, 매수·매도 선택지, 점수 막대, 투표 막대, 시세 등락까지 같은 뜻으로만 써요.', '<b>내 행동은 흰색.</b> 버튼·담은 근거·진행 중 라운드는 흰색과 명도로 표시해요. 포인트 색이 따로 없어요.', '<b>중재자는 무채색.</b> 부엉이는 은회색 나비넥타이로 어느 편도 아니에요.'],
+    outfit: '차콜 정장 · 흰 셔츠. 황소 빨간 넥타이, 곰 파란 넥타이, 부엉이 은회색 나비넥타이.', material: '반투명 진주빛 + 무채색 속빛. 색은 넥타이에만.',
+    swatch: ['#F2F2F3', '#A2A5AC', '#26282C', '#0B0C0E', '#16171A', '#FF6A5C', '#5C9BFF'], swl: ['글자·버튼', '보조', '구분선', '바탕', '카드', '매수', '매도'] },
+}
+const SHARED = ['<b>화면 규칙은 B 그대로.</b> 바탕 #0B0C0E → 카드 #16171A → 칩 #202125, 명도로만 층을 나누고 테두리·그림자 없음.',
+  '<b>넥타이가 색을 맡아요.</b> B-1~B-4는 넥타이 = 포인트 색(두 AI가 같은 색), B-5·B-6은 넥타이 = 편 색(매수 빨강·매도 파랑).',
+  '<b>캐릭터 셋 모두 두 발로 서요.</b> 황소 = 매수 AI(손을 들어 제시), 곰 = 매도 AI(팔짱), 부엉이 = 중재자(정면).',
+  '<b>영상은 화면당 하나.</b> 진행 중 토론의 무대에만, 지금 말하는 쪽. 모션 줄이기 설정이면 정지 이미지.',
+  '<b>시세 등락 숫자</b>는 위 토글로 관례색을 켜 볼 수 있어요.']
+const ROWS = [['몸', '앰버 속빛', '앰버 속빛', '진주빛 무채색', '진주빛 무채색', '진주빛 무채색', '진주빛 무채색', '진주빛 무채색'], ['의상', '셔츠 + 조끼(소매 걷음)', '차콜 정장', '차콜 정장', '셔츠 + 조끼(소매 걷음)', '차콜 정장', '차콜 정장', '차콜 정장'], ['넥타이', '황소 빨강 · 곰 파랑', '앰버', '앰버', '앰버(풀어짐)', '라임', '황소 빨강 · 곰 파랑', '황소 빨강 · 곰 파랑'], ['화면 포인트', '앰버', '앰버', '앰버', '앰버', '라임', '앰버', '없음(버튼 흰색)'], ['화면의 색 수', '3 (앰버·빨강·파랑)', '1', '1', '1', '1', '3 (앰버·빨강·파랑)', '2 (빨강·파랑)'], ['인상', '따뜻·현장감·편이 바로 읽힘', '따뜻·친근', '단정·프리미엄', '역동·현장감', '차갑·젊음', '편이 바로 읽힘', '증권 앱다운 직관'], ['위험', '앰버·빨강이 가까운 계열이라 황소 쪽이 더 뜨거워 보일 수 있음', '몸과 넥타이가 같은 계열이라 넥타이가 덜 보임', '다크 화면에서 캐릭터가 차갑게 보일 수 있음', '정장보다 신뢰감이 덜할 수 있음', '앰버 아이콘 계열과 멀어짐', '색이 셋이라 포인트 1색 원칙이 깨짐', '색이 곧 편이라, 매수를 고르면 화면이 빨개져 판단을 부추겨 보일 수 있음']]
+const DECIDE = '<b>1. B-7로 확정할지</b> — 요청하신 조합(B-1 몸 + 트레이더 룩 + 빨강·파랑 넥타이)이에요. 화면 포인트를 앰버로 둘지(B-7), 앰버를 빼고 빨강·파랑만 쓸지(B-6 방식)도 같이 골라 주세요.<br><b>2. 부엉이 중재자 의상</b> — 지금처럼 정장 + 나비넥타이로 갈지, 판사처럼 구분되는 차림으로 갈지.<br><b>3. 영상 범위</b> — 토론 무대에만 둘지, 홈 첫 화면에도 하나 둘지.<br>고르시면 그 캐릭터로 아바타·상태 포즈(이김·짐·보류)까지 세트를 맞추고, 디자인 가이드를 확정한 뒤 앱에 적용할게요.'
+
+let theme = 's7'
+const KEYS = Object.keys(T)
+const $ = (s, el = document) => el.querySelector(s)
+function img(src) { return `<img src="${src}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'missing',style:'width:100%;aspect-ratio:1',textContent:'생성 중'}))">` }
+
+function render() {
+  const t = T[theme]
+  document.querySelectorAll('.rv-tab').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === theme))
+  document.querySelectorAll('[data-app]').forEach(el => { el.dataset.theme = 'b'; el.dataset.variant = theme })
+  $('#c-name').textContent = t.name; $('#c-one').textContent = t.one
+  $('#c-kw').innerHTML = t.kw.map(k => `<span>${k}</span>`).join('')
+  $('#c-rules').innerHTML = t.rules.map(r => `<li>${r}</li>`).join('')
+  $('#c-shared').innerHTML = SHARED.map(r => `<li>${r}</li>`).join('')
+  $('#guide').innerHTML = `
+    <div class="rv-g"><h3>색</h3><div class="sw" style="grid-template-columns:repeat(${(t.swatch || [...B.swatch, t.dot]).length},1fr)">${(t.swatch || [...B.swatch, t.dot]).map(c => `<div style="background:${c}"></div>`).join('')}</div><div class="sw-l" style="grid-template-columns:repeat(${(t.swl || B.swl).length},1fr)">${(t.swl || B.swl).map(l => `<span>${l}</span>`).join('')}</div></div>
+    <div class="rv-g"><h3>의상</h3><p>${t.outfit}</p></div>
+    <div class="rv-g"><h3>재질</h3><p>${t.material}</p></div>
+    <div class="rv-g"><h3>쓰는 자리</h3><p>홈 첫 화면 히어로(전신), 토론 무대 영상(전신), 발언·판정·결과의 아바타(얼굴 34~44pt). 그 밖의 화면에는 넣지 않아요.</p></div>
+    <div class="rv-g"><h3>모션 · 영상</h3><p>황소는 손을 들어 짚으며 고개를 끄덕이는 짧고 힘 있는 리듬, 곰은 팔짱 낀 채 깊게 숨 쉬며 고개를 기울이는 느린 리듬. 8초 무음 루프.</p></div>`
+  document.querySelectorAll('[data-asset]').forEach(el => { el.src = `assets2/${theme}/${el.dataset.asset}.png` })
+  const still = $('#still').checked
+  document.querySelectorAll('[data-poster]').forEach(el => { el.src = `assets2/${theme}/video/${el.dataset.poster}-poster.jpg` })
+  document.querySelectorAll('[data-video]').forEach(v => {
+    const src = `assets2/${theme}/video/${v.dataset.video}.mp4`
+    v.style.display = still ? 'none' : ''
+    if (v.getAttribute('src') !== src) { v.src = src; v.play().catch(() => {}) }
+    v.onerror = () => { v.style.display = 'none' }
+  })
+  $('#assets').innerHTML = [['bull', '황소 · 매수 AI', '두 발로 서서 손을 들어 짚는 자세. 밀고 들어가는 설득.'], ['bear', '곰 · 매도 AI', '팔짱을 끼고 버티는 자세. 무게로 따지는 회의적인 설득.'], ['owl', '부엉이 · 중재자', '정면, 중립. 판정 공개와 중재자 질문에만.']]
+    .map(([k, n, d]) => `<div class="rv-asset"><div class="stagebox" style="background:#16171A">${img(`assets2/${theme}/${k}.png`)}</div><b>${n}</b><span>${d}</span></div>`).join('')
+  $('#videos').innerHTML = [['bull', '매수 차례 · 황소', '손을 들어 한 번 짚고 고개를 끄덕여요. 짧고 힘 있게 밀어붙이는 리듬.'], ['bear', '매도 차례 · 곰', '팔짱 낀 채 깊게 숨 쉬고 고개를 천천히 기울여요. 느리고 무거운 리듬.']]
+    .map(([k, n, d]) => `<div class="rv-video">${still ? `<img src="assets2/${theme}/video/${k}-poster.jpg" alt="">` : `<video src="assets2/${theme}/video/${k}.mp4" poster="assets2/${theme}/video/${k}-poster.jpg" muted loop playsinline autoplay></video>`}<b>${n}</b><span>${d}</span></div>`).join('')
+  $('#compare').innerHTML = `<tr><th></th>${KEYS.map(k => `<th>${T[k].name}</th>`).join('')}</tr>` + ROWS.map(r => `<tr><td><b>${r[0]}</b></td>${r.slice(1).map((c, i) => `<td style="${KEYS[i] === theme ? 'background:#F3F4F6;font-weight:700' : ''}">${c}</td>`).join('')}</tr>`).join('')
+  $('#decide').innerHTML = DECIDE
+  try { localStorage.setItem('bb-suit2', theme) } catch {}
+}
+$('#tabs').innerHTML = Object.entries(T).map(([k, t]) => `<button class="rv-tab" data-t="${k}"><span class="dot" style="background:${t.dot}"></span>${t.name}</button>`).join('')
+document.querySelectorAll('.rv-tab').forEach(b => b.onclick = () => { theme = b.dataset.t; render() })
+$('#market').onchange = e => document.querySelectorAll('[data-app]').forEach(el => el.classList.toggle('market', e.target.checked))
+$('#still').checked = matchMedia('(prefers-reduced-motion: reduce)').matches
+$('#still').onchange = render
+try { const v = localStorage.getItem('bb-suit2'); if (v && T[v]) theme = v } catch {}
+addEventListener('keydown', e => { const i = KEYS.indexOf(theme); if (e.key === 'ArrowRight') { theme = KEYS[(i + 1) % KEYS.length]; render() } if (e.key === 'ArrowLeft') { theme = KEYS[(i + KEYS.length - 1) % KEYS.length]; render() } })
+render()
+</script>
+</body>
+</html>

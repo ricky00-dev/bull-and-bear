@@ -1,0 +1,8 @@
+{
+  "version": "focused-evidence-v1",
+  "embedding_version": "EMV.fb10ae8612009a90fdbd75e28b678eb641340bfb87a71cfc17632617216060f6",
+  "max_distance": 0.65,
+  "distance_band": 0.04,
+  "lexical_score_ratio": 0.5,
+  "max_items": 2
+}

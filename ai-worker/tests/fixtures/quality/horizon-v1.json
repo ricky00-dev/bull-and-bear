@@ -1,0 +1,11 @@
+[
+  {"id":"standard", "text":"7거래일 코스피 대비 상승 가능성", "expected_codes":[], "kind":"synthetic_regression"},
+  {"id":"spaced-day", "text":"7 거래일 코스피 대비 상승 가능성", "expected_codes":[], "kind":"synthetic_regression"},
+  {"id":"double-space", "text":"7거래일 코스피  대비 상승 가능성", "expected_codes":[], "kind":"synthetic_regression"},
+  {"id":"joined-benchmark", "text":"7거래일 코스피대비 상승 가능성", "expected_codes":[], "kind":"synthetic_regression"},
+  {"id":"wrong-days", "text":"17거래일 코스피 대비 상승 가능성", "expected_codes":["horizon_mismatch"], "kind":"synthetic_regression"},
+  {"id":"decimal-days", "text":"7.7거래일 코스피 대비 상승 가능성", "expected_codes":["horizon_mismatch"], "kind":"synthetic_regression"},
+  {"id":"calendar-days", "text":"7일 코스피 대비 상승 가능성", "expected_codes":["horizon_mismatch"], "kind":"synthetic_regression"},
+  {"id":"wrong-benchmark", "text":"7거래일 코스닥 대비 상승 가능성", "expected_codes":["horizon_mismatch"], "kind":"synthetic_regression"},
+  {"id":"absolute-only", "text":"7거래일 절대수익 상승 가능성", "expected_codes":["horizon_mismatch"], "kind":"synthetic_regression"}
+]

@@ -1,0 +1,3649 @@
+{
+  "schema": "rag-vector-comparison-v1",
+  "generation_id": "G.3b60af83fd361364f31002518b017129a26a45d3d6e88d73af384e06b6d69853",
+  "embedding_version": "EMV.35185972522e5f7b1f55a7296b0f5e5a4c538f7518c8db9f5affd978010c115a",
+  "time_policy": "reconstructed-v1",
+  "selection_policy": {
+    "version": "focused-evidence-v1",
+    "embedding_version": "EMV.35185972522e5f7b1f55a7296b0f5e5a4c538f7518c8db9f5affd978010c115a",
+    "max_distance": 0.7,
+    "distance_band": 0.08,
+    "lexical_score_ratio": 0.5,
+    "max_items": 2
+  },
+  "judgments_hash": "cc400105e078f1101bbf0d8c3d7a579ac090605cfdc7a808299e958c9739c0f8",
+  "latency_scope": "cached_search_and_context_persistence_excludes_embedding_and_index_build",
+  "evidence_type": "caller_supplied_judgments_not_independently_reviewed",
+  "summary": {
+    "bm25": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 9,
+      "p95_cached_seconds": 0.06545530003495514,
+      "recall": 0.8666666666666667,
+      "mrr": 0.8833333333333333,
+      "ndcg": 0.8619074713034125,
+      "bundle_precision": 0.6842105263157895,
+      "bundle_recall": 0.9,
+      "unnecessary_selected": 16,
+      "bundle_micro_precision": 0.6666666666666666,
+      "false_abstentions": 1
+    },
+    "dense": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 10,
+      "p95_cached_seconds": 0.21953590004704893,
+      "recall": 0.85,
+      "mrr": 0.9,
+      "ndcg": 0.8613147192765458,
+      "bundle_precision": 0.6153846153846154,
+      "bundle_recall": 0.8833333333333333,
+      "unnecessary_selected": 27,
+      "bundle_micro_precision": 0.5344827586206896,
+      "false_abstentions": 1
+    },
+    "hybrid": {
+      "failures": 0,
+      "forbidden_hits": 0,
+      "unexpected_answers": 10,
+      "p95_cached_seconds": 0.17356519994791597,
+      "recall": 0.8666666666666667,
+      "mrr": 0.9333333333333333,
+      "ndcg": 0.8817529590353944,
+      "bundle_precision": 0.6282051282051282,
+      "bundle_recall": 0.9,
+      "unnecessary_selected": 26,
+      "bundle_micro_precision": 0.5517241379310345,
+      "false_abstentions": 1
+    }
+  },
+  "results": [
+    {
+      "case_id": "holdout-per-definition-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.395dd7c9e432077601d2205ef8096f5aff042635d831d0d857c9f9472287eef1",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.07888530008494854,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.128b0fe72165ca477a161343453b5cc4903389ddbaea40936d973764b4ccc553",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.14853699994273484,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.907c049174a0d6b33bc6f32764ebe29f79d9f23cc978942584a280f102191d36",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12672390008810908,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.146420417af40d484756a8712e21a58ba87765c43cf44ffc15c38945ab7dff42",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.042688900022767484,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.05b9b2cad6a3be9e72c74b8945194ce5f4b6582aad30a19c05314dd8552e60ed",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12484790000598878,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.3e3f554f17612a08ce5aabf4b5fe5e86e47592c21f0d4382a21580172d0b01bb",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12265110004227608,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.8838b3f676fbd722aee4f48d8238b918f926c5005278a3b57f90c92a596dcad1",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04153110005427152,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.870e71c57cb59cf79bb8f9fd9856871b9b932b1c7c453fab6dc980cf4a8ec9ac",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1248259999556467,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.2a7f943c620ab64e71dea43e5c81de2bab815f5b7ee842d52e122d4f2dc32a66",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.15517690009437501,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.6f3f9ef9270fe784a30e6e691c1ec92ad955eefaa3d69fe92051c5ebf11277fe",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.06545530003495514,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.32fd1ffc9b6968be51b213effee407af031e6db4135f9a140d59269b487b34c3",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.2576015000231564,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-per-definition-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.31b64cc9b98ebc2f813e91ce78ef5480f6a59340338675b90a6d28284a45a7b4",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.20351470005698502,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.24cdc59cdf98a774aa6e0db81dd1da61d0c5beb7c43e79fa7072edc589692f0f",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.06278719997499138,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.4b9aa6d09a12c9262de986f97dcaf2464610b27a4391f0c01a67051dafc5c6c9",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.16660110000520945,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.550cf4ccd13da33a52ce600617b5d07573bccb4efa1c2825b71005dfc958d46d",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.17356519994791597,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.1b3269e89a5d57ff6dce50325cba73b832fe9add53fcef3bbd25c8ee2f15ca32",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.046715900069102645,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.cb28302de0b31ff64758bd2b93a6fdbb4a0a4f9d1939a170d8fd5e503799500b",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12296369997784495,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.11c6a1dd49c646da71844a12156f31279e4c24ff179c896541b0eff7a674e5c5",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12415220006369054,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.df091eb648bdcdfb2a4c487b4d312eadeea29221189bb673d9aa38fa0d50e2a7",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.03989479993470013,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.996c19e4d0d9f20ed8fada30ebc17fc1146fafe0dae9cfcf389209b402cda954",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11404740007128567,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.c68e8f3efcb768d4b677c82cf9af9b7c8576cbe6d73d8a14cc87c9a23d8f18c2",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11549609992653131,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.dc45d06784f0490e326f569f26b278e9685e133d3983ae85a018b1d1a7f5a5c8",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0398762000259012,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.cceda3c0a6d7d6bfe7830c573069370b5bbf79ad3ae4174bb4856f0a675c07fd",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.22886360005941242,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-operating-margin-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.5801847b0fcc75349da3da59884cb64412ab3f4032cb831a83963b99506e9866",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11542500008363277,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.b7115cf86d1e98dbda43bc37055e7a9281a7737247d25fdd2df933a4cf73ce28",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.041238300036638975,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.d0357081518ea3874a7f5577c84bd2193e4008f2793464c26177b3dd8f0f70f9",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11823170003481209,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.2481eab08c4ed214dbc2358ff8937c680d069280b8ab05d011b0843677b68931",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11778510001022369,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-1",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.5a104e3cbc67e90a3df1fd1e63d241746561af8a3a149b57b4ce77a15086327c",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04122090002056211,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.30df2da6ebbde0c064d2c0fbd9fe10d68af1068724e31a7ab228901449ec1568",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12147659994661808,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.d259d847397ca0e4ca03f32c8943ce06bcd8fc7a1f0aae61d2a8c640dcc5989a",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12371770001482219,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.03f07f2ff74f9466feb21c2ccd9025a9a232bf737dca96282abe8fb08eba3622",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0676808999851346,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.d8a05fd760e03e5dde214d19abdab55efa008da81ea1e1fbab8f3828102f7c8c",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12222959997598082,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.77fdf8d2c4eda61ff26b271d94be0dba4392256eacade5f013de9f7dcb9e4e32",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11703059996943921,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.739d8c186977baa340f03e42a44c4050e3e785f437fef29bfc80c3fd3d540367",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.043553999974392354,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.c70da41f6cdc771af44698d4d9e328fef491bc3509009feb761213de265b4745",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11965450004208833,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-volatility-direction-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.9cb75d403257b0ad257f39f51c3e1e52294932cb9291e6415551bdeb67f164cc",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12026619992684573,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.52e04317c71ccf17d941b056882feba9db83f66587c12f0113b113344a42d929",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.040302000008523464,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.7a3b9c503f6fa8465f6555605875e2fdec275526b556c500433cf8fac783ca7a",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11843849997967482,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.c2358627971fc13caff6f6f5880460af4e745f7555fa576a9854d98637f4f4da",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.1181256000418216,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.4330933b30c89cd50a0b2e8a5641100501a54b0edc6c7234850bf3a071e11f96",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04328829993028194,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.23118c88f9d26bf4b6e1ff33e0c682973e8c0decbf70f24da4ce45927932e631",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11724160006269813,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.865198a85a8740cca01a80738c77588ce5efd8d57b9e1c779ffe8afc9618bb9e",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12153979996219277,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.e764d56a0ecaf903c50567aeab88b3ccf1a6e8eef51e72bacce9093c90f85e1f",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04158580000512302,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.6f3f779eec5b522437280040364ca2f2e94035257bfa753d74be518423d593e2",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11568219994660467,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.d93c7af5edbb58636929878d8609c3a2c382d6dc07befccd816d460bc3264db1",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.22870700003113598,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.39f2c50d764c6013a7089c66eecd9481c0edb7bc24b4cc8652c0d788b050e918",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04137069999706,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.33079b4eaca4303046cb0f493502c443a8c05651557421787e73506ed6ae8c3a",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11364850006066263,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-earnings-expectations-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.f026da2d59b02e3f9ec46c6d45224d5f321299ae6a7eeacb05aa0c0e4d48641e",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.1170939999865368,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.41deed5b13b6fe4da3844431d318ee8e3ad3d49da8d75ef5bbb8e3b602e940d7",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04065540002193302,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.254d28c9f5460dd091ef2959c5948f72bf2a425c611529a5ed526a7abc3403a3",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11590650002472103,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.0215686862f4f9263e436ebd0499388f16850579ced752ff12e41e4f42728eab",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11839570000302047,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.bf1fa5f2374b16a83d19899534b01ecb99c89262ef49a4772bfa3e6daea14ddc",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04166460002306849,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.217c902526e9420ae8b824c8e0a75fa8ea451002626a8c9ddc0ec8189f262b81",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11619339999742806,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.369f794c15941aab173917892599cf052702fe1ddd551c63c53d306e6edf1f5e",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11401879996992648,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.98d35eaa846fb96e28853e5828005a8accc03ef74fbc4e7310980a9b31ed23bd",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.03955450002104044,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.38fadb031160d01ec03fdefc55d0d5fa3a60f009d69b39aec2acff1bc6143992",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11515349999535829,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.c2cd9548fdb3d6200f172f16b9a43346770d2462774d2e7647e79bef70a04a17",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11450310004875064,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.0634ba959e2403b292eb830199e41afeb02da0c23bab016cd07495833d1eb5c9",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.041697499924339354,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 0.5,
+      "ndcg": 0.6309297535714575,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.074de4e244300506dd5e00642a590b4b0b4e4c4b20bbeaff8615c7ec814b1299",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.1162957000778988,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-release-vs-filing-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.875ff69f1cc40ea18eac45c2ff11d1bfa187503f88c7d16311483569d09c9e04",
+      "selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11691630003042519,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.0ec8170dab35aa8d9887011815748e162e8a13aa3d56d8783a4c11187a27c446",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.03911749995313585,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-0",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.b1e3f7d20f89a9a604c0bd1843a3934d7a0630b9a90b94952ffb99ddc7989941",
+      "selected": [],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11694370000623167,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-0",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.6ba5b2bd13c15909c28e93cf74864c08cb6f538b70488010478f6fade6c3f6b3",
+      "selected": [],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12359720002859831,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": 0.0,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.045b8b8ca2cd0667385d2407bb667f51b0caee64c48c828f8f5d68b5d4e681b1",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04476970003452152,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.c78e8200c5b538c020b16e8dc7b523a18a9064d9a12ae225da75a9bede772199",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11842429998796433,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.a5a5e07457e0519a25701a3c5f94c5510317b9695b419c26f0dd536c7bed6ad1",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12574829999357462,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.ccd4b674940d01fb6bf13ea766ded1f06765b5a95398dfb52e9632e4b26db924",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04312209994532168,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.b71b620994a8a780b8f243635e32a7f7b939f81d2ad0486b975376c6e3c4e3d1",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11336339998524636,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.ddb52d43892559133598fbc5b2ed230cb37e38cbf5fcfdcb2c08290702ea89e1",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12069750006776303,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.dc610ad3d49e0aeba37a211d151f2d38d6a6a4b554f18d19a0e5c03b67a09a68",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04117129999212921,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.de9c71b92d28df559d1acc81b3a10276c826153e6981e5893382079250dff28f",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11526200000662357,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-momentum-limit-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.105e06419ba642377d84a025c7ce2132b4eacffa6732f8b1e344086637cceef8",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.1155175999738276,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-0",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.bc7de80f9048d23afcacf28f90920970657e006ddce2537f7a5ae4753e56dc51",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04041929997038096,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-0",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.a6b5d13fe8dfafaf9672757ae8e6e20350a72f630653bf731248de9d640a839e",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11869859998114407,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-0",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.75d1bbc8faef41177c5217c40a511569de307dc0697afc9604a1edc143c3fbb5",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11656289990060031,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-1",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.d992fad13330ab4fedb094249967cf246faf8c0f496fc12bfe130a1bcb28814b",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04080810002051294,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-1",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.b56774f720373f25d38166d2962c5885f1b3d5886180903f89e24d3e075db59f",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12593520001973957,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-1",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.f9f0a629570dd0b08d35b857777b088d0befc6417b325535e185ab1c9d47c111",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1185890999622643,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-2",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.395aab366ad886f9adbbc3e7cf04ba72d8a2ee12f9bf0cdbab8e4246c23b40ff",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.039371600025333464,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-2",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.56839deda2f785ed2e8a093dfb8629beaf006fe9f72457cd5de4ff08dee18e8a",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11613729991950095,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-2",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.ee387254480758392f04a013f454da99534c3115cd51cf73488ae0385627744c",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1186701999977231,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-3",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.85f381cf9fd9a934567885b80728195fcfd45c00c320527189ca41d3b376ca75",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.03917769994586706,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-3",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.562e1fb79fd81a3aa5e3e0f55a1eb9b83d1cea93bec6cd3c798d53399d9ed417",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.21953590004704893,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-3",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.0850b7f279ec30d296641114d4ef95849549e62ddd12deb5349554985ee3fe76",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11720049998257309,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-4",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.83e43abf2f28221b79ff885d60c28020ffa84d8859f3c204e74aa85c9aa35ffb",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04288920003455132,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-4",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.ea78a7fac4bbdd62b7e411813c20e575f04b2d49396df874b9623caca9ab45da",
+      "selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.1186951999552548,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.0,
+      "mrr": 0,
+      "ndcg": 0.0,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.5,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-4",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.53794d838f4b5932b40bc61a14daed5f2e703415d2034fe8f6ed900971b1dd1e",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.11987369996495545,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-5",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.5cc4dc39a1c25b2363744ea0ccfc62c1d27cfa345b7c998f4c04801445ccaa62",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.04148879996500909,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927",
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 1.0,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-5",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.ac528faa58183a8399c2c5ebf4e0130d1b35b2a14890d29dff86af5eba7e5417",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12024269998073578,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-multi-5",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.074717f4af9df1006809a0e8fb0bd1c2680ddcf9808c82551be6dc83329437fa",
+      "selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "path": "short",
+      "k": 3,
+      "cached_retrieval_seconds": 0.12729059997946024,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": 0.5,
+      "mrr": 1.0,
+      "ndcg": 0.6131471927654584,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 1.0,
+      "bundle_recall": 0.5,
+      "unnecessary_selected": 0,
+      "abstained": false,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-0",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.f7e9b3960506185dab6b89f32ee2e8d8065eaf8cb00f8d8f235bd59e03f70098",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04614889994263649,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-0",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.be0724a09566a84795724d61aa28d3c3464b5a9ebc6d4c0e04cedd03dfddd997",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.14266959996894002,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-0",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.5babd93a787189e29df16ea67ee8aa1055326c40f707b5e0ab039fa1add961cd",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1292876999359578,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-1",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.ad927309f86d8fa110ebaec363293abc4f2e0a198233332e05e304bbc7a3da3c",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.03765199996996671,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-1",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.41bbcc44b823b29f3c175e95f1d414c2e93a55751423c116f7298c653f995fd7",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12620289996266365,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-1",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.3a77b18b21b79f7e7088ac11335b4398cc156e79ce1f27de29387ce5f37a9c25",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12129439995624125,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-2",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.6cc77de5f4942f9be624b80dbff03f1934826ededa4cf8a22e78b62b42b59fca",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.041919899987988174,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-2",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.44dd394f724dede4a6aa087c16c8b58b0d29d017d5b1d89b4ddb1ca47a31253e",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1300241999560967,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-2",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.4875e69d48013cf1c5a8c63ec09e7344c8501c460ac28477e3b4d21993d97941",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1272224000422284,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-3",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.e9eac0aeb43516970602efa4b3f8b87a42c76e4d3dd1d37136ca3de7e03d649d",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.043934499961324036,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-3",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.da8dcfc0b7eeb42178059611a86dad8970b5965000db930536b3e36f0f693120",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.13021460000891238,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-3",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.942b5ad9ca577aef881dd80aa9f78f029592c07236958d94054247228ae04fa4",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12706029997207224,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-4",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.e6ad9c999a936cc458b960a423ca135a348fe81aafd9460e440a681829741900",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0422350000590086,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-4",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.c534461f7c7538ef9c1c98f2528f8837d714ba55519ddf3162d193cab052e867",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12452339997980744,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-4",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.39b8841388dfb251cfefa37ea96771e0811965280c226c0f11c22f541c80541d",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12132160004694015,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-5",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.160ff4fe3d950c86d1ab60dc6b0ab1949058545804d5d75047582d1517af8753",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.044472399982623756,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-5",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.d9fcb761410746586db4aa5b826336964e932c283e9d0fa021281a73a15c3458",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12021309998817742,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-5",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.0e0b48421d44ed07e1cbb2c525a700de43d05220cfb52f99b0b2bd99646c427d",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12659479991998523,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-6",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.5f16d9207a4e12c7d57b44120c199f44eb2f08e558999569ac9fac40d66cfeb8",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0438158999895677,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-6",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.27d3c207f69080bf1ee2e41d016385c1f1e61e0645f9c505f8948f3c37660b21",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12309760006610304,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-6",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.2d6a58146ac452ee8ef657ce20d9728f871faa4c2449e97044afbf417d74731f",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12176129990257323,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-7",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.2cca5007eea75c71fa383c4ba3cbce9b7635742982b845fdbc65a53a873da9d8",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04145659995265305,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-7",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.f1c2cc5f1f8ec070389da652a6d401a2129098e5001fb0f9d60dc7d49f153ae2",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12223129998892546,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-7",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.affec4ceb6317b250486ac1c18d6c890390779fbe399502acce734d452815c37",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12206739990506321,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-8",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.8a8f2e341c393290c83eb763e97ed89f2e7c46e300884a172257b362c250f346",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04254589998163283,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-8",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.7d3afdd3ec361c6ede3deb79381b241d006d8ee558630f2acc8a27fe3de5af60",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12797259993385524,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-8",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.0801646adc27b7c40d4667df2666281a54661b4e84490d5202b3e0fd4f720e27",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1303864000365138,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-9",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.c90e6a83f6d47e595e72d28c148c709b7044f9b7a77793c3e4bf9e444e0207d3",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04246829997282475,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-9",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.89375cea51687145bbbf71481a3a8102ec24ffbd54b5615f325699a9f4b677b6",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.13004930003080517,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-9",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.a107e8ccf08afd5852f18dc47bd507621c2fea80073e5221e214c7ea0fb06711",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.13807860005181283,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-10",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.159f5fe0f0ed42f303774839cf6ad21120ade20a6d134aa543fc9f9f69d3b900",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.044970400049351156,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-10",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.00d462a8053302500f5168559172ab1956e6880349b138d6a5bdad9df1748fcb",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12445320002734661,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-10",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.0c9dd6faa7ee9ed4d6b510b7750f4c51c6ff3124d31c07f67938f7f9a8d9c1a0",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12546199990902096,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-11",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.a1dec51c17d1eaf81c593d304e27a8d0d0987aca9fda74e7c7896d64ee6e7f43",
+      "selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04406560002826154,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-11",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.a0469edbcf3223663a398436be48b2b743391ab9211b04adaab57c0a95411049",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11871149996295571,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-11",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.9ac04a9ffb8693f70f139128b4398e24c644e808ca9d5e1000372bcd25d7ca57",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12349070003256202,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-12",
+      "strategy": "bm25",
+      "status": "empty",
+      "context_id": "KCTX.312ba0c07c09d8c77ca1256ec09f29525d62d928363f94d55e17d1fcc2b81887",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04256950004491955,
+      "forbidden_hits": 0,
+      "candidate_count": 0,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-12",
+      "strategy": "dense",
+      "status": "empty",
+      "context_id": "KCTX.3d6e581418a02ccc35680e0c4ff8ffd9bcdd2f210ee7e84f5d350e3d2d4afe18",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.13186540000606328,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-12",
+      "strategy": "hybrid",
+      "status": "empty",
+      "context_id": "KCTX.64e2c9e0d734b4f22000bc21182a419e78413008bb22bd2aac2bfe618c92b308",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12314929999411106,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [],
+      "bundle_precision": null,
+      "bundle_recall": null,
+      "unnecessary_selected": 0,
+      "abstained": true,
+      "unexpected_answer": false
+    },
+    {
+      "case_id": "holdout-negative-13",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.3e9712b457ac97c9ab06b183d10884e077e376e1ea313c79e28668dc181d82c3",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04181419999804348,
+      "forbidden_hits": 0,
+      "candidate_count": 3,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-13",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.98dab842d87f261b579711a41f003f437c7defc323b3b9f735fde7db69242736",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12533369997981936,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-13",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.fd8dc7dbee33989e1ee81c8bc1f13987a06652adda309308c6b645616a05350e",
+      "selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11998740001581609,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-14",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.4b700fe2c5abdf461ca2796634d829d294d6b0b61e0aad4af6a3eddd3e28531f",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.04299740004353225,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-14",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.4f93897f4dc130a8a10f3154ba950ff096ff84251f1c5a161fd18dbe31d2f3c4",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12242969998624176,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-14",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.3931c211c61e801658e90e1c7a7e6ec98e75ebd914d2b479f6d8ded893d2cab4",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11984629998914897,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-15",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.4ac5db3f4995da33ef7064ef9e1e4bd040a315e7c4fc563f0c1ed8af36d7fb71",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.041901699965819716,
+      "forbidden_hits": 0,
+      "candidate_count": 2,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-15",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.35a2515590f04fcf9cde4e33443192d9da6534335a97edca2ea2ab0bce41ef52",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12496469996403903,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-15",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.6e1333b189a43e54a7d8a10e0f4ab23465b3a1a8ffb6eb0726dc7fa2d44a8b3c",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.11998940003104508,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+        "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-16",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.5161b24bdbfe3a32a9f94449329b5609b2724b409354fe297d4f37e3dc91f20b",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.042021399945952,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-16",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.ad5c8b17415f17b4e0f7d799c4af01b01b00b37a3fd4a53136853469d0e3216f",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12194980005733669,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-16",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.4df1d2e1c6ebe0137bc640e175edba53186b42f0e626df5d3031903671a2ab51",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.12791869998909533,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-17",
+      "strategy": "bm25",
+      "status": "completed",
+      "context_id": "KCTX.5da6af11b23ab5a57998274421e8f4e819abf1a331433f6d8c22408ad2f7f20b",
+      "selected": [],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.0416123999748379,
+      "forbidden_hits": 0,
+      "candidate_count": 1,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 1,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-17",
+      "strategy": "dense",
+      "status": "completed",
+      "context_id": "KCTX.48a2742950ce72825d657f1b4dd264c2e2278ac554860df190decefcb92dc7a0",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1228910000063479,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    },
+    {
+      "case_id": "holdout-negative-17",
+      "strategy": "hybrid",
+      "status": "completed",
+      "context_id": "KCTX.ae25766a302423b8c93d84f0e360d3f1bcf08467cff4833c511ddfda0d762e17",
+      "selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "path": "common",
+      "k": 2,
+      "cached_retrieval_seconds": 0.1163735999725759,
+      "forbidden_hits": 0,
+      "candidate_count": 6,
+      "recall": null,
+      "mrr": null,
+      "ndcg": null,
+      "bundle_selected": [
+        "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+        "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+      ],
+      "bundle_precision": 0.0,
+      "bundle_recall": null,
+      "unnecessary_selected": 2,
+      "abstained": false,
+      "unexpected_answer": true
+    }
+  ],
+  "embedding_ledger": [
+    {
+      "version_id": "EMV.35185972522e5f7b1f55a7296b0f5e5a4c538f7518c8db9f5affd978010c115a",
+      "calls": 150,
+      "reserved_nano": 323660,
+      "measured_cost_nano": 128140,
+      "unknown_calls": 0,
+      "input_tokens": 6407
+    },
+    {
+      "version_id": "EMV.fb10ae8612009a90fdbd75e28b678eb641340bfb87a71cfc17632617216060f6",
+      "calls": 30,
+      "reserved_nano": 597350,
+      "measured_cost_nano": 237900,
+      "unknown_calls": 0,
+      "input_tokens": 1830
+    },
+    {
+      "version_id": "EMV.fce3a6421dc8c8e7577c80a2ac939ba5a996c790be9ba5eb161e8fca4d8ccd43",
+      "calls": 1,
+      "reserved_nano": 5240,
+      "measured_cost_nano": 0,
+      "unknown_calls": 1,
+      "input_tokens": 0
+    }
+  ],
+  "split": "holdout",
+  "human_reviewed": false,
+  "embedding_spec": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "revision": "pilot-20261102-project-key-v1",
+    "dimensions": 1536,
+    "preprocessing": "identity-v1",
+    "document_prefix": "",
+    "query_prefix": "",
+    "price_revision": "official-model-page-20261102",
+    "nano_usd_per_token": 20
+  },
+  "metric_scope": "whole_bundle_negative_and_precision_v2"
+}

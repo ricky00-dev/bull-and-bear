@@ -7,6 +7,7 @@ pykrx의 KRX 정보데이터시스템 API(PER/PBR, 시가총액)는 현재 빈 �
 from __future__ import annotations
 
 import warnings
+from dataclasses import replace
 from datetime import date, datetime
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .base import (
     DataUnavailable,
     Disclosure,
     FinancialReport,
+    INCOME_ACCOUNTS,
     MarketDataSource,
     PriceBar,
     ReportType,
@@ -101,9 +103,35 @@ class PykrxDartSource(MarketDataSource):
                 break
 
         if latest is None:
-            raise DataUnavailable(f"{as_of} 이전 재무 보고서 없음: {ticker}")
-        reports = [latest] + [r for r in annuals[:2] if r is not latest]
-        return reports
+            return []
+        cash_flow = self._operating_cash_flow(dart, corp, latest)
+        earlier = [r for r in annuals[:2] if r is not latest]
+        if cash_flow is not None:
+            latest = replace(latest, accounts={**latest.accounts, "operating_cash_flow": AccountValue(cash_flow)})
+        return [latest, *earlier]
+
+    def _operating_cash_flow(self, dart: OpenDartClient, corp: str, report: FinancialReport) -> float | None:
+        try:
+            body = dart.get("fnlttSinglAcntAll", corp_code=corp, bsns_year=str(report.fiscal_year),
+                            reprt_code=REPORT_CODES[report.report_type],
+                            fs_div="CFS" if report.consolidated else "OFS")
+        except DataUnavailable:
+            return None
+        rows = (body or {}).get("list", [])
+        values = set()
+        for row in rows:
+            if row.get("sj_div") != "CF" or f"DART:{row.get('rcept_no')}" != report.source_ref:
+                continue
+            if row.get("currency") != "KRW":
+                continue
+            account = str(row.get("account_nm", "")).replace(" ", "")
+            if (row.get("account_id") in ("ifrs-full_CashFlowsFromUsedInOperatingActivities",
+                                         "ifrs_CashFlowsFromUsedInOperatingActivities")
+                    or account in ("영업활동현금흐름", "영업활동으로인한현금흐름")):
+                value = parse_amount(row.get("thstrm_amount"))
+                if value is not None:
+                    values.add(value)
+        return next(iter(values)) if len(values) == 1 else None
 
     def _fetch_report(self, dart: OpenDartClient, corp: str, year: int, rtype: ReportType) -> FinancialReport | None:
         body = dart.get(
@@ -127,7 +155,8 @@ class PykrxDartSource(MarketDataSource):
                 continue
             current = parse_amount(row.get("thstrm_amount"))
             if key in ("total_assets", "total_liabilities", "total_equity") or rtype == "FY":
-                accounts[key] = AccountValue(current=current, ytd=current)
+                prior = parse_amount(row.get("frmtrm_amount")) if key in INCOME_ACCOUNTS else None
+                accounts[key] = AccountValue(current=current, ytd=current, prior_ytd=prior)
             else:
                 ytd = parse_amount(row.get("thstrm_add_amount"))
                 accounts[key] = AccountValue(
@@ -138,7 +167,7 @@ class PykrxDartSource(MarketDataSource):
                     or (parse_amount(row.get("frmtrm_amount")) if rtype == "Q1" else None),
                 )
 
-        rcept_no = rows[0]["rcept_no"]
+        rcept_no = max(row["rcept_no"] for row in rows)
         return FinancialReport(
             fiscal_year=year,
             report_type=rtype,

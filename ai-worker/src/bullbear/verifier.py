@@ -69,6 +69,9 @@ def verify(statement: Statement, snapshot: Snapshot) -> VerificationResult:
 
     refs = set()
     for ev in statement.evidence:
+        if not re.fullmatch(r"E[1-9][0-9]*", ev.ref):
+            issues.append(Issue(severity="error", code="invalid_ref", ref=ev.ref,
+                                message=f"ref '{ev.ref}' 형식 오류: evidence.ref에는 대괄호 없이 E1처럼 쓰고, 본문에만 [E1]을 쓰세요."))
         if ev.ref in refs:
             issues.append(Issue(severity="error", code="duplicate_ref", ref=ev.ref, message=f"{ev.ref} 표식이 중복됩니다"))
         refs.add(ev.ref)
@@ -76,7 +79,7 @@ def verify(statement: Statement, snapshot: Snapshot) -> VerificationResult:
         if fact is None:
             issues.append(Issue(
                 severity="error", code="unknown_source", ref=ev.ref,
-                message=f"{ev.ref}: source_id '{ev.source_id}'는 스냅샷에 없습니다. 도구가 돌려준 id만 쓰세요",
+                message=f"{ev.ref}: source_id '{ev.source_id}'는 스냅샷에 없습니다. 공통 입력 또는 도구에 있는 Fact ID를 쓰세요",
             ))
             continue
         if not values_match(ev.value, fact):

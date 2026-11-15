@@ -1,0 +1,6 @@
+# Explicit real-worker profile: WORKER_TOKEN must match the Python process.
+bullbear:
+  worker:
+    mode: http
+    base-url: ${WORKER_BASE_URL:http://localhost:8000}
+    token: ${WORKER_TOKEN}

@@ -1,0 +1,111 @@
+{
+  "schema": "rag-local-load-probe-v1",
+  "scope": "in_process_http_sqlite_fixture_not_deployment_load",
+  "gate": "32 requests/phase; concurrency<=4 all200; concurrency8 may503; all200 exact baseline equality",
+  "all_gates_passed": true,
+  "phases": [
+    {
+      "route": "search",
+      "concurrency": 1,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 1.4693426999729127,
+      "requests_per_second": 21.778445559766226,
+      "p50_seconds": 0.04413150006439537,
+      "p95_seconds": 0.05642959999386221,
+      "max_seconds": 0.06861539999954402,
+      "gate_passed": true
+    },
+    {
+      "route": "search",
+      "concurrency": 4,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 0.5921164000174031,
+      "requests_per_second": 54.0434279460246,
+      "p50_seconds": 0.06296720006503165,
+      "p95_seconds": 0.13715279998723418,
+      "max_seconds": 0.15077750000637025,
+      "gate_passed": true
+    },
+    {
+      "route": "search",
+      "concurrency": 8,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 0.7272247000364587,
+      "requests_per_second": 44.002905839688495,
+      "p50_seconds": 0.1099663000786677,
+      "p95_seconds": 0.4288442999823019,
+      "max_seconds": 0.49676290003117174,
+      "gate_passed": true
+    },
+    {
+      "route": "facts",
+      "concurrency": 1,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 0.9660417000995949,
+      "requests_per_second": 33.12486406818767,
+      "p50_seconds": 0.030701000010594726,
+      "p95_seconds": 0.0319700000109151,
+      "max_seconds": 0.03301150002516806,
+      "gate_passed": true
+    },
+    {
+      "route": "facts",
+      "concurrency": 4,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 0.5821338000241667,
+      "requests_per_second": 54.97018039267184,
+      "p50_seconds": 0.06139470008201897,
+      "p95_seconds": 0.1740466000046581,
+      "max_seconds": 0.1837164000608027,
+      "gate_passed": true
+    },
+    {
+      "route": "facts",
+      "concurrency": 8,
+      "requests": 32,
+      "statuses": {
+        "200": 32,
+        "503": 0
+      },
+      "wall_seconds": 0.77254959999118,
+      "requests_per_second": 41.421288678895614,
+      "p50_seconds": 0.1252545000752434,
+      "p95_seconds": 0.5412200000137091,
+      "max_seconds": 0.6572528999531642,
+      "gate_passed": true
+    }
+  ],
+  "model_calls": 0,
+  "limitations": [
+    "two tickers/two fixture documents",
+    "no Spring/browser/network transport load",
+    "no PostgreSQL or production hardware",
+    "no sustained endurance or SLA claim"
+  ],
+  "socket_connections": [
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    }
+  ]
+}

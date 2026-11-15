@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "reviewer": "Codex",
+  "review_status": "proposed",
+  "human_reviewed": false,
+  "scope": "Stored pilot findings, not investment correctness or independent quality labels",
+  "findings": [
+    {
+      "run_id": "7ed9cc06d6f94c6aac65c15aa45c2e91",
+      "attempt": 1,
+      "issue_index": 1,
+      "original_code": "reasoning_length",
+      "assessment": "valid",
+      "reason": "실제 4문장으로 3문장 제한 위반.",
+      "candidate_sha256": "b6b18594e79e2623ef3a4df2043276317ae83f679cc04d4aeb3c856186911340",
+      "issue_sha256": "ba86a1ebf8e15965ced3c3208addc3fdcf20c3ae3d3bed408f61e6cd7fd58dbe",
+      "events_sha256": "56f18b249b07fa1fb3ed39d60209891c52a4f5f15e37b5b4240069a128ce1163",
+      "manifest_sha256": "fcaa11592293b8db1b48e6e3b4f06fb81b8f4112c566a7349bfbef3ccae9095a"
+    },
+    {
+      "run_id": "7ed9cc06d6f94c6aac65c15aa45c2e91",
+      "attempt": 2,
+      "issue_index": 1,
+      "original_code": "unsupported_inference",
+      "assessment": "mixed",
+      "reason": "실적 최고/기대 미달의 E2 연결은 잘못됨. 다만 되돌림 부담이라는 가설 자체를 지속 단정으로 보면 과잉.",
+      "candidate_sha256": "dead9f4df7fb0e4c94e58e2d0b1b028f900593b51d35f8adc87bf844c5b40d40",
+      "issue_sha256": "07ccdcc8273c43f72704afb56931c405c03cc1ce2d399512dc0909951de91a98",
+      "events_sha256": "56f18b249b07fa1fb3ed39d60209891c52a4f5f15e37b5b4240069a128ce1163",
+      "manifest_sha256": "fcaa11592293b8db1b48e6e3b4f06fb81b8f4112c566a7349bfbef3ccae9095a"
+    },
+    {
+      "run_id": "7ed9cc06d6f94c6aac65c15aa45c2e91",
+      "attempt": 2,
+      "issue_index": 2,
+      "original_code": "unsupported_inference",
+      "assessment": "mixed",
+      "reason": "절대 낙폭으로 상대 우위를 지지하는 근거는 약함. 그러나 평가 기간의 누적 낙폭을 유지하는 데 추가 하락이 반드시 필요한 것은 아님.",
+      "candidate_sha256": "dead9f4df7fb0e4c94e58e2d0b1b028f900593b51d35f8adc87bf844c5b40d40",
+      "issue_sha256": "fac0c80d678f570a55168e59d66edd67a2c33c3b4382111a5bc09914fa6e5323",
+      "events_sha256": "56f18b249b07fa1fb3ed39d60209891c52a4f5f15e37b5b4240069a128ce1163",
+      "manifest_sha256": "fcaa11592293b8db1b48e6e3b4f06fb81b8f4112c566a7349bfbef3ccae9095a"
+    },
+    {
+      "run_id": "7ed9cc06d6f94c6aac65c15aa45c2e91",
+      "attempt": 3,
+      "issue_index": 1,
+      "original_code": "unsupported_inference",
+      "assessment": "false_positive",
+      "reason": "후보 바로 다음 문장에서 코스피 자료 부재와 상대 낙폭 미확인을 명시함. 같은 단서를 첫 문장에도 요구하는 문맥 누락.",
+      "candidate_sha256": "a3f9cbd3e0fb6f7194f7cfa11cd3444f14a826ef11338cdab97e38f9d3de0a39",
+      "issue_sha256": "907e023ec7a4e4aa96e5bff11505d631fc84ba9db36e6e4087e2babcc4d41ee2",
+      "events_sha256": "56f18b249b07fa1fb3ed39d60209891c52a4f5f15e37b5b4240069a128ce1163",
+      "manifest_sha256": "fcaa11592293b8db1b48e6e3b4f06fb81b8f4112c566a7349bfbef3ccae9095a"
+    },
+    {
+      "run_id": "7ed9cc06d6f94c6aac65c15aa45c2e91",
+      "attempt": 3,
+      "issue_index": 2,
+      "original_code": "unsupported_inference",
+      "assessment": "mixed",
+      "reason": "약세 지속 경로의 설명은 약함. 그러나 추가 하락 필수 요구와 양방향 변동성 설명을 하락 우위의 근거로 읽는 부분은 부적절.",
+      "candidate_sha256": "a3f9cbd3e0fb6f7194f7cfa11cd3444f14a826ef11338cdab97e38f9d3de0a39",
+      "issue_sha256": "efb519f5d897075e82e996af814c40721224092e40c11f961cc78ab9afd6685c",
+      "events_sha256": "56f18b249b07fa1fb3ed39d60209891c52a4f5f15e37b5b4240069a128ce1163",
+      "manifest_sha256": "fcaa11592293b8db1b48e6e3b4f06fb81b8f4112c566a7349bfbef3ccae9095a"
+    },
+    {
+      "run_id": "a9e8de8bbf8449909e30152c966b7f43",
+      "attempt": 1,
+      "issue_index": 1,
+      "original_code": "reasoning_length",
+      "assessment": "valid",
+      "reason": "실제 4문장으로 3문장 제한 위반.",
+      "candidate_sha256": "c0fb7fef6a092a3e3ced574c797e935030f9ac2baeea7c0c36f23a2eb7bb2ff1",
+      "issue_sha256": "ba86a1ebf8e15965ced3c3208addc3fdcf20c3ae3d3bed408f61e6cd7fd58dbe",
+      "events_sha256": "cdaaa4377efe6d75960df6ddc5336fbceafc359c1c0bcc3f9094da1e5e658043",
+      "manifest_sha256": "6a2883768bae3587b78a41e8cac69b06ab640d83b1862cb6bb3a432017b578c3"
+    },
+    {
+      "run_id": "a9e8de8bbf8449909e30152c966b7f43",
+      "attempt": 2,
+      "issue_index": 1,
+      "original_code": "unsupported_inference",
+      "assessment": "mixed",
+      "reason": "비교 기준 부재에 따른 전망의 약점은 남음. 다만 기준일 이후 누적 구간과 미래 추가 하락을 구분해야 함.",
+      "candidate_sha256": "15926cbb69df9be66a30373ab4c403164de20da94be0ba998ce34de783b79aab",
+      "issue_sha256": "5e9ee9e8a3323934a05f03c47e54b1b24d9993f7172d7cb5d4d2587859e685d5",
+      "events_sha256": "cdaaa4377efe6d75960df6ddc5336fbceafc359c1c0bcc3f9094da1e5e658043",
+      "manifest_sha256": "6a2883768bae3587b78a41e8cac69b06ab640d83b1862cb6bb3a432017b578c3"
+    },
+    {
+      "run_id": "a9e8de8bbf8449909e30152c966b7f43",
+      "attempt": 2,
+      "issue_index": 2,
+      "original_code": "contradiction",
+      "assessment": "false_positive",
+      "reason": "다만 및 반등 여지/낮은 확신은 이미 반대 근거를 인정하는 연결. 기대 미달의 시장 반응과 환원의 긍정적 효과는 양립 가능.",
+      "candidate_sha256": "15926cbb69df9be66a30373ab4c403164de20da94be0ba998ce34de783b79aab",
+      "issue_sha256": "afed6a2c02ae4e25328e38e83f367d1d8e48f8e855851008b4930e579295ba5e",
+      "events_sha256": "cdaaa4377efe6d75960df6ddc5336fbceafc359c1c0bcc3f9094da1e5e658043",
+      "manifest_sha256": "6a2883768bae3587b78a41e8cac69b06ab640d83b1862cb6bb3a432017b578c3"
+    },
+    {
+      "run_id": "a9e8de8bbf8449909e30152c966b7f43",
+      "attempt": 3,
+      "issue_index": 1,
+      "original_code": "horizon_mismatch",
+      "assessment": "false_positive",
+      "reason": "마지막 문장에 낙폭 유지 가정/종가 및 코스피 자료 부재/상대 기준을 모두 명시. horizon 변경은 없음.",
+      "candidate_sha256": "70900ef456b94bd3e3d679db7df3980b89cfb7ceae11490ca4a522f65571e2cf",
+      "issue_sha256": "19bb51f3168b6a14a3b787ae6aa4c9aec52533e7b963ca168be36cb3dcf11479",
+      "events_sha256": "cdaaa4377efe6d75960df6ddc5336fbceafc359c1c0bcc3f9094da1e5e658043",
+      "manifest_sha256": "6a2883768bae3587b78a41e8cac69b06ab640d83b1862cb6bb3a432017b578c3"
+    },
+    {
+      "run_id": "a9e8de8bbf8449909e30152c966b7f43",
+      "attempt": 3,
+      "issue_index": 2,
+      "original_code": "contradiction",
+      "assessment": "false_positive",
+      "reason": "판단을 약화시키는 요인을 인정하고 낮은 확신으로 SELL을 유지하는 것은 그 자체로 자기모순 아님. 전망의 약점과 contradiction은 구분해야 함.",
+      "candidate_sha256": "70900ef456b94bd3e3d679db7df3980b89cfb7ceae11490ca4a522f65571e2cf",
+      "issue_sha256": "ec177de052b48e751ca5844d94a5f5044ca5a8f65273893db5407ad21dca2654",
+      "events_sha256": "cdaaa4377efe6d75960df6ddc5336fbceafc359c1c0bcc3f9094da1e5e658043",
+      "manifest_sha256": "6a2883768bae3587b78a41e8cac69b06ab640d83b1862cb6bb3a432017b578c3"
+    }
+  ]
+}

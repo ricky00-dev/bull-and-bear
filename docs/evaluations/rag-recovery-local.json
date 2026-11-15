@@ -1,0 +1,140 @@
+{
+  "schema": "rag-local-recovery-drill-v1",
+  "scope": "sqlite_local_fixture_not_cloud_restore",
+  "backup_seconds": 0.14795989997219294,
+  "restore_seconds": 0.08472380007151514,
+  "backup_inventory": {
+    "files": {
+      "http/worker.sqlite3": "ce3d64531279bbe85c36dd9c211a6911cd6322aa5f6bc14e319eac1248006bde",
+      "http/worker.sqlite3-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "http/worker.sqlite3-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifest.json": "8db245666746819ce678c519489a0addbdb70980384db3fad5badd42330e9f14",
+      "rag/contexts.sqlite3": "d524a0b7ee5d0a85c9970e271277290a0c3b4e8140a776e8ac3757b73716bd49",
+      "rag/generations/G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c/index.ready.json": "359f9978cca1e215458c981ce19dc54fd7bc775fdd7a5c16a073015b762a492e",
+      "rag/generations/G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c/index.sqlite3": "fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5",
+      "rag/generations/G.e1606d945f2ab0ed866e2733acd9626b10475befa35dc33e2c99a694a6aec29b/index.ready.json": "2cfa172d0bfac8f010bf66126a4d07afa9b60e394812493ff772fd8faf24ea82",
+      "rag/generations/G.e1606d945f2ab0ed866e2733acd9626b10475befa35dc33e2c99a694a6aec29b/index.sqlite3": "490b045551649d1bc735eccc1b2bdace6669e03f332e91345fabd430cf819372",
+      "rag/objects/232dbc4700035f9a5bb2a163ca453d81cb0b734efb06bd892ca96233a10c0a3b": "232dbc4700035f9a5bb2a163ca453d81cb0b734efb06bd892ca96233a10c0a3b",
+      "rag/objects/63ae126fc8a5f609642afdcb7faaa40e5316b09d98b69522bce009bd2fbe577d": "63ae126fc8a5f609642afdcb7faaa40e5316b09d98b69522bce009bd2fbe577d",
+      "rag/rag.sqlite3": "1c59927ea19c7a5e0d612787b425c76d280e11ebe1a65414f1a5a4dc3131da3e",
+      "rag/rag.sqlite3-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "rag/rag.sqlite3-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "snapshots/000660-20261016-1f309a0d53.json": "166704c00291831a49fd34db2e2a5c231ccb51331afdf5418708da8d6d16deba",
+      "snapshots/005930-20261028-c637dc2629.json": "a045fca729d3f22771fef8df85406ed7144f391d80fb875df050ad9f0a1fd478",
+      "snapshots/MULTI.000660.b2dcbd3aa43416b3.json": "28284db58806a0323bbd6dd4cbfeb0b3df23df735141ba6ec00b29b2160809e8",
+      "snapshots/MULTI.005930.0c22205920c45d56.json": "cb49f8c834ac3db52d143b1824ca3618c15eaf5ecd90dd0582f5e9f1605c5663",
+      "worker-network-audit.jsonl": "01cb22262cf59e36e71fc48841a6b14db01220c97eb10a2f560bd227e8d752e6"
+    },
+    "database_logical_hashes": {
+      "http/worker.sqlite3": "563d3d8f577ef02615e87099b541c6db37c4b7dd9b47a93ddcaaac508a57cb70",
+      "rag/contexts.sqlite3": "cc9912fef0f63c6dc4e284617e5d1ece99a1b0f78c36f38bac6820db2d54e502",
+      "rag/rag.sqlite3": "8182c65bcc1a601fc510ed42b7adc5d8a1c31de135be2f660c11c4bb5829bd70"
+    }
+  },
+  "binding_check": {
+    "schema": "snapshot-bindings-check-v1",
+    "snapshots": [
+      {
+        "snapshot_id": "000660-20261016-1f309a0d53",
+        "ticker": "000660",
+        "generation_id": null,
+        "state": "unbound",
+        "ready": false,
+        "reason": "binding_or_publication_unavailable"
+      },
+      {
+        "snapshot_id": "005930-20261028-c637dc2629",
+        "ticker": "005930",
+        "generation_id": null,
+        "state": "unbound",
+        "ready": false,
+        "reason": "binding_or_publication_unavailable"
+      },
+      {
+        "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+        "ticker": "000660",
+        "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+        "state": "bound",
+        "ready": true
+      },
+      {
+        "snapshot_id": "MULTI.005930.0c22205920c45d56",
+        "ticker": "005930",
+        "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+        "state": "bound",
+        "ready": true
+      }
+    ],
+    "all_ready": false,
+    "snapshot_count": 4
+  },
+  "checks": [
+    {
+      "restart": 0,
+      "ticker": "005930",
+      "route": "search",
+      "context_id": "KCTX.09e3631b2e2515bdb2d2a15c0caff7a792a0ef6254ae432567cfa86f58697872"
+    },
+    {
+      "restart": 0,
+      "ticker": "005930",
+      "route": "facts",
+      "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+    },
+    {
+      "restart": 0,
+      "ticker": "000660",
+      "route": "search",
+      "context_id": "KCTX.5f439ef1973cd03ab09a97d8b167759d9f24587af3e4133f64f2701f468f932f"
+    },
+    {
+      "restart": 0,
+      "ticker": "000660",
+      "route": "facts",
+      "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+    },
+    {
+      "restart": 1,
+      "ticker": "005930",
+      "route": "search",
+      "context_id": "KCTX.09e3631b2e2515bdb2d2a15c0caff7a792a0ef6254ae432567cfa86f58697872"
+    },
+    {
+      "restart": 1,
+      "ticker": "005930",
+      "route": "facts",
+      "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+    },
+    {
+      "restart": 1,
+      "ticker": "000660",
+      "route": "search",
+      "context_id": "KCTX.5f439ef1973cd03ab09a97d8b167759d9f24587af3e4133f64f2701f468f932f"
+    },
+    {
+      "restart": 1,
+      "ticker": "000660",
+      "route": "facts",
+      "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+    }
+  ],
+  "corrupt_backup_rejected_before_destination_created": true,
+  "model_calls": 0,
+  "limitations": [
+    "fixture corpus and mixed real/mock snapshots",
+    "all writers stopped",
+    "not PostgreSQL backup recovery",
+    "not cloud/IAM/TLS verification",
+    "not capacity or RTO guarantee"
+  ],
+  "socket_connections": [
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    },
+    {
+      "host": "127.0.0.1",
+      "allowed": true
+    }
+  ]
+}

@@ -22,6 +22,7 @@ ACCOUNT_KEYS = (
     "total_assets",
     "total_liabilities",
     "total_equity",
+    "operating_cash_flow",
 )
 INCOME_ACCOUNTS = frozenset({"revenue", "operating_income", "net_income"})
 

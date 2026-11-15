@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: bullbear-api
+  datasource:
+    url: jdbc:postgresql://localhost:5433/bullbear
+    username: bullbear
+    password: bullbear
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  config:
+    # 로컬에서 api/.env에 KAKAO_REST_KEY 등을 넣어 둘 수 있다 (커밋 금지, .gitignore)
+    import: optional:file:.env[.properties]
+
+server:
+  port: 8080
+  # Caddy가 HTTPS를 받아 http로 넘긴다. X-Forwarded-Proto를 믿어야 브라우저의 https 출처를 같은 출처로 보고 CORS 403을 내지 않는다
+  forward-headers-strategy: native
+
+bullbear:
+  cors:
+    # 웹 개발 서버, Capacitor 앱(iOS/Android)
+    allowed-origins:
+      - http://localhost:5173
+      - capacitor://localhost
+      - http://localhost
+  worker:
+    # fake: 계약 문서 예시 이벤트를 재생하는 가짜 워커 / http: 실제 Python 워커
+    mode: fake
+    base-url: http://localhost:8000
+    token: dev-worker-token
+    fake-delay: 1200ms
+  scoring:
+    hold-band: 2.0
+    index: KOSPI
+    # 장 마감(15:30) 뒤. 시세가 늦게 들어와도 다음 회차에 채점된다
+    cron: "0 10 16,18,20 * * MON-FRI"
+  budget:
+    # 사용자가 시작한 토론의 하루 비용 상한 (USD). 전시 당일에는 환경 변수로 올린다
+    user-daily-usd: 6.0
+    per-user-daily-debates: 5
+    # 사용량을 아직 모르는 토론. 현재 엔진(전 역할 Sonnet) 캐시 없이 실측 약 $0.5 (장원, 11/11) + 여유.
+    # 캐시가 켜지면 다시 낮춘다
+    estimate-usd: 0.6
+    # USD / 100만 토큰. 바뀌면 https://platform.claude.com/docs/en/about-claude/pricing 보고 고친다
+    # Haiku 5.5는 프롬프트가 10만 토큰 이하일 때 단가 (토론 한 번의 호출은 그보다 훨씬 작다)
+    prices:
+      "[claude-opus-5-5]": { input: 4.00, output: 20.00, cache-read: 0.20, cache-write: 5.00 }
+      "[claude-sonnet-5-5]": { input: 2.00, output: 10.00, cache-read: 0.10, cache-write: 2.50 }
+      "[claude-haiku-5-5]": { input: 0.10, output: 0.50, cache-read: 0.01, cache-write: 0.125 }
+  forward-run:
+    # 실제 워커를 붙일 때 켠다 (BULLBEAR_FORWARD_RUN_ENABLED=true)
+    enabled: false
+    # 업종을 고르게 10종목 (docs/experiment.md)
+    tickers: ["005930", "000660", "373220", "207940", "105560", "005380", "035420", "051910", "017670", "012450"]
+    # 채점(16:10) 뒤, 종가가 들어온 다음. 18:40은 실패한 종목 재시도
+    cron: "0 40 16,18 * * MON-FRI"
+    max-concurrent: 2
+    # 10종목 × (토론 약 $0.5 + 단일 판정) + 재시도 여유. 실측이 쌓이면 다시 맞춘다
+    daily-usd: 8.0
+    poll-interval: 10s
+
+  backtest:
+    max-concurrent: 2
+    # 남은 크레딧(약 $200)에서 하루에 이만큼까지. 실측 비용을 보고 BACKTEST_DAILY_USD로 조정한다
+    daily-usd: ${BULLBEAR_BACKTEST_DAILY_USD:40.0}
+    poll-interval: 10s
+
+  experiment:
+    # 정식 운용 시작일. 그 전 전향 운용은 예비 운용 (퀴즈·시연용, 실험 집계 제외)
+    start: 2026-11-11
+    # 정식 운용 토론마다 단일 판정(조건 B)을 요청. 워커가 단일 모드(계약 v0.6)를 지원하면 켠다
+    single-enabled: ${BULLBEAR_SINGLE_ENABLED:false}
+    max-attempts: 3
+    poll-interval: 5m
+  admin:
+    # 관리자 화면(/admin)을 여는 토큰. 비우면 관리자 API가 꺼진다 (404)
+    token: ${ADMIN_TOKEN:}
+  kakao:
+    # 카카오 developers > 내 애플리케이션 > 앱 키 > REST API 키. 비우면 카카오 로그인 버튼이 "준비 중"
+    rest-key: ${KAKAO_REST_KEY:}
+    # 보안 > 클라이언트 시크릿을 "사용함"으로 켰을 때만
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    auth-url: https://kauth.kakao.com
+    api-url: https://kapi.kakao.com
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

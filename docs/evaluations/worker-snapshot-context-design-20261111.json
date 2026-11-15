@@ -1,0 +1,467 @@
+{
+  "date_kst": "2026-11-11",
+  "method": "final frozen source copy replay, network blocked, saved v24 responses adapted to editing wire format",
+  "initial_observation": {
+    "method": "initial current-code replay matched 14 then-existing v27 captures; later shared captures were overwritten by concurrent work",
+    "request_count": 14,
+    "chars": 180551,
+    "utf8_bytes": 275618,
+    "debater_snapshot_chars": 6963,
+    "moderator_snapshot_chars": 6817,
+    "moderator_facts": 35,
+    "moderator_history_chars": 10842,
+    "source_sha256": {
+      "ai-worker/src/bullbear/__init__.py": "42405881a2ca48e68b8873ff3fc54665a5d557f8cf2215c05eee6b7fdaeba036",
+      "ai-worker/src/bullbear/anthropic_budget.py": "392571dc5b5190c390ffd9ff716b974c61189f1224549ae2909bca8f9ca3f738",
+      "ai-worker/src/bullbear/audit.py": "aa629eb5f96a6e8713572c8f489f3ae1ad53444e3eee8e5f2d785cc33687f9d0",
+      "ai-worker/src/bullbear/budget.py": "c29739d8935180b1b8a77beb99bc458c840721e7651d342f73eec56b3fd71f9d",
+      "ai-worker/src/bullbear/chart_data.py": "982994b7daa6cc472c2d491bfc2aff11ad45ddfcbdec7c2cb45d67ff71e3f003",
+      "ai-worker/src/bullbear/chart_image.py": "ede9df75907fa66edd6cb92dea1b4713072739e3586688d44fbc44e955da916d",
+      "ai-worker/src/bullbear/cli.py": "19d9841890f58ea4e5e85a81b9975bedeb3fe24de73b1fb8e4d0b42bcbf81866",
+      "ai-worker/src/bullbear/config.py": "d7e48b7f2e286394dfb9e6d207f2f83b92a1e04a010035e5680efb18c5357484",
+      "ai-worker/src/bullbear/data/__init__.py": "b78f59dd361bc9f5258ba53d6732024faac035a8ba721e726e72f0ccfdf43d28",
+      "ai-worker/src/bullbear/data/base.py": "9120aff6d671c394683b54c11344245fd42f42b2b7f31fe585ed42a99e3ed162",
+      "ai-worker/src/bullbear/data/kis.py": "f898212a903adcbb582e997419bfea4e75599fe4d46659e140f96eafb7cad469",
+      "ai-worker/src/bullbear/data/krx_openapi.py": "130200536a15a820c29c289cde30fb923309c784bbd22c1a1a044d93f24123f5",
+      "ai-worker/src/bullbear/data/macro.py": "2f2d91b7644b2cfa21b76a153fd57b77769c6d7cf9ed878de32a244b03ad9e93",
+      "ai-worker/src/bullbear/data/naver_chart.py": "317dd4fd85e19d4141258777b4939db5456817b0c39b47bdeb6a3ba21e6d67a2",
+      "ai-worker/src/bullbear/data/naver_news.py": "2831a799cc57b39ffdf276e69ec04da80a00bbe833ef16b1b044c535b3ec480e",
+      "ai-worker/src/bullbear/data/news_selection.py": "af55342bab41be55f61eb4400045b66c20d2b0e9fe12d6a4c199c3442ad01cb8",
+      "ai-worker/src/bullbear/data/opendart.py": "27fe8816dad18f601e3a2f62aeb98356479e60435e5310780649d9e40124fd9a",
+      "ai-worker/src/bullbear/data/pykrx_dart.py": "fff0aaed9e32d3807710ea89b7c8ee953c495b1162ef27501c307a2d74c89fe3",
+      "ai-worker/src/bullbear/data/universe.py": "f38581e0f537cde5cf2fb8f97fe6e70b7015e619643a6f1c34dfa4c01aa33400",
+      "ai-worker/src/bullbear/events.py": "9e8cdee2d514772c52478cd1eff3d108156dba8c34541faaa74ded64b93b2141",
+      "ai-worker/src/bullbear/experiments/__init__.py": "ad0aaf6eda793d1960b465652128fe4fbc9decf8c684f2eae3c3d2ad873eebbf",
+      "ai-worker/src/bullbear/experiments/minimal_agents.py": "63094db4d8a5a7eae876805b99caa99c3103509d171f8067f44435ef5c2b681b",
+      "ai-worker/src/bullbear/graph.py": "ece2f2d828da4c3282a82ad89eb61e05c13b702c0be9d2b2d16f5e4fa9727b40",
+      "ai-worker/src/bullbear/graph_runtime.py": "c011e20a0a0eedf13b3c124ce879990b769cd728a12b986172a77889f6be66fd",
+      "ai-worker/src/bullbear/history.py": "929eaad20bddb7835abd1330b4f1df7a2d7a8e46a87cbb2fecf631b2a912e39c",
+      "ai-worker/src/bullbear/history_lookup.py": "1a1c05e3d4f8341755257c6a701ffb08aefb58e62405864f6ac22a47432a5775",
+      "ai-worker/src/bullbear/interpretations.py": "ff4eb7832ebc6cf84fd1f33e6eff9f1b5167e1791e602bcb3aff88f98ba30a09",
+      "ai-worker/src/bullbear/llm.py": "7008ba200e041f5ac43596630fc03c347eabf99c32e2aa3c6b51b09f840c14f9",
+      "ai-worker/src/bullbear/model_context.py": "f66692c24017fa38483614bf39bce5aa0ff0f40eff9a356e0e9a9ff69f7f29d3",
+      "ai-worker/src/bullbear/moderator_edit.py": "b9701d7451fce014f2ef599e80899e4fa2b2bda7b0634d9ecf9c9abf16bc4ae5",
+      "ai-worker/src/bullbear/news_lookup.py": "522243ca5f92e5b89ea3a405e389c3d0552a3fed40ba02a1f13a5fa67fe7ec15",
+      "ai-worker/src/bullbear/preflight.py": "723a93639df3728e1a99d99ba11e95db7aa2816057fc173c313eda5f772ea24d",
+      "ai-worker/src/bullbear/presentation.py": "f64ad71304ff1b3e730fda76a49a313564fa2bd2eea34989ce68693e887996a1",
+      "ai-worker/src/bullbear/prompts.py": "ef8514454509142032b154dd5810c6fc2fee9eee03c6d03b3e429ec3f74188d4",
+      "ai-worker/src/bullbear/return_grounding.py": "a9cb3afb521be3e233a2e7f7a3b477852682ca5a8eb624702f4f4b8072a1f5f6",
+      "ai-worker/src/bullbear/schemas.py": "35fb75d946af349147b8f9e82c99c87dc29e69cf9e308ec6e80bc7751a044aa2",
+      "ai-worker/src/bullbear/semantic.py": "8732d92d516ee8adedc5da23629f58e21e9b14cf7a7adf81742ee83a3746e5a4",
+      "ai-worker/src/bullbear/server/__init__.py": "9256534b81afebddc33e976ad2b85d85e5c08aa6759319fa84620b5df0c80bb7",
+      "ai-worker/src/bullbear/server/app.py": "14caa863e7e78ca66ab11ddbc393c1a1def5256d4553ec27f7378f33b2e3f19b",
+      "ai-worker/src/bullbear/server/errors.py": "8f8e0fc2baaf0b97a8446a36e9cbd312614a8c283ae69508d031b76508fd725c",
+      "ai-worker/src/bullbear/server/market.py": "259d34d329be805919b796605e977751affedbef4039830f1fa1ee7d363ac568",
+      "ai-worker/src/bullbear/server/progress.py": "eccec842e0619fe41fd3d519783ee5c925a2661d66ca14521f0cdf2275905c96",
+      "ai-worker/src/bullbear/server/service.py": "ee6a46fd6922feaba3fa4fcbe4b212c86f7d72bfe7414607396415a044d9c84e",
+      "ai-worker/src/bullbear/server/store.py": "fbbbe209c8777b07c2cfb9436c58f8667a7fe9df99ca60b8b5d0c0646a1eb800",
+      "ai-worker/src/bullbear/shared_context.py": "19ef2068ee9ab69694c4544112cb490ccb9c7dd71fc05f2f8249e226afc42255",
+      "ai-worker/src/bullbear/single.py": "e818b9183b32684debeb686adcc95c973e2c499a74d6cded8cb4b38fad560692",
+      "ai-worker/src/bullbear/snapshot.py": "37f4a61a676ef7606d3d92b1a1dcc6484850084ab3939e99517c2269c8deed8a",
+      "ai-worker/src/bullbear/source_grounding.py": "07c956cd2333c6cd3baf4cac2bb85ee0dd4a5205c587da00ab8c14a8898c01e9",
+      "ai-worker/src/bullbear/statement_review.py": "8b7fbcce383fbacc04ac1deb641555be228213216828bee7b00172d0bd02b94d",
+      "ai-worker/src/bullbear/tools.py": "44b215f1cd1392adb1effbd301a7d91704ec1648b6e1aaa78f247c64c9133890",
+      "ai-worker/src/bullbear/verifier.py": "defb0878b5458a454ebe04a9d1a23dd29fc5ed809b62635c4475f73e3332a64d"
+    }
+  },
+  "network_calls": 0,
+  "provider_token_counting_calls": 0,
+  "measured_tokens": false,
+  "limitations": [
+    "single Samsung snapshot",
+    "images omitted",
+    "no actual tool invocation",
+    "saved-output replay cannot establish new-generation quality",
+    "counts exclude HTTP wrappers and provider-internal formatting",
+    "worktree may continue changing after frozen copy"
+  ],
+  "source_sha256": {
+    "ai-worker/src/bullbear/anthropic_budget.py": "392571dc5b5190c390ffd9ff716b974c61189f1224549ae2909bca8f9ca3f738",
+    "ai-worker/src/bullbear/audit.py": "8044ee02a15e3a2df50d3b33762e48b06487814544817a89b3038b693b4db1ef",
+    "ai-worker/src/bullbear/budget.py": "c29739d8935180b1b8a77beb99bc458c840721e7651d342f73eec56b3fd71f9d",
+    "ai-worker/src/bullbear/chart_data.py": "982994b7daa6cc472c2d491bfc2aff11ad45ddfcbdec7c2cb45d67ff71e3f003",
+    "ai-worker/src/bullbear/chart_image.py": "ede9df75907fa66edd6cb92dea1b4713072739e3586688d44fbc44e955da916d",
+    "ai-worker/src/bullbear/cli.py": "19d9841890f58ea4e5e85a81b9975bedeb3fe24de73b1fb8e4d0b42bcbf81866",
+    "ai-worker/src/bullbear/config.py": "d7e48b7f2e286394dfb9e6d207f2f83b92a1e04a010035e5680efb18c5357484",
+    "ai-worker/src/bullbear/events.py": "9e8cdee2d514772c52478cd1eff3d108156dba8c34541faaa74ded64b93b2141",
+    "ai-worker/src/bullbear/graph.py": "ece2f2d828da4c3282a82ad89eb61e05c13b702c0be9d2b2d16f5e4fa9727b40",
+    "ai-worker/src/bullbear/graph_runtime.py": "cffefb13ca8195f842742885a3b0c69cbca01f415096e74a67c44e65be61a1c6",
+    "ai-worker/src/bullbear/history.py": "929eaad20bddb7835abd1330b4f1df7a2d7a8e46a87cbb2fecf631b2a912e39c",
+    "ai-worker/src/bullbear/history_lookup.py": "1a1c05e3d4f8341755257c6a701ffb08aefb58e62405864f6ac22a47432a5775",
+    "ai-worker/src/bullbear/interpretations.py": "ff4eb7832ebc6cf84fd1f33e6eff9f1b5167e1791e602bcb3aff88f98ba30a09",
+    "ai-worker/src/bullbear/llm.py": "a8dec272cba8c311b3f18a10a1b7a00b59b218540a37b5bfdd687452cad67650",
+    "ai-worker/src/bullbear/model_context.py": "741177e272c3d1d166921df486b1d5bdaf4ac3eec8ea556e4cde639a4af172b6",
+    "ai-worker/src/bullbear/moderator_edit.py": "b9701d7451fce014f2ef599e80899e4fa2b2bda7b0634d9ecf9c9abf16bc4ae5",
+    "ai-worker/src/bullbear/news_lookup.py": "cb80d847f3482ed70cf2443206febdb819ec579025d1119d3e87106cdbc631b4",
+    "ai-worker/src/bullbear/preflight.py": "723a93639df3728e1a99d99ba11e95db7aa2816057fc173c313eda5f772ea24d",
+    "ai-worker/src/bullbear/presentation.py": "f64ad71304ff1b3e730fda76a49a313564fa2bd2eea34989ce68693e887996a1",
+    "ai-worker/src/bullbear/prompts.py": "4444999fd657af82adb30258dc964889f721720d0be009127665d59c63388e9c",
+    "ai-worker/src/bullbear/return_grounding.py": "a9cb3afb521be3e233a2e7f7a3b477852682ca5a8eb624702f4f4b8072a1f5f6",
+    "ai-worker/src/bullbear/schemas.py": "35fb75d946af349147b8f9e82c99c87dc29e69cf9e308ec6e80bc7751a044aa2",
+    "ai-worker/src/bullbear/semantic.py": "8732d92d516ee8adedc5da23629f58e21e9b14cf7a7adf81742ee83a3746e5a4",
+    "ai-worker/src/bullbear/shared_context.py": "e309c99617f93c724af1e902497bb3a932391cc402af9bc662f052d9485466ff",
+    "ai-worker/src/bullbear/single.py": "e818b9183b32684debeb686adcc95c973e2c499a74d6cded8cb4b38fad560692",
+    "ai-worker/src/bullbear/snapshot.py": "37f4a61a676ef7606d3d92b1a1dcc6484850084ab3939e99517c2269c8deed8a",
+    "ai-worker/src/bullbear/source_grounding.py": "07c956cd2333c6cd3baf4cac2bb85ee0dd4a5205c587da00ab8c14a8898c01e9",
+    "ai-worker/src/bullbear/statement_review.py": "d50f2b9a7d0d1dd92648134c88b4d8322c491686cf07fac77361db579d92fc37",
+    "ai-worker/src/bullbear/tools.py": "44b215f1cd1392adb1effbd301a7d91704ec1648b6e1aaa78f247c64c9133890",
+    "ai-worker/src/bullbear/verifier.py": "defb0878b5458a454ebe04a9d1a23dd29fc5ed809b62635c4475f73e3332a64d",
+    "ai-worker/src/bullbear/__init__.py": "42405881a2ca48e68b8873ff3fc54665a5d557f8cf2215c05eee6b7fdaeba036",
+    "ai-worker/src/bullbear/data/base.py": "9120aff6d671c394683b54c11344245fd42f42b2b7f31fe585ed42a99e3ed162",
+    "ai-worker/src/bullbear/data/kis.py": "f898212a903adcbb582e997419bfea4e75599fe4d46659e140f96eafb7cad469",
+    "ai-worker/src/bullbear/data/krx_openapi.py": "130200536a15a820c29c289cde30fb923309c784bbd22c1a1a044d93f24123f5",
+    "ai-worker/src/bullbear/data/macro.py": "2f2d91b7644b2cfa21b76a153fd57b77769c6d7cf9ed878de32a244b03ad9e93",
+    "ai-worker/src/bullbear/data/naver_chart.py": "317dd4fd85e19d4141258777b4939db5456817b0c39b47bdeb6a3ba21e6d67a2",
+    "ai-worker/src/bullbear/data/naver_news.py": "2831a799cc57b39ffdf276e69ec04da80a00bbe833ef16b1b044c535b3ec480e",
+    "ai-worker/src/bullbear/data/news_selection.py": "af55342bab41be55f61eb4400045b66c20d2b0e9fe12d6a4c199c3442ad01cb8",
+    "ai-worker/src/bullbear/data/opendart.py": "27fe8816dad18f601e3a2f62aeb98356479e60435e5310780649d9e40124fd9a",
+    "ai-worker/src/bullbear/data/pykrx_dart.py": "fff0aaed9e32d3807710ea89b7c8ee953c495b1162ef27501c307a2d74c89fe3",
+    "ai-worker/src/bullbear/data/universe.py": "f38581e0f537cde5cf2fb8f97fe6e70b7015e619643a6f1c34dfa4c01aa33400",
+    "ai-worker/src/bullbear/data/__init__.py": "b78f59dd361bc9f5258ba53d6732024faac035a8ba721e726e72f0ccfdf43d28",
+    "ai-worker/src/bullbear/experiments/minimal_agents.py": "63094db4d8a5a7eae876805b99caa99c3103509d171f8067f44435ef5c2b681b",
+    "ai-worker/src/bullbear/experiments/__init__.py": "ad0aaf6eda793d1960b465652128fe4fbc9decf8c684f2eae3c3d2ad873eebbf",
+    "ai-worker/src/bullbear/server/app.py": "14caa863e7e78ca66ab11ddbc393c1a1def5256d4553ec27f7378f33b2e3f19b",
+    "ai-worker/src/bullbear/server/errors.py": "8f8e0fc2baaf0b97a8446a36e9cbd312614a8c283ae69508d031b76508fd725c",
+    "ai-worker/src/bullbear/server/market.py": "259d34d329be805919b796605e977751affedbef4039830f1fa1ee7d363ac568",
+    "ai-worker/src/bullbear/server/progress.py": "eccec842e0619fe41fd3d519783ee5c925a2661d66ca14521f0cdf2275905c96",
+    "ai-worker/src/bullbear/server/service.py": "ee6a46fd6922feaba3fa4fcbe4b212c86f7d72bfe7414607396415a044d9c84e",
+    "ai-worker/src/bullbear/server/store.py": "fbbbe209c8777b07c2cfb9436c58f8667a7fe9df99ca60b8b5d0c0646a1eb800",
+    "ai-worker/src/bullbear/server/__init__.py": "9256534b81afebddc33e976ad2b85d85e5c08aa6759319fa84620b5df0c80bb7"
+  },
+  "changes_since_initial_observation": [
+    "ai-worker/src/bullbear/audit.py",
+    "ai-worker/src/bullbear/graph_runtime.py",
+    "ai-worker/src/bullbear/llm.py",
+    "ai-worker/src/bullbear/model_context.py",
+    "ai-worker/src/bullbear/news_lookup.py",
+    "ai-worker/src/bullbear/prompts.py",
+    "ai-worker/src/bullbear/shared_context.py",
+    "ai-worker/src/bullbear/statement_review.py"
+  ],
+  "snapshot": {
+    "id": "005930-20261110-98b2a987dc",
+    "sha256": "5570c01ed49ae55fc6c55b7052235becd94017c7825fcb5a19c60fff935d1fe5",
+    "facts": 131,
+    "categories": {
+      "price": 35,
+      "financials": 28,
+      "valuation": 10,
+      "disclosure": 30,
+      "news": 25,
+      "macro": 3
+    },
+    "selected_core_facts": 16,
+    "core_dependency_closure_count": 27,
+    "missing_dependency_ids": [],
+    "moderator_facts": 14,
+    "moderator_history_chars": 5382
+  },
+  "replay_checks": {
+    "public_statements_identical": true,
+    "first_verdict_unchanged_except_comments": true
+  },
+  "totals": {
+    "before": {
+      "chars": 332442,
+      "utf8_bytes": 497226
+    },
+    "after": {
+      "chars": 134383,
+      "utf8_bytes": 194791
+    }
+  },
+  "requests": [
+    {
+      "name": "bull-01",
+      "before": {
+        "chars": 22251,
+        "utf8_bytes": 32964
+      },
+      "after": {
+        "chars": 9631,
+        "utf8_bytes": 12900
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 819,
+        "instructions": 1056,
+        "tools": 2214,
+        "schema": 1618
+      },
+      "request_sha256": "5ca1ed9895c03b98a94c7964f83e48b6f64887d77b2ac5952bc9d7d7bc2155a6"
+    },
+    {
+      "name": "bull-02",
+      "before": {
+        "chars": 25892,
+        "utf8_bytes": 38580
+      },
+      "after": {
+        "chars": 12309,
+        "utf8_bytes": 16758
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 2651,
+        "instructions": 1056,
+        "tools": 2495,
+        "schema": 2183
+      },
+      "request_sha256": "b8d460b445048e6d6458d99a8eac3f0314de332bfd6eaec37e79693a701a41c8"
+    },
+    {
+      "name": "bull-03",
+      "before": {
+        "chars": 30347,
+        "utf8_bytes": 45818
+      },
+      "after": {
+        "chars": 14176,
+        "utf8_bytes": 19791
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 4266,
+        "instructions": 1056,
+        "tools": 2495,
+        "schema": 2435
+      },
+      "request_sha256": "df180d0bca06df58723cf601c304eba288790d062e0d2d3c2610f0b61a5e9e16"
+    },
+    {
+      "name": "bear-01",
+      "before": {
+        "chars": 22251,
+        "utf8_bytes": 32962
+      },
+      "after": {
+        "chars": 9631,
+        "utf8_bytes": 12898
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 820,
+        "instructions": 1055,
+        "tools": 2214,
+        "schema": 1618
+      },
+      "request_sha256": "624abeff4aa32f71137bb354f14b606d515ff8e0394cd66d029c4674547590f7"
+    },
+    {
+      "name": "bear-02",
+      "before": {
+        "chars": 25892,
+        "utf8_bytes": 38578
+      },
+      "after": {
+        "chars": 12309,
+        "utf8_bytes": 16756
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 2652,
+        "instructions": 1055,
+        "tools": 2495,
+        "schema": 2183
+      },
+      "request_sha256": "cee79b168db846f9fac2086cbaa5b830734f4004911cf3663962b39cfa37c36a"
+    },
+    {
+      "name": "bear-03",
+      "before": {
+        "chars": 30347,
+        "utf8_bytes": 45816
+      },
+      "after": {
+        "chars": 14176,
+        "utf8_bytes": 19789
+      },
+      "parts_chars": {
+        "snapshot": 3924,
+        "task_and_history": 4267,
+        "instructions": 1055,
+        "tools": 2495,
+        "schema": 2435
+      },
+      "request_sha256": "42f59505a6e3d6488672ba8c74e6a21b3fd426818aa8e30023279a748989865c"
+    },
+    {
+      "name": "moderator-01",
+      "before": {
+        "chars": 42802,
+        "utf8_bytes": 63296
+      },
+      "after": {
+        "chars": 16538,
+        "utf8_bytes": 22833
+      },
+      "parts_chars": {
+        "snapshot": 3774,
+        "task_and_history": 5974,
+        "instructions": 1193,
+        "tools": 2495,
+        "schema": 3102
+      },
+      "request_sha256": "58b1b47fad6ad805af65e4bd364d23d24e6ff32d5ba589c9383b7d6fc9b2f897"
+    },
+    {
+      "name": "moderator-02",
+      "before": {
+        "chars": 47723,
+        "utf8_bytes": 70672
+      },
+      "after": {
+        "chars": 2107,
+        "utf8_bytes": 3507
+      },
+      "parts_chars": {
+        "snapshot": 1274,
+        "task_and_history": 574,
+        "instructions": 151,
+        "tools": 2,
+        "schema": 106
+      },
+      "request_sha256": "c191e16f0d65d0dea5f92065312cf70545314882be4ebf1aa0791536430d0cc2"
+    },
+    {
+      "name": "reviewer_bull-01",
+      "before": {
+        "chars": 9919,
+        "utf8_bytes": 14605
+      },
+      "after": {
+        "chars": 5430,
+        "utf8_bytes": 8438
+      },
+      "parts_chars": {
+        "snapshot": 1079,
+        "task_and_history": 2469,
+        "instructions": 792,
+        "tools": 2,
+        "schema": 1088
+      },
+      "request_sha256": "8b1de6c10695c589dc870c9481a877186044eae2762528277538ab9ba118c38c"
+    },
+    {
+      "name": "reviewer_bull-02",
+      "before": {
+        "chars": 14065,
+        "utf8_bytes": 21235
+      },
+      "after": {
+        "chars": 7537,
+        "utf8_bytes": 12082
+      },
+      "parts_chars": {
+        "snapshot": 1253,
+        "task_and_history": 4122,
+        "instructions": 792,
+        "tools": 282,
+        "schema": 1088
+      },
+      "request_sha256": "68b63839dd6c736db66989016298e32ba6b9af06972a91d187a98c957ca84854"
+    },
+    {
+      "name": "reviewer_bull-03",
+      "before": {
+        "chars": 18530,
+        "utf8_bytes": 28509
+      },
+      "after": {
+        "chars": 9170,
+        "utf8_bytes": 14926
+      },
+      "parts_chars": {
+        "snapshot": 1253,
+        "task_and_history": 5755,
+        "instructions": 792,
+        "tools": 282,
+        "schema": 1088
+      },
+      "request_sha256": "986089db42895e2cc8361a6810bd63f9cb2a675eb40c64f0a63d07f380aca4d6"
+    },
+    {
+      "name": "reviewer_bear-01",
+      "before": {
+        "chars": 9781,
+        "utf8_bytes": 14411
+      },
+      "after": {
+        "chars": 5291,
+        "utf8_bytes": 8243
+      },
+      "parts_chars": {
+        "snapshot": 1078,
+        "task_and_history": 2331,
+        "instructions": 792,
+        "tools": 2,
+        "schema": 1088
+      },
+      "request_sha256": "f31ddd2819c6e909d0a7f1700467d9c42c845cb75ec6986f550e94a15f40e908"
+    },
+    {
+      "name": "reviewer_bear-02",
+      "before": {
+        "chars": 13970,
+        "utf8_bytes": 21012
+      },
+      "after": {
+        "chars": 6769,
+        "utf8_bytes": 10688
+      },
+      "parts_chars": {
+        "snapshot": 1253,
+        "task_and_history": 3354,
+        "instructions": 792,
+        "tools": 282,
+        "schema": 1088
+      },
+      "request_sha256": "17db1e4e78224ebf5367d707ad429d8294a85373dfb3be1da681aa5d3fcfb43b"
+    },
+    {
+      "name": "reviewer_bear-03",
+      "before": {
+        "chars": 18672,
+        "utf8_bytes": 28768
+      },
+      "after": {
+        "chars": 9309,
+        "utf8_bytes": 15182
+      },
+      "parts_chars": {
+        "snapshot": 1253,
+        "task_and_history": 5894,
+        "instructions": 792,
+        "tools": 282,
+        "schema": 1088
+      },
+      "request_sha256": "a3fe08b5b46d807f4594f4721a7779c3b51d276a79d1e21756c84566e7df975e"
+    }
+  ],
+  "synthetic_probes": {
+    "loss_per_error": "NameError: name 'report_basis' is not defined",
+    "currency": {
+      "source_currency": "USD",
+      "source_value": 100,
+      "fact_unit": "KRW",
+      "fact_value": 100.0,
+      "production_occurrence_verified": false
+    },
+    "ttm": {
+      "result": 80,
+      "formula_operands": [
+        70,
+        40,
+        30
+      ],
+      "input_ids": [
+        "FIN.2025FY.NET_INCOME",
+        "FIN.2026H1.NET_INCOME_YTD"
+      ],
+      "referenced_values": [
+        70.0,
+        40.0
+      ]
+    }
+  }
+}

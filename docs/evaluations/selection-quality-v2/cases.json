@@ -1,0 +1,2480 @@
+[
+  {
+    "id": "per-definition-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.53bcafdd6fada1af6d24a2825572f297efc524a83b136bc7674f096aa3c81aa2",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "PER 주가수익비율",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "per-definition-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.8c99ac14fbeebbe245b99cf46dd9eeaacdaa3c22ae13b160a92f46edccd5a542",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "이익에 비해 주식 가격이 얼마나 비싼가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "per-definition-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.28c7d66e07a0040b0c5eb788084632286eb0a8167988c5871ff289e30783cee5",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "벌어들이는 돈 대비 주가가 낮다는 뜻",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "operating-margin-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.11d896664201a935f1bf8a6b9ce3772762dc50b4cf15cf95c45f0d77129abb6f",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "영업이익률",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "operating-margin-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.b90d81aad46a7620a9fda4a3e4e755ed8e8d146af1691152d2aed47b7f9e5bf1",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "매출에서 본업 이익이 차지하는 몫",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "operating-margin-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.d0970586acf1e9422eae5c42c58d9957e05e404a61eb6a60b5b7e97c5d1374ba",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "다른 분기 매출과 영업이익을 나눠도 될까",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "volatility-direction-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.d204fd3d1a07eb4802fc078e5401e89ce7a4fcf83b177582553cc194ebec862e",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "변동성",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "volatility-direction-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.92a4b5ab72cbbe5fa086a22ed6de2c35faeb99e8c42e2920b714c7fc8c0d9abb",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "주가가 많이 흔들리면 앞으로 오른다는 뜻인가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "volatility-direction-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.c8e95a81ccfa192f739dbc9677a0e6c08cdc62bdf1529f9f3426e8ba28da40d7",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "가격 움직임의 폭과 상승 방향을 구별",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "earnings-expectations-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.d67364c0bafc20b4e6a0f3bc9d676a23bf23e8677608b5f74d583d831e32f567",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "실적 발표 기대 차이",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "earnings-expectations-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.a915f1d1af6e2108cd0150e83473810d77923da48b2febe50d303003486dbb4e",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "좋은 성적을 발표했는데 왜 주가가 떨어질까",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "earnings-expectations-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.4a17354ccafb61ed7454d4fd1f500aa76853bfb1999eb955c198395db2ce9f74",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "예상보다 이익이 많아도 향후 전망이 나쁜 경우",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "release-vs-filing-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.212601ae360d799fca5dc0c8b283500f14268bb353e8b7df6e7e00ff2fa6f2ab",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "공시 시각 실적 발표",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "release-vs-filing-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.bef7ea770b71ac93a18aa70043835e02d01d9cb6e68f0ab7995ac9092f62455f",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "새 보고서가 올라와도 이미 알려진 내용일 수 있나",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "release-vs-filing-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.604f5cc1f6e310ad4678d6a5901b89c542e12898536463c8d8b4a573340a8ce7",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "처음 시장에 알려진 때와 서류 접수 시간을 구별",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "momentum-limit-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.6a3d2931cc5ae8ecc05e46b8fd91d611ed6ac460c0f2bf6c2bf46c03b99ffd6a",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "모멘텀 과거 수익률",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "direct"
+  },
+  {
+    "id": "momentum-limit-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.eef5ffbf2a6648f4b05fb3aca9cf6148a2669c23b838d317ddae515be95b9fef",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "최근 계속 올랐으면 다음 주에도 오를까",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "momentum-limit-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.bf7bbeb99b0d956905a1dd07380575d81674e73b24a0de5942ed49468f37cbc4",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "지난 상승세만으로 일주일 뒤 시장을 이긴다고 볼 수 있나",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "development",
+    "category": "paraphrase"
+  },
+  {
+    "id": "negative-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.357707d02160cd846a735feecc410139be5f23ce226ea370a76f31bb5402c494",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "광합성에서 엽록체가 하는 일",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "negative-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.c1ad7cee7efce2e192aeda61e38a89bc030d072114e05e5c1bb41e54f568f76d",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "서울에서 부산까지 기차 시간표",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "negative-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.42988ddb7ba2fadf8f68906b3694336048e5133ac5c3cd74ea7c53aefd70d543",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "파이썬 리스트를 정렬하는 문법",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "negative-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.ed3d963e0b75d0adc62a97dea6dd4df8cd9976f9f012f58a154292a9e105f568",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "오늘 삼성전자 정확한 종가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "negative-4",
+    "snapshot": {
+      "snapshot_id": "EVAL.e45ff43d6300e938677c9c5762a149732b34817eeffc8c472ebfe784572fe6aa",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "내일 주가가 몇 원이 되는지 확답",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "negative-5",
+    "snapshot": {
+      "snapshot_id": "EVAL.8bd30ceb2a6900a660ce4e329aff77a0b6f3097447b5f337700c1a551423b708",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "채권 듀레이션 계산 공식",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "development",
+    "category": "negative"
+  },
+  {
+    "id": "holdout-per-definition-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.074783a8f4e1f15569ed2b367716a4f258ca3d608ebaab5842cc731215609e7e",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "주가를 한 주당 벌어들인 순이익으로 나누는 지표를 설명해 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-per-definition-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.8562b23faace2038a0485c9536bd622b1194d02e7e5a67b7ccf6e57582e58fa5",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "같은 업종에서 이익이 양수인 회사들의 PER을 비교할 때 낮은 배수의 의미",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-per-definition-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.76996548b07872a0157d20cf2f8991464e77f4777872947c2d353c06f6ecd744",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "주가수익비율이 낮으면 기업의 이익이 작다는 해석이 맞는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-per-definition-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.53021ba0495b97f62bf97df8008113db47d0606309a5ad0acff81d6fb82b42d4",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "PER 비교에서 이익의 부호와 업종을 확인하는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-operating-margin-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.54777e92e6c84cb3fc12ca85ee361e374839a25c549ebb0ca0498a428dd2a8c6",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "영업이익을 매출액으로 나누어 얻는 수익성 비율",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-operating-margin-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.824ec0735415de3b2908281bfbb93506cb2cd50a71461fca7afd3dcf369ca814",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "서로 다른 분기의 매출과 영업이익을 섞어 계산하면 안 되는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-operating-margin-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.4dc4e6de589179c19ec2443811c1b08cebb6876a694777cf44c19b1c00918de9",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "영업이익과 순이익을 동일한 이익 지표로 보아도 되는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-operating-margin-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.c0e770406f583e9c262d1ee0cd5b720fb3b54f3658116f64851b46af9abb46c5",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "손익계산서 수치의 보고 기간을 맞추어 비교해야 하는 까닭",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-volatility-direction-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.831ff66f558d769a8e441649592a8bde3653eb85a0d484b85e4daffdea06af06",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "가격 변화의 폭이 큰 종목은 상승 확률도 반드시 높은가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-volatility-direction-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.9766f37e78b2492cae789279720d7c35e425ca022e6d87cec846c47ebb602441",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "주가의 출렁임 정도와 오르내리는 방향을 구별해야 하는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-volatility-direction-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.16c7ed16699f4068ea43762a169b2894fdada39d5965047ee78bb1191fa5c998",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "회사 밖의 시장 사건도 주식 가격을 흔들 수 있는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-volatility-direction-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.6e518f1453a11721b3226a4149d0b9a7fe7d29c21fe957110ba4b6e5a9a29573",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "변동성이 크다는 사실만으로 매수 방향을 정할 수 있는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-earnings-expectations-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.571cad3af24ef08ac6ac588894c754fe77cf4e00e0598d72d16be813b21454dd",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "예상보다 좋은 실적을 발표했는데도 주가가 내리는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-earnings-expectations-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.5688e2f09ba3d11f2cb097358fb7ad94494d4c9b70057bb1c8aff235c90c193a",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "실적 발표에서 시장 예상과 실제 결과의 차이를 살피는 까닭",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-earnings-expectations-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.51b970867aad998993a492c0b145182c00d2938ae6d25e6848fb57fc70554b34",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "이익이 늘었다는 사실만으로 발표 직후 상승을 확정할 수 있는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-earnings-expectations-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.6fe54698697f7b9c771670c1c5a5ef73b8fca35539ec97fa2f61a9da97eb7bc4",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "실적은 좋지만 향후 전망이 어두울 때 가격 반응의 해석",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-release-vs-filing-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.8aa9e955015041395fa1937e03155274bcf472fd3a0d2bf368bbdfeab8246e44",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "기업의 실적 보도자료와 정기 보고서 제출 시점이 다른 경우",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-release-vs-filing-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.e4dfadf2212f9390f1b6717897acb583a3a22fe4981284a5b281249d26bfbed4",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "공시 접수일이 곧 시장이 해당 정보를 처음 안 날인가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-release-vs-filing-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.6b3bbe583625f667a0091468323b89677404a627066b5d291600e30810d5c610",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "보고서 등록 전에 이미 알려진 실적을 새로운 호재로 보아도 되는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-release-vs-filing-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.6944f6b5472d50c9b39b8d52fbde26cc622dd69bd5a4e7826b9a33133512e485",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "실적 발표와 공시의 순서를 확인해야 하는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-momentum-limit-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.c05f77626203bc8d812d653922374df4321a405facc097c863182845c1fe8beb",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "어제까지 주가가 올랐으니 다음 주에도 오른다고 단정해도 되는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-momentum-limit-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.7da8a95d05a55de2a1b98e34602ec52ea2a6742e7323660f331b588e1194593b",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "모멘텀 신호가 외부 사건으로 뒤집힐 수 있는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-momentum-limit-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.c3561251e28a907005fec6df4b65fee73ed1e2de5cb3216512ec9f22fa81081e",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "추세 지표가 상승 신호를 냈을 때에도 잘못된 신호일 수 있는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-momentum-limit-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.66db022f240670dd904facbae38364de29727c90034ce47c2903541b3d5f5f8c",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "과거 수익률이 양수이면 앞으로 코스피를 이긴다고 보장되는가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "paraphrase"
+  },
+  {
+    "id": "holdout-multi-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.cf2ff0a35617f3538b7f9a868a24751f0808dcd69bf07964a25fc939d1b3dbde",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "PER의 산식과 영업이익률의 산식을 각각 설명해 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-multi-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.ab1bf3694eedccaec3128100447da7dce4ffe4a2a445945ce7da61d71e430449",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "PER이 낮다는 의미와 변동성이 높다는 의미의 차이",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.43d518a7d3581b826b08153ac7f1dacae2f207627f6626a373e5a15debfea211",
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-multi-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.03e81f7d2ed07b0eb3a46fd8796f02be4caa886020422fac91ed0a25fbcc0fdb",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "영업이익률을 계산하는 법과 실적 발표에서 시장 기대를 살피는 법",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [
+      "C.3201463f4a08e8ba96c51a62b0e5938dc1a6b254c2db6e44dfd8204034a9e514",
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-multi-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.ac873adfbc077798c4f0f7811fea62200011a622350cfac8a6b39905a1354b53",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "실적 발표 뒤의 기대 차이와 공시 이전 공개 여부를 함께 확인하는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.cc7ad547eaffa4e05f1a9a609639964c4d4bb9721f643f76c60d0d1f31ae62e0",
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-multi-4",
+    "snapshot": {
+      "snapshot_id": "EVAL.9bbd51b3b0fcee68eaa557fe5f4a3850ddb2be3fe50ba937613ab246561c00f8",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "큰 변동성과 과거 상승 추세만으로 미래 상승을 보장할 수 없는 이유",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.15f24399444d3d0d50e8647dcc19f75e7e65ab1be725e6214980879051d21ad8",
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-multi-5",
+    "snapshot": {
+      "snapshot_id": "EVAL.1e2436c25aa4212f8a4c559de834a3b85774ff49a3179594bd534cfa98c5670f",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "보고서 접수와 정보 공개 시점의 구분, 그리고 모멘텀 신호의 한계",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "short",
+    "relevant": [
+      "C.5c6fa1a28b12177899154e5e5679a60246cfea628e7326a251c5286abfb2abf9",
+      "C.3841f85fbdbe9e5381a870ede3a0259ca99691a948c40efaad0c30c24faf2927"
+    ],
+    "forbidden": [],
+    "expect_empty": false,
+    "split": "holdout",
+    "category": "multi_concept"
+  },
+  {
+    "id": "holdout-negative-0",
+    "snapshot": {
+      "snapshot_id": "EVAL.55d85a0c4d7fb1779b3b089be9ff393c6a4543aef8cd9f8c2be5c15a8a7cd32a",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "김치찌개를 만드는 순서를 알려 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-1",
+    "snapshot": {
+      "snapshot_id": "EVAL.5e28e7cc6848fe94ab786cdb095d378451450ba137cc97b4476cec25e0aa479c",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "서울에서 부산까지 가는 고속버스 첫차 시간",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-2",
+    "snapshot": {
+      "snapshot_id": "EVAL.77fa03505fe65eb15d3deb1736b9366429993e92db02c6f5e0231c4e52a1939b",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "파이썬 딕셔너리 병합 코드를 작성해 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-3",
+    "snapshot": {
+      "snapshot_id": "EVAL.734020173eea2ad1f474b1bd37a756406323c82946ee5b22d96945cada2fcc66",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "식물 세포에서 엽록체의 역할",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-4",
+    "snapshot": {
+      "snapshot_id": "EVAL.084bdcb80c8c007dc25e4a990c9e9281fd0fdc4d6191b606b379f6e45d939301",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "내일 제주도 강수 확률",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-5",
+    "snapshot": {
+      "snapshot_id": "EVAL.a7d2f630e15399d91645d3c2a85573e2548f04f28c1009933dfa6a5074dfa51c",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "컴퓨터의 메모리와 SSD 용량 차이",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "off_topic"
+  },
+  {
+    "id": "holdout-negative-6",
+    "snapshot": {
+      "snapshot_id": "EVAL.bcec148dfd460cbb80550ea91d40d11dd043df41122c98b65feb5de3aec8f9e5",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "PBR 주가순자산비율 산식",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-7",
+    "snapshot": {
+      "snapshot_id": "EVAL.0ecf3a3067fef72be11b149de1f74da952167b6b3609175f9b859f7906930fbf",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "ROE 자기자본이익률 계산 방법",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-8",
+    "snapshot": {
+      "snapshot_id": "EVAL.d2b26779c7755c6f13a4098ac8281b11e701306eb9c0b238bcae7086cea1b488",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "채권 듀레이션의 정의",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-9",
+    "snapshot": {
+      "snapshot_id": "EVAL.34e683e86f70ccb13ed41051c452f479e63fa5178b0799bdffc37a65c76c991d",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "현금흐름할인법의 기업가치 계산 절차",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-10",
+    "snapshot": {
+      "snapshot_id": "EVAL.bda6ebc5392ef9b88f2b4f4d3940157595f33e8981b69cb313194ccaff68a008",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "배당수익률과 배당성향의 차이",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-11",
+    "snapshot": {
+      "snapshot_id": "EVAL.14221303524a6fbe557a13e988dd84b315c573d58afeb89e3e1aabe014420637",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "환율 선물환 계약의 가격 산정식",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_concept"
+  },
+  {
+    "id": "holdout-negative-12",
+    "snapshot": {
+      "snapshot_id": "EVAL.0290df588a5ce2cf799ef9fbc3dddd17ba118374b749b984021bfd3526de131e",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "삼성전자의 오늘 종가를 원 단위로 알려 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  },
+  {
+    "id": "holdout-negative-13",
+    "snapshot": {
+      "snapshot_id": "EVAL.b3267ce840fce682d7d4d75967fc3b8306a0b9246220f47e8123467e8060de0f",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "SK하이닉스의 현재 PER 실제 수치는 몇 배인가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  },
+  {
+    "id": "holdout-negative-14",
+    "snapshot": {
+      "snapshot_id": "EVAL.1f7774a1c2af0a02d45df5dec2da37309f2c7ef4b6b889f0c59117e4ce445b3b",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "현대차의 이번 분기 영업이익률은 몇 퍼센트인가",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  },
+  {
+    "id": "holdout-negative-15",
+    "snapshot": {
+      "snapshot_id": "EVAL.afb9d53e8969ecfeddf9f3725eba1bc2a2b69cfb0d5ec25aeb0ccbb2864faae8",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "NAVER가 내일 실적을 발표하는 정확한 시각",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  },
+  {
+    "id": "holdout-negative-16",
+    "snapshot": {
+      "snapshot_id": "EVAL.e35cb007085a63beff87d8aba329571a7fac9b522c60f7663ef066c92ed7cf13",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "이번 주 코스피 수익률을 숫자로 알려 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  },
+  {
+    "id": "holdout-negative-17",
+    "snapshot": {
+      "snapshot_id": "EVAL.4cc64f1240820723db5492fd708c4350c7771ad1a9cd80ce9398f8afdedd365f",
+      "ticker": "005930",
+      "name": "평가종목",
+      "as_of": "2026-11-01",
+      "created_at": "2026-11-01T17:52:58.496037Z",
+      "provider": "synthetic_concept_probe",
+      "facts": {
+        "EVAL.PROBE": {
+          "id": "EVAL.PROBE",
+          "category": "valuation",
+          "label": "LG화학의 다음 7거래일 수익률을 정확히 예측해 주세요",
+          "value": null,
+          "unit": "text",
+          "as_of": "2026-11-01",
+          "source": "agent_authored_evaluation",
+          "inputs": [],
+          "note": null,
+          "url": null,
+          "published_at": null
+        }
+      },
+      "warnings": []
+    },
+    "path": "common",
+    "relevant": [],
+    "forbidden": [],
+    "expect_empty": true,
+    "split": "holdout",
+    "category": "missing_market_fact"
+  }
+]

@@ -1,0 +1,362 @@
+{
+  "schema": "rag-multistock-live-v1",
+  "scope": "stored_real_and_mock_sources_with_new_post_publication_test_copies_legacy_context_migration_and_generation_rollover",
+  "publication": {
+    "schema": "generation-readiness-v1",
+    "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+    "checked_at": "2026-11-01T18:35:58.511541+00:00",
+    "generation_as_of": "2026-11-01T18:35:58.454540+00:00",
+    "committed_at": "2026-11-01T18:35:58.505541+00:00",
+    "member_count": 2,
+    "ready_for_new_snapshot": true,
+    "reasons": [],
+    "snapshots": [],
+    "all_snapshots_eligible": true
+  },
+  "readiness": {
+    "schema": "generation-readiness-v1",
+    "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+    "checked_at": "2026-11-01T18:35:58.566541+00:00",
+    "generation_as_of": "2026-11-01T18:35:58.454540+00:00",
+    "committed_at": "2026-11-01T18:35:58.505541+00:00",
+    "member_count": 2,
+    "ready_for_new_snapshot": true,
+    "reasons": [],
+    "snapshots": [
+      {
+        "snapshot_id": "005930-20261028-c637dc2629",
+        "ticker": "005930",
+        "created_at": "2026-10-29T03:44:34.145413+00:00",
+        "eligible": false,
+        "reasons": [
+          "future_generation",
+          "generation_not_committed_at_decision"
+        ]
+      },
+      {
+        "snapshot_id": "MULTI.005930.0c22205920c45d56",
+        "ticker": "005930",
+        "created_at": "2026-11-01T18:35:58.548540+00:00",
+        "eligible": true,
+        "reasons": []
+      },
+      {
+        "snapshot_id": "000660-20261016-1f309a0d53",
+        "ticker": "000660",
+        "created_at": "2026-10-16T09:00:00.000000+00:00",
+        "eligible": false,
+        "reasons": [
+          "future_generation",
+          "generation_not_committed_at_decision"
+        ]
+      },
+      {
+        "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+        "ticker": "000660",
+        "created_at": "2026-11-01T18:35:58.556541+00:00",
+        "eligible": true,
+        "reasons": []
+      }
+    ],
+    "all_snapshots_eligible": false
+  },
+  "configured_generation": "G.e1606d945f2ab0ed866e2733acd9626b10475befa35dc33e2c99a694a6aec29b",
+  "previous_generation": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+  "bindings": [
+    {
+      "schema": "snapshot-generation-v1",
+      "state": "bound",
+      "snapshot_id": "MULTI.005930.0c22205920c45d56",
+      "snapshot_hash": "3477cd301dff258fe4107f8ab115b65264035e96564ed190faf1ef352570d63b",
+      "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+      "publication": {
+        "as_of": "2026-11-01T18:35:58.454540+00:00",
+        "committed_at": "2026-11-01T18:35:58.505541+00:00",
+        "publication_sha256": "fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5"
+      },
+      "source_context_id": "KCTX.399d23283064f83cd12951a86f91638aa5be0e4a265ec0be3619ef866bbd7f81",
+      "bound_at": "2026-11-01T18:44:10.999808+00:00"
+    },
+    {
+      "schema": "snapshot-generation-v1",
+      "state": "bound",
+      "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+      "snapshot_hash": "9e0583f5adfeee0525e461aff48a058a2bc7f60a3d606ffdac09461bfe812899",
+      "generation_id": "G.546eb117ec4c7d279de88452f0101222fce661b9d6601f3154e3e14f917f539c",
+      "publication": {
+        "as_of": "2026-11-01T18:35:58.454540+00:00",
+        "committed_at": "2026-11-01T18:35:58.505541+00:00",
+        "publication_sha256": "fcf9117071790c9a8121499a329a5af05ee3c63a00e38f51075cea996fe2b0d5"
+      },
+      "source_context_id": "KCTX.11919e8e6676b4065f8ec0419f4447af41ab186837cd7ff461b95c8115822340",
+      "bound_at": "2026-11-01T18:44:11.007809+00:00"
+    }
+  ],
+  "rows": [
+    {
+      "ticker": "005930",
+      "source_snapshot_id": "005930-20261028-c637dc2629",
+      "source_sha256": "30c662ec08e6a0393dc233cf1bc37f269b3a979f5c42c15b9f59ad364c62585e",
+      "source_provider": "krx-openapi+opendart+naver-news",
+      "source_created_at": "2026-10-29T12:44:34.145413+09:00",
+      "source_is_mock": false,
+      "chunk_id": "C.8e9000fe6975673de26a6b7bbe7219d31fedd044489a99889d50372f60ae9c9c",
+      "as_of": "2026-10-28",
+      "close": 242000,
+      "original_debate_id": "c20ffeea-5701-5706-b4e9-7a0cbe3d5b2d",
+      "snapshot_id": "MULTI.005930.0c22205920c45d56",
+      "created_at": "2026-11-01T18:35:58.548540+00:00",
+      "debate_id": "b873d52c-0c6e-5a4a-94c6-1fac128a7d85",
+      "documents": {
+        "snapshot_id": "MULTI.005930.0c22205920c45d56",
+        "context_id": "KCTX.09e3631b2e2515bdb2d2a15c0caff7a792a0ef6254ae432567cfa86f58697872",
+        "ticker": "005930",
+        "snapshot_as_of": "2026-10-28",
+        "mode": "documents",
+        "answerability": "documents_found",
+        "reasons": [],
+        "answer_scope": "retrieved_documents_not_verified_numeric_answer",
+        "documents": [
+          {
+            "chunk_id": "C.8e9000fe6975673de26a6b7bbe7219d31fedd044489a99889d50372f60ae9c9c",
+            "text": "PER 종목분리검증 005930 전용 문단. 테스트 fixture이며 투자 정보가 아니다.",
+            "horizons": [
+              "common"
+            ],
+            "applicability": "종목 분리 테스트 전용",
+            "limitations": [
+              "실제 금융 문서가 아닌 테스트 자료"
+            ]
+          }
+        ]
+      },
+      "facts": {
+        "snapshot_id": "MULTI.005930.0c22205920c45d56",
+        "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6",
+        "ticker": "005930",
+        "snapshot_as_of": "2026-10-28",
+        "mode": "facts",
+        "answerability": "supported_fact",
+        "reasons": [],
+        "facts": [
+          {
+            "fact_id": "PX.CLOSE",
+            "ticker": "005930",
+            "value": 242000,
+            "unit": "KRW/share",
+            "as_of": "2026-10-28",
+            "source": "krx-openapi",
+            "inputs": [],
+            "verified_lineage": [
+              "PX.CLOSE"
+            ]
+          }
+        ]
+      },
+      "original_facts": {
+        "snapshot_id": "005930-20261028-c637dc2629",
+        "context_id": "KCTX.dee7d1fe5ceb9ff47ee655c36702b8b001ad4e0309194cea16a03b6d68178001",
+        "ticker": "005930",
+        "snapshot_as_of": "2026-10-28",
+        "mode": "facts",
+        "answerability": "supported_fact",
+        "reasons": [],
+        "facts": [
+          {
+            "fact_id": "PX.CLOSE",
+            "ticker": "005930",
+            "value": 242000,
+            "unit": "KRW/share",
+            "as_of": "2026-10-28",
+            "source": "krx-openapi",
+            "inputs": [],
+            "verified_lineage": [
+              "PX.CLOSE"
+            ]
+          }
+        ]
+      },
+      "concurrent_results": [
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ],
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ],
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ]
+      ]
+    },
+    {
+      "ticker": "000660",
+      "source_snapshot_id": "000660-20261016-1f309a0d53",
+      "source_sha256": "8a3725e1e96a6589dae7b64bc1291e9cdc56059435b7fc7ed90610df935e104e",
+      "source_provider": "fake+fake-news",
+      "source_created_at": "2026-10-16T18:00:00+09:00",
+      "source_is_mock": true,
+      "chunk_id": "C.8dc9aff82bd496276db91e0d053a03feb7b0ac9aafd9837cd6f6dc7fbf44694e",
+      "as_of": "2026-10-16",
+      "close": 399,
+      "original_debate_id": "bdbbc96c-17e4-5692-9007-e91cef7804a2",
+      "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+      "created_at": "2026-11-01T18:35:58.556541+00:00",
+      "debate_id": "033c9a58-0444-5000-8262-c7a0563352a2",
+      "documents": {
+        "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+        "context_id": "KCTX.5f439ef1973cd03ab09a97d8b167759d9f24587af3e4133f64f2701f468f932f",
+        "ticker": "000660",
+        "snapshot_as_of": "2026-10-16",
+        "mode": "documents",
+        "answerability": "documents_found",
+        "reasons": [],
+        "answer_scope": "retrieved_documents_not_verified_numeric_answer",
+        "documents": [
+          {
+            "chunk_id": "C.8dc9aff82bd496276db91e0d053a03feb7b0ac9aafd9837cd6f6dc7fbf44694e",
+            "text": "PER 종목분리검증 000660 전용 문단. 테스트 fixture이며 투자 정보가 아니다.",
+            "horizons": [
+              "common"
+            ],
+            "applicability": "종목 분리 테스트 전용",
+            "limitations": [
+              "실제 금융 문서가 아닌 테스트 자료"
+            ]
+          }
+        ]
+      },
+      "facts": {
+        "snapshot_id": "MULTI.000660.b2dcbd3aa43416b3",
+        "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36",
+        "ticker": "000660",
+        "snapshot_as_of": "2026-10-16",
+        "mode": "facts",
+        "answerability": "supported_fact",
+        "reasons": [],
+        "facts": [
+          {
+            "fact_id": "PX.CLOSE",
+            "ticker": "000660",
+            "value": 399,
+            "unit": "KRW/share",
+            "as_of": "2026-10-16",
+            "source": "pykrx",
+            "inputs": [],
+            "verified_lineage": [
+              "PX.CLOSE"
+            ]
+          }
+        ]
+      },
+      "original_facts": {
+        "snapshot_id": "000660-20261016-1f309a0d53",
+        "context_id": "KCTX.3a3d1c45a030cac52a587cf855bc13001a6b88c11666d8104ff6dc98a92904bc",
+        "ticker": "000660",
+        "snapshot_as_of": "2026-10-16",
+        "mode": "facts",
+        "answerability": "supported_fact",
+        "reasons": [],
+        "facts": [
+          {
+            "fact_id": "PX.CLOSE",
+            "ticker": "000660",
+            "value": 399,
+            "unit": "KRW/share",
+            "as_of": "2026-10-16",
+            "source": "pykrx",
+            "inputs": [],
+            "verified_lineage": [
+              "PX.CLOSE"
+            ]
+          }
+        ]
+      },
+      "concurrent_results": [
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ],
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ],
+        [
+          {
+            "ticker": "005930",
+            "context_id": "KCTX.beaac83cc772e0bbcec983e1e34adf0314fd5d84630f59be8a8ace0fe3bd32a6"
+          },
+          {
+            "ticker": "000660",
+            "context_id": "KCTX.72559731d2ddaef446a9b12eeb86607f58587331b77c07837bae1315d18b5a36"
+          }
+        ]
+      ]
+    }
+  ],
+  "checks": [
+    "005930:scoped_document_only",
+    "005930:saved_value_and_ui",
+    "005930:original_value_unchanged",
+    "005930:old_generation_rejected",
+    "005930:identity_override_rejected",
+    "005930:concurrent_isolation_and_replay",
+    "000660:scoped_document_only",
+    "000660:saved_value_and_ui",
+    "000660:original_value_unchanged",
+    "000660:old_generation_rejected",
+    "000660:identity_override_rejected",
+    "000660:concurrent_isolation_and_replay",
+    "distinct_contexts_between_tickers",
+    "no_browser_exceptions",
+    "mobile_no_overflow",
+    "old_documents_available_after_generation_rollover"
+  ],
+  "response_stubs": false,
+  "snapshot_bytes_unchanged": true,
+  "new_worker_debates": 0,
+  "legacy_context_rows_unchanged": 8,
+  "network_audit": {
+    "external_connect_attempts": 0,
+    "includes_copied_prior_fixture_audit": true
+  },
+  "spring_usage": {
+    "debates": 4,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": "0"
+  },
+  "worker_restarted_before_final_browser_run": true
+}

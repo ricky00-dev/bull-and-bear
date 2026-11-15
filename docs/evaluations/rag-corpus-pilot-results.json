@@ -1,0 +1,243 @@
+{
+  "source_corpus_hash": "c6d2dabdab21c4cbb50f5b4cf1a36022396a0b860716bafe6a16cfab22fa294e",
+  "generation_id": "G.12a990680469ed68328900a4710025ec1e06a7597414d7811ab9f1477b4d458c",
+  "observed_at": "2026-11-01T13:25:12.633773+00:00",
+  "counts_after_second_run": {
+    "documents": 6,
+    "document_revisions": 6,
+    "document_events": 6,
+    "collection_runs": 2,
+    "chunks": 6,
+    "chunk_annotations": 6
+  },
+  "same_input_reimport": true,
+  "cross_process_revision_count_unchanged": true,
+  "time_policy": "observed-v1",
+  "future_generation_blocked": true,
+  "snapshot_unchanged": true,
+  "replay_identical": true,
+  "model_calls": 0,
+  "cost_usd": 0,
+  "human_reviewed": false,
+  "operational_activation_eligible": false,
+  "direct_hits": 6,
+  "direct_total": 6,
+  "paraphrase_hits": 4,
+  "paraphrase_total": 6,
+  "results": [
+    {
+      "case": "per",
+      "path": "common",
+      "label": "PER 주가수익비율",
+      "expected": "per-definition",
+      "selected": [
+        "per-definition"
+      ],
+      "candidates": [
+        "per-definition"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "margin",
+      "path": "common",
+      "label": "영업이익률",
+      "expected": "operating-margin",
+      "selected": [
+        "operating-margin"
+      ],
+      "candidates": [
+        "operating-margin"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "volatility",
+      "path": "common",
+      "label": "변동성은",
+      "expected": "volatility-direction",
+      "selected": [
+        "volatility-direction"
+      ],
+      "candidates": [
+        "volatility-direction"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "expectations",
+      "path": "short",
+      "label": "실적 발표 기대 차이",
+      "expected": "earnings-expectations",
+      "selected": [
+        "earnings-expectations",
+        "momentum-limit",
+        "release-vs-filing"
+      ],
+      "candidates": [
+        "earnings-expectations",
+        "momentum-limit",
+        "release-vs-filing"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "filing",
+      "path": "short",
+      "label": "공시 공개 시각",
+      "expected": "release-vs-filing",
+      "selected": [
+        "release-vs-filing",
+        "momentum-limit",
+        "earnings-expectations"
+      ],
+      "candidates": [
+        "release-vs-filing",
+        "momentum-limit",
+        "earnings-expectations"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "momentum",
+      "path": "short",
+      "label": "momentum 추세",
+      "expected": "momentum-limit",
+      "selected": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "candidates": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "per_paraphrase",
+      "path": "common",
+      "label": "이익 대비 주가가 비싼가",
+      "expected": "per-definition",
+      "selected": [
+        "per-definition",
+        "operating-margin"
+      ],
+      "candidates": [
+        "per-definition",
+        "operating-margin"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "margin_paraphrase",
+      "path": "common",
+      "label": "매출 중 본업으로 남긴 이익의 비중",
+      "expected": "operating-margin",
+      "selected": [],
+      "candidates": [],
+      "hit": false,
+      "status": "completed"
+    },
+    {
+      "case": "volatility_paraphrase",
+      "path": "common",
+      "label": "가격의 흔들림은 오를 가능성을 뜻하나",
+      "expected": "volatility-direction",
+      "selected": [],
+      "candidates": [],
+      "hit": false,
+      "status": "completed"
+    },
+    {
+      "case": "expectations_paraphrase",
+      "path": "short",
+      "label": "좋은 실적인데 전망이 나쁘면",
+      "expected": "earnings-expectations",
+      "selected": [
+        "earnings-expectations",
+        "momentum-limit",
+        "release-vs-filing"
+      ],
+      "candidates": [
+        "earnings-expectations",
+        "momentum-limit",
+        "release-vs-filing"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "filing_paraphrase",
+      "path": "short",
+      "label": "공시 전에 실적을 먼저 발표",
+      "expected": "release-vs-filing",
+      "selected": [
+        "release-vs-filing",
+        "earnings-expectations",
+        "momentum-limit"
+      ],
+      "candidates": [
+        "release-vs-filing",
+        "earnings-expectations",
+        "momentum-limit"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "momentum_paraphrase",
+      "path": "short",
+      "label": "최근 상승이 계속 이어질까",
+      "expected": "momentum-limit",
+      "selected": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "candidates": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "hit": true,
+      "status": "completed"
+    },
+    {
+      "case": "negative_common",
+      "path": "common",
+      "label": "광합성 식물세포",
+      "expected": null,
+      "selected": [],
+      "candidates": [],
+      "hit": null,
+      "status": "completed"
+    },
+    {
+      "case": "negative_short",
+      "path": "short",
+      "label": "광합성 식물세포",
+      "expected": null,
+      "selected": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "candidates": [
+        "momentum-limit",
+        "earnings-expectations",
+        "release-vs-filing"
+      ],
+      "hit": null,
+      "status": "completed"
+    }
+  ]
+}

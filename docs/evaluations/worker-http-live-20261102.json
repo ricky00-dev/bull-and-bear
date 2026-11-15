@@ -1,0 +1,373 @@
+{
+  "base_revision": "bb28c57ea79f16837f5854adca8ef76d5dce08d5",
+  "artifact_directory": "data/http-live-20261102-042457-dbd677",
+  "health": {
+    "status": "UP"
+  },
+  "unauthenticated_status": 401,
+  "server_stopped": true,
+  "known_cost_usd": 0.4351354,
+  "unknown_requests": 0,
+  "runs": [
+    {
+      "mode": "debate",
+      "id": "a925a0f589e0439aa50ba6d86e440f25",
+      "status": "failed",
+      "elapsed_seconds": 339.177,
+      "post_elapsed_seconds": 16.067,
+      "post_statuses": [
+        503,
+        503,
+        503,
+        503,
+        202
+      ],
+      "models": {
+        "claude-haiku-5-5": {
+          "requests": 27,
+          "usd": 0.0649854,
+          "seconds": 278.576,
+          "usage": {
+            "input_tokens": 358659,
+            "output_tokens": 58239,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0
+          }
+        },
+        "claude-sonnet-5-5": {
+          "requests": 6,
+          "usd": 0.187434,
+          "seconds": 41.121,
+          "usage": {
+            "input_tokens": 69307,
+            "output_tokens": 4882,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0
+          }
+        }
+      },
+      "usd": 0.2524194,
+      "api_requests": 33,
+      "event_counts": {
+        "snapshot_created": 1,
+        "turn_started": 6,
+        "tool_call": 22,
+        "statement_accepted": 6,
+        "statement_rejected": 5,
+        "moderator_started": 1,
+        "debate_failed": 1
+      },
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "sse_terminal_replay_verified": true,
+      "public_usage_matches_ledger": true,
+      "snapshot_sha256": "3a178ec4fa42597d65334ca54aab41d0912e0163113fa25b87ddf9c0f74c1b86",
+      "audit_snapshot_payload_hash": "sha256:59f0c28f0525751b58168aa571489835adf15dbf06b3108f6a57565647be5d09",
+      "stages": [
+        {
+          "name": "snapshot",
+          "status": "success",
+          "started_at": "2026-11-02T04:25:14.676189+09:00",
+          "finished_at": "2026-11-02T04:25:15.503211+09:00",
+          "elapsed_seconds": 0.826368
+        },
+        {
+          "name": "runner_initialization",
+          "status": "success",
+          "started_at": "2026-11-02T04:25:15.523210+09:00",
+          "finished_at": "2026-11-02T04:25:15.540211+09:00",
+          "elapsed_seconds": 0.016514
+        },
+        {
+          "name": "debate",
+          "status": "failed",
+          "started_at": "2026-11-02T04:25:15.548211+09:00",
+          "error_type": "LLMError",
+          "finished_at": "2026-11-02T04:30:37.468347+09:00",
+          "elapsed_seconds": 321.919909
+        },
+        {
+          "name": "debater_client_initialization",
+          "status": "success",
+          "started_at": "2026-11-02T04:25:15.557211+09:00",
+          "finished_at": "2026-11-02T04:25:15.611211+09:00",
+          "elapsed_seconds": 0.054267
+        },
+        {
+          "name": "moderator_client_initialization",
+          "status": "success",
+          "started_at": "2026-11-02T04:25:15.620212+09:00",
+          "finished_at": "2026-11-02T04:25:15.632212+09:00",
+          "elapsed_seconds": 0.012315
+        }
+      ],
+      "roles": {
+        "debater": {
+          "structured_calls": 11,
+          "requests": 17,
+          "seconds": 182.478
+        },
+        "moderator": {
+          "structured_calls": 3,
+          "requests": 3,
+          "seconds": 32.391
+        },
+        "semantic_reviewer": {
+          "structured_calls": 13,
+          "requests": 13,
+          "seconds": 106.159
+        }
+      },
+      "attempt_summary": [
+        {
+          "side": "bull",
+          "round": "opening",
+          "attempt": 1,
+          "passed": true,
+          "issue_codes": []
+        },
+        {
+          "side": "bear",
+          "round": "opening",
+          "attempt": 1,
+          "passed": false,
+          "issue_codes": [
+            "unsupported_inference"
+          ]
+        },
+        {
+          "side": "bear",
+          "round": "opening",
+          "attempt": 2,
+          "passed": false,
+          "issue_codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ]
+        },
+        {
+          "side": "bear",
+          "round": "opening",
+          "attempt": 3,
+          "passed": true,
+          "issue_codes": []
+        },
+        {
+          "side": "bull",
+          "round": "rebuttal",
+          "attempt": 1,
+          "passed": false,
+          "issue_codes": [
+            "unsupported_inference"
+          ]
+        },
+        {
+          "side": "bull",
+          "round": "rebuttal",
+          "attempt": 2,
+          "passed": true,
+          "issue_codes": []
+        },
+        {
+          "side": "bear",
+          "round": "rebuttal",
+          "attempt": 1,
+          "passed": false,
+          "issue_codes": [
+            "unbacked_number",
+            "rebuttal_target"
+          ]
+        },
+        {
+          "side": "bear",
+          "round": "rebuttal",
+          "attempt": 2,
+          "passed": true,
+          "issue_codes": [
+            "unbacked_number"
+          ]
+        },
+        {
+          "side": "bull",
+          "round": "closing",
+          "attempt": 1,
+          "passed": false,
+          "issue_codes": [
+            "unbacked_number",
+            "unsupported_inference"
+          ]
+        },
+        {
+          "side": "bull",
+          "round": "closing",
+          "attempt": 2,
+          "passed": true,
+          "issue_codes": [
+            "unbacked_number"
+          ]
+        },
+        {
+          "side": "bear",
+          "round": "closing",
+          "attempt": 1,
+          "passed": true,
+          "issue_codes": [
+            "unbacked_number"
+          ]
+        }
+      ],
+      "audit_usage_matches_ledger": true
+    },
+    {
+      "mode": "single",
+      "id": "9c12c22255e04f8cb73ff3eeb6e65359",
+      "status": "failed",
+      "elapsed_seconds": 36.56,
+      "post_elapsed_seconds": 0.005,
+      "post_statuses": [
+        202
+      ],
+      "models": {
+        "claude-sonnet-5-5": {
+          "requests": 6,
+          "usd": 0.182716,
+          "seconds": 35.897,
+          "usage": {
+            "input_tokens": 71863,
+            "output_tokens": 3899,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0
+          }
+        }
+      },
+      "usd": 0.182716,
+      "api_requests": 6,
+      "event_counts": {
+        "snapshot_created": 1,
+        "moderator_started": 1,
+        "debate_failed": 1
+      },
+      "idempotency": {
+        "status": 202,
+        "same_id": true,
+        "reused": true,
+        "no_new_model_requests": true
+      },
+      "sse_terminal_replay_verified": true,
+      "public_usage_matches_ledger": true,
+      "snapshot_sha256": "3a178ec4fa42597d65334ca54aab41d0912e0163113fa25b87ddf9c0f74c1b86",
+      "audit_snapshot_payload_hash": "sha256:59f0c28f0525751b58168aa571489835adf15dbf06b3108f6a57565647be5d09",
+      "stages": [
+        {
+          "name": "snapshot",
+          "status": "success",
+          "started_at": "2026-11-02T04:30:37.766456+09:00",
+          "finished_at": "2026-11-02T04:30:37.778466+09:00",
+          "elapsed_seconds": 0.012383
+        },
+        {
+          "name": "runner_initialization",
+          "status": "success",
+          "started_at": "2026-11-02T04:30:37.795464+09:00",
+          "finished_at": "2026-11-02T04:30:37.810305+09:00",
+          "elapsed_seconds": 0.014527
+        },
+        {
+          "name": "single",
+          "status": "failed",
+          "started_at": "2026-11-02T04:30:37.817304+09:00",
+          "error_type": "LLMError",
+          "finished_at": "2026-11-02T04:31:14.050082+09:00",
+          "elapsed_seconds": 36.233121
+        },
+        {
+          "name": "moderator_client_initialization",
+          "status": "success",
+          "started_at": "2026-11-02T04:30:37.824302+09:00",
+          "finished_at": "2026-11-02T04:30:37.832305+09:00",
+          "elapsed_seconds": 0.008118
+        }
+      ],
+      "roles": {
+        "moderator": {
+          "structured_calls": 3,
+          "requests": 4,
+          "seconds": 23.497
+        },
+        "semantic_reviewer": {
+          "structured_calls": 2,
+          "requests": 2,
+          "seconds": 12.619
+        }
+      },
+      "attempt_summary": [
+        {
+          "attempt": 1,
+          "passed": false,
+          "issue_codes": [
+            "unsupported_inference",
+            "unsupported_inference"
+          ]
+        },
+        {
+          "attempt": 2,
+          "passed": false,
+          "issue_codes": [
+            "reasoning_length"
+          ]
+        },
+        {
+          "attempt": 3,
+          "passed": false,
+          "issue_codes": [
+            "unsupported_inference"
+          ]
+        }
+      ],
+      "audit_usage_matches_ledger": true
+    }
+  ],
+  "same_snapshot": true,
+  "same_audit_snapshot_hash": true,
+  "post_fix_benchmark": {
+    "status": "passed",
+    "start": "2026-09-28",
+    "end": "2026-10-29",
+    "fact_count": 9,
+    "missing": [],
+    "elapsed_seconds": 7.156,
+    "llm_calls": 0,
+    "fact_values": {
+      "PX.RET_3D": 8.92,
+      "MKT.KOSPI_RET_3D": 8.56,
+      "PX.EXCESS_KOSPI_3D": 0.36,
+      "PX.RET_7D": 9.69,
+      "MKT.KOSPI_RET_7D": 6.93,
+      "PX.EXCESS_KOSPI_7D": 2.76,
+      "PX.RET_21D": -14.07,
+      "MKT.KOSPI_RET_21D": -13.82,
+      "PX.EXCESS_KOSPI_21D": -0.26
+    }
+  },
+  "checks": {
+    "targeted_pytest": "51 passed in 5.16s",
+    "before_fix_new_regressions": "2 failed, 4 passed",
+    "offline_budget_checks": 6,
+    "post_fix_paid_runs": 0
+  },
+  "price_source": "https://platform.claude.com/docs/en/about-claude/pricing",
+  "pricing_checked_on": "2026-11-02",
+  "scope": {
+    "ticker": "005930",
+    "rag": false,
+    "sdk_retries": 0,
+    "request_timeout_seconds": 180,
+    "safety_limit_usd": 3,
+    "max_requests": 48,
+    "full_spring_web_e2e": false
+  }
+}

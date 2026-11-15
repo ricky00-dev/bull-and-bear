@@ -28,14 +28,14 @@ class EventLog:
     def __init__(self, path: Path):
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._seq = sum(1 for _ in path.open()) if path.exists() else 0
+        self._seq = len(path.read_text(encoding="utf-8").splitlines()) if path.exists() else 0
 
     def append(self, type_: str, **payload: Any) -> None:
         self._seq += 1
         record = {"seq": self._seq, "ts": datetime.now().astimezone().isoformat(), "type": type_, **payload}
-        with self.path.open("a") as f:
+        with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=_default) + "\n")
 
     @staticmethod
     def read(path: Path) -> list[dict]:
-        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
