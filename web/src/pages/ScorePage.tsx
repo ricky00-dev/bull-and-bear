@@ -56,7 +56,7 @@ export function ScorePage() {
 
         <Card className="flex flex-col gap-2.5">
           <h3 className="text-sm font-extrabold">판정 뒤 주가는 이렇게 움직였어요</h3>
-          {chart.data ? <div className="mx-auto w-full max-w-[640px]"><ReturnChart chart={chart.data} /></div> : chart.isError ? <ErrorNotice message="수익률 차트를 불러오지 못했어요" onRetry={() => chart.refetch()} /> : <Skeleton className="h-44 w-full" />}
+          {chart.data ? <ReturnChart chart={chart.data} /> : chart.isError ? <ErrorNotice message="수익률 차트를 불러오지 못했어요" onRetry={() => chart.refetch()} /> : <Skeleton className="h-44 w-full" />}
         </Card>
 
         <Card className="flex flex-col gap-3">

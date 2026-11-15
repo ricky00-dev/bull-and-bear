@@ -46,9 +46,10 @@ export function ReturnChart({ chart }: { chart: Chart }) {
   const pending = marks.filter((m) => m.idx < 0)
 
   return (
-    <figure className="flex flex-col gap-2">
+    // viewBox 기준 글자·선 굵기가 화면 폭에 비례해 커지므로 넓은 화면에서도 폭을 묶어 둔다
+    <figure className="mx-auto flex w-full max-w-[640px] flex-col gap-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={`판정일 대비 ${chart.ticker ?? '이 종목'} 수익률과 코스피 수익률`}>
-        {bandPath && <path d={bandPath} fill="#eef0f3" />}
+        {bandPath && <path d={bandPath} fill="rgb(255 255 255 / 9%)" />}
         <line x1={0} x2={W - PAD.right} y1={y(0)} y2={y(0)} stroke="var(--color-line)" strokeDasharray="3 3" />
         <line x1={x(baseIdx)} x2={x(baseIdx)} y1={PAD.top - 6} y2={H - PAD.bottom} stroke="var(--color-faint)" strokeDasharray="3 3" />
         <text x={x(baseIdx)} y={H - 6} textAnchor="middle" className="fill-sub text-[10px] font-bold">
@@ -68,7 +69,7 @@ export function ReturnChart({ chart }: { chart: Chart }) {
           .filter((m) => m.idx >= 0)
           .map((m) => (
             <g key={m.horizonDays}>
-              <circle cx={x(m.idx)} cy={y(pts[m.idx].stockPct)} r={4} fill="var(--color-ink)" stroke="white" strokeWidth={1.5} />
+              <circle cx={x(m.idx)} cy={y(pts[m.idx].stockPct)} r={4} fill="var(--color-ink)" stroke="var(--color-surface)" strokeWidth={1.5} />
               <text x={x(m.idx)} y={y(pts[m.idx].stockPct) - 8} textAnchor="middle" className="fill-ink text-[10px] font-extrabold">
                 {m.horizonDays}일
               </text>
@@ -79,12 +80,12 @@ export function ReturnChart({ chart }: { chart: Chart }) {
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Legend swatch="h-0.5 w-4 bg-ink" label="이 종목" />
           <Legend swatch="h-0.5 w-4 bg-faint" label="코스피" />
-          {!hidden && <Legend swatch="h-2.5 w-4 rounded-sm bg-surface-2" label={`보류 구간 (코스피 ±${band}%p)`} />}
+          {!hidden && <Legend swatch="h-2.5 w-4 rounded-sm bg-white/10" label={`보류 구간 (코스피 ±${band}%p)`} />}
         </span>
         {hidden ? (
           <span>판정일 종가를 0%로 놓고 그 전 한 달을 그렸어요. 오른쪽 빈칸이 맞혀야 할 7거래일이에요.</span>
         ) : (
-          <span>판정일 종가를 0%로 놓고 그렸어요. 판정 뒤 검은 선이 회색 띠보다 위면 매수, 아래면 매도가 맞아요.</span>
+          <span>판정일 종가를 0%로 놓고 그렸어요. 판정 뒤 흰 선이 회색 띠보다 위면 매수, 아래면 매도가 맞아요.</span>
         )}
         {!hidden && pending.length > 0 && <span>{pending.map((m) => `${m.horizonDays}거래일 채점 ${monthDay(m.date!)} 예정`).join(' · ')} (휴장일이 있으면 늦어져요)</span>}
       </figcaption>
