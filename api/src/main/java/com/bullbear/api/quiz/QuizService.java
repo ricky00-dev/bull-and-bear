@@ -232,6 +232,12 @@ public class QuizService {
 				((ObjectNode) e).put("interpretation",
 						QuizHints.mask(e.get("interpretation").asString(), d.getStockName(), d.getTicker()));
 			}
+			// 원자료(뉴스 제목·요약·링크·날짜)는 이름과 날짜를 드러낸다. 칩에 쓰는 제목만 가려서 남긴다
+			if (e.has("observation")) {
+				String label = e.path("observation").path("label").asString(null);
+				((ObjectNode) e).putObject("observation").put("label",
+						QuizHints.mask(label, d.getStockName(), d.getTicker()));
+			}
 		}
 		return event;
 	}
