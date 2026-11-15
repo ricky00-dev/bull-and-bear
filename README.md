@@ -13,6 +13,7 @@ AI가 정답을 알려 주는 서비스가 아니라, **양쪽 근거를 읽고 
 | 시연 영상 (PC) | https://youtu.be/FYpuZBcTEJk |
 | 시연 영상 (모바일) | https://youtube.com/shorts/0l3WMyUk54w |
 | 결과보고서 | [docs/submission/불앤베어_결과보고서.pdf](docs/submission/불앤베어_결과보고서.pdf) |
+| 포스터 | [PDF](docs/submission/불앤베어_포스터.pdf) · [이미지](docs/submission/불앤베어_포스터.png) |
 
 ![홈 → 종목 → 토론](docs/images/screens-flow.png)
 ![판정 → AI 판정 공개 → 채점](docs/images/screens-judge.png)
