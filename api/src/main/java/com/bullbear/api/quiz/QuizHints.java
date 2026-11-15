@@ -37,6 +37,12 @@ final class QuizHints {
 	private static final Pattern AMOUNT = Pattern
 			.compile("\\d[\\d,]*(?:\\.\\d+)?\\s*(?:조|억|만)?\\s*원|\\d{1,3}(?:,\\d{3}){2,}(?:\\.\\d+)?|\\d{7,}(?:\\.\\d+)?");
 
+	/** 본문 속 날짜("10월 15일", "2026-10-15")는 판정일을 드러낸다. 퀴즈는 "몇 월 몇째 주"까지만 알려준다 */
+	private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}|\\d{1,2}월\\s*\\d{1,2}일");
+
+	/** 날짜별 일봉 근거 ID: PX.DAY_20261015 */
+	private static final Pattern DAY_ID = Pattern.compile("PX\\.DAY_(\\d{4})(\\d{2})(\\d{2})");
+
 	private static final String[] NTH = { "첫째", "둘째", "셋째", "넷째", "다섯째" };
 
 	private QuizHints() {
@@ -52,7 +58,7 @@ final class QuizHints {
 		return d.getYear() + "년 " + d.getMonthValue() + "월 " + NTH[(d.getDayOfMonth() - 1) / 7] + " 주";
 	}
 
-	/** 본문에서 종목명·종목코드를 "이 회사"로, 금액·큰 숫자를 "○○"로 바꾼다. */
+	/** 본문에서 종목명·종목코드를 "이 회사"로, 날짜를 "○월 ○일"로, 금액·큰 숫자를 "○○"로 바꾼다. */
 	static String mask(String text, String stockName, String ticker) {
 		if (text == null) {
 			return null;
@@ -61,7 +67,22 @@ final class QuizHints {
 		for (String alias : ALIASES.getOrDefault(ticker, List.of())) {
 			out = out.replace(alias, "이 회사");
 		}
+		out = DATE.matcher(out).replaceAll("○월 ○일");
 		return AMOUNT.matcher(out).replaceAll(m -> m.group().endsWith("원") ? "○○원" : "○○");
+	}
+
+	/**
+	 * 일봉 근거 ID의 날짜를 판정일 기준 거래일 수로 바꾼다: PX.DAY_20261015 → PX.DAY_D-3 (판정일이면 D-0).
+	 * tradingDays는 판정일까지의 거래일(오름차순). 목록에 없는 날이면 PX.DAY_D로 날짜만 지운다.
+	 */
+	static String relativeDayId(String sourceId, List<LocalDate> tradingDays) {
+		var m = DAY_ID.matcher(sourceId == null ? "" : sourceId);
+		if (!m.matches()) {
+			return sourceId;
+		}
+		int i = tradingDays.indexOf(LocalDate.of(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)),
+				Integer.parseInt(m.group(3))));
+		return i < 0 ? "PX.DAY_D" : "PX.DAY_D-" + (tradingDays.size() - 1 - i);
 	}
 
 	/** 근거 값을 공개 전에 가려야 하는지. 비율·배수는 두고, 가격 수준과 금액(1억 이상)은 가린다. */

@@ -74,6 +74,16 @@ const PREFIX: Record<string, { label: string; desc: string }> = {
 
 /** 이름에 날짜·기간이 들어가 표에 미리 적을 수 없는 근거: 날짜별 일봉, 재무 전년 대비 */
 function dynamicEntry(sourceId: string): Entry | undefined {
+  // 퀴즈는 날짜를 가리려고 판정일 기준 거래일 수로 바꿔 보낸다: PX.DAY_D-3, 판정일은 D-0, 모르면 PX.DAY_D
+  const rel = /^PX\.DAY_D(?:-(\d+))?$/.exec(sourceId)
+  if (rel) {
+    const n = rel[1] === undefined ? null : Number(rel[1])
+    return {
+      label: n === null ? '그날 등락률' : n === 0 ? '판정일 등락률' : `판정 ${n}거래일 전 등락률`,
+      desc: '그날 종가가 전날 종가보다 얼마나 움직였는지예요. 같은 날 코스피와 비교하면 시장 탓인지 종목 탓인지 가늠할 수 있어요.',
+      format: signedPct,
+    }
+  }
   const day = /^PX\.DAY_(\d{4})(\d{2})(\d{2})$/.exec(sourceId)
   if (day) {
     return {

@@ -108,6 +108,12 @@ export function RevealPage() {
                   </div>
                 </div>
               ))}
+              {(r.verdict.scores.bull.comment || r.verdict.scores.bear.comment) && (
+                <div className="flex flex-col gap-2 border-t border-line pt-3">
+                  {r.verdict.scores.bull.comment && <p className="text-[13px] leading-relaxed"><b className="text-up-ink">매수 측 평가</b> <VerdictText text={r.verdict.scores.bull.comment} decisive={r.verdict.decisive_evidence} debateId={id} asOf={d?.tradeDate} turns={stream.statements} /></p>}
+                  {r.verdict.scores.bear.comment && <p className="text-[13px] leading-relaxed"><b className="text-down-ink">매도 측 평가</b> <VerdictText text={r.verdict.scores.bear.comment} decisive={r.verdict.decisive_evidence} debateId={id} asOf={d?.tradeDate} turns={stream.statements} /></p>}
+                </div>
+              )}
             </Card>
 
             <Link to={`/me/judgments/${r.mine.id}`} className="pressable flex min-h-touch items-center justify-between rounded-control bg-surface px-4 py-3 text-sm font-bold">

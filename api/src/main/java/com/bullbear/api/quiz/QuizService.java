@@ -204,20 +204,19 @@ public class QuizService {
 	/** 답하기 전 문제: 종목명·종목코드는 "이 회사"로, 차트는 판정일까지만, 가격·날짜·금액은 뺀다 */
 	private Question question(Row row) {
 		Debate d = debates.get(row.debateId());
-		List<JsonNode> statements = debates.acceptedStatements(d.getId()).stream()
-				.map(payload -> mask(json.readTree(payload), d))
-				.toList();
 		ChartResponse full = charts.build(d);
-		List<Point> before = full.points().stream()
-				.filter(p -> !p.date().isAfter(full.baseDate()))
-				.map(p -> new Point(null, null, p.stockPct(), p.indexPct()))
+		List<Point> upToBase = full.points().stream().filter(p -> !p.date().isAfter(full.baseDate())).toList();
+		List<LocalDate> tradingDays = upToBase.stream().map(Point::date).toList();
+		List<JsonNode> statements = debates.acceptedStatements(d.getId()).stream()
+				.map(payload -> mask(json.readTree(payload), d, tradingDays))
 				.toList();
+		List<Point> before = upToBase.stream().map(p -> new Point(null, null, p.stockPct(), p.indexPct())).toList();
 		List<Mark> marks = full.marks().stream().map(m -> new Mark(m.horizonDays(), null, false)).toList();
 		return new Question(row.idx(), QuizHints.sector(d.getTicker()), QuizHints.period(d.getTradeDate()), statements,
 				new ChartResponse(null, null, full.holdBand(), before, marks));
 	}
 
-	private JsonNode mask(JsonNode event, Debate d) {
+	private JsonNode mask(JsonNode event, Debate d, List<LocalDate> tradingDays) {
 		ObjectNode st = (ObjectNode) event.path("statement");
 		for (String field : List.of("claim", "argument")) {
 			if (st.has(field)) {
@@ -225,6 +224,9 @@ public class QuizService {
 			}
 		}
 		for (JsonNode e : st.path("evidence")) {
+			if (e.has("source_id")) {
+				((ObjectNode) e).put("source_id", QuizHints.relativeDayId(e.get("source_id").asString(), tradingDays));
+			}
 			if (e.path("value").isNumber() && QuizHints.revealing(e.path("source_id").asString(), e.path("value").asDouble())) {
 				((ObjectNode) e).putNull("value");
 			}
