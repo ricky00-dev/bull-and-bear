@@ -11,6 +11,7 @@
 | Spring ↔ 워커 연동 | [worker-api](worker-api.md): 공개 계약의 기준 |
 | 인증·비용·재시작·복구 | [WORKER-OPERATIONS](WORKER-OPERATIONS.md) |
 | 배포 구성·명령 | [DEPLOY](DEPLOY.md): 실제 배포 완료 증거와 구분 |
+| 부하 테스트 | [LOAD-TEST](LOAD-TEST.md): 동시 30·100명 결과, 스크립트는 `deploy/loadtest/` |
 | 설계 이유·대안 | [ARCHITECTURE](ARCHITECTURE.md): 제안과 구현 상태를 구분 |
 | 디자인 규칙 | [DESIGN](DESIGN.md): 색·표면·글자·캐릭터·영상 규칙 초안 |
 | 디자인 가안·캐릭터·아이콘 에셋 | [design](design/README.md): 정적 가안 페이지와 남은 결정 |
