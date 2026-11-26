@@ -79,7 +79,7 @@ export function HomePage() {
   const eligibleCount = items.filter((i) => i.eligible || preparing(i)).length
 
   return (
-    <Screen wide>
+    <Screen>
       <header className="pt-safe px-5">
         <div className="flex items-center justify-between pb-2 pt-5">
           <div className="md:invisible">
@@ -89,20 +89,19 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* PC에서는 아래 두 칸 그리드와 같은 비율로, 글·검색은 왼쪽 칸, 캐릭터는 오른쪽 칸에 둔다 */}
-      <div className="flex flex-col gap-3 px-5 pb-5 pt-3 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-8">
-        <div className="lg:order-2">
-          <HeroPair />
-        </div>
-        <div className="flex min-w-0 flex-col gap-3 lg:order-1">
-          <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
+      {/* PC에서도 좌우로 나누지 않고 휴대폰과 같은 한 줄 흐름. 폭만 Screen이 넓힌다 */}
+      <div className="flex flex-col gap-3 px-5 pb-5 pt-3">
+        <HeroPair>
+          <h1 className="text-2xl font-extrabold leading-snug tracking-tight md:text-3xl">
             어떤 종목을
             <br />
             판정해 볼까요?
           </h1>
-          <p className="text-sm leading-relaxed text-sub">
+          <p className="mt-3 break-keep text-sm leading-relaxed text-sub">
             <b className="text-up-ink">매수</b>와 <b className="text-down-ink">매도</b>의 근거를 읽고, AI보다 먼저 판정해요.
           </p>
+        </HeroPair>
+        <div className="flex min-w-0 flex-col gap-3">
           <label
             className={`flex min-h-14 items-center gap-2 rounded-control bg-surface pl-4 pr-1.5 transition-colors focus-within:ring-1 focus-within:ring-point ${query ? 'point-ring' : ''}`}
           >
@@ -133,7 +132,7 @@ export function HomePage() {
 
       <main className="flex flex-1 flex-col gap-6 px-5 pb-8">
         {!deferred && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
+          <div className="flex flex-col gap-6">
             <div className="flex min-w-0 flex-col gap-5">
               {pending && nextScore && (
                 <Link
@@ -175,7 +174,7 @@ export function HomePage() {
                 <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
               )}
             </div>
-            <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
+            <div className="flex min-w-0 flex-col gap-6">
               <TodayTerm />
               <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel bg-surface p-4 transition-colors">
                 <span className="text-sm font-bold">결과를 아는 과거 종목으로 연습하기</span>

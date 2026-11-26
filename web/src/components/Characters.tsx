@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import bearFace from '../assets/characters/bear-face.png'
 import bearPoster from '../assets/characters/bear-poster.jpg'
 import bearVideo from '../assets/characters/bear.mp4'
@@ -30,12 +30,16 @@ export function Avatar({ who, size = 40, label = false }: { who: Speaker; size?:
   )
 }
 
-/** 홈 첫 화면 히어로: 황소(왼쪽)와 곰(오른쪽) 전신. 정지 이미지 (영상은 토론 무대에만) */
-export function HeroPair() {
+/**
+ * 홈 첫 화면 히어로: 황소(왼쪽)와 곰(오른쪽) 전신. 정지 이미지 (영상은 토론 무대에만).
+ * 휴대폰은 캐릭터 한 줄 아래에 제목, 넓은 화면은 두 캐릭터 사이에 제목(children)을 둔다
+ */
+export function HeroPair({ children }: { children?: ReactNode }) {
   return (
-    <div className="flex items-end justify-between lg:justify-around" role="img" aria-label="매수 AI 황소와 매도 AI 곰">
-      <img src={bull} alt="" className="h-[158px] w-auto lg:h-[210px]" />
-      <img src={bear} alt="" className="h-[158px] w-auto lg:h-[210px]" />
+    <div className="flex flex-wrap items-end justify-between gap-y-3 md:flex-nowrap md:gap-6">
+      <img src={bull} alt="매수 AI 황소" className="order-1 h-[158px] w-auto md:h-[190px]" />
+      <div className="order-3 w-full md:order-2 md:w-auto md:flex-1 md:pb-4 md:text-center">{children}</div>
+      <img src={bear} alt="매도 AI 곰" className="order-2 h-[158px] w-auto md:order-3 md:h-[190px]" />
     </div>
   )
 }
