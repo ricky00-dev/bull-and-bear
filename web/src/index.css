@@ -107,7 +107,35 @@ input[type="search"]::-webkit-search-cancel-button {
   .pressable:hover:not(:disabled) { background-color: var(--color-surface-2); }
 }
 
+/* 전시 화면(/exhibit) 배경: 같은 점에서 갈라지는 빨강·파랑 선이 그려졌다 사라지기를 반복한다 */
+.ex-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ex-draw 12s cubic-bezier(.45, .05, .2, 1) infinite;
+}
+.ex-draw-late { animation-delay: .4s; }
+@keyframes ex-draw {
+  0% { stroke-dashoffset: 1; opacity: 1; }
+  25% { stroke-dashoffset: 0; }
+  85% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.ex-candle {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: ex-breathe 4s ease-in-out infinite;
+}
+@keyframes ex-breathe { 50% { transform: scaleY(.75); } }
+.ex-float { animation: ex-float 5s ease-in-out infinite; }
+.ex-float-late { animation-delay: 1.2s; }
+@keyframes ex-float { 50% { transform: translateY(-10px); } }
+.ex-glow { animation: ex-glow 2.4s ease-in-out infinite; }
+@keyframes ex-glow {
+  50% { box-shadow: 0 0 0 4px rgb(255 138 61 / 55%), 0 0 60px rgb(255 138 61 / 35%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ex-draw { stroke-dashoffset: 0; }
   *, *::before, *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
