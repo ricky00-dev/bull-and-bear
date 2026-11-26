@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/* 앱(web/src/index.css)과 같은 색: 다크 그래파이트 + 앰버 포인트, 상승 빨강·하락 파랑 */
+@theme {
+  --font-sans: var(--font-noto), system-ui, sans-serif;
+
+  --color-ground: #0b0c0e;
+  --color-surface: #16171a;
+  --color-surface-2: #202125;
+  --color-ink: #f2f2f3;
+  --color-sub: #a2a5ac;
+  --color-faint: #6b6f77;
+  --color-line: #26282c;
+
+  --color-point: #ff8a3d;
+  --color-on-point: #1b1006;
+  --color-point-soft: rgb(255 138 61 / 13%);
+
+  --color-up: #e5383b;
+  --color-up-ink: #ff6b6e;
+  --color-up-soft: rgb(229 56 59 / 14%);
+  --color-down: #2f6feb;
+  --color-down-ink: #7aa7ff;
+  --color-down-soft: rgb(47 111 235 / 16%);
+  --color-mod: #a9b3bd;
+  --color-mod-soft: #1d2126;
+}
+
+@layer base {
+  :root { color-scheme: dark; }
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+  }
+}
+
+/* 히어로 그래프: 같은 점에서 출발해 빨강은 위로, 파랑은 아래로 그려진다 */
+.draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 2.6s cubic-bezier(.45, .05, .2, 1) .3s forwards;
+}
+.draw-late { animation-delay: .55s; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+.tip {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tip-in .4s ease-out 2.8s forwards, tip-pulse 2.2s ease-in-out 3.2s infinite;
+}
+@keyframes tip-in { to { opacity: 1; } }
+@keyframes tip-pulse { 50% { transform: scale(1.8); opacity: .35; } }
+
+.candle {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  animation: candle-up .6s ease-out forwards, candle-breathe 4s ease-in-out infinite;
+}
+@keyframes candle-up { to { transform: scaleY(1); } }
+@keyframes candle-breathe { 50% { transform: scaleY(.82); } }
+
+.float-a { animation: float 5s ease-in-out infinite; }
+.float-b { animation: float 5s ease-in-out 1.2s infinite; }
+@keyframes float { 50% { transform: translateY(-12px); } }
+
+.fade-up { opacity: 0; animation: fade-up .8s ease-out forwards; }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 황소에 올리면 빨강이 솟고 파랑은 흐려진다. 곰은 반대. 탭(focus)도 같은 효과 */
+.series, .candles {
+  transition: transform .7s cubic-bezier(.3, 1.4, .5, 1), opacity .4s ease, filter .4s ease;
+  transform-box: fill-box;
+}
+.series .area { opacity: .6; transition: opacity .4s ease; }
+.series .line { transition: stroke-width .3s ease; }
+.candles { opacity: .28; transform-origin: bottom; }
+
+.hero:has(.char-bull:hover, .char-bull:focus, .char-bull:active) {
+  & .series-up { transform: translateY(-36px); filter: drop-shadow(0 0 14px rgb(229 56 59 / .8)); }
+  & .series-up .area { opacity: 1; }
+  & .series-up .line { stroke-width: 5; }
+  & .series-down { opacity: .12; }
+  & .candles-up { transform: scaleY(1.7); opacity: .6; }
+  & .candles-down { transform: scaleY(.4); opacity: .1; }
+}
+.hero:has(.char-bear:hover, .char-bear:focus, .char-bear:active) {
+  & .series-down { transform: translateY(36px); filter: drop-shadow(0 0 14px rgb(47 111 235 / .8)); }
+  & .series-down .area { opacity: 1; }
+  & .series-down .line { stroke-width: 5; }
+  & .series-up { opacity: .12; }
+  & .candles-down { transform: scaleY(1.7); opacity: .6; }
+  & .candles-up { transform: scaleY(.4); opacity: .1; }
+}
+
+.char { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.char-img { transition: transform .4s cubic-bezier(.3, 1.4, .5, 1), filter .4s ease; }
+.char-bull:hover .char-img, .char-bull:focus .char-img { transform: translateY(-14px) rotate(-3deg) scale(1.06); }
+.char-bear:hover .char-img, .char-bear:focus .char-img { transform: translateY(10px) rotate(3deg) scale(1.06); }
+.char-badge {
+  position: absolute;
+  top: -.5rem;
+  left: 50%;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: .35rem .8rem;
+  font-size: .8rem;
+  font-weight: 900;
+  opacity: 0;
+  transform: translate(-50%, 8px) scale(.9);
+  transition: opacity .25s ease, transform .35s cubic-bezier(.3, 1.4, .5, 1);
+  pointer-events: none;
+}
+.char:hover .char-badge, .char:focus .char-badge { opacity: 1; transform: translate(-50%, -12px) scale(1); }
+
+/* 스크롤로 보일 때 차례로 등장 (Reveal 컴포넌트가 data-shown을 붙인다) */
+.reveal > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .6s ease-out, transform .6s ease-out;
+  transition-delay: calc(var(--i, 0) * 180ms);
+}
+.reveal[data-shown] > * { opacity: 1; transform: none; }
+.reveal .draw-on-reveal {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.8s cubic-bezier(.45, .05, .2, 1) .4s;
+}
+.reveal[data-shown] .draw-on-reveal { stroke-dashoffset: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .draw, .reveal .draw-on-reveal { animation: none; stroke-dashoffset: 0; transition: none; }
+  .tip, .fade-up { animation: none; opacity: 1; }
+  .candle { animation: none; transform: none; }
+  .float-a, .float-b { animation: none; }
+  .series, .candles, .char-img, .char-badge { transition: none; }
+  .reveal > * { opacity: 1; transform: none; transition: none; }
+}

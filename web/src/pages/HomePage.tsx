@@ -89,10 +89,12 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* PC에서는 아래 두 칸 그리드의 왼쪽 칸과 폭을 맞춘다 */}
-      <div className="px-5 pb-5 pt-3 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8">
-        <div className="flex min-w-0 flex-col gap-3">
+      {/* PC에서는 아래 두 칸 그리드와 같은 비율로, 글·검색은 왼쪽 칸, 캐릭터는 오른쪽 칸에 둔다 */}
+      <div className="flex flex-col gap-3 px-5 pb-5 pt-3 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-8">
+        <div className="lg:order-2">
           <HeroPair />
+        </div>
+        <div className="flex min-w-0 flex-col gap-3 lg:order-1">
           <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
             어떤 종목을
             <br />
@@ -173,7 +175,7 @@ export function HomePage() {
                 <ChipRow title="최근 검색" items={recent} onPick={setQuery} />
               )}
             </div>
-            <div className="flex min-w-0 flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
               <TodayTerm />
               <Link to="/quiz" className="pressable flex min-h-touch items-center justify-between gap-3 rounded-panel bg-surface p-4 transition-colors">
                 <span className="text-sm font-bold">결과를 아는 과거 종목으로 연습하기</span>
